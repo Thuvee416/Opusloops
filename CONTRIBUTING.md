@@ -34,7 +34,7 @@ See [README.md](README.md) for the complete build overview.
 2. Explain what changed, why it changed, and how you verified it.
 3. Add regression tests for bug fixes when practical.
 4. Preserve compatibility for locally saved projects unless a migration is explicitly designed and tested.
-5. Verify a narrow mobile viewport, touch input, offline reload, and the GitHub Pages base path when relevant.
+5. Verify a narrow mobile viewport, touch input, offline reload, and the AWS Amplify production origin when relevant.
 6. Never put secrets, private audio, API keys, or credentials in a commit or issue.
 
 Suggested branch names are `feat/<description>`, `fix/<description>`, and `docs/<description>`.

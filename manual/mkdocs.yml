@@ -47,10 +47,10 @@ nav:
   - Legacy Desktop Compatibility: legacy-desktop.md
 
 extra:
-  homepage: https://thuvee416.github.io/Opusloops/
+  homepage: https://opusloops.com/
   social:
     - icon: fontawesome/solid/play
-      link: https://thuvee416.github.io/Opusloops/
+      link: https://opusloops.com/
       name: Open Opusloops
     - icon: fontawesome/brands/github
       link: https://github.com/Thuvee416/Opusloops

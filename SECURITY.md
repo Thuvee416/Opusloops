@@ -31,11 +31,11 @@ Projects save locally first. Clearing site data, private browsing, storage-press
 
 The PWA may contain only the dedicated Supabase URL and publishable key. Secret, service-role, management, and database credentials stay outside the browser and repository. Direct public signup is disabled. Early-access accounts require an email-bound, single-use invitation and receive a fixed Opusloops application claim; the atomic project-sync function requires that claim in addition to an authenticated user ID. Every exposed project table must revoke anonymous and authenticated direct writes and retain explicit owner-only Row Level Security policies. Email verification and recovery mail require production SMTP before they can be treated as trusted identity signals.
 
-The current GitHub Pages deployment shares the `thuvee416.github.io` browser origin with the maintainer's other project sites. Account sessions and account-scoped device caches therefore assume those sibling sites are trusted. A dedicated custom domain is required before account access expands beyond controlled early access.
+The official production origin is the dedicated `https://opusloops.com` domain on AWS Amplify. Account sessions and account-scoped device caches must remain isolated to approved Opusloops origins; adding a preview or alternate host requires an explicit Auth redirect and Edge Function CORS review.
 
 ### Service worker and cache
 
-The service worker controls offline application code. Restrict it to the `/Opusloops/` scope, cache only expected same-origin assets, version caches deliberately, and delete obsolete Opusloops caches during activation. Never treat a failed response as a valid cached application asset.
+The service worker controls offline application code. Restrict it to the production app scope, cache only expected same-origin assets, version caches deliberately, and delete obsolete Opusloops caches during activation. Never treat a failed response as a valid cached application asset.
 
 ### Web Audio
 

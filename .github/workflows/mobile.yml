@@ -1,0 +1,44 @@
+name: Validate Opusloops mobile app
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'mobile/**'
+      - 'supabase/**'
+      - 'scripts/validate-mobile.sh'
+      - 'scripts/stamp-amplify-version.py'
+      - 'amplify.yml'
+      - 'customHttp.yml'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'supabase/**'
+      - 'scripts/validate-mobile.sh'
+      - 'scripts/stamp-amplify-version.py'
+      - 'amplify.yml'
+      - 'customHttp.yml'
+      - '.github/workflows/mobile.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: opusloops-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate mobile app
+    if: github.repository == 'Thuvee416/Opusloops'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validate static PWA
+        run: bash scripts/validate-mobile.sh

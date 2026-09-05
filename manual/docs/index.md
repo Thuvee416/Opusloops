@@ -2,7 +2,7 @@
 
 Opusloops is a touch-first loop studio for phones and tablets. It runs in the browser, uses Web Audio for its built-in sounds, and can be installed as a Progressive Web App (PWA).
 
-[Open the production app](https://thuvee416.github.io/Opusloops/){ .md-button .md-button--primary }
+[Open the production app](https://opusloops.com/){ .md-button .md-button--primary }
 
 ## What it is for
 

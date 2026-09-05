@@ -1,5 +1,7 @@
 const allowedOrigins = new Set([
-  "https://thuvee416.github.io",
+  "https://opusloops.com",
+  "https://www.opusloops.com",
+  "https://main.d1zc92wmtmvg23.amplifyapp.com",
   "https://heryvahetgzfalmuprbw.supabase.co",
   "http://127.0.0.1:4173",
   "http://127.0.0.1:4174",

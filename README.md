@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Thuvee416/Opusloops/actions/workflows/pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/Thuvee416/Opusloops/pages.yml?branch=main&label=production" alt="Production deployment"></a>
+  <a href="https://opusloops.com/"><img src="https://img.shields.io/badge/production-AWS%20Amplify-ff9900?logo=amazonaws&logoColor=white" alt="AWS Amplify production"></a>
   <a href="https://github.com/Thuvee416/Opusloops/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0"></a>
 </p>
 
@@ -12,7 +12,7 @@
 Opusloops is a calm, touch-first loop studio that runs as an installable mobile web app. Build patterns with Web Audio, arrange ideas, shape a compact mix, export WAV audio, and optionally sync projects through a private account.
 
 <p align="center">
-  <strong><a href="https://thuvee416.github.io/Opusloops/">Launch Opusloops</a></strong>
+  <strong><a href="https://opusloops.com/">Launch Opusloops</a></strong>
 </p>
 
 - **English** | [简体中文](README_CN.md)
@@ -54,7 +54,7 @@ email verification remain unavailable until production SMTP is configured.
 
 ## Production
 
-Pushes to `main` deploy the contents of `mobile/` to [https://thuvee416.github.io/Opusloops/](https://thuvee416.github.io/Opusloops/). A green workflow proves deployment; a fresh production fetch is still required to verify the live revision.
+Pushes to `main` are built automatically by the existing AWS Amplify app and deploy the contents of `mobile/` to [https://opusloops.com/](https://opusloops.com/). The repository-owned [`amplify.yml`](amplify.yml) validates the PWA before publishing it and stamps `version.json` with the deployed commit. A successful Amplify job is still followed by a fresh production fetch to verify the live revision.
 
 ## Legacy desktop source
 

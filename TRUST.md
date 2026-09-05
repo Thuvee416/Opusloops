@@ -22,7 +22,7 @@ These commitments describe how the Opusloops repository is intended to be mainta
 ## User control and privacy
 
 - Opusloops does not intentionally collect usage analytics or telemetry.
-- The installed PWA checks its GitHub Pages origin for updated application assets when it reconnects.
+- The installed PWA checks its AWS Amplify production origin for updated application assets when it reconnects.
 - Projects and settings save first in browser-managed local storage. Invited, signed-in users can sync those project documents through Supabase; an application claim, an atomic sync boundary, and Row Level Security restrict access to the owning account.
 - Four-bar WAV export is rendered entirely on the device. Audio is not uploaded, and a WAV file is not an editable project backup.
 - Opusloops sends account and project-sync requests only to its dedicated Supabase project. It does not send loop audio or usage analytics.

@@ -44,6 +44,7 @@ invitation possession is the early-access ownership factor. Email verification
 and password-recovery mail must be enabled together before authentication is
 described as production-complete.
 
-The current GitHub Pages URL shares its browser origin with sibling project
-sites. Treat every sibling site as trusted during controlled early access, and
-move the PWA to a dedicated custom domain before broad account rollout.
+The official production origin is the dedicated `https://opusloops.com` domain
+on AWS Amplify. Keep the Auth redirect allowlist and the
+`create-opusloops-account` CORS allowlist aligned with that origin before any
+additional production or preview host is exposed.

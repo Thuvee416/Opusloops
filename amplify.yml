@@ -1,0 +1,11 @@
+version: 1
+frontend:
+  phases:
+    build:
+      commands:
+        - bash scripts/validate-mobile.sh
+        - python3 scripts/stamp-amplify-version.py
+  artifacts:
+    baseDirectory: mobile
+    files:
+      - '**/*'

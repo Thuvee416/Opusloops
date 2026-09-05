@@ -1,6 +1,6 @@
 # GitHub Copilot Instructions for Opusloops
 
-Opusloops is a mobile-first, installable web loop studio. The production application lives in `mobile/` and deploys to `https://thuvee416.github.io/Opusloops/`.
+Opusloops is a mobile-first, installable web loop studio. The production application lives in `mobile/` and the existing AWS Amplify app deploys `main` to `https://opusloops.com/`.
 
 The repository also retains a large GPL-licensed C++ desktop codebase from its upstream history. Treat that code as legacy/non-production unless an issue explicitly scopes migration or removal work there.
 
@@ -58,7 +58,7 @@ Do not reintroduce desktop-only assumptions into `mobile/`, including:
 
 ### PWA and deployment
 
-- All production paths must work under the `/Opusloops/` GitHub Pages base path.
+- All production paths must work at the AWS Amplify origin root and remain portable relative paths for PWA installation and local testing.
 - Keep the web manifest, icons, start URL, scope, and service-worker paths aligned.
 - Version caches deliberately and remove obsolete caches during activation.
 - Do not cache failed or opaque responses as if they were valid assets.
@@ -79,7 +79,7 @@ Do not reintroduce desktop-only assumptions into `mobile/`, including:
 - Avoid analytics, fingerprinting, or network calls that are not necessary for the requested feature.
 - Describe cloud sync as optional and local-first; never claim that WAV export can restore an editable project.
 - Email verification and recovery remain incomplete until production SMTP is configured.
-- Treat every sibling GitHub Pages project as trusted until Opusloops moves to a dedicated custom domain.
+- Keep account sessions and account-scoped device caches isolated to the approved Opusloops production origins.
 
 ## Change discipline
 

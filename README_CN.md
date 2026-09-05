@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Thuvee416/Opusloops/actions/workflows/pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/Thuvee416/Opusloops/pages.yml?branch=main&label=production" alt="生产部署"></a>
+  <a href="https://opusloops.com/"><img src="https://img.shields.io/badge/production-AWS%20Amplify-ff9900?logo=amazonaws&logoColor=white" alt="AWS Amplify 生产环境"></a>
   <a href="https://github.com/Thuvee416/Opusloops/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0"></a>
 </p>
 
@@ -12,7 +12,7 @@
 Opusloops 是一款安静、克制、触控优先的循环音乐工作室，以可安装的移动 Web 应用运行。你可以用 Web Audio 编写节奏、排列灵感、完成轻量混音、导出 WAV，并通过私人账户在设备间同步工程。
 
 <p align="center">
-  <strong><a href="https://thuvee416.github.io/Opusloops/">打开 Opusloops</a></strong>
+  <strong><a href="https://opusloops.com/">打开 Opusloops</a></strong>
 </p>
 
 - [English](README.md) | **简体中文**
@@ -47,7 +47,7 @@ python3 -m http.server 4173 --directory mobile
 
 ## 生产环境
 
-推送到 `main` 后，`mobile/` 的内容会部署至 [https://thuvee416.github.io/Opusloops/](https://thuvee416.github.io/Opusloops/)。工作流成功代表部署完成；仍需重新请求生产地址，才能确认线上版本。
+推送到 `main` 后，现有 AWS Amplify 应用会自动构建，并将 `mobile/` 的内容部署至 [https://opusloops.com/](https://opusloops.com/)。仓库中的 [`amplify.yml`](amplify.yml) 会在发布前验证 PWA，并将实际提交写入 `version.json`。Amplify 构建成功后，仍需重新请求生产地址以确认线上版本。
 
 ## 旧版桌面源代码
 

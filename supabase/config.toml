@@ -18,9 +18,11 @@ enabled = false
 
 [auth]
 enabled = true
-site_url = "https://thuvee416.github.io/Opusloops/"
+site_url = "https://opusloops.com/"
 additional_redirect_urls = [
-  "https://thuvee416.github.io/Opusloops/**",
+  "https://opusloops.com/**",
+  "https://www.opusloops.com/**",
+  "https://main.d1zc92wmtmvg23.amplifyapp.com/**",
   "http://127.0.0.1:4173/**",
   "http://127.0.0.1:4174/**",
   "http://localhost:4173/**",
