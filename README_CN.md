@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/Banner.png" alt="Opusloops" width="520">
+  <img src="assets/opus-loops-logo.png" alt="Opusloops" width="220">
 </p>
 
 <p align="center">

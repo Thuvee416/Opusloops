@@ -25,8 +25,8 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
-  logo: assets/images/opusloops-mark.svg
-  favicon: assets/images/opusloops-mark.svg
+  logo: assets/images/opus-loops-logo.png
+  favicon: assets/images/opus-loops-logo.png
   icon:
     repo: fontawesome/brands/github
 

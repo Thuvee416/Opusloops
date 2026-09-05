@@ -1,31 +1,36 @@
 :root {
   color-scheme: dark;
-  --paper: #080b0a;
-  --paper-deep: #040605;
-  --surface: #111613;
-  --surface-raised: #18201c;
-  --ink: #f3f7f5;
-  --muted: #aab6b0;
-  --faint: #8c9992;
-  --line: #29352f;
-  --line-strong: #607168;
-  --accent: #4cf59b;
-  --accent-bright: #83ffc0;
-  --accent-soft: #0d3020;
-  --accent-glow: rgba(76, 245, 155, 0.22);
-  --success: #5af2a9;
-  --warning: #ffc36b;
-  --danger: #ff8e9e;
-  --blue: #63ceff;
-  --plum: #c69aff;
-  --on-accent: #03140b;
-  --placeholder: #85918b;
-  --shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --paper: #06080d;
+  --paper-deep: #020409;
+  --surface: #0c121a;
+  --surface-raised: #121b26;
+  --ink: #f3f7fb;
+  --muted: #a5b1bd;
+  --faint: #7e8c9a;
+  --line: #21303e;
+  --line-strong: #4e6a7f;
+  --accent: #20c7ef;
+  --accent-bright: #85eaff;
+  --accent-soft: #082a37;
+  --accent-glow: rgba(32, 199, 239, 0.22);
+  --accent-ring: rgba(32, 199, 239, 0.58);
+  --success: #4de3c2;
+  --warning: #ffad42;
+  --danger: #ff6b9d;
+  --blue: #3b82f6;
+  --plum: #ff72b7;
+  --on-accent: #031117;
+  --placeholder: #748392;
+  --shadow: 0 20px 70px rgba(0, 0, 0, 0.62);
+  --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --serif: var(--mono);
+  --sans: var(--mono);
   font-family: var(--sans);
   color: var(--ink);
   background: var(--paper-deep);
+  font-feature-settings: "zero" 1;
+  font-variant-ligatures: none;
+  font-variant-numeric: tabular-nums;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -68,8 +73,13 @@ textarea:focus-visible,
 input:focus-visible,
 [contenteditable="true"]:focus-visible,
 summary:focus-visible {
-  outline: 3px solid rgba(76, 245, 155, 0.62);
+  outline: 3px solid var(--accent-ring);
   outline-offset: 3px;
+}
+
+::selection {
+  color: var(--paper-deep);
+  background: var(--warning);
 }
 
 button,
@@ -111,7 +121,8 @@ summary {
   min-height: 100dvh;
   margin: 0 auto;
   background:
-    radial-gradient(circle at 88% -5%, rgba(76, 245, 155, 0.09), transparent 34%),
+    radial-gradient(circle at 88% -5%, rgba(32, 199, 239, 0.12), transparent 34%),
+    radial-gradient(circle at 4% 105%, rgba(255, 107, 157, 0.06), transparent 32%),
     var(--paper);
 }
 
@@ -138,22 +149,20 @@ summary {
   border: 0;
   background: transparent;
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.045em;
   cursor: pointer;
 }
 
 .brand-mark {
-  width: 38px;
-  height: 30px;
-  margin-right: 7px;
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 8px rgba(76, 245, 155, 0.2));
+  display: block;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0, 146, 214, 0.2));
 }
 
 .status-pill {
@@ -218,7 +227,7 @@ summary {
   margin-right: 7px;
   background: var(--success);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(90, 242, 169, 0.14), 0 0 10px rgba(90, 242, 169, 0.24);
+  box-shadow: 0 0 0 3px rgba(77, 227, 194, 0.14), 0 0 10px rgba(77, 227, 194, 0.24);
 }
 
 .status-pill[data-state="syncing"] .status-dot {
@@ -229,7 +238,7 @@ summary {
 .status-pill[data-state="offline"] .status-dot,
 .status-pill[data-state="error"] .status-dot {
   background: var(--warning);
-  box-shadow: 0 0 0 3px rgba(255, 195, 107, 0.16);
+  box-shadow: 0 0 0 3px rgba(255, 173, 66, 0.17);
 }
 
 @keyframes status-pulse {
@@ -300,23 +309,23 @@ h2 {
 h1 {
   max-width: 560px;
   margin-bottom: 12px;
-  font-size: clamp(32px, 9vw, 44px);
-  line-height: 1.02;
-  letter-spacing: -0.045em;
+  font-size: clamp(28px, 8vw, 38px);
+  line-height: 1.08;
+  letter-spacing: -0.055em;
 }
 
 h2 {
   margin-bottom: 8px;
-  font-size: 21px;
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  font-size: 19px;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
 }
 
 .lede {
   max-width: 540px;
   margin-bottom: 22px;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -332,7 +341,7 @@ h2 {
 
 .composer:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(76, 245, 155, 0.14), 0 20px 58px rgba(0, 0, 0, 0.52);
+  box-shadow: 0 0 0 1px rgba(32, 199, 239, 0.17), 0 20px 58px rgba(0, 0, 0, 0.56);
 }
 
 .composer textarea,
@@ -346,7 +355,7 @@ h2 {
   border: 0;
   resize: none;
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.4;
 }
 
@@ -1154,7 +1163,7 @@ h2 {
   margin-top: 24px;
   padding: 18px;
   background:
-    radial-gradient(circle at 100% 0, rgba(76, 245, 155, 0.1), transparent 40%),
+    radial-gradient(circle at 100% 0, rgba(32, 199, 239, 0.12), transparent 40%),
     var(--surface-raised);
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -1394,7 +1403,7 @@ h2 {
   background: var(--accent-bright);
   border: 2px solid var(--paper-deep);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(76, 245, 155, 0.12);
+  box-shadow: 0 0 0 3px rgba(32, 199, 239, 0.14);
 }
 
 .persistent-seek::-moz-range-track {
@@ -1416,7 +1425,7 @@ h2 {
   background: var(--accent-bright);
   border: 2px solid var(--paper-deep);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(76, 245, 155, 0.12);
+  box-shadow: 0 0 0 3px rgba(32, 199, 239, 0.14);
 }
 
 .bottom-nav {
@@ -1742,7 +1751,7 @@ body.has-persistent-player .toast {
   }
 }
 
-@media (max-width: 370px) {
+@media (max-width: 480px) {
   .status-pill span:last-child {
     display: none;
   }
@@ -1756,6 +1765,9 @@ body.has-persistent-player .toast {
   .status-dot {
     margin: 0;
   }
+}
+
+@media (max-width: 370px) {
 
   .transport-card {
     grid-template-columns: 52px minmax(0, 1fr);
