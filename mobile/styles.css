@@ -1,13 +1,13 @@
 :root {
   color-scheme: dark;
-  --paper: #06080d;
-  --paper-deep: #020409;
-  --surface: #0c121a;
-  --surface-raised: #121b26;
+  --paper: #000000;
+  --paper-deep: #000000;
+  --surface: #090d12;
+  --surface-raised: #10161d;
   --ink: #f3f7fb;
   --muted: #a5b1bd;
   --faint: #7e8c9a;
-  --line: #21303e;
+  --line: #1b2833;
   --line-strong: #4e6a7f;
   --accent: #20c7ef;
   --accent-bright: #85eaff;
@@ -116,10 +116,7 @@ summary {
   width: 100%;
   min-height: 100dvh;
   margin: 0 auto;
-  background:
-    radial-gradient(circle at 88% -5%, rgba(32, 199, 239, 0.12), transparent 34%),
-    radial-gradient(circle at 4% 105%, rgba(255, 107, 157, 0.06), transparent 32%),
-    var(--paper);
+  background: var(--paper);
 }
 
 .topbar {
@@ -158,7 +155,9 @@ summary {
   height: 32px;
   margin-right: 8px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(0, 146, 214, 0.2));
+  filter:
+    drop-shadow(0 3px 9px rgba(32, 199, 239, 0.18))
+    drop-shadow(0 3px 12px rgba(255, 107, 157, 0.08));
 }
 
 .status-pill {

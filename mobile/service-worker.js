@@ -1,15 +1,15 @@
 const CACHE_PREFIX = "opusloops-pwa-";
 const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
-const CACHE_NAME = `${CACHE_PREFIX}v26`;
+const CACHE_NAME = `${CACHE_PREFIX}v27`;
 const APP_SHELL = [
   "./",
   "./index.html",
   "./frame-guard.js?v=1",
-  "./styles.css?v=23",
+  "./styles.css?v=24",
   "./config.js?v=1",
   "./cloud-client.js?v=3",
   "./app.js?v=19",
-  "./manifest.webmanifest?v=3",
+  "./manifest.webmanifest?v=4",
   "./icons/icon-192.png?v=3",
   "./icons/icon-512.png?v=3",
   "./icons/apple-touch-icon.png?v=3"
