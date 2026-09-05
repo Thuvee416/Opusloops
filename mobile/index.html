@@ -17,7 +17,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=2" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=2" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=18" />
+    <link rel="stylesheet" href="./styles.css?v=19" />
     <title>Opusloops</title>
   </head>
   <body>
@@ -226,6 +226,40 @@
         </section>
       </main>
 
+      <section class="persistent-player" id="persistent-player" aria-label="Loop player" hidden>
+        <button
+          class="persistent-play-button"
+          id="persistent-play-button"
+          type="button"
+          aria-label="Play loop"
+          aria-pressed="false"
+        >
+          <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
+          <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" /></svg>
+        </button>
+        <div class="persistent-player-detail">
+          <div class="persistent-player-heading">
+            <strong id="persistent-player-title">Untitled loop</strong>
+            <span class="persistent-player-time" aria-hidden="true">
+              <span id="persistent-current-time">0:00.0</span>
+              <span class="persistent-time-divider">/</span>
+              <span id="persistent-duration">0:02.5</span>
+            </span>
+          </div>
+          <label class="sr-only" for="persistent-seek">Seek within loop</label>
+          <input
+            class="persistent-seek"
+            id="persistent-seek"
+            type="range"
+            min="0"
+            max="1000"
+            step="1"
+            value="0"
+            aria-valuetext="0:00.0 of 0:02.5, step 1 of 16"
+          />
+        </div>
+      </section>
+
       <nav class="bottom-nav" aria-label="Primary">
         <button class="nav-item is-active" type="button" data-view-target="create" aria-current="page">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4v-8.5Z" /></svg>
@@ -323,6 +357,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
     <script src="./cloud-client.js?v=3" defer></script>
-    <script src="./app.js?v=17" defer></script>
+    <script src="./app.js?v=18" defer></script>
   </body>
 </html>

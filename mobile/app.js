@@ -70,6 +70,15 @@
   let playing = false;
   let playbackStarting = false;
   let pendingAudioExport = null;
+  let playbackStartRequest = 0;
+  let playbackResumeRequest = 0;
+  let playbackOffset = 0;
+  let playbackAnchorTime = 0;
+  let playbackProgressFrame = 0;
+  let playbackSessionVisible = false;
+  let playbackProjectId = null;
+  let playbackScrubbing = false;
+  let resumeAfterSeek = false;
 
   const dom = {
     composerForm: document.querySelector("#composer-form"),
@@ -77,6 +86,12 @@
     studioTitle: document.querySelector("#studio-title"),
     tempoOutput: document.querySelector("#tempo-output"),
     playButton: document.querySelector("#play-button"),
+    persistentPlayer: document.querySelector("#persistent-player"),
+    persistentPlayButton: document.querySelector("#persistent-play-button"),
+    persistentPlayerTitle: document.querySelector("#persistent-player-title"),
+    persistentSeek: document.querySelector("#persistent-seek"),
+    persistentCurrentTime: document.querySelector("#persistent-current-time"),
+    persistentDuration: document.querySelector("#persistent-duration"),
     keyButton: document.querySelector("#key-button"),
     sequencer: document.querySelector("#sequencer"),
     mixer: document.querySelector("#mixer"),
@@ -485,12 +500,14 @@
       writeDeletions(nextDeletions);
 
       const current = merged.find((project) => project.id === state.id);
-      if (current) state = current;
-      if (!current && nextDeletions[state.id]) {
-        state = merged[0] || makeProject();
-      }
+      let nextState = current || state;
+      if (!current && nextDeletions[state.id]) nextState = merged[0] || makeProject();
+      const audioChanged = playbackAudioFingerprint(nextState) !== playbackAudioFingerprint(state);
+      const playbackSnapshot = audioChanged ? capturePlaybackMutation() : null;
+      state = nextState;
       writeCurrent(state);
       renderAll();
+      if (playbackSnapshot) restorePlaybackMutation(playbackSnapshot);
       setSaveStatus("Saved to account", "synced");
       if (announce) showToast("Your projects are synced");
       return true;
@@ -585,6 +602,7 @@
       showToast("The device loops are still safe. Free some browser storage and try again");
       return;
     }
+    const playbackSnapshot = capturePlaybackMutation();
     state = nextState;
     try {
       localStorage.removeItem(STORAGE_CURRENT);
@@ -594,6 +612,7 @@
       // The account-scoped copies are already safe even if guest cleanup is blocked.
     }
     renderAll();
+    restorePlaybackMutation(playbackSnapshot);
     renderAuth();
     queueCloudSync();
     showToast(`${guests.length} device ${guests.length === 1 ? "loop" : "loops"} moved to your account`);
@@ -601,7 +620,7 @@
 
   function switchUser(user) {
     flushSave();
-    stopPlayback();
+    resetPlaybackSession();
     window.clearTimeout(cloudTimer);
     cloudTimer = 0;
     currentUser = user?.id ? { id: String(user.id), email: String(user.email || "") } : null;
@@ -781,6 +800,7 @@
     renderMixer();
     renderRecent();
     renderProjects();
+    renderPlaybackMetadata();
   }
 
   function renderRecent() {
@@ -925,6 +945,152 @@
     return { input, limiter };
   }
 
+  function loopDuration(project = state) {
+    return STEPS * (60 / project.tempo / 4);
+  }
+
+  function wrapPlaybackOffset(offset, duration = loopDuration()) {
+    if (!Number.isFinite(offset) || !Number.isFinite(duration) || duration <= 0) return 0;
+    const wrapped = offset % duration;
+    return wrapped < 0 ? wrapped + duration : wrapped;
+  }
+
+  function currentPlaybackPosition() {
+    const duration = loopDuration();
+    if (playing && audioContext && playbackAnchorTime > 0) {
+      const elapsed = Math.max(0, audioContext.currentTime - playbackAnchorTime);
+      return wrapPlaybackOffset(playbackOffset + elapsed, duration);
+    }
+    return clamp(playbackOffset, 0, duration);
+  }
+
+  function formatPlaybackTime(seconds) {
+    const totalTenths = Math.max(0, Math.round(seconds * 10));
+    const minutes = Math.floor(totalTenths / 600);
+    const wholeSeconds = Math.floor((totalTenths % 600) / 10);
+    return `${minutes}:${String(wholeSeconds).padStart(2, "0")}.${totalTenths % 10}`;
+  }
+
+  function renderPlaybackPosition(position = currentPlaybackPosition(), { forceSeek = false } = {}) {
+    if (playbackScrubbing && !forceSeek) return;
+    const duration = loopDuration();
+    const bounded = clamp(position, 0, duration);
+    const ratio = duration > 0 ? bounded / duration : 0;
+    const rangeValue = Math.round(ratio * 1000);
+    const stepIndex = Math.min(STEPS - 1, Math.floor(Math.min(ratio, 0.999999) * STEPS));
+    const currentLabel = formatPlaybackTime(bounded);
+    const durationLabel = formatPlaybackTime(duration);
+
+    dom.persistentSeek.value = String(rangeValue);
+    dom.persistentSeek.style.setProperty("--seek-progress", `${ratio * 100}%`);
+    dom.persistentSeek.setAttribute(
+      "aria-valuetext",
+      `${currentLabel} of ${durationLabel}, step ${stepIndex + 1} of ${STEPS}`
+    );
+    dom.persistentCurrentTime.textContent = currentLabel;
+    dom.persistentDuration.textContent = durationLabel;
+  }
+
+  function renderPlaybackMetadata() {
+    dom.persistentPlayerTitle.textContent = state.name;
+    renderPlaybackPosition();
+  }
+
+  function renderPlaybackControls() {
+    const active = playing || playbackStarting;
+    [dom.playButton, dom.persistentPlayButton].forEach((button) => {
+      button.classList.toggle("is-playing", active);
+      button.setAttribute("aria-pressed", String(active));
+      button.setAttribute("aria-label", active ? "Pause loop" : "Play loop");
+    });
+    dom.persistentPlayer.hidden = !playbackSessionVisible;
+    document.body.classList.toggle("has-persistent-player", playbackSessionVisible);
+    renderPlaybackMetadata();
+  }
+
+  function stopProgressTicker() {
+    window.cancelAnimationFrame(playbackProgressFrame);
+    playbackProgressFrame = 0;
+  }
+
+  function startProgressTicker() {
+    stopProgressTicker();
+    const tick = () => {
+      if (!playing) {
+        playbackProgressFrame = 0;
+        return;
+      }
+      renderPlaybackPosition();
+      playbackProgressFrame = window.requestAnimationFrame(tick);
+    };
+    playbackProgressFrame = window.requestAnimationFrame(tick);
+  }
+
+  function playbackAudioFingerprint(project) {
+    return JSON.stringify([
+      project.id,
+      project.audioSeed,
+      project.tempo,
+      project.key,
+      project.swing,
+      project.patterns,
+      project.volumes,
+      project.muted
+    ]);
+  }
+
+  function capturePlaybackMutation() {
+    const engaged = playbackSessionVisible && playbackProjectId === state.id;
+    const duration = loopDuration();
+    const wasPlaying = engaged && (playing || playbackStarting);
+    const ratio = engaged && duration > 0 ? currentPlaybackPosition() / duration : 0;
+    const snapshot = { engaged, projectId: state.id, ratio, wasPlaying };
+    if (wasPlaying) stopPlayback({ resetPosition: false });
+    return snapshot;
+  }
+
+  function restorePlaybackMutation(snapshot) {
+    if (!snapshot?.engaged) {
+      renderPlaybackControls();
+      return;
+    }
+    if (snapshot.projectId !== state.id) {
+      resetPlaybackSession();
+      return;
+    }
+    playbackSessionVisible = true;
+    playbackProjectId = state.id;
+    playbackOffset = snapshot.ratio * loopDuration();
+    renderPlaybackControls();
+    if (snapshot.wasPlaying) schedulePlaybackResume();
+  }
+
+  function schedulePlaybackResume() {
+    const requestId = ++playbackResumeRequest;
+    const projectId = state.id;
+    window.setTimeout(() => {
+      if (
+        requestId === playbackResumeRequest &&
+        !document.hidden &&
+        playbackSessionVisible &&
+        playbackProjectId === projectId &&
+        state.id === projectId &&
+        !playing &&
+        !playbackStarting
+      ) {
+        startPlayback();
+      }
+    }, 24);
+  }
+
+  function resetPlaybackSession({ fade = true } = {}) {
+    playbackSessionVisible = false;
+    playbackProjectId = null;
+    playbackScrubbing = false;
+    resumeAfterSeek = false;
+    stopPlayback({ fade, resetPosition: true });
+  }
+
   async function ensureAudio() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) {
@@ -1004,29 +1170,43 @@
 
   async function startPlayback() {
     if (playing || playbackStarting) return;
+    const requestId = ++playbackStartRequest;
     playbackStarting = true;
+    renderPlaybackControls();
     const ready = await ensureAudio();
-    if (!ready || !playbackStarting) {
-      playbackStarting = false;
+    if (!ready || !playbackStarting || requestId !== playbackStartRequest) {
+      if (requestId === playbackStartRequest) playbackStarting = false;
+      renderPlaybackControls();
       return;
     }
+    if (playbackProjectId !== state.id) playbackOffset = 0;
+    playbackProjectId = state.id;
+    playbackSessionVisible = true;
     playbackStarting = false;
     playing = true;
-    currentStep = 0;
-    nextStepTime = audioContext.currentTime + 0.06;
-    dom.playButton.classList.add("is-playing");
-    dom.playButton.setAttribute("aria-pressed", "true");
-    dom.playButton.setAttribute("aria-label", "Pause loop");
+    const duration = loopDuration();
+    const baseDuration = duration / STEPS;
+    playbackOffset = playbackOffset >= duration ? 0 : wrapPlaybackOffset(playbackOffset, duration);
+    playbackAnchorTime = audioContext.currentTime + 0.06;
+    const nextBoundary = Math.ceil(playbackOffset / baseDuration - 0.000001);
+    currentStep = nextBoundary % STEPS;
+    nextStepTime = playbackAnchorTime + Math.max(0, nextBoundary * baseDuration - playbackOffset);
+    renderPlaybackControls();
     window.clearInterval(schedulerTimer);
     scheduleAhead();
     schedulerTimer = window.setInterval(scheduleAhead, 25);
+    startProgressTicker();
   }
 
-  function stopPlayback({ fade = true } = {}) {
+  function stopPlayback({ fade = true, resetPosition = false } = {}) {
+    const stoppedAt = resetPosition ? 0 : currentPlaybackPosition();
+    playbackStartRequest += 1;
+    playbackResumeRequest += 1;
     playbackStarting = false;
     playing = false;
     window.clearInterval(schedulerTimer);
     schedulerTimer = 0;
+    stopProgressTicker();
     uiTimers.forEach(window.clearTimeout);
     uiTimers.clear();
 
@@ -1054,10 +1234,43 @@
         context.suspend().catch(() => {});
       }
     }, 120);
-    dom.playButton.classList.remove("is-playing");
-    dom.playButton.setAttribute("aria-pressed", "false");
-    dom.playButton.setAttribute("aria-label", "Play loop");
+    playbackOffset = stoppedAt;
+    playbackAnchorTime = 0;
+    renderPlaybackControls();
     document.querySelectorAll(".step.is-current").forEach((step) => step.classList.remove("is-current"));
+  }
+
+  function togglePlayback() {
+    if (playing || playbackStarting) stopPlayback({ resetPosition: false });
+    else startPlayback();
+  }
+
+  function previewPlaybackSeek() {
+    if (!playbackScrubbing) {
+      playbackScrubbing = true;
+      resumeAfterSeek = playing || playbackStarting;
+      if (resumeAfterSeek) stopPlayback({ resetPosition: false });
+    }
+    const ratio = Number(dom.persistentSeek.value) / 1000;
+    playbackOffset = clamp(ratio, 0, 1) * loopDuration();
+    renderPlaybackPosition(playbackOffset, { forceSeek: true });
+  }
+
+  function commitPlaybackSeek() {
+    if (!playbackScrubbing) return;
+    const shouldResume = resumeAfterSeek;
+    playbackScrubbing = false;
+    resumeAfterSeek = false;
+    renderPlaybackPosition(playbackOffset);
+    if (shouldResume) schedulePlaybackResume();
+  }
+
+  function changeTempo(amount) {
+    const playbackSnapshot = capturePlaybackMutation();
+    state.tempo = clamp(state.tempo + amount, 56, 180);
+    dom.tempoOutput.textContent = `${state.tempo} BPM`;
+    queueSave();
+    restorePlaybackMutation(playbackSnapshot);
   }
 
   function scheduleAhead() {
@@ -1375,7 +1588,7 @@
       state.patterns = state.patterns.map((pattern, trackIndex) =>
         pattern.map((active, stepIndex) => (active && stepIndex !== 0 && random() < 0.42 + trackIndex * 0.05 ? 0 : active))
       );
-    } else if (/busy|more|energy|driv/.test(text)) {
+    } else if (/busy|busier|more|energy|driv/.test(text)) {
       state.patterns = state.patterns.map((pattern, trackIndex) =>
         pattern.map((active, stepIndex) => active || (random() < 0.16 + trackIndex * 0.025 && stepIndex % 2 === 0) ? 1 : 0)
       );
@@ -1412,7 +1625,7 @@
     if (target.dataset.loadProject) {
       const project = readProjects().find((item) => item.id === target.dataset.loadProject);
       if (project) {
-        stopPlayback();
+        resetPlaybackSession();
         state = normalizeProject(project);
         writeCurrent(state);
         renderAll();
@@ -1435,7 +1648,7 @@
           writeDeletions(deletions);
         }
         if (state.id === project.id) {
-          stopPlayback();
+          resetPlaybackSession();
           state = remaining[0] || makeProject();
           writeCurrent(state);
           renderAll();
@@ -1467,33 +1680,35 @@
     event.preventDefault();
     const prompt = dom.ideaInput.value.trim();
     if (!prompt) return;
-    stopPlayback();
+    resetPlaybackSession();
     composeFromPrompt(prompt);
     showView("studio");
     showToast("Your loop is ready to play");
   });
 
-  dom.playButton.addEventListener("click", () => ((playing || playbackStarting) ? stopPlayback() : startPlayback()));
+  dom.playButton.addEventListener("click", togglePlayback);
+  dom.persistentPlayButton.addEventListener("click", togglePlayback);
+  dom.persistentSeek.addEventListener("input", previewPlaybackSeek);
+  dom.persistentSeek.addEventListener("change", commitPlaybackSeek);
+  dom.persistentSeek.addEventListener("blur", commitPlaybackSeek);
   dom.exportAudioButton.addEventListener("click", exportAudio);
   dom.shareAudioButton.addEventListener("click", sharePreparedAudio);
   dom.downloadAudioLink.addEventListener("click", () => showToast("Saving WAV"));
 
   document.querySelector("#tempo-down").addEventListener("click", () => {
-    state.tempo = clamp(state.tempo - 2, 56, 180);
-    dom.tempoOutput.textContent = `${state.tempo} BPM`;
-    queueSave();
+    changeTempo(-2);
   });
 
   document.querySelector("#tempo-up").addEventListener("click", () => {
-    state.tempo = clamp(state.tempo + 2, 56, 180);
-    dom.tempoOutput.textContent = `${state.tempo} BPM`;
-    queueSave();
+    changeTempo(2);
   });
 
   dom.keyButton.addEventListener("click", () => {
+    const playbackSnapshot = capturePlaybackMutation();
     state.key = KEYS[(KEYS.indexOf(state.key) + 1) % KEYS.length];
     dom.keyButton.textContent = state.key;
     queueSave();
+    restorePlaybackMutation(playbackSnapshot);
   });
 
   dom.studioTitle.addEventListener("keydown", (event) => {
@@ -1505,12 +1720,14 @@
 
   dom.studioTitle.addEventListener("input", () => {
     state.name = cleanName(dom.studioTitle.textContent) || "Untitled loop";
+    renderPlaybackMetadata();
     queueSave();
   });
 
   dom.studioTitle.addEventListener("blur", () => {
     state.name = cleanName(dom.studioTitle.textContent) || "Untitled loop";
     dom.studioTitle.textContent = state.name;
+    renderPlaybackMetadata();
     queueSave();
   });
 
@@ -1526,7 +1743,7 @@
   });
 
   document.querySelector("#new-project-button").addEventListener("click", () => {
-    stopPlayback();
+    resetPlaybackSession();
     state = makeProject();
     renderAll();
     persist();
@@ -1549,7 +1766,9 @@
   dom.refineForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const instruction = dom.refineInput.value.trim() || "surprise me";
+    const playbackSnapshot = capturePlaybackMutation();
     applyRefinement(instruction);
+    restorePlaybackMutation(playbackSnapshot);
     dom.refineDialog.close?.();
     dom.refineDialog.removeAttribute("open");
     showToast("Loop refined");
@@ -1651,7 +1870,11 @@
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
+      playbackResumeRequest += 1;
+      resumeAfterSeek = false;
+      playbackScrubbing = false;
       if (playing || playbackStarting) stopPlayback();
+      else renderPlaybackControls();
       flushSave();
     }
   });
