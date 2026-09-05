@@ -11,10 +11,10 @@
   const FUTURE_TIMESTAMP_WINDOW = 23 * 60 * 60 * 1000;
   const STEPS = 16;
   const TRACKS = [
-    { id: "kick", name: "Kick", kind: "kick", color: "#ce7658" },
-    { id: "snare", name: "Snare", kind: "snare", color: "#71826b" },
-    { id: "bass", name: "Bass", kind: "bass", color: "#687e8d" },
-    { id: "chords", name: "Chords", kind: "chords", color: "#856b81" }
+    { id: "kick", name: "Kick", kind: "kick", color: "#ff6b96" },
+    { id: "snare", name: "Snare", kind: "snare", color: "#5af2a9" },
+    { id: "bass", name: "Bass", kind: "bass", color: "#63ceff" },
+    { id: "chords", name: "Chords", kind: "chords", color: "#c69aff" }
   ];
   const KEYS = ["C minor", "D minor", "E minor", "F minor", "G minor", "A minor"];
 
