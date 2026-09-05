@@ -7,6 +7,9 @@ on:
     paths:
       - 'mobile/**'
       - 'supabase/**'
+      - 'worker/**'
+      - 'prototypes/stem-tempo-calibration/**'
+      - 'infra/stem-worker/**'
       - 'scripts/validate-mobile.sh'
       - 'scripts/stamp-amplify-version.py'
       - 'amplify.yml'
@@ -16,6 +19,9 @@ on:
     paths:
       - 'mobile/**'
       - 'supabase/**'
+      - 'worker/**'
+      - 'prototypes/stem-tempo-calibration/**'
+      - 'infra/stem-worker/**'
       - 'scripts/validate-mobile.sh'
       - 'scripts/stamp-amplify-version.py'
       - 'amplify.yml'
@@ -42,3 +48,34 @@ jobs:
 
       - name: Validate static PWA
         run: bash scripts/validate-mobile.sh
+
+  processing-contracts:
+    name: Validate stem processing contracts
+    if: github.repository == 'Thuvee416/Opusloops'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install isolated test dependencies
+        run: |
+          python3 -m venv /tmp/opusloops-contracts
+          /tmp/opusloops-contracts/bin/python -m pip install --disable-pip-version-check \
+            pip==25.2 setuptools==84.0.0 wheel==0.46.1
+          /tmp/opusloops-contracts/bin/python -m pip install --disable-pip-version-check \
+            './worker[dev]' './prototypes/stem-tempo-calibration[dev]' \
+            numpy==2.2.6 soundfile==0.13.1
+
+      - name: Lint Python contracts
+        run: |
+          /tmp/opusloops-contracts/bin/ruff check worker prototypes/stem-tempo-calibration infra/stem-worker/tests
+          /tmp/opusloops-contracts/bin/ruff format --check worker prototypes/stem-tempo-calibration infra/stem-worker/tests
+
+      - name: Test worker and calibration contracts
+        run: |
+          /tmp/opusloops-contracts/bin/pytest -q \
+            worker/tests \
+            prototypes/stem-tempo-calibration/tests \
+            infra/stem-worker/tests

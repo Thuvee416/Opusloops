@@ -7,17 +7,17 @@
     <meta name="color-scheme" content="dark" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self' https://heryvahetgzfalmuprbw.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; media-src 'self' blob: https://heryvahetgzfalmuprbw.supabase.co https://heryvahetgzfalmuprbw.storage.supabase.co; connect-src 'self' https://heryvahetgzfalmuprbw.supabase.co https://heryvahetgzfalmuprbw.storage.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <meta
       name="description"
       content="Opusloops is a touch-first loop sketchbook with offline audio and private cloud saves."
     />
-    <link rel="manifest" href="./manifest.webmanifest?v=4" />
+    <link rel="manifest" href="./manifest.webmanifest?v=5" />
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=25" />
+    <link rel="stylesheet" href="./styles.css?v=26" />
     <title>Opusloops</title>
   </head>
   <body>
@@ -79,6 +79,17 @@
             <button class="mood-chip" type="button" data-prompt="A playful syncopated beat with bright chords">Playful</button>
           </div>
 
+          <button class="stem-import-card" id="open-stem-import" type="button" data-view-target="import">
+            <span class="stem-import-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5M4 12h2m2-2h2m4 1h2m2-3h2" /></svg>
+            </span>
+            <span>
+              <strong>Import Suno stems</strong>
+              <small>Upload a ZIP, review its timing, then mix every track</small>
+            </span>
+            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          </button>
+
           <section class="recent-section" aria-labelledby="recent-title">
             <div class="section-heading">
               <div>
@@ -108,6 +119,186 @@
           </aside>
         </section>
 
+        <section class="view import-view" id="view-import" data-view="import" aria-labelledby="import-title" tabindex="-1">
+          <div class="page-heading import-heading">
+            <button class="back-button" type="button" data-view-target="create" aria-label="Back to Create">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
+            </button>
+            <div>
+              <p class="eyebrow">Stem import</p>
+              <h1 id="import-title">Make every bar land.</h1>
+              <p class="lede">Upload a Suno stem ZIP. You approve the files and timing before Opusloops changes any audio.</p>
+            </div>
+          </div>
+
+          <section class="import-panel" id="stem-upload-panel" aria-labelledby="stem-upload-title">
+            <div class="import-panel-heading">
+              <span class="stage-number">01</span>
+              <div>
+                <h2 id="stem-upload-title">Choose a stem ZIP</h2>
+                <p>Sign in first. The archive uploads directly to your private storage.</p>
+              </div>
+            </div>
+            <label class="file-picker" for="stem-zip-input">
+              <input id="stem-zip-input" type="file" accept=".zip,application/zip,application/x-zip-compressed" />
+              <span class="file-picker-action">Choose ZIP</span>
+              <span id="stem-file-name">No file selected</span>
+            </label>
+            <p class="fine-print" id="stem-upload-note">Byte progress comes from the resumable transfer; the service confirms every completed chunk.</p>
+            <button class="primary-action" id="stem-upload-button" type="button">Upload and inspect</button>
+          </section>
+
+          <section class="import-panel process-panel" id="stem-process-panel" aria-labelledby="stem-process-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number" aria-hidden="true">↗</span>
+              <div>
+                <p class="eyebrow">Live process</p>
+                <h2 id="stem-process-title">Preparing import</h2>
+              </div>
+              <span class="process-state" id="stem-process-state">Starting</span>
+            </div>
+            <div
+              class="process-progress"
+              id="stem-process-progress"
+              role="progressbar"
+              aria-label="Stem processing progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              hidden
+            >
+              <div class="process-progress-track" aria-hidden="true"><span id="stem-process-progress-fill"></span></div>
+              <div class="process-progress-copy">
+                <span id="stem-process-progress-label">0 B of 0 B</span>
+                <span id="stem-process-progress-percent">0%</span>
+              </div>
+            </div>
+            <p class="indeterminate-copy" id="stem-indeterminate-copy" role="status" hidden>Working — this stage does not expose a measurable percentage.</p>
+            <ol class="process-events" id="stem-process-events" aria-label="Processing activity" aria-live="polite"></ol>
+            <p class="form-error" id="stem-process-error" role="alert" hidden></p>
+            <button class="text-button cancel-import" id="stem-cancel-button" type="button">Cancel import</button>
+          </section>
+
+          <section class="import-panel" id="stem-gate-a-panel" aria-labelledby="stem-gate-a-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number">02</span>
+              <div>
+                <p class="eyebrow">Your confirmation</p>
+                <h2 id="stem-gate-a-title">Review what will be analyzed</h2>
+                <p>Roles affect the diagnostic only. Every selected stem follows the same shared timing map.</p>
+              </div>
+            </div>
+            <div class="stem-review-list" id="stem-review-list"></div>
+            <label class="field-label" for="stem-reference-method">Analysis reference</label>
+            <select id="stem-reference-method">
+              <option value="selected-stem-sum">All included stems · −12 dB headroom · normalize sum to −3 dBFS</option>
+              <option value="full-mix">Use the included full-mix track</option>
+            </select>
+            <fieldset class="confirmation-list">
+              <legend>Confirm all four before analysis</legend>
+              <label><input id="confirm-stem-files" type="checkbox" /> I reviewed every file and SHA-256 fingerprint.</label>
+              <label><input id="confirm-stem-roles" type="checkbox" /> I reviewed roles, inclusion, and gain.</label>
+              <label><input id="confirm-stem-reference" type="checkbox" /> I approve this shared-reference method.</label>
+              <label><input id="confirm-stem-originals" type="checkbox" /> Keep every original stem unchanged.</label>
+            </fieldset>
+            <button class="primary-action" id="approve-stem-analysis" type="button">Approve and analyze</button>
+          </section>
+
+          <section class="import-panel" id="stem-proposal-panel" aria-labelledby="stem-proposal-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number">03</span>
+              <div>
+                <p class="eyebrow">Tempo shape</p>
+                <h2 id="stem-proposal-title">Choose the intended pulse</h2>
+                <p>Musical mode corrects about every four bars. Rigid mode follows each beat more tightly.</p>
+              </div>
+            </div>
+            <div class="analysis-issue" id="stem-grid-issue" hidden>
+              <strong>Timing grid needs a decision</strong>
+              <p id="stem-grid-issue-copy"></p>
+            </div>
+            <details class="grid-editor" id="stem-grid-editor">
+              <summary>Review detected beats and downbeats</summary>
+              <p>Remove duplicate or incorrect events before requesting a proposal. Times are seconds from the source start.</p>
+              <div class="grid-settings">
+                <label>
+                  <span>Beats per bar</span>
+                  <input id="stem-meter-numerator" type="number" inputmode="numeric" min="1" max="32" step="1" value="4" />
+                </label>
+                <label>
+                  <span>Beat unit</span>
+                  <select id="stem-meter-denominator">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="4" selected>4</option>
+                    <option value="8">8</option>
+                    <option value="16">16</option>
+                    <option value="32">32</option>
+                  </select>
+                </label>
+                <label>
+                  <span>First downbeat · seconds</span>
+                  <input id="stem-first-downbeat" type="number" inputmode="decimal" min="0" step="0.001" value="0" />
+                </label>
+              </div>
+              <div class="grid-event-list" id="stem-grid-event-list"></div>
+              <button class="secondary-action add-grid-event" id="stem-add-grid-event" type="button">Add timing event</button>
+            </details>
+            <div class="proposal-controls">
+              <label>
+                <span>Target BPM</span>
+                <input id="stem-target-bpm" type="number" inputmode="decimal" min="20" max="400" step="0.1" value="120" />
+              </label>
+              <label>
+                <span>Conform mode</span>
+                <select id="stem-conform-mode">
+                  <option value="musical-4bar">Musical · four-bar anchors</option>
+                  <option value="rigid-beat">Rigid · every beat</option>
+                  <option value="no-conform">No conform · preserve timing</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary-action" id="request-stem-proposal" type="button">Build listening proposal</button>
+          </section>
+
+          <section class="import-panel" id="stem-gate-b-panel" aria-labelledby="stem-gate-b-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number">04</span>
+              <div>
+                <p class="eyebrow">Listen, inspect, approve</p>
+                <h2 id="stem-gate-b-title">Confirm the shared timing map</h2>
+                <p>Region BPM and stretch values are derived from the approved grid. To change them, revise beats before building a new proposal.</p>
+              </div>
+            </div>
+            <button class="click-audition" id="stem-click-audition" type="button">
+              <span class="click-audition-icon" aria-hidden="true">▶</span>
+              <span><strong>Play click audition</strong><small id="stem-click-audition-copy">Compare the click against the reference</small></span>
+            </button>
+            <audio id="stem-click-audio" preload="metadata"></audio>
+            <div class="region-list" id="stem-region-list"></div>
+            <fieldset class="confirmation-list gate-b-confirmations">
+              <legend>Confirm each item before rendering</legend>
+              <label><input id="confirm-tempo-click" type="checkbox" /> I listened to the click audition.</label>
+              <label><input id="confirm-tempo-grid" type="checkbox" /> Beat grid is correct.</label>
+              <label><input id="confirm-tempo-meter" type="checkbox" /> Meter and first downbeat are correct.</label>
+              <label><input id="confirm-tempo-octave" type="checkbox" /> Tempo octave is correct.</label>
+              <label><input id="confirm-tempo-flags" type="checkbox" /> I reviewed every flagged region.</label>
+              <label><input id="confirm-tempo-target" type="checkbox" /> Target BPM and mode are correct.</label>
+              <label><input id="confirm-tempo-map" type="checkbox" /> Use this one shared map for every stem.</label>
+              <label><input id="confirm-tempo-originals" type="checkbox" /> Keep every original stem unchanged.</label>
+            </fieldset>
+            <button class="primary-action" id="approve-stem-tempo" type="button">Approve and render stems</button>
+          </section>
+
+          <section class="import-panel ready-panel" id="stem-ready-panel" aria-labelledby="stem-ready-title" hidden>
+            <span class="ready-mark" aria-hidden="true">✓</span>
+            <p class="eyebrow">Import complete</p>
+            <h2 id="stem-ready-title">Your stems are ready.</h2>
+            <p>Open Studio to arrange aligned preview segments, or Mix to balance every track.</p>
+            <button class="primary-action" id="open-ready-stems" type="button">Open Studio</button>
+          </section>
+        </section>
+
         <section class="view" id="view-studio" data-view="studio" aria-labelledby="studio-title" tabindex="-1">
           <div class="studio-heading">
             <div>
@@ -126,25 +317,26 @@
             </button>
             <div class="transport-detail">
               <span class="transport-label">Tempo</span>
-              <div class="tempo-control">
+              <div class="tempo-control" id="tempo-adjustments">
                 <button type="button" id="tempo-down" aria-label="Decrease tempo">−</button>
                 <output id="tempo-output" aria-live="polite">96 BPM</output>
                 <button type="button" id="tempo-up" aria-label="Increase tempo">+</button>
               </div>
             </div>
-            <div class="transport-detail key-detail">
+            <div class="transport-detail key-detail" id="key-detail">
               <span class="transport-label">Key</span>
               <button class="key-button" id="key-button" type="button">C minor</button>
             </div>
           </div>
 
-          <div class="step-legend" aria-hidden="true">
-            <span>Tap steps to shape the loop</span>
-            <span>16 steps</span>
-          </div>
-          <div class="sequencer" id="sequencer" role="group" aria-label="Loop sequencer"></div>
+          <div id="generated-studio">
+            <div class="step-legend" aria-hidden="true">
+              <span>Tap steps to shape the loop</span>
+              <span>16 steps</span>
+            </div>
+            <div class="sequencer" id="sequencer" role="group" aria-label="Loop sequencer"></div>
 
-          <button class="refine-card" type="button" id="refine-button">
+            <button class="refine-card" type="button" id="refine-button">
             <span class="refine-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1" /></svg>
             </span>
@@ -153,13 +345,13 @@
               <small>Make it sparser, warmer, busier, or entirely new</small>
             </span>
             <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
-          </button>
+            </button>
 
-          <button class="secondary-action export-action" id="export-audio-button" type="button">
+            <button class="secondary-action export-action" id="export-audio-button" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" /></svg>
             <span>Export four-bar WAV</span>
-          </button>
-          <div class="audio-export-ready" id="audio-export-ready" hidden>
+            </button>
+            <div class="audio-export-ready" id="audio-export-ready" hidden>
             <div>
               <strong>WAV ready</strong>
               <span id="audio-export-ready-copy"></span>
@@ -168,14 +360,25 @@
               <button class="secondary-action" id="share-audio-button" type="button" hidden>Share WAV</button>
               <a class="secondary-action" id="download-audio-link">Save WAV</a>
             </div>
+            </div>
           </div>
+
+          <section class="stem-studio" id="stem-studio" hidden aria-labelledby="stem-arrangement-title">
+            <div class="step-legend">
+              <span id="stem-arrangement-title">Four-bar arrangement</span>
+              <span id="stem-arrangement-duration">0:00</span>
+            </div>
+            <div class="arrangement-ruler" id="stem-arrangement-ruler" aria-hidden="true"></div>
+            <div class="stem-arrangement" id="stem-arrangement"></div>
+            <button class="secondary-action" id="review-stem-analysis" type="button">Review import details</button>
+          </section>
         </section>
 
         <section class="view" id="view-mix" data-view="mix" aria-labelledby="mix-title" tabindex="-1">
           <div class="page-heading">
-            <p class="eyebrow">Keep it simple</p>
+            <p class="eyebrow" id="mix-eyebrow">Keep it simple</p>
             <h1 id="mix-title">Mix by feel.</h1>
-            <p class="lede">Four voices, one clear balance. Nothing is hidden behind a desktop panel.</p>
+            <p class="lede" id="mix-lede">Four voices, one clear balance. Nothing is hidden behind a desktop panel.</p>
           </div>
           <div class="mixer" id="mixer"></div>
           <button class="secondary-action" id="reset-mix" type="button">Reset mix</button>
@@ -224,7 +427,7 @@
         </section>
       </main>
 
-      <section class="persistent-player" id="persistent-player" aria-label="Loop player" hidden>
+      <section class="persistent-player" id="persistent-player" aria-label="Project player" hidden>
         <button
           class="persistent-play-button"
           id="persistent-play-button"
@@ -354,7 +557,10 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
-    <script src="./cloud-client.js?v=3" defer></script>
-    <script src="./app.js?v=19" defer></script>
+    <script src="./cloud-client.js?v=4" defer></script>
+    <script src="./stem-import-core.js?v=1" defer></script>
+    <script src="./stem-player.js?v=1" defer></script>
+    <script src="./stem-import.js?v=1" defer></script>
+    <script src="./app.js?v=20" defer></script>
   </body>
 </html>

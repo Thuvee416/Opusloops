@@ -1,0 +1,12 @@
+# Direct runtime pins. The container base image is digest-pinned and the image
+# digest published by CodeBuild is the deployment boundary.
+boto3==1.43.89
+beat-this==1.1.0
+imageio-ffmpeg==0.6.0
+jsonschema==4.25.1
+librosa==0.11.0
+numpy==2.2.6
+referencing==0.37.0
+soundfile==0.13.1
+torch==2.7.1+cpu
+torchaudio==2.7.1+cpu

@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools==84.0.0", "wheel==0.46.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opusloops-stem-worker"
+version = "0.1.0"
+description = "Isolated Opusloops stem analysis and tempo-conform worker"
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+dependencies = [
+  "boto3==1.43.89",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.4.2",
+  "ruff==0.12.11",
+]
+
+[project.scripts]
+opusloops-stem-worker = "opusloops_worker.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

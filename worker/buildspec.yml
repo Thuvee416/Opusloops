@@ -1,0 +1,48 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    commands:
+      - set -euo pipefail
+      - test -n "${OPUSLOOPS_REPOSITORY_URL:-}"
+      - test -n "${OPUSLOOPS_GIT_REF:-}"
+      - test -n "${ECR_REPOSITORY_URI:-}"
+      - test -n "${AWS_DEFAULT_REGION:-}"
+      - git clone --filter=blob:none --no-checkout "${OPUSLOOPS_REPOSITORY_URL}" /tmp/opusloops-source
+      - git -C /tmp/opusloops-source fetch --depth 1 origin "${OPUSLOOPS_GIT_REF}"
+      - git -C /tmp/opusloops-source checkout --detach FETCH_HEAD
+      - export RESOLVED_COMMIT="$(git -C /tmp/opusloops-source rev-parse HEAD)"
+      - test "${RESOLVED_COMMIT}" = "${OPUSLOOPS_GIT_REF}"
+  pre_build:
+    commands:
+      - set -euo pipefail
+      - export RESOLVED_COMMIT="$(git -C /tmp/opusloops-source rev-parse HEAD)"
+      - export IMAGE_TAG="git-${RESOLVED_COMMIT}"
+      - aws ecr get-login-password --region "${AWS_DEFAULT_REGION}" | docker login --username AWS --password-stdin "${ECR_REPOSITORY_URI%%/*}"
+      - if aws ecr describe-images --repository-name "${ECR_REPOSITORY_URI#*/}" --image-ids imageTag="${IMAGE_TAG}" --region "${AWS_DEFAULT_REGION}" >/dev/null 2>&1; then echo "Immutable image tag ${IMAGE_TAG} already exists" >&2; exit 2; fi
+  build:
+    commands:
+      - set -euo pipefail
+      - export RESOLVED_COMMIT="$(git -C /tmp/opusloops-source rev-parse HEAD)"
+      - export IMAGE_TAG="git-${RESOLVED_COMMIT}"
+      - docker build --pull --platform linux/amd64 --file /tmp/opusloops-source/worker/Dockerfile --build-arg "OPUSLOOPS_GIT_COMMIT=${RESOLVED_COMMIT}" --tag "${ECR_REPOSITORY_URI}:${IMAGE_TAG}" /tmp/opusloops-source
+      - docker tag "${ECR_REPOSITORY_URI}:${IMAGE_TAG}" "${ECR_REPOSITORY_URI}:latest"
+  post_build:
+    commands:
+      - set -euo pipefail
+      - export RESOLVED_COMMIT="$(git -C /tmp/opusloops-source rev-parse HEAD)"
+      - export IMAGE_TAG="git-${RESOLVED_COMMIT}"
+      - docker push "${ECR_REPOSITORY_URI}:${IMAGE_TAG}"
+      - docker push "${ECR_REPOSITORY_URI}:latest"
+      - export IMAGE_DIGEST="$(aws ecr describe-images --repository-name "${ECR_REPOSITORY_URI#*/}" --image-ids imageTag="${IMAGE_TAG}" --region "${AWS_DEFAULT_REGION}" --query 'imageDetails[0].imageDigest' --output text)"
+      - test -n "${IMAGE_DIGEST}" -a "${IMAGE_DIGEST}" != None
+      - printf '{"commit":"%s","tag":"%s","digest":"%s","image":"%s@%s"}\n' "${RESOLVED_COMMIT}" "${IMAGE_TAG}" "${IMAGE_DIGEST}" "${ECR_REPOSITORY_URI}" "${IMAGE_DIGEST}" > /tmp/opusloops-source/worker-image.json
+
+artifacts:
+  files:
+    - worker-image.json
+  base-directory: /tmp/opusloops-source
+  discard-paths: true

@@ -25,6 +25,7 @@ Opusloops is a calm, touch-first loop studio that runs as an installable mobile 
 - **Compact mixer** — balance levels and mute parts from a phone-sized surface
 - **Offline-first projects** — save instantly on the device, with private account sync across devices
 - **WAV export** — render a reproducible four-bar audio file directly in the browser
+- **Private stem import** — upload a Suno stem ZIP, verify its files and roles, review the detected beat grid, and render one shared tempo map across every included track
 - **Offline installability** — add the PWA to a home screen and reopen it after the first successful load
 - **Calm interface** — quiet hierarchy, warm neutrals, restrained motion, and one clear action at a time
 
@@ -51,6 +52,31 @@ Account creation is invitation-only during early access. Supabase's direct
 public signup endpoint is disabled; an email-bound invitation creates an
 Opusloops-tagged account through the server-side function. Password recovery and
 email verification remain unavailable until production SMTP is configured.
+
+## Stem ZIP workflow
+
+Signed-in users can import a ZIP of audio stems up to 2 GiB. The browser sends it
+directly to private Supabase Storage in resumable 6 MiB chunks and reports only
+confirmed transfer bytes. Isolated AWS Batch Fargate jobs inspect, analyze, propose,
+and render the audio; server events distinguish measurable progress from stages
+whose completion percentage is not knowable yet.
+
+The workflow deliberately pauses twice:
+
+1. Review the extracted files, SHA-256 identities, roles, and analysis reference.
+2. Listen to the compact click audition, inspect or edit the beat/downbeat grid and
+   flagged regions, then approve the exact hash-bound tempo proposal.
+
+Gate B is always a user action. Opusloops never treats a completed analysis as
+musical approval. Once approved, every included stem is conformed from the same
+piecewise tempo map, preserving alignment for the Studio, Arrange, and Mix views.
+The bottom dock player remains available as users move between those views.
+
+Source ZIPs, decoded stems, review artifacts, and rendered outputs stay in private
+per-user buckets. Lifecycle cleanup is scheduled independently from interactive
+requests; database rows record the deletion process and retry partial failures.
+Implementation and deployment contracts live in [`worker/`](worker/),
+[`supabase/`](supabase/), and [`infra/stem-worker/`](infra/stem-worker/).
 
 ## Production
 

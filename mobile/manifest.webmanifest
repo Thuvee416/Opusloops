@@ -1,7 +1,7 @@
 {
   "name": "Opusloops",
   "short_name": "Opusloops",
-  "description": "A dark, touch-first loop sketchbook with offline Web Audio, WAV export, and optional account sync.",
+  "description": "A dark, touch-first loop studio for sketches, private stem imports, tempo review, arranging, mixing, and WAV export.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

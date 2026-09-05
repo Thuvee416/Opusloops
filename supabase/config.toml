@@ -39,3 +39,15 @@ double_confirm_changes = true
 [functions.create-opusloops-account]
 enabled = true
 verify_jwt = false
+
+[functions.stem-import]
+enabled = true
+verify_jwt = true
+
+[functions.stem-worker-callback]
+enabled = true
+verify_jwt = false
+
+[functions.stem-retention]
+enabled = true
+verify_jwt = false

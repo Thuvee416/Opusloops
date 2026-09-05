@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for required in index.html frame-guard.js styles.css config.js cloud-client.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
+for required in index.html frame-guard.js styles.css config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
   if [[ ! -s "mobile/$required" ]]; then
     echo "Required mobile asset is missing or empty: mobile/$required" >&2
     exit 1
@@ -23,9 +23,12 @@ class PageParser(HTMLParser):
         self.has_viewport = False
         self.has_manifest = False
         self.local_assets = []
+        self.ids = []
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
+        if attributes.get("id"):
+            self.ids.append(attributes["id"])
         if tag == "meta" and attributes.get("name", "").lower() == "viewport":
             self.has_viewport = True
         if tag == "link" and "manifest" in attributes.get("rel", "").lower().split():
@@ -41,6 +44,8 @@ root_resolved = root.resolve()
 index_path = root / "index.html"
 manifest_path = root / "manifest.webmanifest"
 service_worker_path = root / "service-worker.js"
+cloud_client_path = root / "cloud-client.js"
+stem_import_path = root / "stem-import.js"
 
 
 def local_path(reference, label):
@@ -62,13 +67,27 @@ def local_path(reference, label):
 parser = PageParser()
 index_source = index_path.read_text(encoding="utf-8")
 service_worker_source = service_worker_path.read_text(encoding="utf-8")
+cloud_client_source = cloud_client_path.read_text(encoding="utf-8")
+stem_import_source = stem_import_path.read_text(encoding="utf-8")
 parser.feed(index_source)
 if not parser.has_viewport:
     raise SystemExit(f"{index_path}: mobile viewport metadata is required")
 if not parser.has_manifest:
     raise SystemExit(f"{index_path}: the PWA manifest must be linked")
+duplicate_ids = sorted({value for value in parser.ids if parser.ids.count(value) > 1})
+if duplicate_ids:
+    raise SystemExit(f"{index_path}: duplicate element ids: {', '.join(duplicate_ids)}")
 
-for asset in ("frame-guard.js", "styles.css", "config.js", "cloud-client.js", "app.js"):
+for asset in (
+    "frame-guard.js",
+    "styles.css",
+    "config.js",
+    "cloud-client.js",
+    "stem-import-core.js",
+    "stem-player.js",
+    "stem-import.js",
+    "app.js",
+):
     pattern = re.compile(rf"\./{re.escape(asset)}\?v=(\d+)")
     index_match = pattern.search(index_source)
     worker_match = pattern.search(service_worker_source)
@@ -83,6 +102,23 @@ for reference in parser.local_assets:
         continue
     if not asset_path.is_file():
         raise SystemExit(f"{index_path}: referenced asset is missing: {asset_path}")
+
+upload_return = cloud_client_source.index("return { bytesUploaded: file.size, uploadUrl };")
+resume_clear = cloud_client_source.index("function forgetStemArchiveUpload")
+if resume_clear < upload_return:
+    raise SystemExit(f"{cloud_client_path}: completed TUS state must survive until API finalization")
+finalize_call = stem_import_source.index("await cloud.finalizeStemUpload")
+resume_forget = stem_import_source.index("cloud.forgetStemArchiveUpload", finalize_call)
+if resume_forget < finalize_call:
+    raise SystemExit(f"{stem_import_path}: TUS state must clear only after finalization succeeds")
+
+proposal_regions_start = stem_import_source.index("function proposalRegions()")
+proposal_regions_end = stem_import_source.index("function renderRegions()", proposal_regions_start)
+proposal_regions_source = stem_import_source[proposal_regions_start:proposal_regions_end]
+canonical_regions = proposal_regions_source.index("job?.regions")
+raw_document_regions = proposal_regions_source.index("proposalDocument?.decision?.regions")
+if canonical_regions > raw_document_regions:
+    raise SystemExit(f"{stem_import_path}: Gate B must prefer canonical job regions")
 
 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 for field in ("name", "short_name", "start_url", "display", "icons"):
@@ -110,8 +146,198 @@ PY
 node --check mobile/app.js
 node --check mobile/config.js
 node --check mobile/cloud-client.js
+node --check mobile/stem-import-core.js
+node --check mobile/stem-player.js
+node --check mobile/stem-import.js
 node --check mobile/frame-guard.js
 node --check mobile/service-worker.js
+
+node <<'NODE'
+const assert = require('node:assert/strict');
+const core = require('./mobile/stem-import-core.js');
+
+assert.equal(core.normalizeStatus('analysis-ready-for-review'), 'awaiting_map_request');
+assert.equal(core.statusLabel('analyzing'), 'Analyzing musical timing');
+assert.equal(core.eventProgress({ determinate: false, completed: 1, total: 2 }), null);
+assert.deepEqual(
+  core.eventProgress({ determinate: true, completed: 3, total: 4, unit: 'files' }),
+  { completed: 3, total: 4, unit: 'files', percent: 75 }
+);
+assert.equal(core.proposalRequest(120, 'musical-4bar').targetBpm, 120);
+assert.equal(core.proposalRequest(120, 'no-conform').targetBpm, null);
+assert.throws(() => core.proposalRequest(10, 'rigid-beat'), /20 to 400/);
+assert.equal(core.normalizeRegion({ targetBpm: null }).targetBpm, null);
+assert.deepEqual(core.editedRegions([{
+  id: 'region-1', startBar: 1, endBar: 4, localBpm: 109.25,
+  targetBpm: null, flagged: false
+}]), [{
+  id: 'region-1', startBar: 1, endBar: 4, localBpm: 109.25,
+  targetBpm: null, flagged: false
+}]);
+const job = core.normalizeJob({
+  id: 'job', project_id: 'project', status: 'awaiting_analysis_confirmation', revision: 2,
+  source_name: 'song.zip', inspection: { audio_assets: [{ asset_id: 'drums', original_name: 'Drums.wav', role: 'drums' }] }
+});
+assert.equal(job.projectId, 'project');
+assert.equal(job.tracks[0].name, 'Drums.wav');
+assert.equal(core.analysisSelection(job).assets[0].role, 'drums');
+assert.equal(core.normalizeJob({ target_bpm: null, mode: 'no-conform' }).targetBpm, null);
+const analyzedNoConformJob = core.normalizeJob({
+  id: 'no-conform-job', project_id: 'no-conform-project', source_name: 'free-time.zip',
+  target_bpm: null, mode: 'no-conform',
+  analysis: { median_bpm: 107.143, duration_seconds: 184.25 }
+});
+assert.equal(analyzedNoConformJob.durationSeconds, 184.25);
+const analyzedNoConformProject = core.toStemProject(analyzedNoConformJob);
+assert.equal(analyzedNoConformProject.tempo, 107.143);
+assert.equal(analyzedNoConformProject.stemImport.durationSeconds, 184.25);
+const fullMixSelection = core.analysisSelection(job, [
+  { ...job.tracks[0], included: true },
+  { assetId: 'mix', name: 'Mix.wav', role: 'full-mix', included: true, gainDb: 0 }
+], 'full-mix');
+assert.deepEqual(fullMixSelection.assets.map((item) => item.included), [false, true]);
+assert.equal(fullMixSelection.fullMixAssetId, 'mix');
+assert.equal(fullMixSelection.drumCrosscheckAssetId, null);
+assert.deepEqual(
+  core.normalizeDisabledSegments({ drums: [4, 2, 2, -1], unknown: [1] }, [job.tracks[0]]),
+  { drums: [2, 4] }
+);
+const asset = core.normalizeAsset({
+  asset_id: 'preview', kind: 'preview_segment', content_type: 'audio/mp4',
+  metadata: { trackAssetId: 'drums', regionIndex: 4, durationSeconds: 8 }
+});
+assert.equal(asset.trackId, 'drums');
+assert.equal(asset.segmentIndex, 4);
+assert.equal(asset.durationSeconds, 8);
+NODE
+
+node <<'NODE'
+const assert = require('node:assert/strict');
+
+class FakeAudio {
+  static instances = [];
+
+  constructor() {
+    this.readyState = 1;
+    this.currentTime = 0;
+    this.volume = 1;
+    this.muted = false;
+    this.paused = true;
+    this.preload = '';
+    this.listeners = new Map();
+    this.source = '';
+    FakeAudio.instances.push(this);
+  }
+
+  get src() { return this.source; }
+  set src(value) { this.source = String(value); }
+
+  addEventListener(name, handler, options = {}) {
+    const listeners = this.listeners.get(name) || [];
+    listeners.push({ handler, once: Boolean(options.once) });
+    this.listeners.set(name, listeners);
+  }
+
+  removeEventListener(name, handler) {
+    this.listeners.set(name, (this.listeners.get(name) || []).filter((entry) => entry.handler !== handler));
+  }
+
+  emit(name) {
+    const listeners = [...(this.listeners.get(name) || [])];
+    listeners.forEach((entry) => entry.handler());
+    this.listeners.set(name, (this.listeners.get(name) || []).filter((entry) => !entry.once));
+  }
+
+  play() {
+    this.paused = false;
+    return Promise.resolve();
+  }
+
+  pause() { this.paused = true; }
+  removeAttribute(name) { if (name === 'src') this.source = ''; }
+  load() {}
+}
+
+global.Audio = FakeAudio;
+global.window = {
+  OpusloopsStemCore: require('./mobile/stem-import-core.js'),
+  setTimeout,
+  clearTimeout,
+  requestAnimationFrame: () => 1,
+  cancelAnimationFrame: () => {}
+};
+require('./mobile/stem-player.js');
+
+const signedAssetIds = [];
+const cloud = {
+  async signStemArtifact(_jobId, assetId) {
+    signedAssetIds.push(assetId);
+    return {
+      signedUrl: `https://audio.example/${assetId}.m4a`,
+      expiresAt: new Date(Date.now() + 900_000).toISOString()
+    };
+  }
+};
+const project = {
+  id: 'project',
+  stemImport: {
+    jobId: 'job',
+    status: 'ready',
+    durationSeconds: 16,
+    tracks: [{ assetId: 'stem', volume: 1, muted: false }],
+    arrangement: {},
+    previewAssets: Array.from({ length: 4 }, (_, index) => ({
+      id: `segment-${index}`,
+      kind: 'preview_segment',
+      contentType: 'audio/mp4',
+      trackId: 'stem',
+      segmentIndex: index,
+      startSeconds: index * 4,
+      durationSeconds: 4
+    }))
+  }
+};
+const settle = () => new Promise((resolve) => setImmediate(resolve));
+const activeAudio = (assetId) => FakeAudio.instances.find((audio) =>
+  !audio.paused && audio.src.endsWith(`/${assetId}.m4a`)
+);
+
+(async () => {
+  const player = window.OpusloopsStemPlayer.create({ cloud });
+  player.loadProject(project);
+  await settle();
+  await player.play(0);
+  await settle();
+  assert.deepEqual(signedAssetIds, ['segment-0', 'segment-1']);
+  assert.equal(activeAudio('segment-0').preload, 'auto');
+
+  const first = activeAudio('segment-0');
+  const remixedProject = JSON.parse(JSON.stringify(project));
+  remixedProject.stemImport.tracks[0].volume = 0.35;
+  remixedProject.stemImport.tracks[0].muted = true;
+  player.loadProject(remixedProject);
+  assert.equal(first.volume, 0.35, 'a synced volume change must update loaded audio');
+  assert.equal(first.muted, true, 'a synced mute change must update loaded audio');
+  assert.equal(first.paused, false, 'a mix-only reload must preserve active playback');
+
+  first.emit('ended');
+  await settle();
+  await settle();
+  assert.ok(signedAssetIds.includes('segment-2'), 'the third segment must preload during the first transition');
+  assert.equal(first.src, '', 'the completed segment must be evicted after its successor starts');
+
+  const second = activeAudio('segment-1');
+  second.emit('ended');
+  await settle();
+  await settle();
+  assert.ok(signedAssetIds.includes('segment-3'), 'rolling preload must continue beyond the first successor');
+  assert.equal(second.src, '', 'the two-segment playback window must evict older media');
+  player.destroy();
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+NODE
 
 if grep -RniE 'magda|conceptual machines|anthropic' mobile; then
   echo "Production mobile files contain retired or third-party product branding." >&2
@@ -124,7 +350,22 @@ if grep -RniE 'sb_secret_|service[_-]?role' mobile; then
 fi
 
 grep -Fq 'https://heryvahetgzfalmuprbw.supabase.co' mobile/index.html
+grep -Fq 'https://heryvahetgzfalmuprbw.storage.supabase.co' mobile/index.html
+grep -Fq "media-src 'self' blob:" mobile/index.html
 grep -Fq 'sb_publishable_' mobile/config.js
+grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
+grep -Fq '"Upload-Offset"' mobile/cloud-client.js
+grep -Fq 'onUploadProgress' mobile/cloud-client.js
+for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
+  grep -Fq "$method" mobile/cloud-client.js
+done
+grep -Fq 'order=created_at.asc,asset_id.asc' mobile/cloud-client.js
+grep -Fq 'disabledSegments: normalized.stemImport.disabledSegments' mobile/app.js
+grep -Fq 'this stage does not expose a measurable percentage' mobile/index.html
+grep -Fq 'data-remove-grid-event' mobile/stem-import.js
+grep -Fq 'meterNumerator' mobile/stem-import.js
+grep -Fq 'firstDownbeatSeconds' mobile/stem-import.js
+grep -Fq 'previewAssets' mobile/stem-import-core.js
 
 migration='supabase/migrations/20260905110000_create_user_projects.sql'
 test -s "$migration"

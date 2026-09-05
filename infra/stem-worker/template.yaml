@@ -1,0 +1,1152 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Opusloops isolated stem DSP worker on AWS Batch Fargate
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC used by the Fargate compute environment.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Public subnets or private subnets with NAT. Jobs require outbound HTTPS.
+  RepositoryUrl:
+    Type: String
+    Default: https://github.com/Thuvee416/Opusloops.git
+    AllowedPattern: '^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\.git$'
+  RepositoryCommit:
+    Type: String
+    Description: Exact 40-character Git commit CodeBuild must clone.
+    AllowedPattern: '^[0-9a-f]{40}$'
+  WorkerImageDigest:
+    Type: String
+    Default: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    Description: ECR image digest. Deploy once to create ECR/CodeBuild, build, then update with the returned digest.
+    AllowedPattern: '^sha256:[0-9a-f]{64}$'
+  RetentionMaintenanceSecretArn:
+    Type: String
+    NoEcho: true
+    Description: ARN of the dedicated stem-retention maintenance secret; never reuse the callback HMAC.
+    AllowedPattern: '^arn:[^:]+:secretsmanager:[^:]+:[0-9]{12}:secret:.+$'
+  WorkerCallbackUrl:
+    Type: String
+    Description: Exact Supabase stem worker callback URL; the fallback refuses payload URLs that differ.
+    AllowedPattern: '^https://[a-z0-9]{20}\.supabase\.co/functions/v1/stem-worker-callback$'
+  RetentionUrl:
+    Type: String
+    Description: Exact production Supabase stem-retention Edge Function URL.
+    AllowedPattern: '^https://[a-z0-9]{20}\.supabase\.co/functions/v1/stem-retention$'
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+    AllowedValues: [7, 14, 30, 60, 90, 120, 150, 180, 365]
+
+Resources:
+  WorkerRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: opusloops/stem-worker
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      ImageTagMutability: IMMUTABLE_WITH_EXCLUSION
+      ImageTagMutabilityExclusionFilters:
+        - ImageTagMutabilityExclusionFilterType: WILDCARD
+          ImageTagMutabilityExclusionFilterValue: latest
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Remove untagged worker images after seven days","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countUnit":"days","countNumber":7},"action":{"type":"expire"}},{"rulePriority":2,"description":"Keep the newest 20 immutable releases","selection":{"tagStatus":"tagged","tagPrefixList":["git-"],"countType":"imageCountMoreThan","countNumber":20},"action":{"type":"expire"}}]}
+      Tags:
+        - Key: Application
+          Value: Opusloops
+        - Key: Component
+          Value: stem-worker
+
+  WorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/batch/opusloops-stem-worker
+      RetentionInDays: !Ref LogRetentionDays
+
+  BuildLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/codebuild/opusloops-stem-worker
+      RetentionInDays: !Ref LogRetentionDays
+
+  BootstrapFailureLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/opusloops-stem-worker-bootstrap-failure
+      RetentionInDays: !Ref LogRetentionDays
+
+  QueueWatchdogLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/opusloops-stem-worker-queue-watchdog
+      RetentionInDays: !Ref LogRetentionDays
+
+  RetentionInvokerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/opusloops-stem-retention-invoker
+      RetentionInDays: !Ref LogRetentionDays
+
+  WorkerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Egress-only HTTPS for Opusloops stem workers
+      VpcId: !Ref VpcId
+      SecurityGroupIngress: []
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Supabase callbacks, Storage S3, and AWS service APIs
+      Tags:
+        - Key: Application
+          Value: Opusloops
+        - Key: Component
+          Value: stem-worker
+
+  BatchExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  BatchTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DenyAwsMutation
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Deny
+                Action: '*'
+                Resource: '*'
+
+  BootstrapFailureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DeliverBootstrapFailure
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/opusloops-stem-worker-bootstrap-failure:*
+
+  QueueWatchdogRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InspectAndTerminateStaleQueuedJobs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: batch:DescribeJobs
+                Resource: '*'
+              - Effect: Allow
+                Action: batch:TerminateJob
+                Resource: !Sub arn:${AWS::Partition}:batch:${AWS::Region}:${AWS::AccountId}:job/*
+              - Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ChangeMessageVisibility
+                Resource: !GetAtt QueueWatchdogDelayQueue.Arn
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/opusloops-stem-worker-queue-watchdog:*
+
+  RetentionInvokerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeStemRetention
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref RetentionMaintenanceSecretArn
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/opusloops-stem-retention-invoker:*
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BuildAndPublishWorker
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !GetAtt WorkerRepository.Arn
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt BuildLogGroup.Arn
+
+  WorkerImageBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: opusloops-stem-worker-image
+      Description: Builds one provenance-tagged Opusloops worker image from an exact public Git commit.
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Source:
+        Type: NO_SOURCE
+        BuildSpec: !Sub |
+          version: 0.2
+          env:
+            shell: bash
+          phases:
+            install:
+              commands:
+                - set -euo pipefail
+                - test -n "$OPUSLOOPS_REPOSITORY_URL"
+                - test "$OPUSLOOPS_GIT_REF" = "${RepositoryCommit}"
+                - git clone --filter=blob:none --no-checkout "$OPUSLOOPS_REPOSITORY_URL" /tmp/opusloops-source
+                - git -C /tmp/opusloops-source fetch --depth 1 origin "$OPUSLOOPS_GIT_REF"
+                - git -C /tmp/opusloops-source checkout --detach FETCH_HEAD
+                - test "$(git -C /tmp/opusloops-source rev-parse HEAD)" = "$OPUSLOOPS_GIT_REF"
+            pre_build:
+              commands:
+                - set -euo pipefail
+                - export ECR_REGISTRY="$(printf '%s' '${WorkerRepository.RepositoryUri}' | cut -d/ -f1)"
+                - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+                - export IMAGE_TAG="git-$OPUSLOOPS_GIT_REF"
+                - if aws ecr describe-images --repository-name opusloops/stem-worker --image-ids imageTag="$IMAGE_TAG" --region "$AWS_DEFAULT_REGION" >/dev/null 2>&1; then echo "Immutable image tag already exists" >&2; exit 2; fi
+            build:
+              commands:
+                - set -euo pipefail
+                - export IMAGE_TAG="git-$OPUSLOOPS_GIT_REF"
+                - docker build --pull --platform linux/amd64 --file /tmp/opusloops-source/worker/Dockerfile --build-arg "OPUSLOOPS_GIT_COMMIT=$OPUSLOOPS_GIT_REF" --tag "${WorkerRepository.RepositoryUri}:$IMAGE_TAG" /tmp/opusloops-source
+                - docker tag "${WorkerRepository.RepositoryUri}:$IMAGE_TAG" "${WorkerRepository.RepositoryUri}:latest"
+            post_build:
+              commands:
+                - set -euo pipefail
+                - export IMAGE_TAG="git-$OPUSLOOPS_GIT_REF"
+                - docker push "${WorkerRepository.RepositoryUri}:$IMAGE_TAG"
+                - docker push "${WorkerRepository.RepositoryUri}:latest"
+                - aws ecr describe-images --repository-name opusloops/stem-worker --image-ids imageTag="$IMAGE_TAG" --region "$AWS_DEFAULT_REGION" --query 'imageDetails[0].{tag:imageTags[0],digest:imageDigest}' --output json
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_LARGE
+        Image: aws/codebuild/standard:7.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: OPUSLOOPS_REPOSITORY_URL
+            Type: PLAINTEXT
+            Value: !Ref RepositoryUrl
+          - Name: OPUSLOOPS_GIT_REF
+            Type: PLAINTEXT
+            Value: !Ref RepositoryCommit
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Ref BuildLogGroup
+          StreamName: image
+      TimeoutInMinutes: 60
+
+  ComputeEnvironment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      ComputeEnvironmentName: opusloops-stem-worker-fargate
+      Type: MANAGED
+      State: ENABLED
+      ReplaceComputeEnvironment: false
+      ComputeResources:
+        Type: FARGATE
+        MaxvCpus: 4
+        Subnets: !Ref SubnetIds
+        SecurityGroupIds:
+          - !GetAtt WorkerSecurityGroup.GroupId
+      Tags:
+        Application: Opusloops
+        Component: stem-worker
+
+  JobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: opusloops-stem-worker
+      Priority: 10
+      State: ENABLED
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref ComputeEnvironment
+      Tags:
+        Application: Opusloops
+        Component: stem-worker
+
+  InspectJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      JobDefinitionName: opusloops-stem-inspect
+      Type: container
+      PlatformCapabilities: [FARGATE]
+      Parameters:
+        payload_base64: ''
+      PropagateTags: true
+      RetryStrategy:
+        Attempts: 1
+      Timeout:
+        AttemptDurationSeconds: 1800
+      EcsProperties:
+        TaskProperties:
+          - ExecutionRoleArn: !GetAtt BatchExecutionRole.Arn
+            TaskRoleArn: !GetAtt BatchTaskRole.Arn
+            PlatformVersion: '1.4.0'
+            RuntimePlatform:
+              CpuArchitecture: X86_64
+              OperatingSystemFamily: LINUX
+            NetworkConfiguration:
+              AssignPublicIp: ENABLED
+            EphemeralStorage:
+              SizeInGiB: 50
+            Containers:
+              - Name: worker
+                Essential: true
+                Image: !Sub '${WorkerRepository.RepositoryUri}@${WorkerImageDigest}'
+                Command: [inspect, --payload-base64, 'Ref::payload_base64']
+                User: '10001:10001'
+                Privileged: false
+                ReadonlyRootFilesystem: false
+                LinuxParameters:
+                  InitProcessEnabled: true
+                ResourceRequirements:
+                  - Type: VCPU
+                    Value: '4'
+                  - Type: MEMORY
+                    Value: '16384'
+                LogConfiguration:
+                  LogDriver: awslogs
+                  Options:
+                    awslogs-group: !Ref WorkerLogGroup
+                    awslogs-region: !Ref AWS::Region
+                    awslogs-stream-prefix: inspect
+
+  AnalyzeJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      JobDefinitionName: opusloops-stem-analyze
+      Type: container
+      PlatformCapabilities: [FARGATE]
+      Parameters:
+        payload_base64: ''
+      PropagateTags: true
+      RetryStrategy:
+        Attempts: 1
+      Timeout:
+        AttemptDurationSeconds: 1800
+      EcsProperties:
+        TaskProperties:
+          - ExecutionRoleArn: !GetAtt BatchExecutionRole.Arn
+            TaskRoleArn: !GetAtt BatchTaskRole.Arn
+            PlatformVersion: '1.4.0'
+            RuntimePlatform:
+              CpuArchitecture: X86_64
+              OperatingSystemFamily: LINUX
+            NetworkConfiguration:
+              AssignPublicIp: ENABLED
+            EphemeralStorage:
+              SizeInGiB: 50
+            Containers:
+              - Name: worker
+                Essential: true
+                Image: !Sub '${WorkerRepository.RepositoryUri}@${WorkerImageDigest}'
+                Command: [analyze, --payload-base64, 'Ref::payload_base64']
+                User: '10001:10001'
+                Privileged: false
+                ReadonlyRootFilesystem: false
+                LinuxParameters:
+                  InitProcessEnabled: true
+                ResourceRequirements:
+                  - Type: VCPU
+                    Value: '4'
+                  - Type: MEMORY
+                    Value: '16384'
+                LogConfiguration:
+                  LogDriver: awslogs
+                  Options:
+                    awslogs-group: !Ref WorkerLogGroup
+                    awslogs-region: !Ref AWS::Region
+                    awslogs-stream-prefix: analyze
+
+  ProposeJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      JobDefinitionName: opusloops-stem-propose
+      Type: container
+      PlatformCapabilities: [FARGATE]
+      Parameters:
+        payload_base64: ''
+      PropagateTags: true
+      RetryStrategy:
+        Attempts: 1
+      Timeout:
+        AttemptDurationSeconds: 1800
+      EcsProperties:
+        TaskProperties:
+          - ExecutionRoleArn: !GetAtt BatchExecutionRole.Arn
+            TaskRoleArn: !GetAtt BatchTaskRole.Arn
+            PlatformVersion: '1.4.0'
+            RuntimePlatform:
+              CpuArchitecture: X86_64
+              OperatingSystemFamily: LINUX
+            NetworkConfiguration:
+              AssignPublicIp: ENABLED
+            EphemeralStorage:
+              SizeInGiB: 50
+            Containers:
+              - Name: worker
+                Essential: true
+                Image: !Sub '${WorkerRepository.RepositoryUri}@${WorkerImageDigest}'
+                Command: [propose, --payload-base64, 'Ref::payload_base64']
+                User: '10001:10001'
+                Privileged: false
+                ReadonlyRootFilesystem: false
+                LinuxParameters:
+                  InitProcessEnabled: true
+                ResourceRequirements:
+                  - Type: VCPU
+                    Value: '4'
+                  - Type: MEMORY
+                    Value: '16384'
+                LogConfiguration:
+                  LogDriver: awslogs
+                  Options:
+                    awslogs-group: !Ref WorkerLogGroup
+                    awslogs-region: !Ref AWS::Region
+                    awslogs-stream-prefix: propose
+
+  RenderJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      JobDefinitionName: opusloops-stem-render
+      Type: container
+      PlatformCapabilities: [FARGATE]
+      Parameters:
+        payload_base64: ''
+      PropagateTags: true
+      RetryStrategy:
+        Attempts: 1
+      Timeout:
+        AttemptDurationSeconds: 1800
+      EcsProperties:
+        TaskProperties:
+          - ExecutionRoleArn: !GetAtt BatchExecutionRole.Arn
+            TaskRoleArn: !GetAtt BatchTaskRole.Arn
+            PlatformVersion: '1.4.0'
+            RuntimePlatform:
+              CpuArchitecture: X86_64
+              OperatingSystemFamily: LINUX
+            NetworkConfiguration:
+              AssignPublicIp: ENABLED
+            EphemeralStorage:
+              SizeInGiB: 50
+            Containers:
+              - Name: worker
+                Essential: true
+                Image: !Sub '${WorkerRepository.RepositoryUri}@${WorkerImageDigest}'
+                Command: [render, --payload-base64, 'Ref::payload_base64']
+                User: '10001:10001'
+                Privileged: false
+                ReadonlyRootFilesystem: false
+                LinuxParameters:
+                  InitProcessEnabled: true
+                ResourceRequirements:
+                  - Type: VCPU
+                    Value: '4'
+                  - Type: MEMORY
+                    Value: '16384'
+                LogConfiguration:
+                  LogDriver: awslogs
+                  Options:
+                    awslogs-group: !Ref WorkerLogGroup
+                    awslogs-region: !Ref AWS::Region
+                    awslogs-stream-prefix: render
+
+  BootstrapFailureLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: BootstrapFailureLogGroup
+    Properties:
+      FunctionName: opusloops-stem-worker-bootstrap-failure
+      Description: Reports AWS Batch failures that occur before the isolated worker can callback.
+      Runtime: python3.12
+      Architectures: [arm64]
+      Handler: index.handler
+      Role: !GetAtt BootstrapFailureRole.Arn
+      MemorySize: 128
+      Timeout: 30
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          OPUSLOOPS_CALLBACK_URL: !Ref WorkerCallbackUrl
+          OPUSLOOPS_JOB_QUEUE_ARN: !Ref JobQueue
+          OPUSLOOPS_INSPECT_JOB_DEFINITION_ARN: !Ref InspectJobDefinition
+          OPUSLOOPS_ANALYZE_JOB_DEFINITION_ARN: !Ref AnalyzeJobDefinition
+          OPUSLOOPS_PROPOSE_JOB_DEFINITION_ARN: !Ref ProposeJobDefinition
+          OPUSLOOPS_RENDER_JOB_DEFINITION_ARN: !Ref RenderJobDefinition
+      Code:
+        ZipFile: |
+          import base64
+          import hashlib
+          import hmac
+          import json
+          import os
+          import time
+          import uuid
+          from urllib import error, request
+
+          MAX_PAYLOAD_BYTES = 256 * 1024
+          MAX_RESPONSE_BYTES = 64 * 1024
+          QUEUE_TIMEOUT_REASON = "Opusloops queue credential freshness limit exceeded."
+          CALLBACK_URL = os.environ["OPUSLOOPS_CALLBACK_URL"]
+          EXPECTED_QUEUE = os.environ["OPUSLOOPS_JOB_QUEUE_ARN"]
+          JOB_DEFINITIONS = {
+              os.environ["OPUSLOOPS_INSPECT_JOB_DEFINITION_ARN"]: "inspect",
+              os.environ["OPUSLOOPS_ANALYZE_JOB_DEFINITION_ARN"]: "analyze",
+              os.environ["OPUSLOOPS_PROPOSE_JOB_DEFINITION_ARN"]: "propose",
+              os.environ["OPUSLOOPS_RENDER_JOB_DEFINITION_ARN"]: "render",
+          }
+          class ValidationError(Exception):
+              pass
+
+          def _log(aws_job_id, stage, outcome):
+              print(json.dumps({
+                  "awsJobId": str(aws_job_id)[:200],
+                  "stage": stage if stage in {"inspect", "analyze", "propose", "render"} else None,
+                  "batchStatus": "FAILED",
+                  "outcome": outcome,
+              }, sort_keys=True, separators=(",", ":")))
+
+          def _uuid(value, label, version=None):
+              if not isinstance(value, str):
+                  raise ValidationError(label)
+              try:
+                  parsed = uuid.UUID(value)
+              except (ValueError, AttributeError):
+                  raise ValidationError(label) from None
+              if str(parsed) != value.lower() or (version is not None and parsed.version != version):
+                  raise ValidationError(label)
+              return str(parsed)
+
+          def _payload(event):
+              if event.get("source") != "aws.batch" or event.get("detail-type") != "Batch Job State Change":
+                  raise ValidationError("event-envelope")
+              detail = event.get("detail")
+              if not isinstance(detail, dict) or detail.get("status") != "FAILED":
+                  raise ValidationError("event-detail")
+              if detail.get("jobQueue") != EXPECTED_QUEUE:
+                  raise ValidationError("job-queue")
+              stage = JOB_DEFINITIONS.get(detail.get("jobDefinition"))
+              if stage is None:
+                  raise ValidationError("job-definition")
+              parameters = detail.get("parameters")
+              encoded = parameters.get("payload_base64") if isinstance(parameters, dict) else None
+              if not isinstance(encoded, str) or not encoded or len(encoded) > MAX_PAYLOAD_BYTES * 2:
+                  raise ValidationError("payload-parameter")
+              try:
+                  raw = base64.b64decode(encoded, altchars=b"-_", validate=True)
+                  if len(raw) > MAX_PAYLOAD_BYTES:
+                      raise ValidationError("payload-size")
+                  payload = json.loads(raw)
+              except ValidationError:
+                  raise
+              except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+                  raise ValidationError("payload-encoding") from None
+              expected_fields = {
+                  "version", "jobId", "userId", "projectId", "attemptId", "stage",
+                  "revision", "storage", "inputs", "callback",
+              }
+              if not isinstance(payload, dict) or set(payload) != expected_fields or payload.get("version") != 1:
+                  raise ValidationError("payload-contract")
+              job_id = _uuid(payload.get("jobId"), "job-id", version=4)
+              attempt_id = _uuid(payload.get("attemptId"), "attempt-id", version=4)
+              _uuid(payload.get("userId"), "user-id")
+              _uuid(payload.get("projectId"), "project-id", version=4)
+              if payload.get("stage") != stage:
+                  raise ValidationError("stage-binding")
+              callback = payload.get("callback")
+              if (
+                  not isinstance(callback, dict)
+                  or set(callback) != {"url", "token"}
+                  or callback.get("url") != CALLBACK_URL
+                  or not isinstance(callback.get("token"), str)
+                  or len(callback["token"]) != 64
+                  or any(character not in "0123456789abcdef" for character in callback["token"])
+              ):
+                  raise ValidationError("callback-binding")
+              expected_name = f"opusloops-{stage}-{job_id[:8]}-{attempt_id[:8]}"
+              if detail.get("jobName") != expected_name:
+                  raise ValidationError("job-name-binding")
+              dispatch_job_id = _uuid(detail.get("jobId"), "dispatch-job-id")
+              error_code = (
+                  "batch_queue_timeout"
+                  if detail.get("statusReason") == QUEUE_TIMEOUT_REASON
+                  else "batch_bootstrap_failed"
+              )
+              return payload, stage, dispatch_job_id, error_code
+
+          def _signed_request(payload, stage, dispatch_job_id, error_code):
+              error_message = (
+                  "The audio job did not start within ten minutes."
+                  if error_code == "batch_queue_timeout"
+                  else "The isolated audio worker could not complete in AWS Batch."
+              )
+              body = json.dumps({
+                  "version": 1,
+                  "jobId": payload["jobId"],
+                  "userId": payload["userId"],
+                  "attemptId": payload["attemptId"],
+                  "dispatchJobId": dispatch_job_id,
+                  "stage": stage,
+                  "event": {
+                      "status": "failed",
+                      "determinate": False,
+                      "completed": None,
+                      "total": None,
+                      "unit": None,
+                      "detail": {"operation": "batch-bootstrap-failure", "source": "aws-batch"},
+                  },
+                  "assets": [],
+                  "result": None,
+                  "error": {
+                      "code": error_code,
+                      "message": error_message,
+                      "retryable": True,
+                  },
+              }, sort_keys=True, separators=(",", ":")).encode("utf-8")
+              timestamp = int(time.time())
+              nonce = str(uuid.uuid4())
+              signature = hmac.new(
+                  payload["callback"]["token"].encode("ascii"),
+                  f"{timestamp}.{nonce}.".encode("ascii") + body,
+                  hashlib.sha256,
+              ).hexdigest()
+              headers = {
+                  "Content-Type": "application/json",
+                  "X-Opusloops-Job-Id": payload["jobId"],
+                  "X-Opusloops-Nonce": nonce,
+                  "X-Opusloops-Timestamp": str(timestamp),
+                  "X-Opusloops-Attempt": payload["attemptId"],
+                  "X-Opusloops-Signature": signature,
+                  "User-Agent": "opusloops-batch-failure-callback/1.0",
+              }
+              return request.Request(CALLBACK_URL, data=body, headers=headers, method="POST")
+
+          def _deliver(payload, stage, dispatch_job_id, error_code):
+              signed = _signed_request(payload, stage, dispatch_job_id, error_code)
+              for attempt in range(3):
+                  try:
+                      with request.urlopen(signed, timeout=8) as response:
+                          raw = response.read(MAX_RESPONSE_BYTES + 1)
+                          if len(raw) > MAX_RESPONSE_BYTES:
+                              raise RuntimeError("callback response is invalid")
+                          result = json.loads(raw)
+                          if not isinstance(result, dict) or result.get("accepted") is not True:
+                              raise RuntimeError("callback response is invalid")
+                          return "reported"
+                  except error.HTTPError as exc:
+                      if exc.code == 409:
+                          return "already-settled"
+                      if exc.code != 429 and not 500 <= exc.code <= 599:
+                          raise RuntimeError("callback rejected fallback") from None
+                  except (error.URLError, TimeoutError, json.JSONDecodeError, UnicodeDecodeError):
+                      pass
+                  if attempt < 2:
+                      time.sleep(0.5 * (2 ** attempt))
+              raise RuntimeError("callback delivery failed")
+
+          def handler(event, context):
+              aws_job_id = None
+              stage = None
+              try:
+                  payload, stage, aws_job_id, error_code = _payload(event)
+              except ValidationError:
+                  detail = event.get("detail") if isinstance(event, dict) else None
+                  candidate = detail.get("jobId") if isinstance(detail, dict) else None
+                  try:
+                      aws_job_id = _uuid(candidate, "dispatch-job-id")
+                  except ValidationError:
+                      aws_job_id = None
+                  _log(aws_job_id, stage, "rejected-event")
+                  return {"status": "rejected-event"}
+              try:
+                  outcome = _deliver(payload, stage, aws_job_id, error_code)
+              except Exception:
+                  _log(aws_job_id, stage, "delivery-failed")
+                  raise RuntimeError("bootstrap failure callback did not settle") from None
+              _log(aws_job_id, stage, outcome)
+              return {"status": outcome}
+
+  BootstrapFailureRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Report Batch jobs that fail before the worker can report its own failure.
+      State: ENABLED
+      EventPattern:
+        source: [aws.batch]
+        detail-type: [Batch Job State Change]
+        detail:
+          status: [FAILED]
+          jobQueue:
+            - !Ref JobQueue
+          jobDefinition:
+            - !Ref InspectJobDefinition
+            - !Ref AnalyzeJobDefinition
+            - !Ref ProposeJobDefinition
+            - !Ref RenderJobDefinition
+      Targets:
+        - Arn: !GetAtt BootstrapFailureLambda.Arn
+          Id: StemWorkerBootstrapFailure
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 86400
+            MaximumRetryAttempts: 12
+
+  AllowEventBridgeBootstrapFailureInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BootstrapFailureLambda
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt BootstrapFailureRule.Arn
+
+  QueueWatchdogDelayQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: opusloops-stem-worker-queue-watchdog
+      DelaySeconds: 600
+      MessageRetentionPeriod: 86400
+      VisibilityTimeout: 60
+      SqsManagedSseEnabled: true
+
+  QueueWatchdogQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref QueueWatchdogDelayQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowOnlyStemWorkerSubmittedRule
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt QueueWatchdogDelayQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !GetAtt QueueWatchdogEnqueueRule.Arn
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+
+  QueueWatchdogEnqueueRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Delay each submitted stem job by ten minutes, then verify that it has started.
+      State: ENABLED
+      EventPattern:
+        source: [aws.batch]
+        detail-type: [Batch Job State Change]
+        detail:
+          status: [SUBMITTED]
+          jobQueue:
+            - !Ref JobQueue
+          jobDefinition:
+            - !Ref InspectJobDefinition
+            - !Ref AnalyzeJobDefinition
+            - !Ref ProposeJobDefinition
+            - !Ref RenderJobDefinition
+      Targets:
+        - Arn: !GetAtt QueueWatchdogDelayQueue.Arn
+          Id: StemWorkerQueueWatchdogDelay
+          InputTransformer:
+            InputPathsMap:
+              createdAt: $.detail.createdAt
+              jobDefinition: $.detail.jobDefinition
+              jobId: $.detail.jobId
+              jobName: $.detail.jobName
+              jobQueue: $.detail.jobQueue
+            InputTemplate: '{"createdAt":<createdAt>,"jobDefinition":"<jobDefinition>","jobId":"<jobId>","jobName":"<jobName>","jobQueue":"<jobQueue>"}'
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 12
+
+  QueueWatchdogLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: QueueWatchdogLogGroup
+    Properties:
+      FunctionName: opusloops-stem-worker-queue-watchdog
+      Description: Terminates a stem job that has not reached RUNNING within ten minutes.
+      Runtime: python3.12
+      Architectures: [arm64]
+      Handler: index.handler
+      Role: !GetAtt QueueWatchdogRole.Arn
+      MemorySize: 128
+      Timeout: 30
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          OPUSLOOPS_WATCHDOG_QUEUE_ARN: !GetAtt QueueWatchdogDelayQueue.Arn
+          OPUSLOOPS_JOB_QUEUE_ARN: !Ref JobQueue
+          OPUSLOOPS_INSPECT_JOB_DEFINITION_ARN: !Ref InspectJobDefinition
+          OPUSLOOPS_ANALYZE_JOB_DEFINITION_ARN: !Ref AnalyzeJobDefinition
+          OPUSLOOPS_PROPOSE_JOB_DEFINITION_ARN: !Ref ProposeJobDefinition
+          OPUSLOOPS_RENDER_JOB_DEFINITION_ARN: !Ref RenderJobDefinition
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import re
+          import time
+          import uuid
+
+          import boto3
+
+          MINIMUM_QUEUE_AGE_MS = 10 * 60 * 1000
+          EXPECTED_EVENT_SOURCE = "aws:sqs"
+          EXPECTED_WATCHDOG_QUEUE = os.environ["OPUSLOOPS_WATCHDOG_QUEUE_ARN"]
+          EXPECTED_JOB_QUEUE = os.environ["OPUSLOOPS_JOB_QUEUE_ARN"]
+          JOB_DEFINITIONS = {
+              os.environ["OPUSLOOPS_INSPECT_JOB_DEFINITION_ARN"]: "inspect",
+              os.environ["OPUSLOOPS_ANALYZE_JOB_DEFINITION_ARN"]: "analyze",
+              os.environ["OPUSLOOPS_PROPOSE_JOB_DEFINITION_ARN"]: "propose",
+              os.environ["OPUSLOOPS_RENDER_JOB_DEFINITION_ARN"]: "render",
+          }
+          PRE_RUN_STATUSES = {"SUBMITTED", "PENDING", "RUNNABLE", "STARTING"}
+          JOB_NAME = re.compile(
+              r"^opusloops-(inspect|analyze|propose|render)-[0-9a-f]{8}-[0-9a-f]{8}$"
+          )
+          BATCH = boto3.client("batch")
+
+          class ValidationError(Exception):
+              pass
+
+          def _uuid(value):
+              if not isinstance(value, str):
+                  raise ValidationError("job-id")
+              try:
+                  parsed = uuid.UUID(value)
+              except (ValueError, AttributeError):
+                  raise ValidationError("job-id") from None
+              if str(parsed) != value.lower():
+                  raise ValidationError("job-id")
+              return str(parsed)
+
+          def _log(job_id, stage, batch_status, outcome):
+              print(json.dumps({
+                  "dispatchJobId": job_id,
+                  "stage": stage if stage in JOB_DEFINITIONS.values() else None,
+                  "batchStatus": batch_status if batch_status in PRE_RUN_STATUSES | {"RUNNING", "SUCCEEDED", "FAILED"} else None,
+                  "outcome": outcome,
+              }, sort_keys=True, separators=(",", ":")))
+
+          def _message(event):
+              records = event.get("Records") if isinstance(event, dict) else None
+              if not isinstance(records, list) or len(records) != 1:
+                  raise ValidationError("records")
+              record = records[0]
+              if (
+                  not isinstance(record, dict)
+                  or record.get("eventSource") != EXPECTED_EVENT_SOURCE
+                  or record.get("eventSourceARN") != EXPECTED_WATCHDOG_QUEUE
+              ):
+                  raise ValidationError("event-source")
+              try:
+                  message = json.loads(record.get("body"))
+              except (TypeError, ValueError, json.JSONDecodeError):
+                  raise ValidationError("body") from None
+              expected_fields = {"createdAt", "jobDefinition", "jobId", "jobName", "jobQueue"}
+              if not isinstance(message, dict) or set(message) != expected_fields:
+                  raise ValidationError("contract")
+              job_id = _uuid(message.get("jobId"))
+              job_definition = message.get("jobDefinition")
+              stage = JOB_DEFINITIONS.get(job_definition)
+              if stage is None or message.get("jobQueue") != EXPECTED_JOB_QUEUE:
+                  raise ValidationError("scope")
+              job_name = message.get("jobName")
+              match = JOB_NAME.fullmatch(job_name) if isinstance(job_name, str) else None
+              if match is None or match.group(1) != stage:
+                  raise ValidationError("job-name")
+              created_at = message.get("createdAt")
+              if isinstance(created_at, bool) or not isinstance(created_at, int) or created_at <= 0:
+                  raise ValidationError("created-at")
+              return message, stage, job_id
+
+          def _inspect(message, stage, job_id):
+              if int(time.time() * 1000) - message["createdAt"] < MINIMUM_QUEUE_AGE_MS:
+                  raise RuntimeError("queue age threshold has not elapsed")
+              response = BATCH.describe_jobs(jobs=[job_id])
+              jobs = response.get("jobs") if isinstance(response, dict) else None
+              if not isinstance(jobs, list) or len(jobs) != 1 or not isinstance(jobs[0], dict):
+                  raise RuntimeError("authoritative Batch job was not found")
+              job = jobs[0]
+              bindings = (
+                  job.get("jobId") == job_id
+                  and job.get("jobName") == message["jobName"]
+                  and job.get("jobQueue") == EXPECTED_JOB_QUEUE
+                  and job.get("jobDefinition") == message["jobDefinition"]
+                  and job.get("createdAt") == message["createdAt"]
+              )
+              if not bindings:
+                  raise RuntimeError("authoritative Batch job did not match")
+              status = job.get("status")
+              if status in PRE_RUN_STATUSES:
+                  BATCH.terminate_job(
+                      jobId=job_id,
+                      reason="Opusloops queue credential freshness limit exceeded.",
+                  )
+                  return status, "terminated"
+              if status in {"RUNNING", "SUCCEEDED", "FAILED"}:
+                  return status, "no-action"
+              raise RuntimeError("authoritative Batch status was invalid")
+
+          def handler(event, context):
+              job_id = None
+              stage = None
+              try:
+                  message, stage, job_id = _message(event)
+                  status, outcome = _inspect(message, stage, job_id)
+              except ValidationError:
+                  _log(job_id, stage, None, "rejected-message")
+                  raise RuntimeError("queue watchdog message was rejected") from None
+              except Exception:
+                  _log(job_id, stage, None, "watchdog-failed")
+                  raise RuntimeError("queue watchdog could not settle the job") from None
+              _log(job_id, stage, status, outcome)
+              return {"status": outcome}
+
+  QueueWatchdogEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !GetAtt QueueWatchdogDelayQueue.Arn
+      FunctionName: !Ref QueueWatchdogLambda
+      MaximumBatchingWindowInSeconds: 0
+
+  RetentionInvokerLambda:
+    Type: AWS::Lambda::Function
+    DependsOn: RetentionInvokerLogGroup
+    Properties:
+      FunctionName: opusloops-stem-retention-invoker
+      Description: Invokes the bounded production stem-retention Edge Function once per hour.
+      Runtime: python3.12
+      Architectures: [arm64]
+      Handler: index.handler
+      Role: !GetAtt RetentionInvokerRole.Arn
+      MemorySize: 128
+      Timeout: 30
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          OPUSLOOPS_RETENTION_URL: !Ref RetentionUrl
+          OPUSLOOPS_RETENTION_SECRET_ARN: !Ref RetentionMaintenanceSecretArn
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import time
+          from urllib import error, request
+
+          import boto3
+
+          MAX_RESPONSE_BYTES = 64 * 1024
+          RETENTION_URL = os.environ["OPUSLOOPS_RETENTION_URL"]
+          RETENTION_SECRET_ARN = os.environ["OPUSLOOPS_RETENTION_SECRET_ARN"]
+          REQUEST_BODY = b'{"limit":25}'
+          SECRETS = boto3.client("secretsmanager")
+
+          def _secret():
+              try:
+                  response = SECRETS.get_secret_value(SecretId=RETENTION_SECRET_ARN)
+                  value = response.get("SecretString")
+              except Exception:
+                  raise RuntimeError("retention secret is unavailable") from None
+              if not isinstance(value, str) or len(value) < 32:
+                  raise RuntimeError("retention secret is invalid")
+              return value
+
+          def _validate_summary(raw):
+              if len(raw) > MAX_RESPONSE_BYTES:
+                  raise RuntimeError("retention response is invalid")
+              try:
+                  summary = json.loads(raw)
+              except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+                  raise RuntimeError("retention response is invalid") from None
+              fields = {"claimed", "deleted", "failed", "remaining"}
+              if not isinstance(summary, dict) or set(summary) != fields:
+                  raise RuntimeError("retention response is invalid")
+              if any(
+                  isinstance(summary[field], bool)
+                  or not isinstance(summary[field], int)
+                  or summary[field] < 0
+                  for field in fields
+              ):
+                  raise RuntimeError("retention response is invalid")
+              return summary
+
+          def _invoke():
+              signed = request.Request(
+                  RETENTION_URL,
+                  data=REQUEST_BODY,
+                  headers={
+                      "Content-Type": "application/json",
+                      "X-Opusloops-Maintenance-Secret": _secret(),
+                      "User-Agent": "opusloops-stem-retention/1.0",
+                  },
+                  method="POST",
+              )
+              for attempt in range(3):
+                  try:
+                      with request.urlopen(signed, timeout=8) as response:
+                          return _validate_summary(response.read(MAX_RESPONSE_BYTES + 1))
+                  except error.HTTPError as exc:
+                      if exc.code != 429 and not 500 <= exc.code <= 599:
+                          raise RuntimeError("retention endpoint rejected invocation") from None
+                  except (error.URLError, TimeoutError):
+                      pass
+                  if attempt < 2:
+                      time.sleep(0.5 * (2 ** attempt))
+              raise RuntimeError("retention endpoint did not settle")
+
+          def handler(event, context):
+              if (
+                  not isinstance(event, dict)
+                  or event.get("source") != "aws.events"
+                  or event.get("detail-type") != "Scheduled Event"
+              ):
+                  print('{"outcome":"rejected-event"}')
+                  return {"status": "rejected-event"}
+              try:
+                  summary = _invoke()
+              except Exception:
+                  print('{"outcome":"delivery-failed"}')
+                  raise RuntimeError("retention invocation failed") from None
+              print(json.dumps({
+                  "outcome": "completed",
+                  "claimed": summary["claimed"],
+                  "deleted": summary["deleted"],
+                  "failed": summary["failed"],
+                  "remaining": summary["remaining"],
+              }, sort_keys=True, separators=(",", ":")))
+              return {"status": "completed"}
+
+  RetentionSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Invoke bounded stem artifact retention every hour.
+      ScheduleExpression: rate(1 hour)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt RetentionInvokerLambda.Arn
+          Id: StemRetentionInvoker
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 3
+
+  AllowEventBridgeRetentionInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref RetentionInvokerLambda
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt RetentionSchedule.Arn
+
+Outputs:
+  RepositoryUri:
+    Value: !GetAtt WorkerRepository.RepositoryUri
+  ImageBuildProject:
+    Value: !Ref WorkerImageBuild
+  JobQueueArn:
+    Value: !Ref JobQueue
+  InspectJobDefinitionArn:
+    Value: !Ref InspectJobDefinition
+  AnalyzeJobDefinitionArn:
+    Value: !Ref AnalyzeJobDefinition
+  ProposeJobDefinitionArn:
+    Value: !Ref ProposeJobDefinition
+  RenderJobDefinitionArn:
+    Value: !Ref RenderJobDefinition
+  WorkerLogGroupName:
+    Value: !Ref WorkerLogGroup
+  BootstrapFailureRuleArn:
+    Value: !GetAtt BootstrapFailureRule.Arn
+  QueueWatchdogRuleArn:
+    Value: !GetAtt QueueWatchdogEnqueueRule.Arn
+  QueueWatchdogQueueArn:
+    Value: !GetAtt QueueWatchdogDelayQueue.Arn
+  RetentionScheduleArn:
+    Value: !GetAtt RetentionSchedule.Arn
+  WorkerImage:
+    Value: !Sub '${WorkerRepository.RepositoryUri}@${WorkerImageDigest}'
