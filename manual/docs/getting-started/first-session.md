@@ -24,6 +24,6 @@ Tap **Refine this loop** for a sparser, busier, warmer, or surprising variation.
 
 Changes save automatically on the device; the header reports the current save state. You can also tap the save icon in Studio. Open **Projects** to return to any locally saved loop or start a new one.
 
-The current release has no file export or cloud backup, so do not clear the site's browser data if you want to keep a project.
+If you have an early-access invitation, sign in before changing devices to keep editable project sync. You can also export a four-bar WAV for playback, but that audio file does not contain editable steps or mix settings.
 
 Next: [Touch sequencer](../sequencer.md) · [Mixer](../mixer.md) · [Projects and offline use](../projects-offline.md)

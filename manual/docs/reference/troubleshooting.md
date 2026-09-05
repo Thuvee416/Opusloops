@@ -24,7 +24,15 @@
 
 ## A local project disappeared
 
-Browser storage can be removed by private browsing, site-data cleanup, storage pressure, browser reset, or PWA uninstall. The current release has no export or server-side copy, so a removed local project cannot be recovered through Opusloops.
+Browser storage can be removed by private browsing, site-data cleanup, storage pressure, browser reset, or PWA uninstall. If the project had synced to an account, sign in again while connected and let Opusloops restore it. Unsigned-in projects have no server copy. A downloaded WAV preserves the rendered sound but cannot restore an editable project.
+
+## A project is not syncing
+
+Confirm the header shows **Saved to account**, not **Offline — sync pending**. Reconnect, open the account sheet, and choose **Sync now**. Signing out hides account-scoped projects locally but does not delete their private server copies.
+
+## I cannot create or recover an account
+
+Account creation is invitation-only during early access, and each invitation works once for its assigned email. Direct public signup is disabled. Password-recovery email is not available until production email delivery is configured.
 
 ## Offline mode does not open
 

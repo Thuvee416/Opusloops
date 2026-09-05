@@ -29,4 +29,4 @@ Opusloops synthesizes its four voices with Web Audio. External VST, Audio Unit, 
 
 ## Avoid accidental loss
 
-Save after a useful change. The current release has no file export, so avoid clearing browser storage. See [Projects and offline use](projects-offline.md).
+Save after a useful change. Sign in for editable project sync, or export a four-bar WAV when you need a playable audio file. See [Projects and offline use](projects-offline.md).

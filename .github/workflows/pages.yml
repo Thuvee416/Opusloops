@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for required in index.html styles.css app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
+          for required in index.html frame-guard.js styles.css config.js cloud-client.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
             if [[ ! -s "mobile/$required" ]]; then
               echo "::error file=mobile/$required::Required mobile asset is missing or empty."
               exit 1
@@ -95,7 +95,7 @@ jobs:
           if not parser.has_manifest:
               raise SystemExit(f"{index_path}: the PWA manifest must be linked")
 
-          for asset in ("styles.css", "app.js"):
+          for asset in ("frame-guard.js", "styles.css", "config.js", "cloud-client.js", "app.js"):
               pattern = re.compile(rf"\./{re.escape(asset)}\?v=(\d+)")
               index_match = pattern.search(index_source)
               worker_match = pattern.search(service_worker_source)
@@ -135,12 +135,41 @@ jobs:
           PY
 
           node --check mobile/app.js
+          node --check mobile/config.js
+          node --check mobile/cloud-client.js
+          node --check mobile/frame-guard.js
           node --check mobile/service-worker.js
 
           if grep -RniE 'magda|conceptual machines|anthropic' mobile; then
             echo "::error::Production mobile files contain retired or third-party product branding."
             exit 1
           fi
+
+          if grep -RniE 'sb_secret_|service[_-]?role' mobile; then
+            echo "::error::Production mobile files contain a privileged Supabase credential marker."
+            exit 1
+          fi
+
+          grep -Fq 'https://heryvahetgzfalmuprbw.supabase.co' mobile/index.html
+          grep -Fq 'sb_publishable_' mobile/config.js
+
+          migration='supabase/migrations/20260905110000_create_user_projects.sql'
+          test -s "$migration"
+          grep -Fq 'alter table public.projects enable row level security' "$migration"
+          grep -Fq 'revoke all on table public.projects from anon, authenticated' "$migration"
+          test "$(grep -c '^create policy ' "$migration")" -eq 4
+
+          atomic_sync='supabase/migrations/20260905123000_add_atomic_project_sync.sql'
+          membership='supabase/migrations/20260905135000_require_opusloops_membership_for_sync.sql'
+          invites='supabase/migrations/20260905130000_create_single_use_signup_invites.sql'
+          test -s "$atomic_sync" -a -s "$membership" -a -s "$invites"
+          grep -Fq 'pg_advisory_xact_lock' "$atomic_sync"
+          grep -Fq "'app_metadata' ->> 'opusloops'" "$membership"
+          grep -Fq 'grant execute on function public.sync_projects(jsonb) to authenticated' "$membership"
+          grep -Fq 'grant execute on function public.claim_opusloops_signup_invite(text, text) to service_role' "$invites"
+          test "$(grep -c '^enable_signup = false$' supabase/config.toml)" -eq 2
+          grep -Fq 'verify_jwt = false' supabase/config.toml
+          grep -Fq 'OPUSLOOPS_PUBLISHABLE_KEY_HASH' supabase/functions/create-opusloops-account/index.ts
 
       - name: Stamp deployment provenance
         shell: bash

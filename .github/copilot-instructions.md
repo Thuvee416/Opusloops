@@ -11,7 +11,8 @@ Production work should preserve these constraints:
 - Touch-first phone and tablet interaction
 - Built-in Web Audio sounds and loops
 - A focused sequencer and compact mixer
-- Local project persistence in browser-managed storage
+- Offline-first project persistence with optional per-user Supabase sync
+- Deterministic four-bar WAV export in the browser
 - PWA installation and offline reopening after a successful first load
 - Calm visual hierarchy, warm neutrals, restrained motion, and one clear primary action
 
@@ -28,6 +29,10 @@ Do not reintroduce desktop-only assumptions into `mobile/`, including:
 ### Correctness and data safety
 
 - Protect locally saved projects during schema or cache changes.
+- Keep account caches isolated by Supabase user ID and enforce ownership with RLS.
+- Keep direct public signup disabled; account creation must remain invitation-only until a reviewed replacement is released.
+- Require the fixed Opusloops application claim at the atomic sync boundary.
+- Ship only the Supabase publishable key; secret and service-role keys stay server-side.
 - Make local-storage migrations explicit and version stored project data.
 - Never silently replace a saved project with defaults after a parse failure.
 - Test first-run, reload, update, offline, and storage-denied states.
@@ -72,7 +77,9 @@ Do not reintroduce desktop-only assumptions into `mobile/`, including:
 - Do not commit secrets, credentials, private audio, or user project data.
 - Treat browser-stored project data as untrusted input.
 - Avoid analytics, fingerprinting, or network calls that are not necessary for the requested feature.
-- Never claim cloud or file backup: production projects are local and this release has no export/import path.
+- Describe cloud sync as optional and local-first; never claim that WAV export can restore an editable project.
+- Email verification and recovery remain incomplete until production SMTP is configured.
+- Treat every sibling GitHub Pages project as trusted until Opusloops moves to a dedicated custom domain.
 
 ## Change discipline
 

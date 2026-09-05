@@ -23,7 +23,10 @@ These commitments describe how the Opusloops repository is intended to be mainta
 
 - Opusloops does not intentionally collect usage analytics or telemetry.
 - The installed PWA checks its GitHub Pages origin for updated application assets when it reconnects.
-- Projects and settings are stored in browser-managed local storage. There is no cloud copy or export/import path in the current release.
+- Projects and settings save first in browser-managed local storage. Invited, signed-in users can sync those project documents through Supabase; an application claim, an atomic sync boundary, and Row Level Security restrict access to the owning account.
+- Four-bar WAV export is rendered entirely on the device. Audio is not uploaded, and a WAV file is not an editable project backup.
+- Opusloops sends account and project-sync requests only to its dedicated Supabase project. It does not send loop audio or usage analytics.
+- Direct public account signup is disabled during early access. Email verification and password recovery remain unavailable until production SMTP is configured.
 - The core loop workflow does not require microphone, contacts, location, remote-control, or external AI-provider access.
 
 ## Maintenance

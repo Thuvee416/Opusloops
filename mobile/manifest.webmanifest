@@ -1,7 +1,7 @@
 {
   "name": "Opusloops",
   "short_name": "Opusloops",
-  "description": "A local, touch-first loop sketchbook powered by Web Audio.",
+  "description": "A dark, touch-first loop sketchbook with offline Web Audio, WAV export, and optional account sync.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

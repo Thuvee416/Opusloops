@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="frame-check-pending">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -7,16 +7,17 @@
     <meta name="color-scheme" content="dark" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self' https://heryvahetgzfalmuprbw.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <meta
       name="description"
-      content="Opusloops is a touch-first loop sketchbook that works offline in your browser."
+      content="Opusloops is a touch-first loop sketchbook with offline audio and private cloud saves."
     />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icons/icon-192.png" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
-    <link rel="stylesheet" href="./styles.css?v=13" />
+    <script src="./frame-guard.js?v=1"></script>
+    <link rel="stylesheet" href="./styles.css?v=16" />
     <title>Opusloops</title>
   </head>
   <body>
@@ -31,10 +32,17 @@
           <span>Opusloops</span>
         </button>
 
-        <button class="status-pill" id="save-status" type="button" data-view-target="projects" aria-label="Open saved projects">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span>Saved in browser</span>
-        </button>
+        <div class="topbar-actions">
+          <button class="status-pill" id="save-status" type="button" data-view-target="projects" aria-label="Open saved projects">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Saved on device</span>
+          </button>
+          <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
+          <button class="account-button" id="account-button" type="button" aria-label="Sign in to Opusloops">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
+            <span id="account-initial" hidden></span>
+          </button>
+        </div>
       </header>
 
       <main id="main-content">
@@ -58,7 +66,7 @@
             <div class="composer-footer">
               <span class="privacy-note">
                 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V7a4 4 0 0 1 8 0v2m-9 0h10v8H5V9Z" /></svg>
-                Stays in this browser
+                <span id="save-copy">Saved on this device</span>
               </span>
               <button class="send-button" type="submit" aria-label="Create loop">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-5 14-2.4-5.6L5 12Z" /></svg>
@@ -97,7 +105,7 @@
             <span class="principle-number">01</span>
             <div>
               <h2>Start with sound, not setup.</h2>
-              <p>No plugins, patching, accounts, or file management. Make the first eight bars useful, then shape them.</p>
+              <p>No plugins, patching, or file management. Make the first bars useful, then shape them.</p>
             </div>
           </aside>
         </section>
@@ -148,6 +156,21 @@
             </span>
             <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
           </button>
+
+          <button class="secondary-action export-action" id="export-audio-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" /></svg>
+            <span>Export four-bar WAV</span>
+          </button>
+          <div class="audio-export-ready" id="audio-export-ready" hidden>
+            <div>
+              <strong>WAV ready</strong>
+              <span id="audio-export-ready-copy"></span>
+            </div>
+            <div class="audio-export-actions">
+              <button class="secondary-action" id="share-audio-button" type="button" hidden>Share WAV</button>
+              <a class="secondary-action" id="download-audio-link">Save WAV</a>
+            </div>
+          </div>
         </section>
 
         <section class="view" id="view-mix" data-view="mix" aria-labelledby="mix-title" tabindex="-1">
@@ -163,13 +186,25 @@
         <section class="view" id="view-projects" data-view="projects" aria-labelledby="projects-title" tabindex="-1">
           <div class="page-heading projects-heading">
             <div>
-              <p class="eyebrow">On this device</p>
-              <h1 id="projects-title">Projects</h1>
+              <p class="eyebrow" id="projects-eyebrow">Device first</p>
+              <h1 id="projects-title">Your loops</h1>
             </div>
             <button class="primary-small" id="new-project-button" type="button">New</button>
           </div>
-          <p class="lede">Local by default. Projects stay in this browser and remain available offline.</p>
+          <p class="lede" id="projects-lede">Create and play offline. Sign in to privately sync your work across devices.</p>
           <div class="projects-list" id="projects-list"></div>
+
+          <aside class="account-card" id="account-card">
+            <span class="account-card-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
+            </span>
+            <div>
+              <p class="eyebrow" id="account-card-eyebrow">Private cloud sync</p>
+              <h2 id="account-card-title">Keep every loop with you.</h2>
+              <p id="account-card-copy">Sign in to bring your projects to another phone without giving up offline access.</p>
+            </div>
+            <button class="secondary-action" id="account-card-button" type="button">Sign in</button>
+          </aside>
 
           <aside class="offline-card" id="install-card">
             <div>
@@ -183,8 +218,8 @@
           <details class="about-details">
             <summary>About Opusloops</summary>
             <p>
-              Opusloops is a focused Web Audio sketchbook. Desktop plugin hosting, scripting,
-              remote-control servers, and local model downloads are intentionally excluded from this build.
+              Opusloops is a focused Web Audio sketchbook with optional private account sync.
+              Desktop plugin hosting, scripting, remote-control servers, and local model downloads are intentionally excluded.
             </p>
             <p class="fine-print">Independent open-source software, built for local sketches in your browser.</p>
           </details>
@@ -235,7 +270,59 @@
       </form>
     </dialog>
 
+    <dialog class="account-dialog" id="account-dialog" aria-labelledby="account-title">
+      <div class="dialog-handle" aria-hidden="true"></div>
+      <div class="account-dialog-inner">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow" id="account-eyebrow">Private cloud sync</p>
+            <h2 id="account-title">Sign in to Opusloops</h2>
+          </div>
+          <button class="icon-button" id="account-close-button" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <form id="account-form">
+          <p class="account-intro" id="account-intro">Your loops remain playable offline and sync privately when you are connected.</p>
+          <label for="account-email">Email</label>
+          <input id="account-email" name="email" type="email" inputmode="email" autocomplete="email" required />
+          <label for="account-password">Password</label>
+          <input id="account-password" name="password" type="password" autocomplete="current-password" minlength="8" required />
+          <div id="account-invite-field" hidden>
+            <label for="account-invite">Early-access invitation</label>
+            <input
+              id="account-invite"
+              name="invite"
+              type="text"
+              autocomplete="one-time-code"
+              autocapitalize="none"
+              spellcheck="false"
+              minlength="22"
+              maxlength="64"
+              pattern="[A-Za-z0-9_-]{22,64}"
+            />
+          </div>
+          <p class="form-error" id="account-error" role="alert" hidden></p>
+          <button class="primary-action" id="account-submit" type="submit">Sign in</button>
+          <button class="text-button account-switch" id="account-switch-button" type="button">Create an account</button>
+          <p class="form-note" id="account-note">At least 8 characters. Cloud saves are protected by your account.</p>
+        </form>
+
+        <section class="signed-in-panel" id="signed-in-panel" hidden>
+          <span class="signed-in-avatar" id="signed-in-avatar" aria-hidden="true">O</span>
+          <p class="eyebrow">Signed in</p>
+          <h3 id="signed-in-email">Your account</h3>
+          <p>Your projects save locally first, then sync privately whenever you are online.</p>
+          <button class="primary-action" id="sync-now-button" type="button">Sync now</button>
+          <button class="secondary-action" id="sign-out-button" type="button">Sign out</button>
+        </section>
+      </div>
+    </dialog>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=12" defer></script>
+    <script src="./config.js?v=1" defer></script>
+    <script src="./cloud-client.js?v=3" defer></script>
+    <script src="./app.js?v=16" defer></script>
   </body>
 </html>

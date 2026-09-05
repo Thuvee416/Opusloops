@@ -13,7 +13,7 @@ It may not be the right fit when you need:
 - A full desktop DAW or large multitrack recording environment
 - VST, Audio Unit, LV2, or other external plugin hosting
 - Detailed audio-driver, multi-output, or studio-hardware routing
-- Automatic cloud sync or collaboration
+- Real-time collaboration or shared team libraries
 - App Store or Play Store distribution
 
-Opusloops is under active development, and the current release has no cloud backup or file export. Report reproducible problems through the [issue tracker](https://github.com/Thuvee416/Opusloops/issues).
+Opusloops is under active development. It now provides optional private project sync and four-bar WAV export, but WAV files cannot be imported as editable projects. Report reproducible problems through the [issue tracker](https://github.com/Thuvee416/Opusloops/issues).

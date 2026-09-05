@@ -9,7 +9,7 @@
 
 <p align="center">Create · Arrange · Evolve</p>
 
-Opusloops is a calm, touch-first loop studio that runs as an installable mobile web app. Build patterns with Web Audio, arrange ideas, shape a compact mix, and keep projects on your device.
+Opusloops is a calm, touch-first loop studio that runs as an installable mobile web app. Build patterns with Web Audio, arrange ideas, shape a compact mix, export WAV audio, and optionally sync projects through a private account.
 
 <p align="center">
   <strong><a href="https://thuvee416.github.io/Opusloops/">Launch Opusloops</a></strong>
@@ -23,7 +23,8 @@ Opusloops is a calm, touch-first loop studio that runs as an installable mobile 
 - **Touch sequencer** — place and clear steps without desktop-sized controls
 - **Built-in loops and sounds** — powered by Web Audio, with no plugin scanning or installation
 - **Compact mixer** — balance levels and mute parts from a phone-sized surface
-- **Local projects** — save work in browser-managed storage on the current device
+- **Offline-first projects** — save instantly on the device, with private account sync across devices
+- **WAV export** — render a reproducible four-bar audio file directly in the browser
 - **Offline installability** — add the PWA to a home screen and reopen it after the first successful load
 - **Calm interface** — quiet hierarchy, warm neutrals, restrained motion, and one clear action at a time
 
@@ -40,6 +41,16 @@ python3 -m http.server 4173 --directory mobile
 ```
 
 Then open `http://localhost:4173`. Use a local server rather than opening `mobile/index.html` directly so the service worker and offline paths behave like production.
+
+The committed Supabase URL and publishable key are intentionally public client
+configuration. Access is enforced in Postgres with per-user Row Level Security;
+secret and service-role keys must never be shipped to the browser. Database
+migrations and operating notes live in [`supabase/`](supabase/).
+
+Account creation is invitation-only during early access. Supabase's direct
+public signup endpoint is disabled; an email-bound invitation creates an
+Opusloops-tagged account through the server-side function. Password recovery and
+email verification remain unavailable until production SMTP is configured.
 
 ## Production
 

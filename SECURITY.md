@@ -25,7 +25,13 @@ Treat browser-stored project data as untrusted input because extensions, develop
 
 ### Browser storage
 
-Projects are local to the browser. Clearing site data, private browsing, storage-pressure eviction, browser reset, or PWA uninstall can remove them. The current release has no cloud backup or file export, and the interface must state that boundary plainly. Destructive storage actions need explicit user confirmation.
+Projects save locally first. Clearing site data, private browsing, storage-pressure eviction, browser reset, or PWA uninstall can remove an unsigned-in project. Signed-in projects are reconciled with the user's private Supabase rows when the app reconnects. Account-scoped local caches must never be displayed after another user signs in. Destructive storage actions need explicit user confirmation and durable deletion tombstones.
+
+### Cloud identity and data
+
+The PWA may contain only the dedicated Supabase URL and publishable key. Secret, service-role, management, and database credentials stay outside the browser and repository. Direct public signup is disabled. Early-access accounts require an email-bound, single-use invitation and receive a fixed Opusloops application claim; the atomic project-sync function requires that claim in addition to an authenticated user ID. Every exposed project table must revoke anonymous and authenticated direct writes and retain explicit owner-only Row Level Security policies. Email verification and recovery mail require production SMTP before they can be treated as trusted identity signals.
+
+The current GitHub Pages deployment shares the `thuvee416.github.io` browser origin with the maintainer's other project sites. Account sessions and account-scoped device caches therefore assume those sibling sites are trusted. A dedicated custom domain is required before account access expands beyond controlled early access.
 
 ### Service worker and cache
 
@@ -41,7 +47,7 @@ This policy primarily covers the Opusloops PWA in `mobile/`, its deployment work
 
 ## Contributor checklist
 
-- Do not commit API keys, passwords, tokens, certificates, or private user content.
+- Do not commit secret or service-role API keys, passwords, tokens, certificates, or private user content. A reviewed Supabase publishable client key is the only exception.
 - Validate untrusted input and preserve bounds checks.
 - Release timers, audio nodes, event listeners, and other resources when their owning view or playback session ends.
 - Review service-worker scope, cache updates, and local-storage migrations.
