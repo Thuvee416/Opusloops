@@ -1,19 +1,23 @@
 :root {
-  --paper: #f7f4ec;
-  --paper-deep: #eee9dd;
-  --surface: #fffdf8;
-  --ink: #1d1c19;
-  --muted: #6d6a62;
-  --faint: #716d65;
-  --line: #ded9ce;
-  --line-strong: #c8c1b4;
-  --clay: #c76548;
-  --clay-dark: #9f4934;
-  --clay-soft: #f0d9cf;
-  --sage: #6f8068;
-  --blue: #677c8c;
-  --plum: #80677d;
-  --shadow: 0 16px 48px rgba(50, 42, 30, 0.09);
+  color-scheme: dark;
+  --paper: #171614;
+  --paper-deep: #0f0f0e;
+  --surface: #211f1c;
+  --surface-raised: #292621;
+  --ink: #f2ede4;
+  --muted: #bbb4aa;
+  --faint: #aaa298;
+  --line: #37332e;
+  --line-strong: #514a42;
+  --clay: #df8f70;
+  --clay-dark: #f0a98d;
+  --clay-soft: #3b2923;
+  --sage: #9bab90;
+  --blue: #85a0b0;
+  --plum: #a98da4;
+  --on-accent: #20130f;
+  --placeholder: #938c82;
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.34);
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-family: var(--sans);
@@ -56,7 +60,7 @@ button:focus-visible,
 textarea:focus-visible,
 [contenteditable="true"]:focus-visible,
 summary:focus-visible {
-  outline: 3px solid rgba(199, 101, 72, 0.35);
+  outline: 3px solid rgba(223, 143, 112, 0.62);
   outline-offset: 3px;
 }
 
@@ -71,7 +75,7 @@ summary {
   top: 8px;
   left: 8px;
   padding: 10px 14px;
-  color: white;
+  color: var(--paper-deep);
   background: var(--ink);
   border-radius: 8px;
   transform: translateY(-150%);
@@ -99,7 +103,7 @@ summary {
   min-height: 100dvh;
   margin: 0 auto;
   background:
-    radial-gradient(circle at 88% -5%, rgba(211, 137, 104, 0.11), transparent 30%),
+    radial-gradient(circle at 88% -5%, rgba(223, 143, 112, 0.13), transparent 32%),
     var(--paper);
 }
 
@@ -149,7 +153,7 @@ summary {
   min-height: 44px;
   padding: 0 12px;
   color: var(--muted);
-  background: rgba(255, 253, 248, 0.65);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 12px;
@@ -162,7 +166,7 @@ summary {
   margin-right: 7px;
   background: var(--sage);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(111, 128, 104, 0.13);
+  box-shadow: 0 0 0 3px rgba(155, 171, 144, 0.14);
 }
 
 main {
@@ -257,7 +261,7 @@ h2 {
 
 .composer:focus-within {
   border-color: var(--clay);
-  box-shadow: 0 18px 54px rgba(82, 51, 33, 0.12);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.42);
 }
 
 .composer textarea,
@@ -277,7 +281,7 @@ h2 {
 
 .composer textarea::placeholder,
 .refine-dialog textarea::placeholder {
-  color: #a09b91;
+  color: var(--placeholder);
 }
 
 .composer textarea:focus,
@@ -315,12 +319,12 @@ h2 {
   width: 48px;
   height: 48px;
   padding: 0;
-  color: white;
+  color: var(--on-accent);
   background: var(--clay);
   border: 0;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(159, 73, 52, 0.2);
+  box-shadow: 0 8px 22px rgba(223, 143, 112, 0.2);
 }
 
 .send-button:active,
@@ -425,13 +429,13 @@ h2 {
   height: 70px;
   padding: 13px;
   overflow: hidden;
-  background: #26231e;
+  background: #100f0e;
   border-radius: 12px;
 }
 
 .project-art span {
   width: 6px;
-  background: #df8b69;
+  background: var(--clay);
   border-radius: 9px;
 }
 
@@ -551,15 +555,16 @@ h2 {
   align-items: center;
   gap: 15px;
   padding: 14px;
-  background: #24221e;
+  background: #11100f;
+  border: 1px solid var(--line);
   border-radius: 18px;
-  box-shadow: 0 16px 34px rgba(31, 26, 20, 0.15);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
 }
 
 .play-button {
   width: 52px;
   height: 52px;
-  color: #28231e;
+  color: var(--on-accent);
   background: #f1a17e;
 }
 
@@ -575,7 +580,7 @@ h2 {
 .transport-label {
   display: block;
   margin-bottom: 4px;
-  color: #aaa59b;
+  color: #b9b2a8;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -642,7 +647,7 @@ h2 {
   max-width: 100%;
   min-width: 0;
   padding: 13px 12px 12px;
-  background: rgba(255, 253, 248, 0.65);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
   border: 1px solid var(--line);
   border-radius: 15px;
 }
@@ -717,7 +722,7 @@ h2 {
   width: 44px;
   height: 44px;
   padding: 0;
-  background: var(--paper-deep);
+  background: var(--surface-raised);
   border: 1px solid transparent;
   border-radius: 9px;
   cursor: pointer;
@@ -862,7 +867,7 @@ h2 {
 }
 
 .mute-button[aria-pressed="true"] {
-  color: white;
+  color: var(--paper-deep);
   background: var(--ink);
   border-color: var(--ink);
 }
@@ -891,7 +896,7 @@ h2 {
 
 .primary-action,
 .primary-small {
-  color: white;
+  color: var(--paper-deep);
   background: var(--ink);
   border: 1px solid var(--ink);
 }
@@ -975,7 +980,7 @@ h2 {
 .empty-state {
   padding: 38px 24px;
   text-align: center;
-  background: rgba(255, 253, 248, 0.55);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
   border: 1px dashed var(--line-strong);
   border-radius: 16px;
 }
@@ -996,7 +1001,8 @@ h2 {
   gap: 18px;
   margin-top: 36px;
   padding: 22px;
-  background: #e8e1d4;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
   border-radius: 18px;
 }
 
@@ -1013,7 +1019,7 @@ h2 {
 
 .offline-card .secondary-action {
   width: 100%;
-  background: rgba(255, 253, 248, 0.5);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .offline-card[hidden] {
@@ -1100,11 +1106,11 @@ h2 {
   background: var(--surface);
   border: 0;
   border-radius: 24px 24px 0 0;
-  box-shadow: 0 -20px 60px rgba(31, 25, 18, 0.2);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .refine-dialog::backdrop {
-  background: rgba(38, 32, 25, 0.32);
+  background: rgba(5, 5, 4, 0.68);
   backdrop-filter: blur(3px);
 }
 
@@ -1166,8 +1172,8 @@ h2 {
   left: 50%;
   max-width: calc(100% - 40px);
   padding: 11px 16px;
-  color: white;
-  background: #282621;
+  color: var(--paper-deep);
+  background: var(--ink);
   border-radius: 999px;
   font-size: 12px;
   font-weight: 650;
@@ -1194,7 +1200,7 @@ h2 {
     overflow: hidden;
     border: 1px solid var(--line-strong);
     border-radius: 24px;
-    box-shadow: 0 20px 70px rgba(45, 36, 25, 0.13);
+    box-shadow: 0 24px 78px rgba(0, 0, 0, 0.48);
   }
 
   .topbar {

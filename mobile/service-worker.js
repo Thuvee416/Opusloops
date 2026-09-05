@@ -1,10 +1,10 @@
 const CACHE_PREFIX = "opusloops-pwa-";
 const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
-const CACHE_NAME = `${CACHE_PREFIX}v13`;
+const CACHE_NAME = `${CACHE_PREFIX}v14`;
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=12",
+  "./styles.css?v=13",
   "./app.js?v=12",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
