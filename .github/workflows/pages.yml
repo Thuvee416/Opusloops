@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build:
     name: Validate mobile app
-    if: github.repository_owner == 'Thuvee416' && github.ref == 'refs/heads/main'
+    if: github.repository == 'Thuvee416/Opusloops' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -42,6 +42,7 @@ jobs:
 
           python3 - <<'PY'
           import json
+          import re
           from html.parser import HTMLParser
           from pathlib import Path
           from urllib.parse import unquote, urlsplit
@@ -65,24 +66,48 @@ jobs:
                           self.local_assets.append(value)
 
           root = Path("mobile")
+          root_resolved = root.resolve()
           index_path = root / "index.html"
           manifest_path = root / "manifest.webmanifest"
+          service_worker_path = root / "service-worker.js"
+
+          def local_path(reference, label):
+              parsed = urlsplit(reference)
+              if parsed.scheme or parsed.netloc or not parsed.path:
+                  return None
+              if parsed.path.startswith("/"):
+                  raise SystemExit(
+                      f"{label}: root-relative asset {reference!r} breaks on the /Opusloops/ Pages path"
+                  )
+              candidate = (root / unquote(parsed.path)).resolve()
+              try:
+                  candidate.relative_to(root_resolved)
+              except ValueError:
+                  raise SystemExit(f"{label}: asset path escapes mobile/: {reference!r}")
+              return candidate
+
           parser = PageParser()
-          parser.feed(index_path.read_text(encoding="utf-8"))
+          index_source = index_path.read_text(encoding="utf-8")
+          service_worker_source = service_worker_path.read_text(encoding="utf-8")
+          parser.feed(index_source)
           if not parser.has_viewport:
               raise SystemExit(f"{index_path}: mobile viewport metadata is required")
           if not parser.has_manifest:
               raise SystemExit(f"{index_path}: the PWA manifest must be linked")
 
-          for reference in parser.local_assets:
-              parsed = urlsplit(reference)
-              if parsed.scheme or parsed.netloc or not parsed.path:
-                  continue
-              if parsed.path.startswith("/"):
+          for asset in ("styles.css", "app.js"):
+              pattern = re.compile(rf"\./{re.escape(asset)}\?v=(\d+)")
+              index_match = pattern.search(index_source)
+              worker_match = pattern.search(service_worker_source)
+              if not index_match or not worker_match or index_match.group(1) != worker_match.group(1):
                   raise SystemExit(
-                      f"{index_path}: root-relative asset {reference!r} breaks on the /Opusloops-Mobile/ Pages path"
+                      f"{asset}: index and service-worker asset versions must exist and match"
                   )
-              asset_path = root / unquote(parsed.path)
+
+          for reference in parser.local_assets:
+              asset_path = local_path(reference, index_path)
+              if asset_path is None:
+                  continue
               if not asset_path.is_file():
                   raise SystemExit(f"{index_path}: referenced asset is missing: {asset_path}")
 
@@ -93,19 +118,18 @@ jobs:
           if manifest["name"] != "Opusloops" or manifest["short_name"] != "Opusloops":
               raise SystemExit(f"{manifest_path}: PWA name and short_name must both be Opusloops")
 
-          for field in ("start_url", "scope"):
+          for field in ("id", "start_url", "scope"):
               value = manifest.get(field)
-              if value and (value.startswith("/") or urlsplit(value).scheme or urlsplit(value).netloc):
+              if value != "./":
                   raise SystemExit(
-                      f"{manifest_path}: {field} must be relative so it works under /Opusloops-Mobile/, got {value!r}"
+                      f"{manifest_path}: {field} must be './' so it stays within /Opusloops/, got {value!r}"
                   )
 
           for icon in manifest["icons"]:
               source = icon.get("src", "").split("?", 1)[0].split("#", 1)[0]
-              parsed = urlsplit(source)
-              if not source or source.startswith("/") or parsed.scheme or parsed.netloc:
+              icon_path = local_path(source, manifest_path) if source else None
+              if icon_path is None:
                   raise SystemExit(f"{manifest_path}: icons must use relative local paths, got {source!r}")
-              icon_path = root / unquote(parsed.path)
               if not icon_path.is_file() or icon_path.stat().st_size == 0:
                   raise SystemExit(f"{manifest_path}: referenced icon is missing: {icon_path}")
           PY

@@ -1,10 +1,11 @@
-const CACHE_PREFIX = "opusloops-mobile-";
-const CACHE_NAME = `${CACHE_PREFIX}v11`;
+const CACHE_PREFIX = "opusloops-pwa-";
+const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
+const CACHE_NAME = `${CACHE_PREFIX}v13`;
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=11",
-  "./app.js?v=11",
+  "./styles.css?v=12",
+  "./app.js?v=12",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -23,7 +24,12 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+            .filter(
+              (key) =>
+                key !== CACHE_NAME &&
+                (key.startsWith(CACHE_PREFIX) ||
+                  RETIRED_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix)))
+            )
             .map((key) => caches.delete(key))
         )
       )
@@ -33,6 +39,12 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+
+  const requestUrl = new URL(event.request.url);
+  const scopeUrl = new URL(self.registration.scope);
+  const isInAppScope =
+    requestUrl.origin === scopeUrl.origin && requestUrl.pathname.startsWith(scopeUrl.pathname);
+  if (!isInAppScope) return;
 
   event.respondWith(
     (async () => {

@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Thuvee416/Opusloops-Mobile/actions/workflows/pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/Thuvee416/Opusloops-Mobile/pages.yml?branch=main&label=production" alt="Production deployment"></a>
-  <a href="https://github.com/Thuvee416/Opusloops-Mobile/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0"></a>
+  <a href="https://github.com/Thuvee416/Opusloops/actions/workflows/pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/Thuvee416/Opusloops/pages.yml?branch=main&label=production" alt="Production deployment"></a>
+  <a href="https://github.com/Thuvee416/Opusloops/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">Create · Arrange · Evolve</p>
@@ -12,11 +12,11 @@
 Opusloops is a calm, touch-first loop studio that runs as an installable mobile web app. Build patterns with Web Audio, arrange ideas, shape a compact mix, and keep projects on your device.
 
 <p align="center">
-  <strong><a href="https://thuvee416.github.io/Opusloops-Mobile/">Launch Opusloops</a></strong>
+  <strong><a href="https://thuvee416.github.io/Opusloops/">Launch Opusloops</a></strong>
 </p>
 
 - **English** | [简体中文](README_CN.md)
-- [Issues](https://github.com/Thuvee416/Opusloops-Mobile/issues) · [Source](https://github.com/Thuvee416/Opusloops-Mobile)
+- [Issues](https://github.com/Thuvee416/Opusloops/issues) · [Source](https://github.com/Thuvee416/Opusloops)
 
 ## Mobile-first by design
 
@@ -34,8 +34,8 @@ Opusloops does not require an App Store or Play Store download. Open the product
 The production PWA lives in [`mobile/`](mobile/). It has no package-manager or native-toolchain requirement.
 
 ```bash
-git clone https://github.com/Thuvee416/Opusloops-Mobile.git
-cd Opusloops-Mobile
+git clone https://github.com/Thuvee416/Opusloops.git
+cd Opusloops
 python3 -m http.server 4173 --directory mobile
 ```
 
@@ -43,7 +43,7 @@ Then open `http://localhost:4173`. Use a local server rather than opening `mobil
 
 ## Production
 
-Pushes to `main` deploy the contents of `mobile/` to [https://thuvee416.github.io/Opusloops-Mobile/](https://thuvee416.github.io/Opusloops-Mobile/). A green workflow proves deployment; a fresh production fetch is still required to verify the live revision.
+Pushes to `main` deploy the contents of `mobile/` to [https://thuvee416.github.io/Opusloops/](https://thuvee416.github.io/Opusloops/). A green workflow proves deployment; a fresh production fetch is still required to verify the live revision.
 
 ## Legacy desktop source
 

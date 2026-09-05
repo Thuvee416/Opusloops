@@ -21,8 +21,8 @@ Avoid mixing unrelated changes, broad rewrites, or new third-party service depen
 The production app is a static PWA in `mobile/`. A local HTTP server is enough to run it:
 
 ```bash
-git clone https://github.com/Thuvee416/Opusloops-Mobile.git
-cd Opusloops-Mobile
+git clone https://github.com/Thuvee416/Opusloops.git
+cd Opusloops
 python3 -m http.server 4173 --directory mobile
 ```
 

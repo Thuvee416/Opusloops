@@ -1,6 +1,6 @@
 # GitHub Copilot Instructions for Opusloops
 
-Opusloops is a mobile-first, installable web loop studio. The production application lives in `mobile/` and deploys to `https://thuvee416.github.io/Opusloops-Mobile/`.
+Opusloops is a mobile-first, installable web loop studio. The production application lives in `mobile/` and deploys to `https://thuvee416.github.io/Opusloops/`.
 
 The repository also retains a large GPL-licensed C++ desktop codebase from its upstream history. Treat that code as legacy/non-production unless an issue explicitly scopes migration or removal work there.
 
@@ -53,7 +53,7 @@ Do not reintroduce desktop-only assumptions into `mobile/`, including:
 
 ### PWA and deployment
 
-- All production paths must work under the `/Opusloops-Mobile/` GitHub Pages base path.
+- All production paths must work under the `/Opusloops/` GitHub Pages base path.
 - Keep the web manifest, icons, start URL, scope, and service-worker paths aligned.
 - Version caches deliberately and remove obsolete caches during activation.
 - Do not cache failed or opaque responses as if they were valid assets.

@@ -20,7 +20,7 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Open https://thuvee416.github.io/Opusloops-Mobile/
+        1. Open https://thuvee416.github.io/Opusloops/
         2. Tap ...
         3. Observe ...
     validations:

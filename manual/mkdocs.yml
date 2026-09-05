@@ -30,8 +30,8 @@ theme:
   icon:
     repo: fontawesome/brands/github
 
-repo_url: https://github.com/Thuvee416/Opusloops-Mobile
-repo_name: Thuvee416/Opusloops-Mobile
+repo_url: https://github.com/Thuvee416/Opusloops
+repo_name: Thuvee416/Opusloops
 
 nav:
   - Home: index.md
@@ -47,13 +47,13 @@ nav:
   - Legacy Desktop Compatibility: legacy-desktop.md
 
 extra:
-  homepage: https://thuvee416.github.io/Opusloops-Mobile/
+  homepage: https://thuvee416.github.io/Opusloops/
   social:
     - icon: fontawesome/solid/play
-      link: https://thuvee416.github.io/Opusloops-Mobile/
+      link: https://thuvee416.github.io/Opusloops/
       name: Open Opusloops
     - icon: fontawesome/brands/github
-      link: https://github.com/Thuvee416/Opusloops-Mobile
+      link: https://github.com/Thuvee416/Opusloops
       name: Source on GitHub
 
 extra_css:

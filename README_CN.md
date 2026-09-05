@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Thuvee416/Opusloops-Mobile/actions/workflows/pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/Thuvee416/Opusloops-Mobile/pages.yml?branch=main&label=production" alt="生产部署"></a>
-  <a href="https://github.com/Thuvee416/Opusloops-Mobile/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0"></a>
+  <a href="https://github.com/Thuvee416/Opusloops/actions/workflows/pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/Thuvee416/Opusloops/pages.yml?branch=main&label=production" alt="生产部署"></a>
+  <a href="https://github.com/Thuvee416/Opusloops/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">创作 · 编排 · 演进</p>
@@ -12,11 +12,11 @@
 Opusloops 是一款安静、克制、触控优先的循环音乐工作室，以可安装的移动 Web 应用运行。你可以用 Web Audio 编写节奏、排列灵感、完成轻量混音，并把工程保存在自己的设备上。
 
 <p align="center">
-  <strong><a href="https://thuvee416.github.io/Opusloops-Mobile/">打开 Opusloops</a></strong>
+  <strong><a href="https://thuvee416.github.io/Opusloops/">打开 Opusloops</a></strong>
 </p>
 
 - [English](README.md) | **简体中文**
-- [问题反馈](https://github.com/Thuvee416/Opusloops-Mobile/issues) · [源代码](https://github.com/Thuvee416/Opusloops-Mobile)
+- [问题反馈](https://github.com/Thuvee416/Opusloops/issues) · [源代码](https://github.com/Thuvee416/Opusloops)
 
 ## 为移动端而设计
 
@@ -34,8 +34,8 @@ Opusloops 不需要通过 App Store 或 Play Store 下载。请在受支持的�
 生产 PWA 位于 [`mobile/`](mobile/)，无需包管理器或原生工具链。
 
 ```bash
-git clone https://github.com/Thuvee416/Opusloops-Mobile.git
-cd Opusloops-Mobile
+git clone https://github.com/Thuvee416/Opusloops.git
+cd Opusloops
 python3 -m http.server 4173 --directory mobile
 ```
 
@@ -43,7 +43,7 @@ python3 -m http.server 4173 --directory mobile
 
 ## 生产环境
 
-推送到 `main` 后，`mobile/` 的内容会部署至 [https://thuvee416.github.io/Opusloops-Mobile/](https://thuvee416.github.io/Opusloops-Mobile/)。工作流成功代表部署完成；仍需重新请求生产地址，才能确认线上版本。
+推送到 `main` 后，`mobile/` 的内容会部署至 [https://thuvee416.github.io/Opusloops/](https://thuvee416.github.io/Opusloops/)。工作流成功代表部署完成；仍需重新请求生产地址，才能确认线上版本。
 
 ## 旧版桌面源代码
 

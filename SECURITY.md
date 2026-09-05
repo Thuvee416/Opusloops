@@ -8,7 +8,7 @@ Opusloops is in active pre-1.0 development. Security fixes are applied to the cu
 
 Do not open a public issue for a suspected vulnerability.
 
-Use GitHub's private vulnerability reporting flow for the [Opusloops repository](https://github.com/Thuvee416/Opusloops-Mobile/security/advisories/new). Include:
+Use GitHub's private vulnerability reporting flow for the [Opusloops repository](https://github.com/Thuvee416/Opusloops/security/advisories/new). Include:
 
 - A clear description and likely impact
 - Affected versions, platforms, and configurations
@@ -29,7 +29,7 @@ Projects are local to the browser. Clearing site data, private browsing, storage
 
 ### Service worker and cache
 
-The service worker controls offline application code. Restrict it to the `/Opusloops-Mobile/` scope, cache only expected same-origin assets, version caches deliberately, and delete obsolete Opusloops caches during activation. Never treat a failed response as a valid cached application asset.
+The service worker controls offline application code. Restrict it to the `/Opusloops/` scope, cache only expected same-origin assets, version caches deliberately, and delete obsolete Opusloops caches during activation. Never treat a failed response as a valid cached application asset.
 
 ### Web Audio
 

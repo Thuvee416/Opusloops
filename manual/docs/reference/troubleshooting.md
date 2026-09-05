@@ -2,7 +2,7 @@
 
 ## The app does not load
 
-1. Confirm you opened [the production HTTPS URL](https://thuvee416.github.io/Opusloops-Mobile/).
+1. Confirm you opened [the production HTTPS URL](https://thuvee416.github.io/Opusloops/).
 2. Reload once while connected to the network.
 3. Disable content blockers for the site temporarily.
 4. Update the browser and retry.
@@ -32,7 +32,7 @@ Reconnect and complete one full load, then reopen the installed app. A private t
 
 ## Report a problem
 
-Open an [Opusloops issue](https://github.com/Thuvee416/Opusloops-Mobile/issues/new) with:
+Open an [Opusloops issue](https://github.com/Thuvee416/Opusloops/issues/new) with:
 
 - Device and operating-system version
 - Browser name and version

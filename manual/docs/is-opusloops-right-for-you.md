@@ -16,4 +16,4 @@ It may not be the right fit when you need:
 - Automatic cloud sync or collaboration
 - App Store or Play Store distribution
 
-Opusloops is under active development, and the current release has no cloud backup or file export. Report reproducible problems through the [issue tracker](https://github.com/Thuvee416/Opusloops-Mobile/issues).
+Opusloops is under active development, and the current release has no cloud backup or file export. Report reproducible problems through the [issue tracker](https://github.com/Thuvee416/Opusloops/issues).

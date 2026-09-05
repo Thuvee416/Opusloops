@@ -4,7 +4,7 @@ Opusloops is a mobile web app. It does not require an App Store or Play Store do
 
 ## Open the production app
 
-Visit [https://thuvee416.github.io/Opusloops-Mobile/](https://thuvee416.github.io/Opusloops-Mobile/) in a modern mobile browser with Web Audio and service-worker support.
+Visit [https://thuvee416.github.io/Opusloops/](https://thuvee416.github.io/Opusloops/) in a modern mobile browser with Web Audio and service-worker support.
 
 The first load requires a network connection. Wait until the interface is ready before installing so the app shell can be cached for offline use.
 

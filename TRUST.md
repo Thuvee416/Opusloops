@@ -36,4 +36,4 @@ These commitments describe how the Opusloops repository is intended to be mainta
 
 The production target is a modern mobile browser with Web Audio, service workers, and local storage. iPhone and iPad installation uses Safari's home-screen flow; Android installation uses a compatible browser's PWA flow. Opusloops makes no App Store or Play Store availability claim.
 
-Questions about these commitments can be raised in the [Opusloops issue tracker](https://github.com/Thuvee416/Opusloops-Mobile/issues).
+Questions about these commitments can be raised in the [Opusloops issue tracker](https://github.com/Thuvee416/Opusloops/issues).
