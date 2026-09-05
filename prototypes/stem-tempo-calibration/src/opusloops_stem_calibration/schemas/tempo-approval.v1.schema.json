@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opusloops.com/schemas/tempo-approval.v1.schema.json",
+  "title": "Opusloops tempo-map approval v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "approval_id",
+    "approved_at",
+    "approved_by",
+    "notice",
+    "upstream",
+    "decision",
+    "confirmations"
+  ],
+  "properties": {
+    "schema_version": { "const": "opusloops.tempo-approval.v1" },
+    "approval_id": { "$ref": "#/$defs/identifier" },
+    "approved_at": { "type": "string", "format": "date-time" },
+    "approved_by": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "\\S"
+    },
+    "notice": { "const": "No audio has been altered yet." },
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_artifact",
+        "analysis_sha256",
+        "reference_sha256",
+        "click_audition",
+        "tempo_grid"
+      ],
+      "properties": {
+        "analysis_artifact": { "$ref": "#/$defs/safePath" },
+        "analysis_sha256": { "$ref": "#/$defs/sha256" },
+        "reference_sha256": { "$ref": "#/$defs/sha256" },
+        "click_audition": { "$ref": "#/$defs/artifact" },
+        "tempo_grid": { "$ref": "#/$defs/artifact" }
+      }
+    },
+    "decision": { "$ref": "#/$defs/decision" },
+    "confirmations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "click_auditioned",
+        "beat_grid_reviewed",
+        "meter_and_first_downbeat_reviewed",
+        "tempo_octave_reviewed",
+        "flagged_regions_reviewed",
+        "target_and_mode_reviewed",
+        "shared_map_for_all_stems",
+        "originals_unchanged"
+      ],
+      "properties": {
+        "click_auditioned": { "const": true },
+        "beat_grid_reviewed": { "const": true },
+        "meter_and_first_downbeat_reviewed": { "const": true },
+        "tempo_octave_reviewed": { "const": true },
+        "flagged_regions_reviewed": { "const": true },
+        "target_and_mode_reviewed": { "const": true },
+        "shared_map_for_all_stems": { "const": true },
+        "originals_unchanged": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "safePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/safePath" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_frame", "target_frame", "kind"],
+      "properties": {
+        "source_frame": { "type": "integer", "minimum": 0 },
+        "target_frame": { "type": "integer", "minimum": 0 },
+        "kind": {
+          "enum": [
+            "timeline-origin",
+            "first-downbeat",
+            "four-bar",
+            "beat",
+            "partial-outro",
+            "timeline-end",
+            "user-bar"
+          ]
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "map_algorithm_version",
+        "mode",
+        "meter",
+        "first_downbeat_seconds",
+        "tempo_octave",
+        "target_bpm",
+        "sample_rate",
+        "total_source_frames",
+        "total_target_frames",
+        "anchors",
+        "notes"
+      ],
+      "properties": {
+        "map_algorithm_version": { "const": "opusloops.shared-tempo-map.v1" },
+        "mode": { "enum": ["musical-4bar", "rigid-beat", "no-conform"] },
+        "meter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["numerator", "denominator"],
+          "properties": {
+            "numerator": { "type": "integer", "minimum": 1, "maximum": 32 },
+            "denominator": { "enum": [1, 2, 4, 8, 16, 32] }
+          }
+        },
+        "first_downbeat_seconds": { "type": "number", "minimum": 0 },
+        "tempo_octave": { "enum": ["half", "normal", "double", "custom"] },
+        "target_bpm": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "number", "minimum": 20, "maximum": 400 }
+          ]
+        },
+        "sample_rate": { "type": "integer", "minimum": 8000, "maximum": 384000 },
+        "total_source_frames": { "type": "integer", "minimum": 1 },
+        "total_target_frames": { "type": "integer", "minimum": 1 },
+        "anchors": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/anchor" }
+        },
+        "notes": { "type": "string", "maxLength": 4000 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "no-conform" } } },
+          "then": { "properties": { "target_bpm": { "type": "null" } } },
+          "else": { "properties": { "target_bpm": { "type": "number" } } }
+        }
+      ]
+    }
+  }
+}

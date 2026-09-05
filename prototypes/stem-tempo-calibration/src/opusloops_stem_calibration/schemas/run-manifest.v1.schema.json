@@ -1,0 +1,557 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opusloops.com/schemas/run-manifest.v1.schema.json",
+  "title": "Opusloops stem calibration run manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "created_at",
+    "updated_at",
+    "repository",
+    "host",
+    "source_archive",
+    "policy",
+    "entries",
+    "audio_assets",
+    "inspection_snapshot",
+    "analysis_selection",
+    "analysis",
+    "tempo_map",
+    "renders",
+    "metrics",
+    "toolchain",
+    "events"
+  ],
+  "properties": {
+    "schema_version": { "const": "opusloops.run-manifest.v1" },
+    "run_id": { "$ref": "#/$defs/identifier" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "repository": { "$ref": "#/$defs/repository" },
+    "host": { "$ref": "#/$defs/host" },
+    "source_archive": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sourceArchive" }]
+    },
+    "policy": { "$ref": "#/$defs/policy" },
+    "entries": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/archiveEntry" }
+    },
+    "audio_assets": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/audioAsset" }
+    },
+    "inspection_snapshot": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifact" }]
+    },
+    "analysis_selection": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/approvalReference" }]
+    },
+    "analysis": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/analysisRecord" }]
+    },
+    "tempo_map": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/tempoMapRecord" }]
+    },
+    "renders": {
+      "oneOf": [
+        { "type": "array", "maxItems": 0 },
+        {
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "#/$defs/linkedRenderResult" },
+            { "$ref": "#/$defs/independentRenderResult" }
+          ],
+          "items": false,
+          "minItems": 2
+        }
+      ]
+    },
+    "metrics": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/metricsRecord" }]
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "signalsmith_renderer": { "$ref": "#/$defs/rendererToolchain" }
+      }
+    },
+    "events": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/eventJournalAnchor" }]
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$"
+    },
+    "renderAttemptId": {
+      "type": "string",
+      "pattern": "^render-[0-9a-f]{32}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+        },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "eventJournalAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "entries",
+        "bytes_at_anchor",
+        "journal_sha256_at_anchor",
+        "head_event_sha256"
+      ],
+      "properties": {
+        "path": { "const": "events.jsonl" },
+        "entries": { "type": "integer", "minimum": 1 },
+        "bytes_at_anchor": { "type": "integer", "minimum": 1 },
+        "journal_sha256_at_anchor": { "$ref": "#/$defs/sha256" },
+        "head_event_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "dirty"],
+      "properties": {
+        "commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{7,64}$"
+        },
+        "dirty": { "type": ["boolean", "null"] }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "os_release", "machine", "processor", "cpu_count", "gpu"],
+      "properties": {
+        "os": { "type": "string" },
+        "os_release": { "type": "string" },
+        "machine": { "type": "string" },
+        "processor": { "type": ["string", "null"] },
+        "cpu_count": { "type": ["integer", "null"], "minimum": 1 },
+        "gpu": { "type": ["string", "null"] }
+      }
+    },
+    "sourceArchive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "original_name",
+        "bytes",
+        "sha256",
+        "zip_comment",
+        "central_directory_sha256",
+        "inventory_sha256"
+      ],
+      "properties": {
+        "original_name": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "zip_comment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["encoding", "value"],
+          "properties": {
+            "encoding": { "const": "base64" },
+            "value": { "type": "string", "contentEncoding": "base64" }
+          }
+        },
+        "central_directory_sha256": { "$ref": "#/$defs/sha256" },
+        "inventory_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "approvalReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact", "upstream"],
+      "properties": {
+        "artifact": { "$ref": "#/$defs/artifact" },
+        "upstream": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "run_manifest_sha256",
+            "source_archive_sha256",
+            "inventory_sha256"
+          ],
+          "properties": {
+            "run_manifest_sha256": { "$ref": "#/$defs/sha256" },
+            "source_archive_sha256": { "$ref": "#/$defs/sha256" },
+            "inventory_sha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      }
+    },
+    "analysisArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary", "diagnostics"],
+      "properties": {
+        "primary": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact" }
+        },
+        "diagnostics": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/artifact" }
+            }
+          }
+        }
+      }
+    },
+    "analysisRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt_id", "artifact", "reference", "grid_template", "artifacts"],
+      "properties": {
+        "attempt_id": { "$ref": "#/$defs/identifier" },
+        "artifact": { "$ref": "#/$defs/artifact" },
+        "reference": { "$ref": "#/$defs/artifact" },
+        "grid_template": { "$ref": "#/$defs/artifact" },
+        "artifacts": { "$ref": "#/$defs/analysisArtifacts" }
+      }
+    },
+    "tempoMapRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval", "decision"],
+      "properties": {
+        "approval": { "$ref": "#/$defs/artifact" },
+        "decision": {
+          "$ref": "https://opusloops.com/schemas/tempo-approval.v1.schema.json#/$defs/decision"
+        }
+      }
+    },
+    "sha256Map": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        "^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "nativeConsumed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan_sha256", "stems_tsv_sha256", "map_tsv_sha256", "stem_sha256s"],
+      "properties": {
+        "plan_sha256": { "$ref": "#/$defs/sha256" },
+        "stems_tsv_sha256": { "$ref": "#/$defs/sha256" },
+        "map_tsv_sha256": { "$ref": "#/$defs/sha256" },
+        "stem_sha256s": { "$ref": "#/$defs/sha256Map" }
+      }
+    },
+    "verifiedInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_sha256",
+        "plan_sha256",
+        "map_sha256",
+        "stems_tsv_sha256",
+        "map_tsv_sha256",
+        "binding_sha256",
+        "stem_sha256s",
+        "native_consumed"
+      ],
+      "properties": {
+        "approval_sha256": { "$ref": "#/$defs/sha256" },
+        "plan_sha256": { "$ref": "#/$defs/sha256" },
+        "map_sha256": { "$ref": "#/$defs/sha256" },
+        "stems_tsv_sha256": { "$ref": "#/$defs/sha256" },
+        "map_tsv_sha256": { "$ref": "#/$defs/sha256" },
+        "binding_sha256": { "$ref": "#/$defs/sha256" },
+        "stem_sha256s": { "$ref": "#/$defs/sha256Map" },
+        "native_consumed": { "$ref": "#/$defs/nativeConsumed" }
+      }
+    },
+    "inputArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding", "stems_tsv", "map_tsv"],
+      "properties": {
+        "binding": { "$ref": "#/$defs/artifact" },
+        "stems_tsv": { "$ref": "#/$defs/artifact" },
+        "map_tsv": { "$ref": "#/$defs/artifact" }
+      }
+    },
+    "renderResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_id",
+        "engine",
+        "version",
+        "mode",
+        "source_frames",
+        "target_frames",
+        "stem_count",
+        "plan_sha256",
+        "stems_tsv_sha256",
+        "map_tsv_sha256",
+        "stem_sha256s",
+        "wall_seconds",
+        "peak_rss_bytes",
+        "verified_inputs",
+        "input_artifacts",
+        "artifacts"
+      ],
+      "properties": {
+        "attempt_id": { "$ref": "#/$defs/renderAttemptId" },
+        "engine": { "const": "signalsmith-stretch" },
+        "version": { "const": "1.3.2" },
+        "mode": { "enum": ["linked", "independent"] },
+        "source_frames": { "type": "integer", "minimum": 1 },
+        "target_frames": { "type": "integer", "minimum": 1 },
+        "stem_count": { "type": "integer", "minimum": 1 },
+        "plan_sha256": { "$ref": "#/$defs/sha256" },
+        "stems_tsv_sha256": { "$ref": "#/$defs/sha256" },
+        "map_tsv_sha256": { "$ref": "#/$defs/sha256" },
+        "stem_sha256s": { "$ref": "#/$defs/sha256Map" },
+        "wall_seconds": { "type": "number", "minimum": 0 },
+        "peak_rss_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "verified_inputs": { "$ref": "#/$defs/verifiedInputs" },
+        "input_artifacts": { "$ref": "#/$defs/inputArtifacts" },
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/artifact" }
+        }
+      }
+    },
+    "linkedRenderResult": {
+      "allOf": [
+        { "$ref": "#/$defs/renderResult" },
+        { "properties": { "mode": { "const": "linked" } } }
+      ]
+    },
+    "independentRenderResult": {
+      "allOf": [
+        { "$ref": "#/$defs/renderResult" },
+        { "properties": { "mode": { "const": "independent" } } }
+      ]
+    },
+    "metricsRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt_id", "artifact", "gate_b_sha256"],
+      "properties": {
+        "attempt_id": { "$ref": "#/$defs/renderAttemptId" },
+        "artifact": { "$ref": "#/$defs/artifact" },
+        "gate_b_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "externalFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable_path", "bytes", "sha256"],
+      "properties": {
+        "executable_path": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "rendererToolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine", "version", "binary", "modes"],
+      "properties": {
+        "engine": { "const": "signalsmith-stretch" },
+        "version": { "const": "1.3.2" },
+        "binary": { "$ref": "#/$defs/externalFile" },
+        "modes": {
+          "type": "array",
+          "prefixItems": [{ "const": "linked" }, { "const": "independent" }],
+          "items": false,
+          "minItems": 2
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "max_archive_bytes",
+        "max_total_entries",
+        "max_audio_entries",
+        "max_entry_compressed_bytes",
+        "max_entry_uncompressed_bytes",
+        "max_aggregate_compressed_bytes",
+        "max_aggregate_uncompressed_bytes",
+        "max_compression_ratio",
+        "scratch_space_multiplier",
+        "max_audio_duration_seconds",
+        "max_channels_per_stem",
+        "max_decoded_channels",
+        "max_audio_streams_per_file",
+        "canonical_sample_rate",
+        "canonical_sample_width_bytes",
+        "silence_epsilon",
+        "copy_chunk_bytes",
+        "max_probe_output_bytes",
+        "probe_timeout_seconds",
+        "decode_timeout_seconds",
+        "max_subprocess_memory_bytes",
+        "max_subprocess_cpu_seconds",
+        "max_member_name_bytes",
+        "max_path_component_bytes",
+        "allowed_audio_extensions",
+        "rejected_archive_extensions",
+        "allowed_zip_compression_methods"
+      ],
+      "properties": {
+        "version": { "const": "policy.v1" },
+        "max_archive_bytes": { "type": "integer", "minimum": 1 },
+        "max_total_entries": { "type": "integer", "minimum": 1 },
+        "max_audio_entries": { "type": "integer", "minimum": 1 },
+        "max_entry_compressed_bytes": { "type": "integer", "minimum": 1 },
+        "max_entry_uncompressed_bytes": { "type": "integer", "minimum": 1 },
+        "max_aggregate_compressed_bytes": { "type": "integer", "minimum": 1 },
+        "max_aggregate_uncompressed_bytes": { "type": "integer", "minimum": 1 },
+        "max_compression_ratio": { "type": "number", "minimum": 1 },
+        "scratch_space_multiplier": { "type": "number", "minimum": 1 },
+        "max_audio_duration_seconds": { "type": "number", "exclusiveMinimum": 0 },
+        "max_channels_per_stem": { "type": "integer", "minimum": 1 },
+        "max_decoded_channels": { "type": "integer", "minimum": 1 },
+        "max_audio_streams_per_file": { "type": "integer", "minimum": 1 },
+        "canonical_sample_rate": { "const": 48000 },
+        "canonical_sample_width_bytes": { "const": 4 },
+        "silence_epsilon": { "type": "number", "minimum": 0, "exclusiveMaximum": 1 },
+        "copy_chunk_bytes": { "type": "integer", "minimum": 1 },
+        "max_probe_output_bytes": { "type": "integer", "minimum": 1 },
+        "probe_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+        "decode_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+        "max_subprocess_memory_bytes": { "type": "integer", "minimum": 1 },
+        "max_subprocess_cpu_seconds": { "type": "integer", "minimum": 1 },
+        "max_member_name_bytes": { "type": "integer", "minimum": 1 },
+        "max_path_component_bytes": { "type": "integer", "minimum": 1 },
+        "allowed_audio_extensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^\\.[a-z0-9]+$" }
+        },
+        "rejected_archive_extensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^\\.[a-z0-9]+$" }
+        },
+        "allowed_zip_compression_methods": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "archiveEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "original_name",
+        "normalized_name",
+        "compressed_bytes",
+        "uncompressed_bytes",
+        "crc32",
+        "compression_method",
+        "sha256",
+        "outcome",
+        "reason"
+      ],
+      "properties": {
+        "asset_id": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/identifier" }]
+        },
+        "original_name": { "type": "string" },
+        "normalized_name": { "type": ["string", "null"] },
+        "compressed_bytes": { "type": "integer", "minimum": 0 },
+        "uncompressed_bytes": { "type": "integer", "minimum": 0 },
+        "crc32": { "type": "string", "pattern": "^[0-9a-f]{8}$" },
+        "compression_method": { "type": "integer", "minimum": 0 },
+        "sha256": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+        },
+        "outcome": { "enum": ["accepted", "ignored", "rejected"] },
+        "reason": { "type": ["string", "null"] }
+      }
+    },
+    "audioAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "original_name",
+        "normalized_name",
+        "codec",
+        "profile",
+        "tags",
+        "time_base",
+        "first_packet_timestamp",
+        "skip_samples",
+        "discard_padding",
+        "sample_rate",
+        "channels",
+        "duration_seconds",
+        "decoded_frames",
+        "timeline_offset_frames",
+        "canonical_pcm",
+        "probe",
+        "decode"
+      ],
+      "properties": {
+        "asset_id": { "$ref": "#/$defs/identifier" },
+        "original_name": { "type": "string", "minLength": 1 },
+        "normalized_name": { "type": "string", "minLength": 1 },
+        "codec": { "type": "string", "minLength": 1 },
+        "profile": { "type": ["string", "null"] },
+        "tags": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "time_base": { "type": ["string", "null"] },
+        "first_packet_timestamp": { "type": ["number", "null"] },
+        "skip_samples": { "type": "integer", "minimum": 0 },
+        "discard_padding": { "type": "integer", "minimum": 0 },
+        "sample_rate": { "type": "integer", "minimum": 1 },
+        "channels": { "type": "integer", "minimum": 1 },
+        "duration_seconds": { "type": "number", "exclusiveMinimum": 0 },
+        "decoded_frames": { "type": "integer", "minimum": 1 },
+        "timeline_offset_frames": { "type": "integer" },
+        "canonical_pcm": { "$ref": "#/$defs/artifact" },
+        "probe": { "type": "object" },
+        "decode": { "type": "object" }
+      }
+    }
+  }
+}

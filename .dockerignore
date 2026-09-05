@@ -2,6 +2,21 @@
 build/
 cmake-build-*/
 .cache/
+**/.build/
+**/.local/
+**/.venv/
+**/tests/fixtures/audio/
+
+# Private calibration inputs and generated audio must never enter a repo-root
+# Docker build context. Production workers fetch authorized objects at runtime.
+prototypes/stem-tempo-calibration/**/*.zip
+prototypes/stem-tempo-calibration/**/*.mp3
+prototypes/stem-tempo-calibration/**/*.wav
+prototypes/stem-tempo-calibration/**/*.flac
+prototypes/stem-tempo-calibration/**/*.aif
+prototypes/stem-tempo-calibration/**/*.aiff
+prototypes/stem-tempo-calibration/**/*.m4a
+prototypes/stem-tempo-calibration/**/*.ogg
 
 # IDE files
 .idea/

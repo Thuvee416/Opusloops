@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "The canonical runtime schema is packaged with opusloops_stem_calibration.",
+  "$ref": "../src/opusloops_stem_calibration/schemas/run-manifest.v1.schema.json"
+}

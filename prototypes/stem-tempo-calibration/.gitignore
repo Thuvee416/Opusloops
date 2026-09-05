@@ -1,0 +1,8 @@
+.build/
+.local/
+.pytest_cache/
+.ruff_cache/
+.venv/
+tests/fixtures/audio/
+*.egg-info/
+__pycache__/
