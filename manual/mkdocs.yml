@@ -1,124 +1,60 @@
-site_name: MAGDA Manual
-site_description: User manual for MAGDA — a free, open-source digital audio workstation
-site_url: https://Conceptual-Machines.github.io/magda-core/
+site_name: Opusloops Guide
+site_description: Guide to the Opusloops mobile web app
 
 theme:
   name: material
   palette:
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/brightness-7
-        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: custom
       accent: custom
       toggle:
-        icon: material/brightness-4
-        name: Switch to dark mode
+        icon: material/weather-night
+        name: Use dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Use light mode
   features:
     - navigation.instant
     - navigation.tracking
-    - navigation.sections
     - navigation.top
     - search.suggest
     - search.highlight
     - content.code.copy
-    - content.tabs.link
-  logo: assets/images/magda-lisa.svg
-  favicon: assets/images/magda-lisa.svg
+  logo: assets/images/opusloops-mark.svg
+  favicon: assets/images/opusloops-mark.svg
   icon:
     repo: fontawesome/brands/github
 
-repo_url: https://github.com/Conceptual-Machines/magda-core
-repo_name: magda-core
+repo_url: https://github.com/Thuvee416/Opusloops-Mobile
+repo_name: Thuvee416/Opusloops-Mobile
 
 nav:
   - Home: index.md
-  - Is MAGDA Right for You?: is-magda-right-for-you.md
+  - Is Opusloops Right for You?: is-opusloops-right-for-you.md
   - Getting Started:
-      - Installation: getting-started/installation.md
-      - First Session: getting-started/first-session.md
-      - Localization: localization.md
-  - Interface Layout:
-      - Overview: interface/overview.md
-      - Menus: interface/menus.md
-      - Preferences: interface/preferences.md
-      - Audio Settings: interface/audio-settings.md
-      - Plugin Settings: interface/plugin-settings.md
-      - AI Settings: interface/ai-settings.md
-      - Controllers: interface/controllers.md
-      - Connections: interface/connections.md
-  - Tracks: tracks.md
-  - Clips: clips.md
-  - Stem Separation: stem-separation.md
-  - FX Chain & Racks: fx-chain.md
-  - Plugin Parameters: plugin-parameters.md
-  - Arrangement View: arrangement-view.md
-  - Session View: session-view.md
-  - Mixer View: mixer-view.md
-  - Recording & Comping: recording-comping.md
-  - Chord Track: chord-track.md
-  - Working with AI: working-with-ai.md
-  - Panels:
-      - Inspector: panels/inspector.md
-      - Plugin & Media Browser: panels/browsers.md
-      - Media Library: panels/media-library.md
-      - AI Assistant: panels/ai-assistant.md
-      - Editors:
-          - Overview: panels/editors.md
-          - Piano Roll: panels/piano-roll.md
-          - Drum Grid Editor: panels/drum-grid-editor.md
-          - Waveform Editor: panels/waveform-editor.md
-          - Track Chain: panels/track-chain.md
-      - Chord Panel: panels/chord-panel.md
-  - Devices:
-      - Overview: devices/built-in.md
-      - MIDI Devices:
-          - Arpeggiator: devices/arpeggiator.md
-          - Chord Engine: devices/chord-engine.md
-          - Step Sequencer: devices/step-sequencer.md
-          - Poly Sequencer: devices/poly-sequencer.md
-      - Instruments:
-          - Poly Synth: devices/poly-synth.md
-          - FM0: devices/fm0.md
-          - Drum Kit: devices/drum-kit.md
-          - Physical Models: devices/physical-models.md
-          - Mutable Ports: devices/mutable.md
-          - 4OSC Synth: devices/4osc.md
-          - Drum Grid: devices/drum-grid.md
-          - Sampler: devices/sampler.md
-          - Faust Instrument: devices/faust-instrument.md
-      - Effects: devices/effects.md
-      - Analysis: devices/analysis.md
-  - Modulation:
-      - Overview: modulation/overview.md
-      - Modulators: modulation/modulators.md
-      - Macros: modulation/macros.md
-      - Linking Parameters: modulation/linking.md
-  - Automation: automation.md
-  - Time Bend: time-bend.md
-  - Transport: transport.md
-  - Reference:
-      - DSL Reference: reference/dsl.md
-      - Controller Profile Format: reference/controller-profile-format.md
-      - OSC Address Reference: reference/osc-addresses.md
-      - Lua Scripting: reference/lua-scripting.md
-      - Keyboard Shortcuts: reference/keyboard-shortcuts.md
-      - File Formats: reference/file-formats.md
-      - Troubleshooting: reference/troubleshooting.md
+      - Install the PWA: getting-started/installation.md
+      - Make Your First Loop: getting-started/first-session.md
+  - Interface: interface/overview.md
+  - Touch Sequencer: sequencer.md
+  - Mixer: mixer.md
+  - Projects and Offline Use: projects-offline.md
+  - Troubleshooting: reference/troubleshooting.md
+  - Legacy Desktop Compatibility: legacy-desktop.md
 
 extra:
-  homepage: https://magda.land
+  homepage: https://thuvee416.github.io/Opusloops-Mobile/
   social:
+    - icon: fontawesome/solid/play
+      link: https://thuvee416.github.io/Opusloops-Mobile/
+      name: Open Opusloops
     - icon: fontawesome/brands/github
-      link: https://github.com/Conceptual-Machines/magda-core
-    - icon: fontawesome/solid/globe
-      link: https://magda.land
-      name: MAGDA Website
+      link: https://github.com/Thuvee416/Opusloops-Mobile
+      name: Source on GitHub
 
 extra_css:
   - stylesheets/extra.css
@@ -126,14 +62,7 @@ extra_css:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.keys
+  - pymdownx.superfences
   - attr_list
   - md_in_html
   - toc:

@@ -1,19 +1,27 @@
 name: Feature Request
-description: Suggest a new feature or improvement
+description: Suggest a focused improvement to the mobile Opusloops workflow
 labels: ["enhancement"]
 body:
   - type: textarea
-    id: description
+    id: need
     attributes:
-      label: What would you like?
-      description: Describe the feature or improvement.
+      label: What are you trying to do?
+      description: Describe the musical task or friction before proposing a control.
     validations:
       required: true
 
   - type: textarea
-    id: use-case
+    id: proposal
     attributes:
-      label: Use case
-      description: How would this help your workflow?
+      label: What would make it easier?
+      description: Keep the touch-first, built-in Web Audio, local-first product boundary in mind.
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device or viewport
+      placeholder: "iPhone portrait"
     validations:
       required: false

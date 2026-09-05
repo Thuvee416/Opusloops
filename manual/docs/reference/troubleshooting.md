@@ -1,66 +1,41 @@
 # Troubleshooting
 
-## No Audio Output
+## The app does not load
 
-1. Check **Settings > Audio** and verify the correct output device is selected
-2. Make sure your system volume is turned up
-3. Check that no tracks are muted and the master fader is up
-4. Try a different sample rate (e.g., 44100 Hz or 48000 Hz)
+1. Confirm you opened [the production HTTPS URL](https://thuvee416.github.io/Opusloops-Mobile/).
+2. Reload once while connected to the network.
+3. Disable content blockers for the site temporarily.
+4. Update the browser and retry.
 
-## High Latency
+## There is no sound
 
-1. Lower the buffer size in **Settings > Audio**
-2. Use an ASIO driver (Windows) or Core Audio (macOS) for best performance
-3. Close other audio applications
-4. Switch to Live mode for the lowest latency profile
+1. Tap **Play** once to satisfy the browser's audio-gesture requirement.
+2. Raise the device's media volume and leave silent mode if the browser respects it.
+3. Disconnect Bluetooth audio temporarily to rule out an unexpected output route.
+4. Return to Opusloops after switching apps; playback intentionally pauses when the page moves to the background.
+5. Close another page or app that may have exclusive audio focus, then retry.
 
-## Crashes on Startup
+## Installation is not offered
 
-1. Reset MAGDA's configuration (see below) — a bad preference, stale audio device, or failed model load can prevent MAGDA from reaching the main window
-2. Check the [GitHub Issues](https://github.com/Conceptual-Machines/magda-core/issues) for known problems
-3. File a bug report with your system details and the `magda.log` file from the Logs folder
+- On iPhone and iPad, use Safari's **Share → Add to Home Screen**.
+- On Android, use the browser's **Install app** or **Add to Home screen** action.
+- Wait for the first load to finish over HTTPS.
+- The app still works in a normal tab when installation is unavailable.
 
-## Plugin Issues
+## A local project disappeared
 
-1. Verify the plugin is compatible with your OS and architecture
-2. Re-scan plugins from **Settings > Plugins**
-3. Try loading the plugin in a fresh project
+Browser storage can be removed by private browsing, site-data cleanup, storage pressure, browser reset, or PWA uninstall. The current release has no export or server-side copy, so a removed local project cannot be recovered through Opusloops.
 
-## Resetting MAGDA
+## Offline mode does not open
 
-If MAGDA misbehaves and the in-app settings can't help — typically when it crashes before the UI loads (e.g. a bad AI model path or an audio device that's no longer available) — delete the config file manually and MAGDA will start with defaults on the next launch.
+Reconnect and complete one full load, then reopen the installed app. A private tab or browser policy may prevent durable service-worker storage.
 
-### Config file location
+## Report a problem
 
-| Platform | Path |
-|---|---|
-| macOS | `~/Library/MAGDA/config.json` |
-| Windows | `%APPDATA%\MAGDA\config.json` |
-| Linux | `~/.config/MAGDA/config.json` |
+Open an [Opusloops issue](https://github.com/Thuvee416/Opusloops-Mobile/issues/new) with:
 
-### What gets reset
-
-Deleting `config.json` wipes every user preference: audio device selection, recent projects, browser favourites, AI provider and model settings, UI language, custom track-colour palette, panel layout, and the "check for updates" state. Your projects (`.mgd` files) and any audio you've rendered are untouched.
-
-### Logs
-
-MAGDA writes a rolling log next to the config file under `Logs/magda.log`. When filing a bug report, attach the log — it usually contains the last few seconds before a crash.
-
-### Waveform peak cache
-
-MAGDA stores generated waveform peak files separately from projects and the configurable MAGDA data folder. These `.mpk` files are used to draw audio waveforms faster and are safe to delete; MAGDA rebuilds them automatically when the source audio is displayed again.
-
-| Platform | Path |
-|---|---|
-| macOS | `~/Library/magda/peaks` |
-| Windows | `%APPDATA%\magda\peaks` |
-| Linux | `~/.config/magda/peaks` |
-
-If waveform display looks stale or the cache grows too large, quit MAGDA and delete the `peaks` folder.
-
-### Nuclear option
-
-To wipe everything MAGDA has on disk, delete the `MAGDA` config folder at the platform path above and the generated cache folder listed under **Waveform peak cache**. Project files live elsewhere (wherever you saved them) and are safe.
-
-!!! tip
-    If your issue isn't listed here, check the [GitHub Issues](https://github.com/Conceptual-Machines/magda-core/issues) page or open a new issue.
+- Device and operating-system version
+- Browser name and version
+- Whether Opusloops was installed or opened in a tab
+- Exact steps and the result you expected
+- A screen recording or screenshot when it does not reveal private content

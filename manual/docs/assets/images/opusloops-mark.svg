@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Opusloops</title>
+  <desc id="desc">A continuous terracotta loop on a warm ink background.</desc>
+  <defs>
+    <linearGradient id="loop" x1="98" y1="132" x2="420" y2="382" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f3b294" />
+      <stop offset="0.54" stop-color="#d87856" />
+      <stop offset="1" stop-color="#bd5d43" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#24221e" />
+  <rect x="13" y="13" width="486" height="486" rx="106" fill="none" stroke="#4d473e" stroke-width="4" />
+  <path
+    d="M102 256c0-78 69-106 119-38l60 82c47 64 119 32 119-44s-72-108-119-44l-60 82c-50 68-119 40-119-38Z"
+    fill="none"
+    stroke="url(#loop)"
+    stroke-width="38"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="102" cy="256" r="11" fill="#fff3e9" />
+  <circle cx="400" cy="256" r="11" fill="#f3b294" />
+</svg>

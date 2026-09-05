@@ -1,74 +1,56 @@
-# Contributing to MAGDA
+# Contributing to Opusloops
 
-Thanks for your interest in MAGDA! This document covers how to contribute effectively.
+Thank you for helping improve Opusloops.
 
-## Contributor License Agreement
+## Before you start
 
-All contributions require signing our [Contributor License Agreement (CLA)](CLA.md). This grants the maintainer the right to use your contributions under any license, including commercial licenses. The CLA bot will prompt you to sign when you open your first pull request.
+Open an issue before investing in a substantial change. Describe the problem, the proposed result, and any user-facing or compatibility impact. Small bug fixes and documentation corrections can go directly to a pull request when the scope is clear.
 
-## Before You Start
+## Contributions we welcome
 
-**Open an issue first.** Don't spend time on a PR that might get rejected. Describe what you want to change and why. Wait for a green light before writing code. PRs for features that have been discussed and declined will be closed immediately.
+- Bug fixes with a reproducible case
+- Documentation and accessibility improvements
+- Performance improvements with before-and-after evidence
+- Focused features discussed with the maintainers
+- Tests that cover real regressions or compatibility requirements
 
-## What We Accept
+Avoid mixing unrelated changes, broad rewrites, or new third-party service dependencies into a focused pull request.
 
-- Bug fixes with a clear reproduction case
-- Documentation improvements
-- Performance improvements with benchmarks
-- Small, focused features that have been discussed and approved via an issue
+## Development setup
 
-## What We Don't Accept
-
-- Unsolicited large features or integrations
-- Changes that add new third-party service dependencies
-- PRs that rewrite or restructure existing code without prior discussion
-- AI/LLM provider integrations (we maintain these ourselves)
-
-## Development Setup
-
-### Prerequisites
-
-- CMake 3.24+
-- C++20 compiler (Clang 15+ or GCC 13+)
-- macOS: Xcode Command Line Tools
-- Linux: ALSA and X11 development headers
-
-### Building
+The production app is a static PWA in `mobile/`. A local HTTP server is enough to run it:
 
 ```bash
-git clone --recursive https://github.com/Conceptual-Machines/magda-core.git
-cd magda-core
-make debug    # Debug build
-make release  # Release build
+git clone https://github.com/Thuvee416/Opusloops-Mobile.git
+cd Opusloops-Mobile
+python3 -m http.server 4173 --directory mobile
 ```
 
-### Running Tests
+See [README.md](README.md) for the complete build overview.
 
-```bash
-make test
-```
+## Pull request guidelines
 
-## PR Guidelines
+1. Keep each pull request focused on one concern.
+2. Explain what changed, why it changed, and how you verified it.
+3. Add regression tests for bug fixes when practical.
+4. Preserve compatibility for locally saved projects unless a migration is explicitly designed and tested.
+5. Verify a narrow mobile viewport, touch input, offline reload, and the GitHub Pages base path when relevant.
+6. Never put secrets, private audio, API keys, or credentials in a commit or issue.
 
-1. **One concern per PR.** Don't mix bug fixes with refactoring or features.
-2. **Keep it small.** Large PRs are hard to review and will take longer to merge.
-3. **Match the existing style.** We use `clang-format` — the pre-commit hook enforces this.
-4. **Write a clear description.** Explain what changed and why. Include before/after if relevant.
-5. **Don't break the build.** Make sure `make debug` and `make release` both pass before pushing.
+Suggested branch names are `feat/<description>`, `fix/<description>`, and `docs/<description>`.
 
-## Branch Naming
+## Web Audio and mobile requirements
 
-- `feat/<description>` for features
-- `fix/<description>` for bug fixes
-- `docs/<description>` for documentation
+- Start or resume audio only after a user gesture.
+- Schedule against the audio clock rather than visual animation timing.
+- Handle background, foreground, interrupted-audio, and reduced-motion states.
+- Keep primary controls touch-sized and avoid hover-only or right-click interactions.
+- Treat browser-storage, service-worker, and project-format changes as data-safety work.
 
-## Code Style
+The retained C++ desktop source is non-production. Changes to it require an issue that explicitly scopes legacy compatibility or removal work; do not add desktop features to the mobile application.
 
-- C++20
-- `clang-format` with the project's `.clang-format` config
-- No raw `new`/`delete` — use smart pointers
-- No blocking operations on the audio thread
+## Contribution terms
 
-## License
+Opusloops does not use the former upstream contributor license agreement. Contributions to this repository are accepted under the [GNU General Public License v3.0](LICENSE) only. By submitting a contribution, you represent that you have the right to provide it under that license.
 
-By contributing, you agree that your contributions will be licensed under the [GNU General Public License v3.0](LICENSE).
+The upstream project's historical contribution terms are not transferred to Opusloops. See [CLA.md](CLA.md) and [NOTICE.md](NOTICE.md) for clarification and provenance.

@@ -1,30 +1,35 @@
-# Installation
+# Install Opusloops
 
-## System Requirements
+Opusloops is a mobile web app. It does not require an App Store or Play Store download.
 
-| | Minimum | Recommended |
-|---|---|---|
-| **OS** | macOS 11+, Windows 10, Ubuntu 22.04 | Latest stable release |
-| **RAM** | 4 GB | 8 GB+ |
-| **Disk** | 200 MB | 500 MB+ (for projects and audio files) |
-| **Audio** | Built-in audio output | Dedicated audio interface |
+## Open the production app
 
-## Download
+Visit [https://thuvee416.github.io/Opusloops-Mobile/](https://thuvee416.github.io/Opusloops-Mobile/) in a modern mobile browser with Web Audio and service-worker support.
 
-Download the latest release from the [GitHub Releases](https://github.com/Conceptual-Machines/magda-core/releases) page.
+The first load requires a network connection. Wait until the interface is ready before installing so the app shell can be cached for offline use.
 
-### Updates
+## Add it to your home screen
 
-MAGDA checks the GitHub releases feed at most once every 24 hours on launch and surfaces a dialog only if a newer version is available. You can also trigger the check manually from **Help > Check for Updates…**. No telemetry is sent.
+### iPhone or iPad
 
-## Building from Source
+1. Open Opusloops in Safari.
+2. Tap **Share**.
+3. Choose **Add to Home Screen**.
+4. Confirm the name and tap **Add**.
 
-MAGDA is built with CMake and requires a C++20 compiler. See the [README](https://github.com/Conceptual-Machines/magda-core#building) for full build instructions.
+### Android
 
-## Audio Setup
+1. Open Opusloops in Chrome or another browser that supports PWA installation.
+2. Open the browser menu.
+3. Choose **Install app** or **Add to Home screen**.
+4. Confirm the installation.
 
-On first launch, go to **Settings > Audio** to configure:
+Browser wording varies by version. If no install action appears, keep using Opusloops in the browser and check that the page finished loading over HTTPS.
 
-- **Audio device** — Select your audio interface or built-in output
-- **Sample rate** — 44100 Hz or 48000 Hz are common choices
-- **Buffer size** — Lower values reduce latency but increase CPU load
+## Audio permission
+
+Mobile browsers do not start audio until you interact with the page. Tap the play control once to activate the audio engine. This is a browser privacy rule, not a failure to load.
+
+## Updates
+
+Opusloops checks for a newer cached app shell when it reconnects. Save your current loop before refreshing after an update.

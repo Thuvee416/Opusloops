@@ -1,32 +1,29 @@
-# First Session
+# Make Your First Loop
 
-This guide walks you through creating your first project in MAGDA.
+## 1. Describe the idea
 
-## Creating a New Project
+Open Opusloops on the **Create** tab. Type a short feeling or direction, or tap **Warm**, **Driving**, **Spacious**, or **Playful** to start from a quick idea. Tap the arrow to create a loop.
 
-1. Launch MAGDA
-2. Select **File > New Project**
-3. Choose a location to save your project
+## 2. Listen
 
-## Adding a Track
+The **Studio** opens with a 16-step pattern for Kick, Snare, Bass, and Chords. Tap **Play**. If you hear nothing, tap Play again and check the device's media volume.
 
-Press ++ctrl+t++ (or ++cmd+t++ on macOS) to add a new track, or use **Track > Add Track** from the menu.
+## 3. Shape the steps
 
-## Recording Audio
+Tap a step to turn it on. Tap an active step again to clear it. You can edit while the loop runs; the moving highlight shows the step currently playing.
 
-1. Configure your audio input in **Settings > Audio**
-2. Arm a track for recording by clicking its **R** button
-3. Press the **Record** button in the transport bar (or press ++r++)
-4. Press ++space++ to stop
+## 4. Set tempo and key
 
-## Navigating Between Views
+Use the minus and plus buttons to change tempo. Tap the key to move through the available minor keys.
 
-Use the mode buttons in the footer bar at the bottom of the window to switch between views:
+## 5. Refine and mix
 
-- **Live** — Session view with clip launcher
-- **Arrange** — Timeline arrangement view
-- **Mix** — Full mixer with channel strips
+Tap **Refine this loop** for a sparser, busier, warmer, or surprising variation. Open **Mix** to balance the four voices. Mute compares a part against the rest without deleting its steps.
 
-## Saving Your Work
+## 6. Save and reopen
 
-Use ++ctrl+s++ (or ++cmd+s++ on macOS) to save. Use ++ctrl+shift+s++ (or ++cmd+shift+s++) to save as a new file.
+Changes save automatically on the device; the header reports the current save state. You can also tap the save icon in Studio. Open **Projects** to return to any locally saved loop or start a new one.
+
+The current release has no file export or cloud backup, so do not clear the site's browser data if you want to keep a project.
+
+Next: [Touch sequencer](../sequencer.md) · [Mixer](../mixer.md) · [Projects and offline use](../projects-offline.md)

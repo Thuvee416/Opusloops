@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Opusloops</title>
+  <desc id="desc">Opusloops wordmark with the tagline Create, arrange, evolve.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1200" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F4EC"/>
+      <stop offset="1" stop-color="#EEE9DD"/>
+    </linearGradient>
+    <linearGradient id="loop" x1="68" y1="64" x2="340" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F3B294"/>
+      <stop offset="0.52" stop-color="#D87856"/>
+      <stop offset="1" stop-color="#BD5D43"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="1192" height="352" rx="44" fill="url(#background)" stroke="#DED9CE" stroke-width="8"/>
+  <path
+    d="M68 180C68 100 138 72 190 142L252 226C300 292 374 260 374 180C374 100 300 68 252 136L190 220C138 290 68 260 68 180Z"
+    fill="none"
+    stroke="url(#loop)"
+    stroke-width="38"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+  <text x="450" y="178" fill="#1D1C19" font-family="Iowan Old Style, Palatino Linotype, Palatino, Georgia, serif" font-size="104" font-weight="600" letter-spacing="-3">Opusloops</text>
+  <text x="455" y="246" fill="#6D6A62" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="600" letter-spacing="4">CREATE · ARRANGE · EVOLVE</text>
+</svg>

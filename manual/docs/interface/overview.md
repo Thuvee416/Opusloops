@@ -1,65 +1,30 @@
-# Interface Overview
+# Interface
 
-MAGDA's window is divided into fixed regions that stay consistent across all three views (Live, Arrange, Mix).
+Opusloops is designed around a narrow mobile viewport and direct touch.
 
-![Arrangement View](../assets/images/arrangement/arrangement-view.png)
+## Navigation
 
-## Window Layout
+The primary navigation keeps the sequencer and mixer close together. Switching surfaces does not stop playback or discard the current project.
 
-![Window Layout](../assets/images/interface/window-layout.png)
+## Touch targets
 
-## Transport Bar
+Controls use generous hit areas even when their visible shape is small. Tap once for the primary action; Opusloops does not rely on hover, right-click, or desktop-only keyboard shortcuts.
 
-The transport bar sits at the top of the window and is always visible. It provides playback controls, tempo, time signature, loop/punch settings, and position displays. See [Transport](../transport.md) for details.
+## Visual language
 
-## Left Panel
+- Warm, low-contrast surfaces reduce glare.
+- A restrained accent color marks the current step and the primary action.
+- Motion confirms state changes without competing with the music.
+- Labels are short and controls stay in consistent positions.
 
-The left panel contains:
+## Phone and tablet layouts
 
-- **Inspector** — Context-sensitive properties for the selected track, clip, note, or device. See [Inspector](../panels/inspector.md).
-- **AI Assistant** — Chat-based assistant for natural-language control. See [AI Assistant](../panels/ai-assistant.md).
+On phones, controls stack into one focused column. Wider screens can show more of the sequence and mix at once, but the same actions remain available and nothing essential depends on tablet width.
 
-## Central View
+## Safe areas and orientation
 
-The central area displays one of three views depending on the active mode:
+Installed mode respects device safe areas. Portrait is the default working orientation; landscape can expose more steps where the browser and device allow it.
 
-- ![Session](../assets/images/icons/Session.svg){ width="18" } **Session View** — Grid-based clip launcher for real-time performance. See [Session View](../session-view.md).
-- ![Arrangement](../assets/images/icons/Arrangement.svg){ width="18" } **Arrangement View** — Traditional timeline for composing and editing. See [Arrangement View](../arrangement-view.md).
-- ![Mix](../assets/images/icons/Mix.svg){ width="18" } **Mixer View** — Channel-strip mixer for balancing and routing. See [Mixer View](../mixer-view.md).
+## Accessibility
 
-Switch between views using the mode buttons in the footer.
-
-## Right Panel
-
-The right panel contains two tools:
-
-- **Plugin Browser** — Browse, search, and drag plugins onto tracks
-- **Media Explorer** — Browse the file system, preview audio files, and drag them into the project
-
-See [Plugin & Media Browser](../panels/browsers.md) for details.
-
-## Bottom Panel
-
-The bottom panel auto-switches based on the current selection:
-
-- **Empty** — Nothing selected
-- **Piano Roll** — When a MIDI clip is selected
-- **Drum Grid** — When a drum clip or DrumGrid device is selected
-- **Waveform Editor** — When an audio clip is selected
-- **Track Chain** — When a track or device is selected, showing the FX chain
-
-See [Editors](../panels/editors.md) for details.
-
-## Footer
-
-The footer bar at the bottom of the window contains:
-
-- **Live** / **Arrange** / **Mix** mode buttons — Switch between the three main views
-- Panel visibility toggles
-
-## Panel Behavior
-
-All side and bottom panels are:
-
-- **Collapsible** — Click the panel header or use keyboard shortcuts to show/hide
-- **Resizable** — Drag the panel edges to adjust width or height
+Interactive controls expose text labels and visible focus states. System text scaling, reduced-motion preferences, and adequate color contrast should remain usable without changing the musical result.

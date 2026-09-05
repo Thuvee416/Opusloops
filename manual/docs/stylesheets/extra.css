@@ -1,74 +1,87 @@
-/* MAGDA dark theme — matches the DAW's DarkTheme palette */
-
-/* Dark mode (default) */
-[data-md-color-scheme="slate"] {
-  --md-primary-fg-color: #252530;
-  --md-primary-bg-color: #dddddd;
-  --md-accent-fg-color: #5588aa;
-  --md-accent-bg-color: #5588aa1a;
-
-  /* Background */
-  --md-default-bg-color: #1a1a1a;
-  --md-default-fg-color: #dddddd;
-
-  /* Code blocks */
-  --md-code-bg-color: #1e1e22;
-  --md-code-fg-color: #aabbcc;
-
-  /* Footer */
-  --md-footer-bg-color: #1e1e22;
-  --md-footer-fg-color: #aabbcc;
-
-  /* Typeset */
-  --md-typeset-color: #dddddd;
-  --md-typeset-a-color: #5588aa;
+:root {
+  --md-primary-fg-color: #5f5a50;
+  --md-primary-fg-color--light: #7b7468;
+  --md-primary-fg-color--dark: #403c35;
+  --md-accent-fg-color: #9a6b4f;
+  --opus-paper: #f5f1e8;
+  --opus-ink: #24231f;
+  --opus-line: #d8d0c2;
 }
 
-/* Header bar */
-[data-md-color-scheme="slate"] .md-header {
-  background-color: #1e1e22;
-}
-
-/* Navigation sidebar */
-[data-md-color-scheme="slate"] .md-sidebar {
-  background-color: #1a1a1a;
-}
-
-/* Nav links - active */
-[data-md-color-scheme="slate"] .md-nav__link--active {
-  color: #5588aa;
-}
-
-/* Admonition note — use MAGDA purple */
-[data-md-color-scheme="slate"] .md-typeset .admonition.note,
-[data-md-color-scheme="slate"] .md-typeset details.note {
-  border-color: #7777dd;
-}
-
-[data-md-color-scheme="slate"] .md-typeset .note > .admonition-title,
-[data-md-color-scheme="slate"] .md-typeset .note > summary {
-  background-color: #7777dd1a;
-  border-color: #7777dd;
-}
-
-[data-md-color-scheme="slate"] .md-typeset .note > .admonition-title::before,
-[data-md-color-scheme="slate"] .md-typeset .note > summary::before {
-  background-color: #7777dd;
-}
-
-/* Tables */
-[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
-  background-color: #252530;
-  color: #aabbcc;
-}
-
-[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:hover td {
-  background-color: #2a2a35;
-}
-
-/* Light mode */
 [data-md-color-scheme="default"] {
-  --md-primary-fg-color: #2a2a35;
-  --md-primary-bg-color: #ffffff;
-  --md-accent-fg-color: #5588aa;
+  --md-default-bg-color: var(--opus-paper);
+  --md-default-fg-color: var(--opus-ink);
+  --md-typeset-a-color: #83583f;
+  --md-code-bg-color: #ece6db;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #1f201d;
+  --md-default-fg-color: #eeeadf;
+  --md-typeset-a-color: #d7a181;
+  --md-code-bg-color: #2a2b27;
+}
+
+.md-header,
+.md-tabs {
+  box-shadow: none;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.md-main__inner {
+  max-width: 72rem;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 520;
+  letter-spacing: -0.018em;
+}
+
+.md-typeset h1 {
+  margin-bottom: 1.25rem;
+}
+
+.md-typeset p,
+.md-typeset li {
+  line-height: 1.72;
+}
+
+.md-typeset .md-button {
+  border-radius: 999px;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.md-typeset table:not([class]) {
+  border: 1px solid var(--opus-line);
+  border-radius: 0.75rem;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.md-typeset code {
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 44.984375em) {
+  .md-typeset h1 {
+    font-size: 1.9rem;
+  }
+
+  .md-content__inner {
+    padding-inline: 0.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

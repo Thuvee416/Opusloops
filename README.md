@@ -1,157 +1,60 @@
 <p align="center">
-  <img src="assets/Banner.png" alt="MAGDA" width="400">
+  <img src="assets/Banner.png" alt="Opusloops" width="520">
 </p>
 
 <p align="center">
-  <a href="https://github.com/Conceptual-Machines/magda-core/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Conceptual-Machines/magda-core/ci.yml?label=Linux&logo=linux&logoColor=white" alt="Linux Build"></a>
-  <a href="https://github.com/Conceptual-Machines/magda-core/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Conceptual-Machines/magda-core/ci.yml?label=macOS&logo=apple" alt="macOS Build"></a>
-  <a href="https://github.com/Conceptual-Machines/magda-core/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Conceptual-Machines/magda-core/ci.yml?label=Windows&logo=windows" alt="Windows Build"></a>
-  <a href="https://github.com/Conceptual-Machines/magda-core/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="License"></a>
-  <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg" alt="C++20">
-  <a href="https://crowdin.com/project/magda"><img src="https://badges.crowdin.net/magda/localized.svg" alt="Crowdin"></a>
+  <a href="https://github.com/Thuvee416/Opusloops-Mobile/actions/workflows/pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/Thuvee416/Opusloops-Mobile/pages.yml?branch=main&label=production" alt="Production deployment"></a>
+  <a href="https://github.com/Thuvee416/Opusloops-Mobile/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0"></a>
 </p>
+
+<p align="center">Create · Arrange · Evolve</p>
+
+Opusloops is a calm, touch-first loop studio that runs as an installable mobile web app. Build patterns with Web Audio, arrange ideas, shape a compact mix, and keep projects on your device.
 
 <p align="center">
-  Multi-Agent Digital Audio
+  <strong><a href="https://thuvee416.github.io/Opusloops-Mobile/">Launch Opusloops</a></strong>
 </p>
-<p align="center"><img src="assets/treaktion-engine-logo.png" alt="Powered by Tracktion Engine" width="250" height="80"></p>
 
----
-MAGDA is a free, open-source DAW with AI integrated from the ground up. Built on C++20, JUCE, and Tracktion Engine.
- - **English** | [简体中文](README_CN.md)
+- **English** | [简体中文](README_CN.md)
+- [Issues](https://github.com/Thuvee416/Opusloops-Mobile/issues) · [Source](https://github.com/Thuvee416/Opusloops-Mobile)
 
-### Features
+## Mobile-first by design
 
-- **Hybrid tracks**: every track hosts both audio and MIDI clips
-- **Three views**: Arrangement, Session, and Mix
-- **AI chat**: natural language commands that generate and execute a custom DSL directly in the app (BYOAK, Bring Your Own API Keys)
-- **Modulation system**: 16 LFOs (with bezier curve editor) and 16 macro knobs per device and rack
-- **Racks**: parallel processing chains with volume, pan, mute, solo per chain, fully nestable
-- **Piano roll** with pitchbend and MIDI CC lanes
-- **Drum grid** device
-- **Session view** with clip launching
-- **Mixer** with faders, pan, mute, solo, sends, and I/O routing
-- **Collapsible, resizable panels**: Inspector + AI Chat (left), Plugin Browser + Sample Browser (right), context-sensitive editor (bottom)
+- **Touch sequencer** — place and clear steps without desktop-sized controls
+- **Built-in loops and sounds** — powered by Web Audio, with no plugin scanning or installation
+- **Compact mixer** — balance levels and mute parts from a phone-sized surface
+- **Local projects** — save work in browser-managed storage on the current device
+- **Offline installability** — add the PWA to a home screen and reopen it after the first successful load
+- **Calm interface** — quiet hierarchy, warm neutrals, restrained motion, and one clear action at a time
 
-### Links
+Opusloops does not require an App Store or Play Store download. Open the production URL in a supported mobile browser and use the browser's **Add to Home Screen** or **Install App** action.
 
-- **Website**: [magda.land](https://magda.land/)
-- **YouTube**: [Introduction Video](https://www.youtube.com/watch?v=momhIo5vOSc)
-- **KVR**: [Product Page](https://www.kvraudio.com/product/magda-by-conceptual-machines)
-- **Issues**: [Bug Reports & Feature Requests](https://github.com/Conceptual-Machines/magda-core/issues)
+## Run locally
 
-## Status
-
-See [Issues](https://github.com/Conceptual-Machines/magda-core/issues) for known bugs and planned features.
-
-## Building
-
-### Prerequisites
-
-- C++20 compiler (GCC 10+, Clang 12+, or Xcode)
-- CMake 3.20+
-- [Git LFS](https://git-lfs.com/) — required to fetch bundled binary assets
-  (CJK font, etc.). Install with `brew install git-lfs` (macOS),
-  `apt install git-lfs` (Debian/Ubuntu), or `choco install git-lfs` (Windows),
-  then run `git lfs install` once per machine.
-- **Windows only:** [vcpkg](https://github.com/microsoft/vcpkg) supplies libxml2
-  (there is no system copy on Windows). Clone and bootstrap it once, then set a
-  `VCPKG_ROOT` environment variable pointing at the checkout — the build
-  auto-detects it and installs libxml2 from the `vcpkg.json` manifest on first
-  configure. On macOS/Linux libxml2 comes from the system, so no vcpkg is needed.
-
-  ```powershell
-  git clone https://github.com/microsoft/vcpkg C:\vcpkg
-  C:\vcpkg\bootstrap-vcpkg.bat
-  setx VCPKG_ROOT C:\vcpkg   # reopen the shell so it takes effect
-  ```
-
-### Quick Start
+The production PWA lives in [`mobile/`](mobile/). It has no package-manager or native-toolchain requirement.
 
 ```bash
-# Clone with submodules and LFS assets
-git clone --recursive https://github.com/Conceptual-Machines/magda-core.git
-cd magda-core
-git lfs pull  # safety net if git-lfs wasn't installed at clone time
-
-# Setup and build
-make setup
-make debug
-
-# Run
-make run
+git clone https://github.com/Thuvee416/Opusloops-Mobile.git
+cd Opusloops-Mobile
+python3 -m http.server 4173 --directory mobile
 ```
 
-### Make Targets
+Then open `http://localhost:4173`. Use a local server rather than opening `mobile/index.html` directly so the service worker and offline paths behave like production.
 
-```bash
-make setup      # Initialize submodules and dependencies
-make debug      # Debug build
-make release    # Release build
-make test       # Run tests
-make clean      # Clean build artifacts
-make format     # Format code
-make lint       # Run clang-tidy analysis
-```
+## Production
 
-## Automated Workflows
+Pushes to `main` deploy the contents of `mobile/` to [https://thuvee416.github.io/Opusloops-Mobile/](https://thuvee416.github.io/Opusloops-Mobile/). A green workflow proves deployment; a fresh production fetch is still required to verify the live revision.
 
-The project includes automated GitHub Actions workflows:
+## Legacy desktop source
 
-- **CI Workflow**: Runs on every push to validate builds and code quality
-- **Security Scanning**: CodeQL analysis, secret detection, and vulnerability scanning
-- **Periodic Code Analysis**: Weekly scans for TODOs, FIXMEs, and code smells
-- **Refactoring Scanner**: Bi-weekly analysis of code complexity and technical debt
+This repository retains GPL-licensed C++ DAW source and compatibility identifiers from its upstream history. That desktop application, external plugin hosting, plugin scanning, MCP, OSC, Lua controller surfaces, and desktop packaging are not part of the Opusloops mobile production target.
 
-See [docs/ci/automated-workflows.md](docs/ci/automated-workflows.md) for details on automated analysis and periodic workflows.
+The legacy source remains available for provenance and migration work. Internal directory names may retain historical identifiers where changing them would break saved projects or protocols. See [NOTICE.md](NOTICE.md) and the [legacy compatibility note](manual/docs/legacy-desktop.md).
 
-## Security
+## Contributing and security
 
-MAGDA takes security seriously. The repository implements comprehensive security measures:
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
-- 🔒 **Branch Protection**: Main branch protected with required reviews and status checks
-- 🔍 **Automated Scanning**: CodeQL security analysis for C++ vulnerabilities
-- 🔐 **Secret Detection**: Automated scanning to prevent credential leaks
-- 🛡️ **Dependency Monitoring**: Dependabot for security updates
-- ⚡ **CI/CD Security**: All security checks must pass before merge
+## License and provenance
 
-**Found a security issue?** Please review our [Security Policy](SECURITY.md) for responsible disclosure.
-
-For detailed information about branch protection and security architecture, see [docs/ci/branch-protection.md](docs/ci/branch-protection.md).
-
-## Architecture
-
-```
-magda/
-├── daw/        # DAW application (C++/JUCE)
-│   ├── audio/      # Audio processing
-│   ├── core/       # Track, clip, selection management
-│   ├── engine/     # Tracktion Engine wrapper
-│   ├── interfaces/ # Abstract interfaces
-│   ├── profiling/  # Performance profiling
-│   ├── project/    # Project management and serialization
-│   ├── ui/         # User interface components
-│   └── utils/      # Utility helpers
-└── agents/     # Agent system (C++)
-tests/          # Test suite
-scripts/        # Development and build scripts
-docs/           # Documentation
-```
-
-## Dependencies
-
-- [Tracktion Engine](https://github.com/Tracktion/tracktion_engine) - Audio engine
-- [JUCE](https://juce.com/) - C++ application framework (GUI, audio I/O, plugin hosting, MIDI, DSP)
-- [juce-llm](https://github.com/Conceptual-Machines/juce-llm) - LLM API client module
-- [llama.cpp](https://github.com/ggml-org/llama.cpp) - Embedded local LLM inference
-- [Catch2](https://github.com/catchorg/Catch2) - Testing (fetched via CMake)
-
-## Issues
-
-> **Heads up:** MAGDA is in early v0. Development started in January 2026 — internal iteration first, public release more recently — and is very much active. Expect bugs and missing pieces. The best way to help the project is to file an issue.
-
-Found a bug or have a feature request? Please [open an issue](https://github.com/Conceptual-Machines/magda-core/issues/new) on GitHub.
-
-## License
-
-GPL v3 - see [LICENSE](LICENSE) for details.
+Opusloops is distributed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for the license and [NOTICE.md](NOTICE.md) for upstream provenance and third-party notices.

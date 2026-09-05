@@ -1,54 +1,58 @@
-name: Crash Report
-description: Report a crash with a log file
-labels: ["bug", "crash"]
+name: App Reload or Data-Loss Report
+description: Report an unexpected reload, freeze, or missing local project
+labels: ["bug", "data-safety"]
 body:
-  - type: textarea
-    id: description
+  - type: markdown
     attributes:
-      label: What were you doing when it crashed?
-      description: Describe what you were doing right before the crash.
+      value: |
+        Do not paste private project data publicly. Opusloops has no cloud or file backup in this release.
+
+  - type: textarea
+    id: event
+    attributes:
+      label: What failed?
+      description: Describe the freeze, reload, blank screen, audio interruption, or missing project.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happened immediately before it?
     validations:
       required: true
 
   - type: input
-    id: version
+    id: device
     attributes:
-      label: MAGDA version
-      description: Found in Help > About MAGDA
-      placeholder: "0.1.0-rc2"
+      label: Device, OS, and browser
+      placeholder: "Pixel 10, Android 17, Chrome 141"
     validations:
       required: true
 
   - type: dropdown
-    id: os
+    id: launch-mode
     attributes:
-      label: Operating system
+      label: Launch mode
       options:
-        - macOS
-        - Windows
-        - Linux
+        - Browser tab
+        - Installed PWA / home-screen icon
     validations:
       required: true
 
   - type: textarea
-    id: crash-log
+    id: storage-events
     attributes:
-      label: Crash log
-      description: |
-        Paste the contents of your crash log here.
+      label: Recent storage or app changes
+      description: Note private browsing, cleared site data, browser updates, low-storage warnings, or PWA reinstallations.
+    validations:
+      required: false
 
-        **macOS:** Open Finder → Go → Go to Folder → `~/Library/Logs/DiagnosticReports/`. Look for a file starting with `Magda` (`.ips` or `.crash`). Open it in a text editor and paste the contents.
-
-        **Windows:** Open Event Viewer (Win+R → `eventvwr.msc`) → Windows Logs → Application. Look for recent "Error" entries from MAGDA. Alternatively, check `%LOCALAPPDATA%\CrashDumps\` for `.dmp` files.
-
-        **Linux:** Check `journalctl --user -e` or `dmesg` for recent crash entries. If a core dump was generated, run `coredumpctl info` for details.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Include visible errors or browser-console output, with private data removed.
       render: text
     validations:
-      required: true
-
-  - type: checkboxes
-    id: reproducible
-    attributes:
-      label: Reproducibility
-      options:
-        - label: I can reproduce this crash consistently
+      required: false

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f4ec" />
+    <meta name="color-scheme" content="light" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="Opusloops is a touch-first loop sketchbook that works offline in your browser."
+    />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./styles.css?v=11" />
+    <title>Opusloops</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <button class="brand" type="button" data-view-target="create" aria-label="Opusloops home">
+          <svg class="brand-mark" viewBox="0 0 96 64" aria-hidden="true">
+            <path d="M8 32c0-20 19-27 32-10l16 20c12 16 32 8 32-10S68 6 56 22L40 42C27 59 8 52 8 32Z" />
+          </svg>
+          <span>Opusloops</span>
+        </button>
+
+        <button class="status-pill" id="save-status" type="button" data-view-target="projects" aria-label="Open saved projects">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Saved in browser</span>
+        </button>
+      </header>
+
+      <main id="main-content">
+        <section class="view is-active" id="view-create" data-view="create" aria-labelledby="create-title" tabindex="-1">
+          <div class="hero-copy">
+            <p class="eyebrow">A pocket studio for first ideas</p>
+            <h1 id="create-title">What do you want to make?</h1>
+            <p class="lede">Describe the feeling. Opusloops turns it into a playable starting loop on this device.</p>
+          </div>
+
+          <form class="composer" id="composer-form">
+            <label class="sr-only" for="idea-input">Describe your loop</label>
+            <textarea
+              id="idea-input"
+              name="idea"
+              rows="3"
+              maxlength="180"
+              placeholder="A warm, late-night groove with a patient bassline…"
+              required
+            ></textarea>
+            <div class="composer-footer">
+              <span class="privacy-note">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V7a4 4 0 0 1 8 0v2m-9 0h10v8H5V9Z" /></svg>
+                Stays in this browser
+              </span>
+              <button class="send-button" type="submit" aria-label="Create loop">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-5 14-2.4-5.6L5 12Z" /></svg>
+              </button>
+            </div>
+          </form>
+
+          <div class="mood-row" role="group" aria-label="Quick ideas">
+            <button class="mood-chip" type="button" data-prompt="A warm soulful pocket groove">Warm</button>
+            <button class="mood-chip" type="button" data-prompt="A focused driving electronic loop">Driving</button>
+            <button class="mood-chip" type="button" data-prompt="A spacious ambient loop with soft movement">Spacious</button>
+            <button class="mood-chip" type="button" data-prompt="A playful syncopated beat with bright chords">Playful</button>
+          </div>
+
+          <section class="recent-section" aria-labelledby="recent-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Continue</p>
+                <h2 id="recent-title">Your latest sketch</h2>
+              </div>
+              <button class="text-button" type="button" data-view-target="projects">All projects</button>
+            </div>
+            <button class="project-preview" id="recent-project" type="button" data-view-target="studio">
+              <span class="project-art" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+              </span>
+              <span class="project-preview-copy">
+                <strong id="recent-project-name">Untitled loop</strong>
+                <span id="recent-project-meta">96 BPM · C minor</span>
+              </span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+            </button>
+          </section>
+
+          <aside class="principle-card">
+            <span class="principle-number">01</span>
+            <div>
+              <h2>Start with sound, not setup.</h2>
+              <p>No plugins, patching, accounts, or file management. Make the first eight bars useful, then shape them.</p>
+            </div>
+          </aside>
+        </section>
+
+        <section class="view" id="view-studio" data-view="studio" aria-labelledby="studio-title" tabindex="-1">
+          <div class="studio-heading">
+            <div>
+              <p class="eyebrow">Now playing</p>
+              <h1 id="studio-title" contenteditable="true" spellcheck="false">Untitled loop</h1>
+            </div>
+            <button class="icon-button" id="save-project-button" type="button" aria-label="Save project">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5V4Zm3 0v6h8V4M8 20v-7h8v7" /></svg>
+            </button>
+          </div>
+
+          <div class="transport-card">
+            <button class="play-button" id="play-button" type="button" aria-label="Play loop" aria-pressed="false">
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
+              <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" /></svg>
+            </button>
+            <div class="transport-detail">
+              <span class="transport-label">Tempo</span>
+              <div class="tempo-control">
+                <button type="button" id="tempo-down" aria-label="Decrease tempo">−</button>
+                <output id="tempo-output" aria-live="polite">96 BPM</output>
+                <button type="button" id="tempo-up" aria-label="Increase tempo">+</button>
+              </div>
+            </div>
+            <div class="transport-detail key-detail">
+              <span class="transport-label">Key</span>
+              <button class="key-button" id="key-button" type="button">C minor</button>
+            </div>
+          </div>
+
+          <div class="step-legend" aria-hidden="true">
+            <span>Tap steps to shape the loop</span>
+            <span>16 steps</span>
+          </div>
+          <div class="sequencer" id="sequencer" role="group" aria-label="Loop sequencer"></div>
+
+          <button class="refine-card" type="button" id="refine-button">
+            <span class="refine-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1" /></svg>
+            </span>
+            <span>
+              <strong>Refine this loop</strong>
+              <small>Make it sparser, warmer, busier, or entirely new</small>
+            </span>
+            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          </button>
+        </section>
+
+        <section class="view" id="view-mix" data-view="mix" aria-labelledby="mix-title" tabindex="-1">
+          <div class="page-heading">
+            <p class="eyebrow">Keep it simple</p>
+            <h1 id="mix-title">Mix by feel.</h1>
+            <p class="lede">Four voices, one clear balance. Nothing is hidden behind a desktop panel.</p>
+          </div>
+          <div class="mixer" id="mixer"></div>
+          <button class="secondary-action" id="reset-mix" type="button">Reset mix</button>
+        </section>
+
+        <section class="view" id="view-projects" data-view="projects" aria-labelledby="projects-title" tabindex="-1">
+          <div class="page-heading projects-heading">
+            <div>
+              <p class="eyebrow">On this device</p>
+              <h1 id="projects-title">Projects</h1>
+            </div>
+            <button class="primary-small" id="new-project-button" type="button">New</button>
+          </div>
+          <p class="lede">Local by default. Projects stay in this browser and remain available offline.</p>
+          <div class="projects-list" id="projects-list"></div>
+
+          <aside class="offline-card" id="install-card">
+            <div>
+              <p class="eyebrow">Install Opusloops</p>
+              <h2>Keep it within reach.</h2>
+              <p>Add Opusloops to your home screen for a full-screen, offline studio.</p>
+            </div>
+            <button class="secondary-action" id="install-button" type="button">Add to home screen</button>
+          </aside>
+
+          <details class="about-details">
+            <summary>About this mobile edition</summary>
+            <p>
+              Opusloops Mobile is a focused Web Audio sketchbook. Desktop plugin hosting, scripting,
+              remote-control servers, and local model downloads are intentionally excluded from this build.
+            </p>
+            <p class="fine-print">Independent open-source software, built for local sketches in your browser.</p>
+          </details>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Primary">
+        <button class="nav-item is-active" type="button" data-view-target="create" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4v-8.5Z" /></svg>
+          <span>Create</span>
+        </button>
+        <button class="nav-item" type="button" data-view-target="studio">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14M12 8v8m7-13v18M3 9h4m3 3h4m3-4h4" /></svg>
+          <span>Studio</span>
+        </button>
+        <button class="nav-item" type="button" data-view-target="mix">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16m6-16v16m6-16v16M3 9h6m0 6h6m0-7h6" /></svg>
+          <span>Mix</span>
+        </button>
+        <button class="nav-item" type="button" data-view-target="projects">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6l2 2h8v11H4V6Z" /></svg>
+          <span>Projects</span>
+        </button>
+      </nav>
+    </div>
+
+    <dialog class="refine-dialog" id="refine-dialog" aria-labelledby="refine-title">
+      <form method="dialog" id="refine-form">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Shape the idea</p>
+            <h2 id="refine-title">How should it change?</h2>
+          </div>
+          <button class="icon-button" id="refine-close-button" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+        <label class="sr-only" for="refine-input">Describe the change</label>
+        <textarea id="refine-input" rows="3" placeholder="Make the drums sparser and the chords brighter"></textarea>
+        <div class="refine-options">
+          <button type="button" data-refine="sparser">Sparser</button>
+          <button type="button" data-refine="busier">Busier</button>
+          <button type="button" data-refine="warmer">Warmer</button>
+          <button type="button" data-refine="surprise">Surprise me</button>
+        </div>
+        <button class="primary-action" id="apply-refine" type="submit" value="default">Apply change</button>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js?v=11" defer></script>
+  </body>
+</html>
