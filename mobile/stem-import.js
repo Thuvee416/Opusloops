@@ -61,6 +61,7 @@
       retryInspection: document.querySelector("#stem-retry-inspection"),
       retryProposal: document.querySelector("#stem-retry-proposal"),
       repairRender: document.querySelector("#stem-repair-render"),
+      retryRender: document.querySelector("#stem-retry-render"),
       cancelButton: document.querySelector("#stem-cancel-button"),
       gateAPanel: document.querySelector("#stem-gate-a-panel"),
       reviewList: document.querySelector("#stem-review-list"),
@@ -154,7 +155,10 @@
     let dispatchInFlight = null;
     let automaticRepairKey = "";
     let automaticRepairTimer = 0;
+    let automaticRenderRetryKey = "";
+    let automaticRenderRetryTimer = 0;
     const repairRequests = new Map();
+    const renderRetryRequests = new Map();
     const jsonArtifacts = new Map();
 
     function field(id) {
@@ -1150,8 +1154,10 @@
       const retryableInspection = core.canRetryInspection(job);
       const retryableProposal = core.canRetryProposal(job, events);
       const repairableRender = core.canRepairRenderProposal(job, events);
+      const retryableRender = core.canRetryRender(job, events);
       dom.uploadPanel.hidden = Boolean(job && (
-        retryableProposal || repairableRender || !["uploading", "failed", "cancelled", "deleted"].includes(status)
+        retryableProposal || repairableRender || retryableRender
+          || !["uploading", "failed", "cancelled", "deleted"].includes(status)
       ));
       dom.processPanel.hidden = !job;
       dom.processPanel.dataset.kind = statusKind;
@@ -1176,8 +1182,11 @@
       dom.retryInspection.hidden = !retryableInspection;
       dom.retryProposal.hidden = !retryableProposal;
       dom.repairRender.hidden = !repairableRender;
+      dom.retryRender.hidden = !retryableRender;
       dom.cancelButton.hidden = ["ready", "failed", "cancelled", "deleted", "deletion_pending"].includes(status);
-      const failureMessage = repairableRender
+      const failureMessage = retryableRender
+        ? "Your stems, timing proposal, and approval are safe. The renderer now supports this audio format and can resume without another upload or review."
+        : repairableRender
         ? "Your stems and analysis are safe. An early timing boundary needs a renderer-safe proposal. Repair it, then listen to and approve the corrected timing before rendering."
         : retryableProposal
           ? "Your completed timing analysis is safe. Restart the timing proposal to continue without uploading again."
@@ -1203,6 +1212,23 @@
       } else if (automaticRepairTimer) {
         window.clearTimeout(automaticRepairTimer);
         automaticRepairTimer = 0;
+      }
+
+      if (retryableRender) {
+        const retryKey = `${job.id}:${job.revision}:${job.proposalManifestSha256}:${job.tempoApprovalSha256}`;
+        if (automaticRenderRetryKey !== retryKey) {
+          automaticRenderRetryKey = retryKey;
+          window.clearTimeout(automaticRenderRetryTimer);
+          const scheduledGeneration = generation;
+          automaticRenderRetryTimer = window.setTimeout(() => {
+            automaticRenderRetryTimer = 0;
+            if (scheduledGeneration !== generation || automaticRenderRetryKey !== retryKey) return;
+            retryRender(retryKey);
+          }, 0);
+        }
+      } else if (automaticRenderRetryTimer) {
+        window.clearTimeout(automaticRenderRetryTimer);
+        automaticRenderRetryTimer = 0;
       }
 
       if (status === "awaiting_analysis_confirmation") {
@@ -1532,6 +1558,46 @@
       return operation;
     }
 
+    async function retryRender(expectedKey = "") {
+      if (!job || !core.canRetryRender(job, events)) return;
+      const requestJobId = job.id;
+      const requestRevision = job.revision;
+      const requestProposalSha256 = job.proposalManifestSha256;
+      const requestApprovalSha256 = job.tempoApprovalSha256;
+      const requestKey = `${requestJobId}:${requestRevision}:${requestProposalSha256}:${requestApprovalSha256}`;
+      if (expectedKey && expectedKey !== requestKey) return;
+      const localGeneration = generation;
+      const existingRequest = renderRetryRequests.get(requestKey);
+      if (existingRequest?.generation === localGeneration) return existingRequest.operation;
+      const operation = (async () => {
+        try {
+          setBusy(dom.retryRender, true, "Retrying render…");
+          const response = await cloud.retryStemRender(
+            requestJobId,
+            requestRevision,
+            requestProposalSha256,
+            requestApprovalSha256
+          );
+          if (localGeneration !== generation || job?.id !== requestJobId) return;
+          adoptResponse(response);
+          showToast?.("Render restarted with your existing approval");
+        } catch (error) {
+          if (localGeneration !== generation || job?.id !== requestJobId) return;
+          setError(friendlyError(error));
+          window.setTimeout(() => poll(localGeneration), 100);
+        } finally {
+          if (renderRetryRequests.get(requestKey)?.operation === operation) {
+            renderRetryRequests.delete(requestKey);
+          }
+          if (localGeneration === generation && job?.id === requestJobId) {
+            setBusy(dom.retryRender, false);
+          }
+        }
+      })();
+      renderRetryRequests.set(requestKey, { generation: localGeneration, operation });
+      return operation;
+    }
+
     async function requestProposal() {
       if (!job) return;
       try {
@@ -1632,7 +1698,10 @@
       pollingTimer = 0;
       window.clearTimeout(automaticRepairTimer);
       automaticRepairTimer = 0;
+      window.clearTimeout(automaticRenderRetryTimer);
+      automaticRenderRetryTimer = 0;
       setBusy(dom.repairRender, false);
+      setBusy(dom.retryRender, false);
       uploadController?.abort();
       uploadController = null;
       dispatchInFlight = null;
@@ -1664,6 +1733,7 @@
         renderedGridFingerprint = "";
         renderedRegionFingerprint = "";
         automaticRepairKey = "";
+        automaticRenderRetryKey = "";
       }
     }
 
@@ -1712,6 +1782,7 @@
     dom.retryInspection.addEventListener("click", retryInspection);
     dom.retryProposal.addEventListener("click", retryProposal);
     dom.repairRender.addEventListener("click", () => repairRenderProposal());
+    dom.retryRender.addEventListener("click", () => retryRender());
     dom.referenceMethod.addEventListener("change", selectFullMixReference);
     dom.approveAnalysis.addEventListener("click", approveAnalysis);
     dom.requestProposal.addEventListener("click", requestProposal);

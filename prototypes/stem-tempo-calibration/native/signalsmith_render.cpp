@@ -63,6 +63,17 @@ constexpr double kMinPlaybackRate = 0.25;
 constexpr double kMaxPlaybackRate = 4.0;
 constexpr const char* kLeaseFileName = ".opusloops-render-lease";
 constexpr std::uintmax_t kMaxRendererInputBytes = 1024U * 1024U;
+constexpr int kWaveFormatPcm = 0x0001;
+constexpr int kWaveFormatIeeeFloat = 0x0003;
+constexpr int kWaveFormatExtensible = 0xFFFE;
+constexpr std::array<unsigned char, 16> kPcmSubformat = {
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
+    0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71,
+};
+constexpr std::array<unsigned char, 16> kIeeeFloatSubformat = {
+    0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
+    0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71,
+};
 
 static_assert(signalsmith::stretch::SignalsmithStretch<float>::version[0] == 1 &&
                   signalsmith::stretch::SignalsmithStretch<float>::version[1] == 3 &&
@@ -765,6 +776,8 @@ class WavReader {
                 throw Error("WAV chunk extends beyond file: " + path_.string());
 
             if (chunkId == "fmt ") {
+                if (sawFormat)
+                    throw Error("multiple WAV fmt chunks are not supported: " + path_.string());
                 if (chunkBytes < 16)
                     throw Error("invalid WAV fmt chunk: " + path_.string());
                 audioFormat_ = static_cast<int>(readU16(input_));
@@ -773,6 +786,24 @@ class WavReader {
                 static_cast<void>(readU32(input_));
                 blockAlign_ = static_cast<int>(readU16(input_));
                 bitsPerSample_ = static_cast<int>(readU16(input_));
+                if (audioFormat_ == kWaveFormatExtensible) {
+                    if (chunkBytes < 40)
+                        throw Error("invalid extensible WAV fmt chunk: " + path_.string());
+                    const auto extensionBytes = static_cast<std::uint64_t>(readU16(input_));
+                    const auto validBitsPerSample = static_cast<int>(readU16(input_));
+                    static_cast<void>(readU32(input_));
+                    std::array<unsigned char, 16> subformat{};
+                    input_.readExact(subformat.data(), subformat.size());
+                    if (extensionBytes < 22 || extensionBytes > chunkBytes - 18 ||
+                        validBitsPerSample != bitsPerSample_)
+                        throw Error("invalid extensible WAV fmt chunk: " + path_.string());
+                    if (subformat == kPcmSubformat)
+                        audioFormat_ = kWaveFormatPcm;
+                    else if (subformat == kIeeeFloatSubformat)
+                        audioFormat_ = kWaveFormatIeeeFloat;
+                    else
+                        throw Error("unsupported extensible WAV subtype: " + path_.string());
+                }
                 sawFormat = true;
             } else if (chunkId == "data") {
                 if (sawData)
@@ -794,8 +825,8 @@ class WavReader {
             throw Error("unsupported WAV channel count: " + path_.string());
         if (sampleRate_ < 8000 || sampleRate_ > 384000)
             throw Error("unsupported WAV sample rate: " + path_.string());
-        const bool supported = (audioFormat_ == 1 && bitsPerSample_ == 16) ||
-                               (audioFormat_ == 3 && bitsPerSample_ == 32);
+        const bool supported = (audioFormat_ == kWaveFormatPcm && bitsPerSample_ == 16) ||
+                               (audioFormat_ == kWaveFormatIeeeFloat && bitsPerSample_ == 32);
         if (!supported)
             throw Error("WAV must be PCM16 or IEEE float32: " + path_.string());
         const int expectedAlign = channels_ * (bitsPerSample_ / 8);

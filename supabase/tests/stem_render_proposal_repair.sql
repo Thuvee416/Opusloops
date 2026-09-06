@@ -1,6 +1,6 @@
 begin;
 
-select '1..10';
+select '1..14';
 
 insert into auth.users (id, raw_app_meta_data, raw_user_meta_data)
 values (
@@ -679,5 +679,276 @@ end;
 $$;
 
 select 'ok 10 - render proposal repair remains service-role-only';
+
+select set_config('request.jwt.claim.role', 'service_role', true);
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+set local role service_role;
+
+do $$
+declare
+  v_approval_hash text;
+begin
+  reset role;
+  select tempo_approval_sha256 into v_approval_hash
+  from public.stem_import_jobs
+  where id = 'c3000000-0000-4000-8000-000000000002';
+  set local role service_role;
+  begin
+    perform public.retry_stem_render(
+      'a3000000-0000-4000-8000-000000000001',
+      'c3000000-0000-4000-8000-000000000002',
+      19,
+      repeat('b', 64),
+      v_approval_hash
+    );
+    raise exception 'stale render revision unexpectedly retried';
+  exception when serialization_failure then null;
+  end;
+  begin
+    perform public.retry_stem_render(
+      'a3000000-0000-4000-8000-000000000001',
+      'c3000000-0000-4000-8000-000000000002',
+      20,
+      repeat('9', 64),
+      v_approval_hash
+    );
+    raise exception 'stale render proposal unexpectedly retried';
+  exception when invalid_parameter_value then null;
+  end;
+  begin
+    perform public.retry_stem_render(
+      'a3000000-0000-4000-8000-000000000001',
+      'c3000000-0000-4000-8000-000000000002',
+      20,
+      repeat('b', 64),
+      repeat('9', 64)
+    );
+    raise exception 'stale Gate B unexpectedly retried';
+  exception when invalid_parameter_value then null;
+  end;
+  begin
+    perform public.retry_stem_render(
+      'a3000000-0000-4000-8000-000000000001',
+      'c3000000-0000-4000-8000-000000000002',
+      20,
+      repeat('b', 64),
+      v_approval_hash
+    );
+    raise exception 'generic render failure unexpectedly retried';
+  exception when object_not_in_prerequisite_state then null;
+  end;
+end;
+$$;
+
+select 'ok 11 - render retry accepts only the allowlisted WAV compatibility failure';
+
+reset role;
+
+update public.stem_import_jobs
+set error_code = 'canonical_wav_extensible_unsupported'
+where id in (
+  'c3000000-0000-4000-8000-000000000003',
+  'c3000000-0000-4000-8000-000000000006',
+  'c3000000-0000-4000-8000-000000000008',
+  'c3000000-0000-4000-8000-000000000010',
+  'c3000000-0000-4000-8000-000000000011'
+);
+
+set local role service_role;
+
+do $$
+declare
+  v_job_id uuid;
+  v_approval_hash text;
+begin
+  for v_job_id in
+    select unnest(array[
+      'c3000000-0000-4000-8000-000000000003'::uuid,
+      'c3000000-0000-4000-8000-000000000006'::uuid,
+      'c3000000-0000-4000-8000-000000000008'::uuid,
+      'c3000000-0000-4000-8000-000000000010'::uuid,
+      'c3000000-0000-4000-8000-000000000011'::uuid
+    ])
+  loop
+    reset role;
+    select tempo_approval_sha256 into v_approval_hash
+    from public.stem_import_jobs where id = v_job_id;
+    set local role service_role;
+    begin
+      perform public.retry_stem_render(
+        'a3000000-0000-4000-8000-000000000001',
+        v_job_id,
+        20,
+        repeat('b', 64),
+        v_approval_hash
+      );
+      raise exception 'unsafe render fixture unexpectedly retried: %', v_job_id;
+    exception when object_not_in_prerequisite_state then null;
+    end;
+  end loop;
+end;
+$$;
+
+select 'ok 12 - render retry rejects wrong attempts, retention, and any partial output';
+
+reset role;
+
+update private.stem_job_attempts
+set state = 'cancelled', finished_at = statement_timestamp()
+where job_id = 'c3000000-0000-4000-8000-000000000001'
+  and state in ('pending_dispatch', 'dispatching', 'submitted', 'running');
+
+update public.stem_import_jobs
+set status = 'cancelled', revision = revision + 1
+where id = 'c3000000-0000-4000-8000-000000000001';
+
+update public.stem_import_jobs
+set error_code = 'canonical_wav_extensible_unsupported',
+    error_message = 'The audio format is ready to retry with the updated renderer.'
+where id = 'c3000000-0000-4000-8000-000000000002';
+
+set local role service_role;
+
+do $$
+declare
+  v_before jsonb;
+  v_result jsonb;
+  v_approval_hash text;
+  v_old_attempt uuid := 'd3000000-0000-4000-8000-000000000002';
+  v_new_attempt uuid;
+begin
+  reset role;
+  select jsonb_build_object(
+    'analysisSelection', analysis_selection,
+    'analysisSelectionSha256', analysis_selection_sha256,
+    'gateAApprovedAt', gate_a_approved_at,
+    'gateAApprovedBy', gate_a_approved_by,
+    'analysisSha256', analysis_sha256,
+    'reviewedGrid', reviewed_grid,
+    'reviewedGridSha256', reviewed_grid_sha256,
+    'proposalId', proposal_id,
+    'proposalManifestSha256', proposal_manifest_sha256,
+    'proposal', proposal,
+    'tempoApproval', tempo_approval,
+    'tempoApprovalSha256', tempo_approval_sha256,
+    'gateBApprovedAt', gate_b_approved_at,
+    'gateBApprovedBy', gate_b_approved_by
+  ), tempo_approval_sha256
+  into v_before, v_approval_hash
+  from public.stem_import_jobs
+  where id = 'c3000000-0000-4000-8000-000000000002';
+  set local role service_role;
+
+  v_result := public.retry_stem_render(
+    'a3000000-0000-4000-8000-000000000001',
+    'c3000000-0000-4000-8000-000000000002',
+    20,
+    repeat('b', 64),
+    v_approval_hash
+  );
+  v_new_attempt := (v_result ->> 'active_attempt_id')::uuid;
+
+  reset role;
+  if v_result ->> 'status' <> 'render_queued'
+     or (v_result ->> 'revision')::bigint <> 21
+     or v_new_attempt = v_old_attempt
+     or v_result ->> 'aws_job_id' is not null
+     or v_result ->> 'error_code' is not null
+     or v_result ->> 'error_message' is not null
+     or v_result ->> 'render_manifest_sha256' is not null
+     or v_result ->> 'render_result' is not null
+     or v_before is distinct from jsonb_build_object(
+       'analysisSelection', v_result -> 'analysis_selection',
+       'analysisSelectionSha256', v_result ->> 'analysis_selection_sha256',
+       'gateAApprovedAt', (v_result ->> 'gate_a_approved_at')::timestamptz,
+       'gateAApprovedBy', (v_result ->> 'gate_a_approved_by')::uuid,
+       'analysisSha256', v_result ->> 'analysis_sha256',
+       'reviewedGrid', v_result -> 'reviewed_grid',
+       'reviewedGridSha256', v_result ->> 'reviewed_grid_sha256',
+       'proposalId', v_result ->> 'proposal_id',
+       'proposalManifestSha256', v_result ->> 'proposal_manifest_sha256',
+       'proposal', v_result -> 'proposal',
+       'tempoApproval', v_result -> 'tempo_approval',
+       'tempoApprovalSha256', v_result ->> 'tempo_approval_sha256',
+       'gateBApprovedAt', (v_result ->> 'gate_b_approved_at')::timestamptz,
+       'gateBApprovedBy', (v_result ->> 'gate_b_approved_by')::uuid
+     )
+     or (select state from private.stem_job_attempts where id = v_old_attempt) <> 'failed'
+     or (select state from private.stem_job_attempts where id = v_new_attempt)
+       <> 'pending_dispatch'
+     or (select stage from private.stem_job_attempts where id = v_new_attempt) <> 'render'
+     or (select job_revision from private.stem_job_attempts where id = v_new_attempt) <> 21
+     or not exists (
+       select 1 from public.stem_import_events
+       where job_id = 'c3000000-0000-4000-8000-000000000002'
+         and attempt_id = v_new_attempt
+         and stage = 'dispatch' and status = 'started'
+         and detail ->> 'operation' = 'retry-render'
+         and detail ->> 'proposalManifestSha256' = repeat('b', 64)
+         and detail ->> 'tempoApprovalSha256' = v_approval_hash
+     ) then
+    raise exception 'successful render retry changed an approval or attempt invariant';
+  end if;
+  set local role service_role;
+end;
+$$;
+
+select 'ok 13 - render retry preserves both approval gates and creates a fresh render attempt';
+
+do $$
+declare
+  v_dispatch jsonb;
+  v_expected_approval jsonb;
+begin
+  reset role;
+  select tempo_approval into v_expected_approval
+  from public.stem_import_jobs
+  where id = 'c3000000-0000-4000-8000-000000000002';
+  set local role service_role;
+
+  v_dispatch := public.claim_stem_dispatch(
+    'a3000000-0000-4000-8000-000000000001',
+    'c3000000-0000-4000-8000-000000000002',
+    'f3000000-0000-4000-8000-000000000003'
+  );
+  if (v_dispatch ->> 'dispatchClaimed')::boolean is not true
+     or v_dispatch ->> 'stage' <> 'render'
+     or v_dispatch -> 'inputs' ->> 'proposalId' <> 'old-proposal-02'
+     or v_dispatch -> 'inputs' -> 'proposal' is null
+     or v_dispatch -> 'inputs' -> 'approval' is distinct from v_expected_approval
+     or v_dispatch -> 'inputs' ->> 'reviewedGrid' is not null then
+    raise exception 'retried render dispatch lost or changed its approved inputs: %', v_dispatch;
+  end if;
+end;
+$$;
+
+select 'ok 14 - retried render dispatch uses the exact retained proposal and Gate B';
+
+reset role;
+
+do $$
+begin
+  if has_function_privilege(
+       'anon',
+       'public.retry_stem_render(uuid,uuid,bigint,text,text)',
+       'EXECUTE'
+     )
+     or has_function_privilege(
+       'authenticated',
+       'public.retry_stem_render(uuid,uuid,bigint,text,text)',
+       'EXECUTE'
+     )
+     or not has_function_privilege(
+       'service_role',
+       'public.retry_stem_render(uuid,uuid,bigint,text,text)',
+       'EXECUTE'
+     ) then
+    raise exception 'retry_stem_render must be service-role-only';
+  end if;
+end;
+$$;
+
+-- Privilege coverage is part of the preceding dispatch/retry checks and does
+-- not add a TAP line so the file retains its 14-test plan.
 
 rollback;

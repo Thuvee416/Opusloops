@@ -99,8 +99,35 @@ def _float_wave_bytes(
     return b"RIFF" + struct.pack("<I", len(chunks) + 4) + b"WAVE" + chunks
 
 
-def _make_ffmpeg(path: Path, samples: list[float] | None, *, fail: bool = False) -> Path:
-    packed = _float_wave_bytes(samples or [])
+def _extensible_float_wave_bytes(
+    samples: list[float],
+    *,
+    channels: int = 2,
+    sample_rate: int = 48_000,
+    extension_bytes: int = 22,
+    valid_bits: int = 32,
+) -> bytes:
+    data = struct.pack("<" + "f" * len(samples), *samples)
+    block_align = channels * 4
+    fmt = struct.pack(
+        "<HHIIHHHHI16s",
+        0xFFFE,
+        channels,
+        sample_rate,
+        sample_rate * block_align,
+        block_align,
+        32,
+        extension_bytes,
+        valid_bits,
+        (1 << channels) - 1,
+        bytes.fromhex("0300000000001000800000aa00389b71"),
+    )
+    chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt
+    chunks += b"data" + struct.pack("<I", len(data)) + data
+    return b"RIFF" + struct.pack("<I", len(chunks) + 4) + b"WAVE" + chunks
+
+
+def _make_ffmpeg_bytes(path: Path, packed: bytes, *, fail: bool = False) -> Path:
     return _write_tool(
         path,
         f"""
@@ -121,6 +148,10 @@ def _make_ffmpeg(path: Path, samples: list[float] | None, *, fail: bool = False)
             output.write_bytes({packed!r})
         """,
     )
+
+
+def _make_ffmpeg(path: Path, samples: list[float] | None, *, fail: bool = False) -> Path:
+    return _make_ffmpeg_bytes(path, _float_wave_bytes(samples or []), fail=fail)
 
 
 class AudioProbeTests(unittest.TestCase):
@@ -218,6 +249,55 @@ class AudioProbeTests(unittest.TestCase):
             self.assertEqual(canonical.ffmpeg.path, str(ffmpeg.resolve()))
             self.assertFalse((root / "SHOULD_NOT_EXIST.mp3").exists())
             self.assertEqual(list(root.glob(".*.decode-*")), [])
+
+    def test_decode_accepts_strict_extensible_ieee_float32_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "stem.mp3"
+            source.write_bytes(b"fixture")
+            ffprobe = _make_ffprobe(root / "ffprobe", _ffprobe_payload())
+            ffmpeg = _make_ffmpeg_bytes(
+                root / "ffmpeg",
+                _extensible_float_wave_bytes([0.0, 0.0, 0.25, -0.5]),
+            )
+
+            canonical = decode_canonical(
+                source,
+                root / "canonical.wav",
+                ffmpeg_bin=ffmpeg,
+                ffprobe_bin=ffprobe,
+            )
+
+            self.assertEqual(canonical.frames, 2)
+            self.assertEqual(canonical.channels, 2)
+            self.assertEqual(canonical.audio_data_bytes, 16)
+
+    def test_decode_rejects_malformed_extensible_float_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "stem.mp3"
+            source.write_bytes(b"fixture")
+            ffprobe = _make_ffprobe(root / "ffprobe", _ffprobe_payload())
+            for name, packed in (
+                (
+                    "short-extension",
+                    _extensible_float_wave_bytes([0.1, -0.1], extension_bytes=20),
+                ),
+                (
+                    "wrong-valid-bits",
+                    _extensible_float_wave_bytes([0.1, -0.1], valid_bits=24),
+                ),
+            ):
+                output = root / f"{name}.wav"
+                ffmpeg = _make_ffmpeg_bytes(root / f"ffmpeg-{name}", packed)
+                with self.assertRaisesRegex(AudioProbeError, "not IEEE float32"):
+                    decode_canonical(
+                        source,
+                        output,
+                        ffmpeg_bin=ffmpeg,
+                        ffprobe_bin=ffprobe,
+                    )
+                self.assertFalse(output.exists())
 
     def test_decode_refuses_overwrite_and_cleans_failed_staging(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

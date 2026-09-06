@@ -627,6 +627,15 @@ Deno.serve(async (request) => {
         p_proposal_manifest_sha256: stringField(body, "proposalManifestSha256", 64),
       }) as JsonObject;
       dispatchResult = await durableDispatch(user.id, jobId, user.accessToken, user.expiresAt);
+    } else if (action === "retry-render") {
+      job = await rpc("retry_stem_render", {
+        p_user_id: user.id,
+        p_job_id: jobId,
+        p_revision: revisionField(body),
+        p_proposal_manifest_sha256: stringField(body, "proposalManifestSha256", 64),
+        p_tempo_approval_sha256: stringField(body, "tempoApprovalSha256", 64),
+      }) as JsonObject;
+      dispatchResult = await durableDispatch(user.id, jobId, user.accessToken, user.expiresAt);
     } else if (action === "approve-analysis") {
       const [files, roles, reference, originals] = confirmations(body, [
         "files", "roles", "reference", "originalsUnchanged",

@@ -275,6 +275,33 @@ assert.equal(core.canRepairRenderProposal({
 assert.equal(core.canRepairRenderProposal({
   status: 'failed', error_code: 'tempo_map_preroll_invalid'
 }, failedRenderEvents), false);
+assert.equal(core.canRetryRender({
+  status: 'failed',
+  error_code: 'canonical_wav_extensible_unsupported',
+  proposal_manifest_sha256: 'a'.repeat(64),
+  tempo_approval_sha256: 'b'.repeat(64),
+  gate_b_approved_at: '2026-09-06T21:25:51Z'
+}, failedRenderEvents), true);
+assert.equal(core.canRetryRender({
+  status: 'failed',
+  error_code: 'calibration_stage_failed',
+  proposal_manifest_sha256: 'a'.repeat(64),
+  tempo_approval_sha256: 'b'.repeat(64),
+  gate_b_approved_at: '2026-09-06T21:25:51Z'
+}, failedRenderEvents), false);
+assert.equal(core.canRetryRender({
+  status: 'failed',
+  error_code: 'canonical_wav_extensible_unsupported',
+  proposal_manifest_sha256: 'a'.repeat(64),
+  tempo_approval_sha256: 'b'.repeat(64),
+  gate_b_approved_at: '2026-09-06T21:25:51Z'
+}, [...failedRenderEvents, { sequence: 21, stage: 'propose', status: 'failed' }]), false);
+assert.equal(core.canRetryRender({
+  status: 'failed',
+  error_code: 'canonical_wav_extensible_unsupported',
+  proposal_manifest_sha256: 'a'.repeat(64),
+  gate_b_approved_at: '2026-09-06T21:25:51Z'
+}, failedRenderEvents), false);
 assert.equal(core.eventProgress({ determinate: false, completed: 1, total: 2 }), null);
 assert.deepEqual(
   core.eventProgress({ determinate: true, completed: 3, total: 4, unit: 'files' }),
@@ -677,7 +704,7 @@ grep -Fq 'sb_publishable_' mobile/config.js
 grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
 grep -Fq '"Upload-Offset"' mobile/cloud-client.js
 grep -Fq 'onUploadProgress' mobile/cloud-client.js
-for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection retryStemProposal repairStemRenderProposal getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
+for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection retryStemProposal repairStemRenderProposal retryStemRender getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
   grep -Fq "$method" mobile/cloud-client.js
 done
 grep -Fq 'order=created_at.asc,asset_id.asc' mobile/cloud-client.js
@@ -717,7 +744,7 @@ grep -Fq 'return stemAction("retry-proposal", { jobId, revision })' mobile/cloud
 grep -Fq 'id="stem-repair-render"' mobile/index.html
 grep -Fq 'const repairableRender = core.canRepairRenderProposal(job, events)' mobile/stem-import.js
 grep -Fq 'dom.repairRender.hidden = !repairableRender' mobile/stem-import.js
-grep -Fq 'retryableProposal || repairableRender || !["uploading", "failed", "cancelled", "deleted"].includes(status)' mobile/stem-import.js
+grep -Fq 'retryableProposal || repairableRender || retryableRender' mobile/stem-import.js
 grep -Fq 'await cloud.repairStemRenderProposal(' mobile/stem-import.js
 grep -Fq 'repairRenderProposal(repairKey)' mobile/stem-import.js
 grep -Fq 'if (scheduledGeneration !== generation || automaticRepairKey !== repairKey) return' mobile/stem-import.js
@@ -725,6 +752,11 @@ grep -Fq 'const existingRequest = repairRequests.get(requestKey)' mobile/stem-im
 grep -Fq 'if (existingRequest?.generation === localGeneration) return existingRequest.operation' mobile/stem-import.js
 grep -Fq 'repairRequests.get(requestKey)?.operation === operation' mobile/stem-import.js
 grep -Fq 'return stemAction("repair-render-proposal", { jobId, revision, proposalManifestSha256 })' mobile/cloud-client.js
+grep -Fq 'id="stem-retry-render"' mobile/index.html
+grep -Fq 'const retryableRender = core.canRetryRender(job, events)' mobile/stem-import.js
+grep -Fq 'dom.retryRender.hidden = !retryableRender' mobile/stem-import.js
+grep -Fq 'await cloud.retryStemRender(' mobile/stem-import.js
+grep -Fq 'return stemAction("retry-render", {' mobile/cloud-client.js
 grep -Fq 'job.proposalId' mobile/stem-import.js
 grep -Fq 'resetConfirmations(gateBConfirmationIds)' mobile/stem-import.js
 grep -Fq 'documentProposalId !== job.proposalId' mobile/stem-import.js
@@ -756,8 +788,9 @@ inspection_retry='supabase/migrations/20260905230000_add_failed_inspection_retry
 inspection_retry_test='supabase/tests/stem_inspection_retry.sql'
 stem_import_function='supabase/functions/stem-import/index.ts'
 render_repair='supabase/migrations/20260906210000_add_render_proposal_repair.sql'
+render_retry='supabase/migrations/20260906223000_retry_extensible_wav_render.sql'
 snapshot_test='supabase/tests/stem_import_event_snapshot.sql'
-test -s "$render_repair" -a -s "$snapshot_test"
+test -s "$render_repair" -a -s "$render_retry" -a -s "$snapshot_test"
 grep -Fq 'create function public.get_stem_import_event_snapshot' "$render_repair"
 grep -Fq 'security invoker' "$render_repair"
 grep -Fq 'to authenticated' "$render_repair"
@@ -765,6 +798,8 @@ test -s "$inspection_retry" -a -s "$inspection_retry_test"
 grep -Fq 'action === "retry-inspection"' "$stem_import_function"
 grep -Fq 'action === "repair-render-proposal"' "$stem_import_function"
 grep -Fq 'job = await rpc("repair_stem_render_proposal"' "$stem_import_function"
+grep -Fq 'action === "retry-render"' "$stem_import_function"
+grep -Fq 'job = await rpc("retry_stem_render"' "$stem_import_function"
 grep -Fq 'get_stem_inspection_retry_source' "$stem_import_function"
 grep -Fq 'job = await rpc("retry_stem_inspection"' "$stem_import_function"
 grep -Fq 'dispatchResult = await durableDispatch' "$stem_import_function"
@@ -777,6 +812,15 @@ grep -Fq 'from private.stem_retention_scopes as scope' "$inspection_retry"
 grep -Fq 'from storage.objects as object' "$inspection_retry"
 grep -Fq "private.opusloops_stem_begin_attempt(" "$inspection_retry"
 grep -Fq 'to service_role' "$inspection_retry"
+grep -Fq 'create function public.retry_stem_render' "$render_retry"
+grep -Fq "canonical_wav_extensible_unsupported" "$render_retry"
+grep -Fq 'p_tempo_approval_sha256 is distinct from v_job.tempo_approval_sha256' "$render_retry"
+grep -Fq "v_failed_attempt.stage <> 'render'" "$render_retry"
+grep -Fq "asset.kind in (" "$render_retry"
+grep -Fq 'from storage.objects as object' "$render_retry"
+grep -Fq "event.detail ->> 'operation' in ('publishing-state', 'publishing-assets')" "$render_retry"
+grep -Fq "private.opusloops_stem_begin_attempt(" "$render_retry"
+grep -Fq 'to service_role' "$render_retry"
 
 migration='supabase/migrations/20260905110000_create_user_projects.sql'
 test -s "$migration"

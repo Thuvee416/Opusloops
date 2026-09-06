@@ -478,6 +478,23 @@
     return latestFailure?.stage === "render";
   }
 
+  function canRetryRender(jobValue, eventsValue) {
+    const job = normalizeJob(jobValue);
+    if (job.status !== "failed"
+        || job.errorCode !== "canonical_wav_extensible_unsupported"
+        || !job.proposalManifestSha256
+        || !job.tempoApprovalSha256
+        || !job.gateBApprovedAt
+        || !Array.isArray(eventsValue)) {
+      return false;
+    }
+    const latestFailure = eventsValue
+      .map(normalizeEvent)
+      .filter((event) => event.status === "failed")
+      .reduce((latest, event) => !latest || event.sequence >= latest.sequence ? event : latest, null);
+    return latestFailure?.stage === "render";
+  }
+
   function normalizeEvent(raw) {
     const determinate = pick(raw, "determinate") === true;
     const completed = finiteNumber(pick(raw, "completed"));
@@ -625,6 +642,8 @@
       analysisSha256: boundedString(pick(source, "analysisSha256", "analysis_sha256") ?? pick(analysis, "sha256", "analysisSha256", "analysis_sha256"), 64),
       proposalId: boundedString(pick(source, "proposalId", "proposal_id") ?? pick(proposal, "proposalId", "proposal_id"), 64),
       proposalManifestSha256: boundedString(pick(source, "proposalManifestSha256", "proposal_manifest_sha256") ?? pick(proposal, "sha256", "manifestSha256", "manifest_sha256"), 64),
+      tempoApprovalSha256: boundedString(pick(source, "tempoApprovalSha256", "tempo_approval_sha256"), 64),
+      gateBApprovedAt: boundedString(pick(source, "gateBApprovedAt", "gate_b_approved_at"), 80),
       targetBpm: rawTargetBpm === null ? null : finiteNumber(rawTargetBpm),
       mode: boundedString(pick(source, "mode", "conformMode", "conform_mode") ?? proposal.mode ?? tempoMap.mode, 40),
       durationSeconds: Math.max(0, finiteNumber(
@@ -784,6 +803,7 @@
     canRetryInspection,
     canRetryProposal,
     canRepairRenderProposal,
+    canRetryRender,
     editedRegions,
     eventProgress,
     finiteNumber,

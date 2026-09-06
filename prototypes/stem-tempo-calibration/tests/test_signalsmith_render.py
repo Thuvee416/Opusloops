@@ -36,6 +36,48 @@ def _write_pcm16(path: Path, *, frames: int, sample_rate: int, phase: float = 0.
         output.writeframes(samples)
 
 
+def _write_extensible_float32(
+    path: Path,
+    *,
+    frames: int,
+    sample_rate: int,
+    channels: int = 2,
+    extension_bytes: int = 22,
+    valid_bits: int = 32,
+    subtype: bytes = bytes.fromhex("0300000000001000800000aa00389b71"),
+) -> None:
+    block_align = channels * 4
+    samples = bytearray()
+    for frame in range(frames):
+        for channel in range(channels):
+            value = 0.2 * math.sin(2 * math.pi * (220 + channel * 110) * frame / sample_rate)
+            samples.extend(struct.pack("<f", value))
+    fmt = struct.pack(
+        "<HHIIHHHHI16s",
+        0xFFFE,
+        channels,
+        sample_rate,
+        sample_rate * block_align,
+        block_align,
+        32,
+        extension_bytes,
+        valid_bits,
+        (1 << channels) - 1,
+        subtype,
+    )
+    riff_bytes = 4 + 8 + len(fmt) + 8 + len(samples)
+    path.write_bytes(
+        b"RIFF"
+        + struct.pack("<I", riff_bytes)
+        + b"WAVEfmt "
+        + struct.pack("<I", len(fmt))
+        + fmt
+        + b"data"
+        + struct.pack("<I", len(samples))
+        + samples
+    )
+
+
 def _write_impulses(
     path: Path, *, frames: int, sample_rate: int, impulses: tuple[int, ...]
 ) -> None:
@@ -170,6 +212,75 @@ def test_renderer_is_frame_exact_finite_and_source_immutable(
 
     # Signalsmith links the spectral decisions, but its channel synthesis is not bit-identical.
     assert max(abs(left - right) for left, right in zip(*rendered, strict=True)) < 1e-3
+
+
+@pytest.mark.parametrize("mode", ["linked", "independent"])
+def test_renderer_accepts_extensible_ieee_float32_canonical_wav(
+    renderer_binary: Path, tmp_path: Path, mode: str
+) -> None:
+    source = (tmp_path / "extensible-float.wav").resolve()
+    _write_extensible_float32(source, frames=16_000, sample_rate=8_000)
+    plan = RenderPlan(
+        stems=(StemInput("extensible-float", source, 2, 16_000),),
+        anchors=(
+            FrameAnchor(0, 0),
+            FrameAnchor(8_000, 8_200),
+            FrameAnchor(16_000, 17_000),
+        ),
+        sample_rate=8_000,
+    )
+    inputs = write_renderer_inputs(plan, (tmp_path / "inputs").resolve())
+    output = (tmp_path / mode).resolve()
+
+    result = run_signalsmith(renderer_binary, plan, inputs, output, mode=mode)
+
+    assert result["target_frames"] == 17_000
+    channels, sample_rate, samples = _read_float_wav(output / "extensible-float.wav")
+    assert channels == 2
+    assert sample_rate == 8_000
+    assert len(samples) == 34_000
+    assert all(math.isfinite(sample) for sample in samples)
+    assert max(abs(sample) for sample in samples) > 0.05
+
+
+@pytest.mark.parametrize(
+    ("extension_bytes", "valid_bits", "subtype", "expected_error"),
+    [
+        (20, 32, bytes.fromhex("0300000000001000800000aa00389b71"), "invalid extensible"),
+        (22, 24, bytes.fromhex("0300000000001000800000aa00389b71"), "invalid extensible"),
+        (22, 32, bytes.fromhex("0600000000001000800000aa00389b71"), "unsupported extensible"),
+    ],
+)
+def test_renderer_rejects_invalid_extensible_wav_contract(
+    renderer_binary: Path,
+    tmp_path: Path,
+    extension_bytes: int,
+    valid_bits: int,
+    subtype: bytes,
+    expected_error: str,
+) -> None:
+    source = (tmp_path / "invalid-extensible.wav").resolve()
+    _write_extensible_float32(
+        source,
+        frames=16_000,
+        sample_rate=8_000,
+        extension_bytes=extension_bytes,
+        valid_bits=valid_bits,
+        subtype=subtype,
+    )
+    plan = RenderPlan(
+        stems=(StemInput("invalid-extensible", source, 2, 16_000),),
+        anchors=(FrameAnchor(0, 0), FrameAnchor(16_000, 16_000)),
+        sample_rate=8_000,
+    )
+    inputs = write_renderer_inputs(plan, (tmp_path / "inputs").resolve())
+    output = (tmp_path / "render").resolve()
+
+    failed = _run_test_renderer(renderer_binary, plan, inputs, output, mode="linked", options=())
+
+    assert failed.returncode == 2
+    assert expected_error in failed.stderr
+    assert not output.exists()
 
 
 def test_renderer_refuses_to_overwrite_derivatives(renderer_binary: Path, tmp_path: Path) -> None:

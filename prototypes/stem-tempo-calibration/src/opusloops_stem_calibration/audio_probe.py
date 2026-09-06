@@ -1068,7 +1068,13 @@ def _parse_canonical_wave(descriptor: int) -> _WaveLayout:
                 if format_tag == 3:
                     float_format = True
                 elif format_tag == 0xFFFE and chunk_bytes >= 40:
-                    float_format = payload[24:40] == _IEEE_FLOAT_SUBFORMAT
+                    extension_bytes, valid_bits_per_sample = struct.unpack_from("<HH", payload, 16)
+                    float_format = (
+                        extension_bytes >= 22
+                        and extension_bytes <= chunk_bytes - 18
+                        and valid_bits_per_sample == format_values[5]
+                        and payload[24:40] == _IEEE_FLOAT_SUBFORMAT
+                    )
             elif chunk_id == b"data":
                 if data_chunk is not None:
                     raise AudioProbeError("canonical WAVE has multiple data chunks")

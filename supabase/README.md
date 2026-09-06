@@ -90,6 +90,9 @@ these actions:
 | `create` | `projectId`, `file: {name,size,type,lastModified}` | Job plus the direct TUS endpoint, bucket, immutable object name, and 6 MiB chunk size |
 | `finalize-upload` | `jobId`, `revision` | Verified job and `inspect` dispatch |
 | `retry-inspection` | `jobId`, `revision` | Re-verifies and reuses the intact uploaded ZIP, creates a fresh inspect attempt, and dispatches it |
+| `retry-proposal` | `jobId`, `revision` | Reuses retained approved timing after an allowlisted proposal callback failure |
+| `repair-render-proposal` | `jobId`, `revision`, `proposalManifestSha256` | Rebuilds a renderer-safe proposal after an allowlisted map incompatibility and requires a fresh Gate B |
+| `retry-render` | `jobId`, `revision`, `proposalManifestSha256`, `tempoApprovalSha256` | Reuses the exact proposal and Gate B after an allowlisted worker compatibility failure, then dispatches a fresh render attempt |
 | `approve-analysis` | `jobId`, `revision`, `inspectionManifestSha256`, `selection`, all four Gate A confirmations | Hash-bound Gate A and `analyze` dispatch |
 | `request-proposal` | `jobId`, `revision`, `analysisSha256`, `proposalId`, `targetBpm` (20–400 for conforming modes; omitted for no-conform), `mode`, reviewed `reviewedGrid`, `meterNumerator`, `meterDenominator`, `firstDownbeatSeconds` | `propose` dispatch |
 | `approve-tempo` | `jobId`, `revision`, `proposalManifestSha256`, `approval`, all eight Gate B confirmations | Hash-bound Gate B and `render` dispatch |
