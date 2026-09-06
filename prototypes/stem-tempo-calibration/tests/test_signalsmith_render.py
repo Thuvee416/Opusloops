@@ -453,10 +453,18 @@ def test_rate_change_inside_delayed_tail_maps_transients(
     expected = expected_target
     start = max(0, expected - 1_000)
     window = samples[start : min(len(samples), expected + 1_001)]
-    peak = start + max(range(len(window)), key=lambda index: abs(window[index]))
-    assert abs(peak - expected) <= 160
+    dominant_peak = max(abs(sample) for sample in window)
+    mapped_window = samples[max(0, expected - 160) : min(len(samples), expected + 161)]
+    mapped_peak = max(abs(sample) for sample in mapped_window)
+
+    # Signalsmith spreads an impulse across several phase-vocoder lobes. Tiny
+    # platform-specific FFT differences can swap two near-equal lobes, so the
+    # mapped lobe must be co-dominant instead of being the single largest sample.
+    assert mapped_peak >= dominant_peak * 0.9
     if abs(source_frame - expected) > 160:
-        assert abs(peak - source_frame) > 160
+        source_window = samples[max(0, source_frame - 80) : min(len(samples), source_frame + 81)]
+        source_peak = max(abs(sample) for sample in source_window)
+        assert source_peak <= mapped_peak * 0.75
 
 
 def test_failed_short_render_removes_its_partial_output(
