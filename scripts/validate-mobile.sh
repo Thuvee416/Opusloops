@@ -399,6 +399,8 @@ fi
 grep -Fq 'https://heryvahetgzfalmuprbw.supabase.co' mobile/index.html
 grep -Fq 'https://heryvahetgzfalmuprbw.storage.supabase.co' mobile/index.html
 grep -Fq "media-src 'self' blob:" mobile/index.html
+grep -Fq 'https://heryvahetgzfalmuprbw.storage.supabase.co' customHttp.yml
+grep -Fq "media-src 'self' blob:" customHttp.yml
 grep -Fq 'sb_publishable_' mobile/config.js
 grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
 grep -Fq '"Upload-Offset"' mobile/cloud-client.js
