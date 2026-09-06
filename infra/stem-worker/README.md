@@ -29,6 +29,11 @@ strict job payload:
 - `storage.secretAccessKey`: the project's legacy anon JWT key;
 - `storage.sessionToken`: the fresh authenticated user's JWT.
 
+The Edge dispatcher reads the second value from the dedicated
+`OPUSLOOPS_STORAGE_LEGACY_ANON_KEY` Supabase secret. Do not rely on the hosted
+`SUPABASE_ANON_KEY` binding: newer projects can expose an `sb_publishable_...`
+value there, which is not valid for this S3 session-authentication contract.
+
 The worker uses those three values only as Supabase S3 session credentials, so
 Storage RLS remains the authorization boundary. They must never be copied into
 callbacks, artifacts, state files, exceptions, or logs. The dispatcher must

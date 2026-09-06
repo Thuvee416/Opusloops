@@ -307,7 +307,7 @@
     if (!configured()) throw new CloudError("Stem import is not configured");
     assertSessionUser(boundUserId);
     const requiresWorkerDispatch = [
-      "finalize-upload", "approve-analysis", "request-proposal", "approve-tempo", "dispatch"
+      "finalize-upload", "retry-inspection", "approve-analysis", "request-proposal", "approve-tempo", "dispatch"
     ].includes(action);
     const tokenLifetime = requiresWorkerDispatch ? STEM_DISPATCH_TOKEN_SECONDS : REFRESH_MARGIN_SECONDS;
     const token = await accessToken(boundUserId, tokenLifetime);
@@ -605,6 +605,10 @@
     return stemAction("finalize-upload", { jobId, revision });
   }
 
+  function retryStemInspection(jobId, revision) {
+    return stemAction("retry-inspection", { jobId, revision });
+  }
+
   async function fetchStemAssets(encodedJobId) {
     const assets = [];
     for (let offset = 0; ; offset += STEM_ASSET_PAGE_SIZE) {
@@ -685,6 +689,7 @@
     uploadStemArchive,
     forgetStemArchiveUpload,
     finalizeStemUpload,
+    retryStemInspection,
     getStemImport,
     approveStemAnalysis,
     requestStemProposal,

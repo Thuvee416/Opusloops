@@ -70,6 +70,8 @@ begin
     'public.create_stem_import(uuid,uuid,text,bigint,text)',
     'public.finalize_stem_upload(uuid,uuid,bigint,bigint,text)',
     'public.get_stem_job_for_finalize(uuid,uuid)',
+    'public.get_stem_inspection_retry_source(uuid,uuid,bigint)',
+    'public.retry_stem_inspection(uuid,uuid,bigint,bigint,text)',
     'public.approve_stem_analysis(uuid,uuid,bigint,text,jsonb,boolean,boolean,boolean,boolean)',
     'public.request_stem_proposal(uuid,uuid,bigint,text,text,numeric,text,jsonb,integer,integer,numeric)',
     'public.approve_stem_tempo(uuid,uuid,bigint,text,jsonb,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean)',
@@ -92,7 +94,8 @@ begin
   end loop;
   foreach v_signature in array array[
     'public.finalize_stem_upload_unchecked(uuid,uuid,bigint,bigint,text)',
-    'public.apply_stem_worker_callback_unchecked(uuid,text,jsonb)'
+    'public.apply_stem_worker_callback_unchecked(uuid,text,jsonb)',
+    'private.opusloops_stem_retryable_inspection_job(uuid,uuid,bigint)'
   ] loop
     if has_function_privilege('anon', v_signature, 'EXECUTE')
        or has_function_privilege('authenticated', v_signature, 'EXECUTE')

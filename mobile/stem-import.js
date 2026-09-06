@@ -31,6 +31,7 @@
       indeterminateCopy: document.querySelector("#stem-indeterminate-copy"),
       processEvents: document.querySelector("#stem-process-events"),
       processError: document.querySelector("#stem-process-error"),
+      retryInspection: document.querySelector("#stem-retry-inspection"),
       cancelButton: document.querySelector("#stem-cancel-button"),
       gateAPanel: document.querySelector("#stem-gate-a-panel"),
       reviewList: document.querySelector("#stem-review-list"),
@@ -720,6 +721,7 @@
 
     function render() {
       const status = job?.status || "";
+      const retryableInspection = core.canRetryInspection(job);
       dom.uploadPanel.hidden = Boolean(job && !["uploading", "failed", "cancelled", "deleted"].includes(status));
       dom.processPanel.hidden = !job;
       dom.gateAPanel.hidden = status !== "awaiting_analysis_confirmation";
@@ -736,8 +738,12 @@
       dom.processTitle.textContent = core.statusLabel(status);
       dom.processState.textContent = core.statusKind(status) === "waiting" ? "Needs you" : status === "ready" ? "Complete" : status === "failed" ? "Stopped" : "Live";
       dom.processState.dataset.kind = core.statusKind(status);
+      dom.retryInspection.hidden = !retryableInspection;
       dom.cancelButton.hidden = ["ready", "failed", "cancelled", "deleted", "deletion_pending"].includes(status);
-      setError(status === "failed" ? job.errorMessage || "Processing stopped. The recorded events remain available for review." : "");
+      const failureMessage = job.errorMessage || "Processing stopped. The recorded events remain available for review.";
+      setError(status === "failed"
+        ? `${failureMessage}${retryableInspection ? " Retry can reuse the original upload if it remains available." : ""}`
+        : "");
       renderEvents();
       renderProgress();
 
@@ -965,6 +971,24 @@
       }
     }
 
+    async function retryInspection() {
+      if (!job || !core.canRetryInspection(job)) return;
+      const localGeneration = generation;
+      try {
+        setBusy(dom.retryInspection, true, "Retrying inspection…");
+        const response = await cloud.retryStemInspection(job.id, job.revision);
+        if (localGeneration !== generation) return;
+        adoptResponse(response);
+        showToast?.("Inspection restarted using your original upload");
+      } catch (error) {
+        if (localGeneration !== generation) return;
+        setError(friendlyError(error));
+        window.setTimeout(() => poll(localGeneration), 100);
+      } finally {
+        setBusy(dom.retryInspection, false);
+      }
+    }
+
     async function requestProposal() {
       if (!job) return;
       try {
@@ -1127,6 +1151,7 @@
         : "Byte progress comes from the resumable transfer; the service confirms every completed chunk.";
     });
     dom.uploadButton.addEventListener("click", beginUpload);
+    dom.retryInspection.addEventListener("click", retryInspection);
     dom.referenceMethod.addEventListener("change", selectFullMixReference);
     dom.approveAnalysis.addEventListener("click", approveAnalysis);
     dom.requestProposal.addEventListener("click", requestProposal);

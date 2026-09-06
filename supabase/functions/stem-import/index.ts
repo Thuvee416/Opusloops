@@ -4,6 +4,7 @@ import {
   fetchAwsBatch,
   requireAwsBatchJson,
 } from "./aws-dispatch.mjs";
+import { isLegacyStorageAnonKey } from "./storage-credential.mjs";
 import { canonicalAssetUuid, canonicalV4Uuid } from "./validation.ts";
 
 const allowedOrigins = new Set([
@@ -88,11 +89,17 @@ function requiredEnv(name: string): string {
 }
 
 function supabaseConfig() {
-  const legacyAnonKey = requiredEnv("SUPABASE_ANON_KEY");
+  const anonKey = requiredEnv("SUPABASE_ANON_KEY");
+  const url = requiredEnv("SUPABASE_URL").replace(/\/$/, "");
+  const projectRef = /^https:\/\/([a-z0-9]{20})\.supabase\.co$/.exec(url)?.[1] || "";
+  const storageLegacyAnonKey = requiredEnv("OPUSLOOPS_STORAGE_LEGACY_ANON_KEY");
+  if (!isLegacyStorageAnonKey(storageLegacyAnonKey, projectRef)) {
+    throw new ApiError(503, "service_unavailable", "Stem import service is not configured");
+  }
   return {
-    url: requiredEnv("SUPABASE_URL").replace(/\/$/, ""),
-    publishableKey: Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || legacyAnonKey,
-    legacyAnonKey,
+    url,
+    publishableKey: Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || anonKey,
+    storageLegacyAnonKey,
     serviceRoleKey: requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
   };
 }
@@ -430,7 +437,7 @@ async function dispatch(
         endpoint: `https://${refMatch[1]}.storage.supabase.co/storage/v1/s3`,
         region: Deno.env.get("OPUSLOOPS_STORAGE_REGION")?.trim() || "us-east-1",
         accessKeyId: refMatch[1],
-        secretAccessKey: config.legacyAnonKey,
+        secretAccessKey: config.storageLegacyAnonKey,
         sessionToken: userAccessToken,
         uploadBucket: UPLOAD_BUCKET,
         sourceBucket: SOURCE_BUCKET,
@@ -592,6 +599,17 @@ Deno.serve(async (request) => {
       const current = await rpc("get_stem_job_for_finalize", { p_user_id: user.id, p_job_id: jobId }) as JsonObject;
       const observed = await inspectUploadedObject(String(current.source_bucket), String(current.source_object_path));
       job = await rpc("finalize_stem_upload", {
+        p_user_id: user.id, p_job_id: jobId, p_revision: revision,
+        p_observed_bytes: observed.bytes, p_storage_etag: observed.etag,
+      }) as JsonObject;
+      dispatchResult = await durableDispatch(user.id, jobId, user.accessToken, user.expiresAt);
+    } else if (action === "retry-inspection") {
+      const revision = revisionField(body);
+      const current = await rpc("get_stem_inspection_retry_source", {
+        p_user_id: user.id, p_job_id: jobId, p_revision: revision,
+      }) as JsonObject;
+      const observed = await inspectUploadedObject(String(current.source_bucket), String(current.source_object_path));
+      job = await rpc("retry_stem_inspection", {
         p_user_id: user.id, p_job_id: jobId, p_revision: revision,
         p_observed_bytes: observed.bytes, p_storage_etag: observed.etag,
       }) as JsonObject;

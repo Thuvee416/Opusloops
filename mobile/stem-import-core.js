@@ -26,6 +26,10 @@
     "awaiting_tempo_confirmation"
   ]);
   const TERMINAL_STATUSES = new Set(["ready", "failed", "cancelled", "deleted"]);
+  const RETRYABLE_INSPECTION_ERRORS = new Set([
+    "batch_bootstrap_failed",
+    "batch_queue_timeout"
+  ]);
   const ROLES = Object.freeze([
     "drums",
     "bass",
@@ -123,6 +127,11 @@
     if (WAITING_STATUSES.has(status)) return "waiting";
     if (TERMINAL_STATUSES.has(status)) return "terminal";
     return "unknown";
+  }
+
+  function canRetryInspection(jobValue) {
+    const job = normalizeJob(jobValue);
+    return job.status === "failed" && RETRYABLE_INSPECTION_ERRORS.has(job.errorCode);
   }
 
   function normalizeEvent(raw) {
@@ -421,10 +430,12 @@
     ACTIVE_STATUSES,
     WAITING_STATUSES,
     TERMINAL_STATUSES,
+    RETRYABLE_INSPECTION_ERRORS,
     ROLES,
     MODES,
     analysisSelection,
     boundedString,
+    canRetryInspection,
     editedRegions,
     eventProgress,
     finiteNumber,

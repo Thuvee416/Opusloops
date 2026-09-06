@@ -89,6 +89,7 @@ these actions:
 | --- | --- | --- |
 | `create` | `projectId`, `file: {name,size,type,lastModified}` | Job plus the direct TUS endpoint, bucket, immutable object name, and 6 MiB chunk size |
 | `finalize-upload` | `jobId`, `revision` | Verified job and `inspect` dispatch |
+| `retry-inspection` | `jobId`, `revision` | Re-verifies and reuses the intact uploaded ZIP, creates a fresh inspect attempt, and dispatches it |
 | `approve-analysis` | `jobId`, `revision`, `inspectionManifestSha256`, `selection`, all four Gate A confirmations | Hash-bound Gate A and `analyze` dispatch |
 | `request-proposal` | `jobId`, `revision`, `analysisSha256`, `proposalId`, `targetBpm` (20–400 for conforming modes; omitted for no-conform), `mode`, reviewed `reviewedGrid`, `meterNumerator`, `meterDenominator`, `firstDownbeatSeconds` | `propose` dispatch |
 | `approve-tempo` | `jobId`, `revision`, `proposalManifestSha256`, `approval`, all eight Gate B confirmations | Hash-bound Gate B and `render` dispatch |
@@ -101,6 +102,16 @@ All mutations use the current job `revision`; stale decisions fail with HTTP
 progress is determinate only when it has measured `completed`, `total`, and
 `unit`. Beat-model work remains explicitly indeterminate rather than displaying
 a simulated percentage.
+
+Inspection retry is deliberately narrower than dispatch retry. It is available
+only after an `inspect` attempt failed with the allowlisted AWS bootstrap or
+queue-timeout codes, while the seven-day recovery window and original owned
+Storage object are intact. Cleanup must not have started and the failed attempt
+must have registered zero assets. The server rechecks those conditions under
+the retention and job locks, verifies the archive size with Storage, increments
+the job revision, and creates a new attempt. It never reopens the failed attempt
+or asks the browser to upload the ZIP again; late callbacks from the old attempt
+remain stale.
 
 The reviewed grid is required before proposal dispatch. It carries strictly
 increasing `beats_seconds`, ordered `downbeats_seconds` that are also beat
@@ -146,9 +157,15 @@ Supabase's RLS-enforcing S3 session-token contract:
 
 ```text
 storage.accessKeyId     = Supabase project ref
-storage.secretAccessKey = legacy JWT-shaped SUPABASE_ANON_KEY
+storage.secretAccessKey = legacy JWT-shaped OPUSLOOPS_STORAGE_LEGACY_ANON_KEY
 storage.sessionToken    = current validated user JWT
 ```
+
+`SUPABASE_ANON_KEY` may be exposed to Edge Functions as a newer
+`sb_publishable_...` key. That key cannot authenticate the S3 session flow, so
+the dispatcher deliberately requires the project's legacy anon JWT in the
+dedicated `OPUSLOOPS_STORAGE_LEGACY_ANON_KEY` secret and fails closed if the
+credential has the wrong shape.
 
 Do not substitute generated Supabase S3 access keys: those bypass Storage RLS.
 The session fields are sensitive in transit to the selected Batch task and must
@@ -196,6 +213,7 @@ OPUSLOOPS_AWS_BATCH_ANALYZE_JOB_DEFINITION
 OPUSLOOPS_AWS_BATCH_PROPOSE_JOB_DEFINITION
 OPUSLOOPS_AWS_BATCH_RENDER_JOB_DEFINITION
 OPUSLOOPS_STORAGE_REGION                # defaults to us-east-1
+OPUSLOOPS_STORAGE_LEGACY_ANON_KEY        # project's legacy JWT-shaped anon key
 OPUSLOOPS_WORKER_CALLBACK_URL            # defaults to this project's function URL
 OPUSLOOPS_WORKER_CALLBACK_SECRET
 OPUSLOOPS_RETENTION_MAINTENANCE_SECRET   # random 32+ character value

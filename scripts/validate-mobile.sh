@@ -192,10 +192,12 @@ node --check mobile/service-worker.js
 node --check supabase/functions/create-opusloops-account/handler.mjs
 node --check supabase/functions/create-opusloops-account/policy.mjs
 node --check supabase/functions/stem-import/aws-dispatch.mjs
+node --check supabase/functions/stem-import/storage-credential.mjs
 node --test \
   supabase/functions/create-opusloops-account/handler.test.mjs \
   supabase/functions/create-opusloops-account/policy.test.mjs \
-  supabase/functions/stem-import/aws-dispatch.test.mjs
+  supabase/functions/stem-import/aws-dispatch.test.mjs \
+  supabase/functions/stem-import/storage-credential.test.mjs
 node --input-type=module <<'NODE'
 import assert from 'node:assert/strict';
 import { DOCK_PIXEL_PALETTES } from './mobile/pixel-dock.mjs';
@@ -216,6 +218,18 @@ const core = require('./mobile/stem-import-core.js');
 
 assert.equal(core.normalizeStatus('analysis-ready-for-review'), 'awaiting_map_request');
 assert.equal(core.statusLabel('analyzing'), 'Analyzing musical timing');
+assert.equal(core.canRetryInspection({
+  status: 'failed', error_code: 'batch_bootstrap_failed'
+}), true);
+assert.equal(core.canRetryInspection({
+  status: 'failed', error_code: 'batch_queue_timeout'
+}), true);
+assert.equal(core.canRetryInspection({
+  status: 'failed', error_code: 'internal_worker_error'
+}), false);
+assert.equal(core.canRetryInspection({
+  status: 'inspecting', error_code: 'batch_bootstrap_failed'
+}), false);
 assert.equal(core.eventProgress({ determinate: false, completed: 1, total: 2 }), null);
 assert.deepEqual(
   core.eventProgress({ determinate: true, completed: 3, total: 4, unit: 'files' }),
@@ -416,7 +430,7 @@ grep -Fq 'sb_publishable_' mobile/config.js
 grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
 grep -Fq '"Upload-Offset"' mobile/cloud-client.js
 grep -Fq 'onUploadProgress' mobile/cloud-client.js
-for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
+for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
   grep -Fq "$method" mobile/cloud-client.js
 done
 grep -Fq 'order=created_at.asc,asset_id.asc' mobile/cloud-client.js
@@ -426,6 +440,26 @@ grep -Fq 'data-remove-grid-event' mobile/stem-import.js
 grep -Fq 'meterNumerator' mobile/stem-import.js
 grep -Fq 'firstDownbeatSeconds' mobile/stem-import.js
 grep -Fq 'previewAssets' mobile/stem-import-core.js
+grep -Fq 'id="stem-retry-inspection"' mobile/index.html
+grep -Fq 'await cloud.retryStemInspection(job.id, job.revision)' mobile/stem-import.js
+
+inspection_retry='supabase/migrations/20260905230000_add_failed_inspection_retry.sql'
+inspection_retry_test='supabase/tests/stem_inspection_retry.sql'
+stem_import_function='supabase/functions/stem-import/index.ts'
+test -s "$inspection_retry" -a -s "$inspection_retry_test"
+grep -Fq 'action === "retry-inspection"' "$stem_import_function"
+grep -Fq 'get_stem_inspection_retry_source' "$stem_import_function"
+grep -Fq 'job = await rpc("retry_stem_inspection"' "$stem_import_function"
+grep -Fq 'dispatchResult = await durableDispatch' "$stem_import_function"
+grep -Fq 'v_job.error_code is null' "$inspection_retry"
+grep -Fq "v_job.error_code not in ('batch_bootstrap_failed', 'batch_queue_timeout')" "$inspection_retry"
+grep -Fq "v_attempt.stage <> 'inspect'" "$inspection_retry"
+grep -Fq 'from public.stem_import_assets as asset' "$inspection_retry"
+grep -Fq 'from private.stem_retention_items as item' "$inspection_retry"
+grep -Fq 'from private.stem_retention_scopes as scope' "$inspection_retry"
+grep -Fq 'from storage.objects as object' "$inspection_retry"
+grep -Fq "private.opusloops_stem_begin_attempt(" "$inspection_retry"
+grep -Fq 'to service_role' "$inspection_retry"
 
 migration='supabase/migrations/20260905110000_create_user_projects.sql'
 test -s "$migration"
