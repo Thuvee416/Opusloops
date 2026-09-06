@@ -529,6 +529,21 @@ class ManifestTests(unittest.TestCase):
         }
         manifest.validate()
 
+        v2 = json.loads(json.dumps(approval))
+        v2["decision"]["map_algorithm_version"] = "opusloops.shared-tempo-map.v2"
+        v2["decision"]["anchors"].insert(
+            1,
+            {"source_frame": 50, "target_frame": 50, "kind": "renderer-preroll"},
+        )
+        validate_tempo_approval_schema(v2)
+        manifest.data["tempo_map"]["decision"] = v2["decision"]
+        manifest.validate()
+
+        mislabeled_v1 = json.loads(json.dumps(v2))
+        mislabeled_v1["decision"]["map_algorithm_version"] = "opusloops.shared-tempo-map.v1"
+        with self.assertRaisesRegex(ManifestError, "tempo approval schema validation"):
+            validate_tempo_approval_schema(mislabeled_v1)
+
         missing_notes = json.loads(json.dumps(approval))
         missing_notes["decision"].pop("notes")
         with self.assertRaisesRegex(ManifestError, "tempo approval schema validation.*notes"):

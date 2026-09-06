@@ -4,6 +4,10 @@ from decimal import ROUND_HALF_UP, Decimal
 
 import pytest
 
+from opusloops_stem_calibration.render_plan import (
+    target_at_source,
+    validate_signalsmith_pre_roll,
+)
 from opusloops_stem_calibration.tempo_map import (
     TempoMapError,
     build_tempo_map,
@@ -55,6 +59,44 @@ def test_musical_map_preserves_pickup_and_lands_four_bar_boundaries_exactly() ->
     assert len(tempo_map.regions) == 2
     assert all(region.local_bpm == pytest.approx(120) for region in tempo_map.regions)
     assert all(region.max_internal_residual_ms == pytest.approx(0) for region in tempo_map.regions)
+
+
+def test_near_origin_downbeat_gets_a_renderer_safe_identity_preroll() -> None:
+    # These are the production failure's exact first two four-bar coordinates:
+    # (960, 960) -> (424320, 423712) at 48 kHz and 109 BPM.
+    beats = [0.02 + index * 0.55125 for index in range(21)]
+    downbeats = beats[::4]
+    tempo_map = build_tempo_map(
+        beats,
+        downbeats,
+        sample_rate=SAMPLE_RATE,
+        total_frames=12 * SAMPLE_RATE,
+        meter_numerator=4,
+        target_bpm=109,
+    )
+
+    assert tempo_map.algorithm_version == "opusloops.shared-tempo-map.v2"
+    assert tempo_map.first_downbeat_seconds == pytest.approx(0.02)
+    assert (
+        tempo_map.anchors[1].source_frame,
+        tempo_map.anchors[1].target_frame,
+        tempo_map.anchors[1].kind,
+    ) == (7_200, 7_200, "renderer-preroll")
+    assert (
+        tempo_map.anchors[2].source_frame,
+        tempo_map.anchors[2].target_frame,
+        tempo_map.anchors[2].kind,
+    ) == (424_320, 423_712, "four-bar")
+    assert target_at_source(tempo_map.to_render_plan_anchors(), 960) == 960
+    validate_signalsmith_pre_roll(
+        tempo_map.to_render_plan_anchors(),
+        sample_rate=SAMPLE_RATE,
+    )
+    assert tempo_map.regions[0].source_start_frame == 960
+    assert tempo_map.regions[0].target_start_frame == 960
+    assert tempo_map.regions[0].max_internal_residual_ms > 0
+    assert tempo_map.residuals[0].residual_ms == 0
+    assert any("renderer-safe identity pre-roll" in item for item in tempo_map.warnings)
 
 
 def test_target_positions_use_one_cumulative_rounding_not_incremental_rounding() -> None:
@@ -147,9 +189,12 @@ def test_no_conform_is_an_exact_identity_map() -> None:
 
     assert [(a.source_frame, a.target_frame) for a in tempo_map.anchors] == [
         (0, 0),
-        (SAMPLE_RATE, SAMPLE_RATE),
         (20 * SAMPLE_RATE, 20 * SAMPLE_RATE),
     ]
+    assert tempo_map.algorithm_version == "opusloops.shared-tempo-map.v2"
+    assert tempo_map.first_downbeat_seconds == 1.0
+    assert target_at_source(tempo_map.to_render_plan_anchors(), SAMPLE_RATE) == SAMPLE_RATE
+    assert all(anchor.kind != "renderer-preroll" for anchor in tempo_map.anchors)
 
 
 def test_extreme_stretch_is_preserved_but_warned_for_human_decision() -> None:

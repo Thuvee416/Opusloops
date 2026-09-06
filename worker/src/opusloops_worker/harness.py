@@ -12,12 +12,14 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 from .callback import event_payload
-from .errors import ContractError, HarnessError, IntegrityError
+from .errors import ContractError, HarnessError, IntegrityError, TempoMapCompatibilityError
 from .storage import sha256_file
 
 BEAT_THIS_FINAL0_SHA256 = "8c328b45f59d8dd3dff219253ff6a8d6482be57d0133a29140e2febbf8eb8331"
 SIGNALSMITH_VERSION = "1.3.2"
 MAX_COMMAND_OUTPUT_BYTES = 1024 * 1024
+MAX_COMMAND_ERROR_BYTES = 64 * 1024
+SIGNALSMITH_PRE_ROLL_ERROR = b"first map region is shorter than the Signalsmith pre-roll"
 UNIT_MAP = {
     "bytes": "bytes",
     "files": "files",
@@ -184,6 +186,20 @@ class HarnessRunner:
             "NUMBA_NUM_THREADS": "4",
         }
 
+    @staticmethod
+    def _known_failure(stderr_path: Path) -> str | None:
+        """Classify only bounded, explicitly recognized calibration failures."""
+        try:
+            with stderr_path.open("rb") as stderr_handle:
+                stderr = stderr_handle.read(MAX_COMMAND_ERROR_BYTES + 1)
+        except OSError:
+            return None
+        if len(stderr) > MAX_COMMAND_ERROR_BYTES:
+            return None
+        if SIGNALSMITH_PRE_ROLL_ERROR in stderr:
+            return "signalsmith-pre-roll"
+        return None
+
     def _command(self, arguments: Sequence[str]) -> Mapping[str, object]:
         stdout_path = self.work_dir / f"command-{time.monotonic_ns()}-stdout.json"
         stderr_path = self.work_dir / f"command-{time.monotonic_ns()}-stderr.log"
@@ -219,14 +235,16 @@ class HarnessRunner:
                 self._drain_events()
                 time.sleep(0.25)
             self._drain_events()
+        if process.returncode != 0:
+            if self._known_failure(stderr_path) == "signalsmith-pre-roll":
+                raise TempoMapCompatibilityError
+            raise HarnessError("calibration harness rejected the requested stage")
         if stdout_path.stat().st_size > MAX_COMMAND_OUTPUT_BYTES:
             raise HarnessError("calibration command output exceeded its bound")
         try:
             output = json.loads(stdout_path.read_bytes())
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise HarnessError("calibration command returned invalid JSON") from exc
-        if process.returncode != 0:
-            raise HarnessError("calibration harness rejected the requested stage")
         if not isinstance(output, Mapping):
             raise HarnessError("calibration command result is invalid")
         return output

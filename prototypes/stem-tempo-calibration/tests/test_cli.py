@@ -1531,6 +1531,38 @@ def test_propose_map_records_failure_for_active_build_stage(tmp_path: Path, monk
     assert map_events[-1]["details"]["error"] == "synthetic tempo-map failure"
 
 
+def test_propose_map_preflights_renderer_compatibility_before_click_creation(
+    tmp_path: Path, monkeypatch
+) -> None:
+    run_dir = _proposal_test_run(tmp_path)
+
+    class InvalidTempoMap:
+        @staticmethod
+        def to_render_plan_anchors():
+            return (
+                render_plan_module.FrameAnchor(0, 0),
+                render_plan_module.FrameAnchor(960, 960),
+                render_plan_module.FrameAnchor(24_000, 24_000),
+            )
+
+    monkeypatch.setattr(cli_module, "build_tempo_map", lambda *args, **kwargs: InvalidTempoMap())
+
+    def unexpected_click(*args, **kwargs):
+        del args, kwargs
+        raise AssertionError("click creation must follow render-plan preflight")
+
+    monkeypatch.setattr(cli_module, "create_click_audition", unexpected_click)
+
+    with pytest.raises(
+        CalibrationCLIError,
+        match="tempo map cannot be rendered: first map region is shorter",
+    ):
+        cli_module.command_propose_map(_proposal_args(run_dir, proposal_id="renderer-incompatible"))
+
+    map_events = [event for event in _events(run_dir) if event["stage"] == "building-tempo-map"]
+    assert [event["status"] for event in map_events] == ["started", "failed"]
+
+
 def test_approve_map_without_path_refuses_ambiguous_proposals(tmp_path: Path, capsys) -> None:
     run_dir = _proposal_test_run(tmp_path)
     _two_proposals(run_dir)
@@ -1588,6 +1620,9 @@ def test_approve_map_explicitly_selects_one_proposal_and_preserves_bindings(
     approved = json.loads((run_dir / "tempo-approval.json").read_text())
     selected = json.loads(Path(str(second["approval_template"])).read_text())
     rejected = json.loads(Path(str(first["approval_template"])).read_text())
+    assert selected["decision"]["map_algorithm_version"] == "opusloops.shared-tempo-map.v2"
+    assert selected["decision"]["first_downbeat_seconds"] == pytest.approx(1 / 48_000)
+    assert all(anchor["source_frame"] != 1 for anchor in selected["decision"]["anchors"])
     assert approved["upstream"] == selected["upstream"]
     assert approved["upstream"] != rejected["upstream"]
     assert approved["upstream"]["click_audition"]["path"].startswith("proposals/revision-two/")
@@ -1598,6 +1633,19 @@ def test_approve_map_explicitly_selects_one_proposal_and_preserves_bindings(
     gate_b, _, approval_path = cli_module._gate_b(run_dir, manifest)
     assert gate_b["upstream"] == approved["upstream"]
     assert approval_path == run_dir / "tempo-approval.json"
+
+
+def test_approve_map_remains_compatible_with_a_v1_decision(tmp_path: Path, capsys) -> None:
+    run_dir = _proposal_test_run(tmp_path)
+    proposal = cli_module.command_propose_map(_proposal_args(run_dir, proposal_id="legacy-v1"))
+    template_path = Path(str(proposal["approval_template"]))
+    payload = json.loads(template_path.read_text())
+    payload["decision"]["map_algorithm_version"] = "opusloops.shared-tempo-map.v1"
+    atomic_write_json(template_path, payload)
+
+    assert main(_approve_map_argv(run_dir, template_path)) == 0, capsys.readouterr().err
+    approved = json.loads((run_dir / "tempo-approval.json").read_text())
+    assert approved["decision"]["map_algorithm_version"] == "opusloops.shared-tempo-map.v1"
 
 
 @pytest.mark.parametrize(

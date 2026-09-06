@@ -1645,6 +1645,15 @@ def _command_propose_map_locked(
             mode=args.mode,
             snap_tolerance_seconds=args.snap_tolerance,
         )
+        from .render_plan import RenderPlanError, validate_signalsmith_pre_roll
+
+        try:
+            validate_signalsmith_pre_roll(
+                tempo_map.to_render_plan_anchors(),
+                sample_rate=primary.reference_sample_rate,
+            )
+        except RenderPlanError as exc:
+            raise CalibrationCLIError(f"tempo map cannot be rendered: {exc}") from exc
         click_path = create_click_audition(
             reference_result,
             beats,
@@ -1860,7 +1869,11 @@ def _tempo_approval(
     }
     if set(decision) - allowed_decision_fields:
         raise CalibrationCLIError("tempo approval decision has unexpected fields")
-    if decision.get("map_algorithm_version") != "opusloops.shared-tempo-map.v1":
+    map_algorithm_version = decision.get("map_algorithm_version")
+    if map_algorithm_version not in {
+        "opusloops.shared-tempo-map.v1",
+        "opusloops.shared-tempo-map.v2",
+    }:
         raise CalibrationCLIError("tempo approval has an unsupported map algorithm")
     mode = decision.get("mode")
     if mode not in {"musical-4bar", "rigid-beat", "no-conform"}:
@@ -1920,6 +1933,7 @@ def _tempo_approval(
         "partial-outro",
         "timeline-end",
         "user-bar",
+        "renderer-preroll",
     }
     for index, anchor in enumerate(anchors):
         if not isinstance(anchor, Mapping) or set(anchor) != {
@@ -1930,18 +1944,29 @@ def _tempo_approval(
             raise CalibrationCLIError(f"tempo approval anchor {index} has an invalid shape")
         if anchor.get("kind") not in allowed_anchor_kinds:
             raise CalibrationCLIError(f"tempo approval anchor {index} has an invalid kind")
+        if (
+            map_algorithm_version == "opusloops.shared-tempo-map.v1"
+            and anchor.get("kind") == "renderer-preroll"
+        ):
+            raise CalibrationCLIError("tempo-map v1 does not support a renderer pre-roll anchor")
     validate_anchor_payload(anchors, total_source_frames=total_source)
     if anchors[-1].get("target_frame") != total_target:
         raise CalibrationCLIError("tempo approval target frame count disagrees with its map")
-    from .render_plan import FrameAnchor, RenderPlanError, validate_signalsmith_pre_roll
+    from .render_plan import (
+        FrameAnchor,
+        RenderPlanError,
+        target_at_source,
+        validate_signalsmith_pre_roll,
+    )
+
+    render_anchors = tuple(
+        FrameAnchor(int(item["source_frame"]), int(item["target_frame"])) for item in anchors
+    )
 
     if mode != "no-conform":
         try:
             validate_signalsmith_pre_roll(
-                tuple(
-                    FrameAnchor(int(item["source_frame"]), int(item["target_frame"]))
-                    for item in anchors
-                ),
+                render_anchors,
                 sample_rate=sample_rate,
             )
         except RenderPlanError as exc:
@@ -1951,8 +1976,16 @@ def _tempo_approval(
     ):
         raise CalibrationCLIError("no-conform approval contains a non-identity anchor")
     first_downbeat_frame = seconds_to_frame(float(first_downbeat), sample_rate)
-    if not any(item.get("source_frame") == first_downbeat_frame for item in anchors):
+    if map_algorithm_version == "opusloops.shared-tempo-map.v1" and not any(
+        item.get("source_frame") == first_downbeat_frame for item in anchors
+    ):
         raise CalibrationCLIError("first downbeat is not represented by an approved map anchor")
+    try:
+        mapped_first_downbeat = target_at_source(render_anchors, first_downbeat_frame)
+    except RenderPlanError as exc:
+        raise CalibrationCLIError("first downbeat falls outside the approved map") from exc
+    if mapped_first_downbeat != first_downbeat_frame:
+        raise CalibrationCLIError("first downbeat is not preserved by the approved map")
 
     confirmations = payload.get("confirmations")
     required_confirmations = {

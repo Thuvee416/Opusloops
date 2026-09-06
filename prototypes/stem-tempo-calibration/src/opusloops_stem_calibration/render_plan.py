@@ -255,6 +255,28 @@ def _source_at_target(start: FrameAnchor, end: FrameAnchor, target_frame: int) -
     return start.source_frame + (relative * source_delta + target_delta // 2) // target_delta
 
 
+def target_at_source(anchors: Sequence[FrameAnchor], source_frame: int) -> int:
+    """Map one bound source frame through a validated piecewise-linear plan."""
+
+    if (
+        not anchors
+        or source_frame < anchors[0].source_frame
+        or source_frame > anchors[-1].source_frame
+    ):
+        raise RenderPlanError("source frame falls outside the frame map")
+    if source_frame == anchors[-1].source_frame:
+        return anchors[-1].target_frame
+    for start, end in zip(anchors[:-1], anchors[1:], strict=True):
+        if source_frame <= end.source_frame:
+            source_delta = end.source_frame - start.source_frame
+            target_delta = end.target_frame - start.target_frame
+            relative = source_frame - start.source_frame
+            return (
+                start.target_frame + (relative * target_delta + source_delta // 2) // source_delta
+            )
+    raise RenderPlanError("source frame falls outside the frame map")
+
+
 def _signalsmith_default_split_latencies(sample_rate: int) -> tuple[int, int]:
     """Match Signalsmith Stretch 1.3.2's split-computation default preset."""
 
@@ -273,6 +295,13 @@ def _signalsmith_default_split_latencies(sample_rate: int) -> tuple[int, int]:
     input_latency = block_samples - synthesis_latency
     output_latency = synthesis_latency + interval_samples
     return input_latency, output_latency
+
+
+def signalsmith_default_pre_roll_frames(sample_rate: int) -> int:
+    """Return the source-frame boundary needed by the pinned default preset."""
+
+    input_latency, output_latency = _signalsmith_default_split_latencies(sample_rate)
+    return input_latency + output_latency
 
 
 def validate_signalsmith_pre_roll(anchors: Sequence[FrameAnchor], *, sample_rate: int) -> None:

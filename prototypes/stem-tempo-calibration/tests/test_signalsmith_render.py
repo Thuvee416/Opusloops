@@ -424,6 +424,47 @@ def test_gradual_drift_four_bar_anchors_survive_render(
         assert abs(peak - expected) <= 160
 
 
+def test_near_origin_downbeat_v2_map_survives_native_renderer_preroll(
+    renderer_binary: Path, tmp_path: Path
+) -> None:
+    sample_rate = 8_000
+    total_frames = 12 * sample_rate
+    beats = [0.02 + index * 0.55125 for index in range(21)]
+    tempo_map = build_tempo_map(
+        beats,
+        beats[::4],
+        sample_rate=sample_rate,
+        total_frames=total_frames,
+        meter_numerator=4,
+        target_bpm=109,
+    )
+    assert tempo_map.anchors[1].kind == "renderer-preroll"
+    assert tempo_map.anchors[1].source_frame == 1_200
+    assert tempo_map.anchors[1].target_frame == 1_200
+
+    source = (tmp_path / "near-origin.wav").resolve()
+    _write_impulses(
+        source,
+        frames=total_frames,
+        sample_rate=sample_rate,
+        impulses=(round(0.02 * sample_rate),),
+    )
+    plan = RenderPlan(
+        stems=(StemInput("near-origin", source, 1, total_frames),),
+        anchors=tempo_map.to_render_plan_anchors(),
+        sample_rate=sample_rate,
+    )
+    inputs = write_renderer_inputs(plan, (tmp_path / "inputs").resolve())
+    output = (tmp_path / "render").resolve()
+
+    result = run_signalsmith(renderer_binary, plan, inputs, output, mode="linked")
+
+    assert result["target_frames"] == tempo_map.total_target_frames
+    _, rendered_rate, samples = _read_float_wav(output / "near-origin.wav")
+    assert rendered_rate == sample_rate
+    assert len(samples) == tempo_map.total_target_frames
+
+
 @pytest.mark.parametrize(
     ("source_frame", "expected_target"),
     [(15_799, 15_799), (15_801, 15_804), (15_900, 16_200), (15_999, 16_596)],

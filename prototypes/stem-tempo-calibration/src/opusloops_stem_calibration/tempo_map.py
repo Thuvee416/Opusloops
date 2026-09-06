@@ -14,7 +14,10 @@ from dataclasses import asdict, dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 
+from .render_plan import signalsmith_default_pre_roll_frames
+
 MapMode = Literal["musical-4bar", "rigid-beat", "no-conform"]
+TEMPO_MAP_ALGORITHM_VERSION = "opusloops.shared-tempo-map.v2"
 
 
 class TempoMapError(ValueError):
@@ -278,9 +281,30 @@ def _segment_target_frame(
     return target_start + _round_decimal(offset / Decimal(source_delta))
 
 
+def _target_frame_at_source(anchors: Sequence[FrameAnchor], source_frame: int) -> int:
+    """Interpolate one source coordinate through the complete render map."""
+
+    if source_frame < anchors[0].source_frame or source_frame > anchors[-1].source_frame:
+        raise TempoMapError("source frame falls outside the tempo map")
+    if source_frame == anchors[-1].source_frame:
+        return anchors[-1].target_frame
+    positions = [anchor.source_frame for anchor in anchors]
+    index = max(0, bisect.bisect_right(positions, source_frame) - 1)
+    left = anchors[index]
+    right = anchors[index + 1]
+    return _segment_target_frame(
+        source_frame,
+        left.source_frame,
+        right.source_frame,
+        left.target_frame,
+        right.target_frame,
+    )
+
+
 def _four_bar_diagnostics(
     *,
-    anchors: Sequence[FrameAnchor],
+    musical_anchors: Sequence[FrameAnchor],
+    render_anchors: Sequence[FrameAnchor],
     beat_frames: Sequence[int],
     first_downbeat_beat_index: int,
     sample_rate: int,
@@ -289,8 +313,9 @@ def _four_bar_diagnostics(
 ) -> tuple[tuple[TempoRegion, ...], tuple[BeatResidual, ...]]:
     regions: list[TempoRegion] = []
     residuals: list[BeatResidual] = []
-    musical = [anchor for anchor in anchors if anchor.kind == "four-bar"]
-    for region_index, (left, right) in enumerate(zip(musical, musical[1:], strict=False)):
+    for region_index, (left, right) in enumerate(
+        zip(musical_anchors, musical_anchors[1:], strict=False)
+    ):
         source_delta = right.source_frame - left.source_frame
         target_delta = right.target_frame - left.target_frame
         local_bpm = (4 * meter_numerator * 60 * sample_rate) / source_delta
@@ -303,13 +328,7 @@ def _four_bar_diagnostics(
             source_frame = beat_frames[beat_index]
             if not left.source_frame <= source_frame <= right.source_frame:
                 continue
-            mapped = _segment_target_frame(
-                source_frame,
-                left.source_frame,
-                right.source_frame,
-                left.target_frame,
-                right.target_frame,
-            )
+            mapped = _target_frame_at_source(render_anchors, source_frame)
             straight = left.target_frame + _target_offset_frames(ordinal, target_bpm, sample_rate)
             residual_ms = (mapped - straight) * 1000 / sample_rate
             region_residuals.append(abs(residual_ms))
@@ -378,13 +397,14 @@ def build_tempo_map(
 
     first_source = downbeat_frames[0]
     anchors: list[FrameAnchor] = [FrameAnchor(0, 0, "timeline-origin")]
-    if first_source:
-        _append_anchor(anchors, FrameAnchor(first_source, first_source, "first-downbeat"))
 
     if mode == "no-conform":
+        # The first downbeat remains explicit metadata, but an identity point is
+        # redundant in the render map and can create an artificial early
+        # Signalsmith region. Two endpoints express the exact same decision.
         _append_anchor(anchors, FrameAnchor(total_frames, total_frames, "timeline-end"))
         return TempoMap(
-            algorithm_version="opusloops.shared-tempo-map.v1",
+            algorithm_version=TEMPO_MAP_ALGORITHM_VERSION,
             mode=mode,
             sample_rate=sample_rate,
             meter_numerator=meter_numerator,
@@ -403,25 +423,49 @@ def build_tempo_map(
     if target_bpm is None or not math.isfinite(target_bpm) or target_bpm <= 0:
         raise TempoMapError("a positive target_bpm is required when conforming")
 
+    renderer_preroll_frame = signalsmith_default_pre_roll_frames(sample_rate)
+    renderer_preroll_added = False
+
     if mode == "musical-4bar":
         if len(downbeat_frames) < 5:
             raise TempoMapError("musical-4bar requires at least five confirmed bar starts")
-        # The first downbeat is already present to preserve a pickup.  Mark it
-        # as the first four-bar anchor instead of silently losing it when the
-        # two coordinates are identical.
-        anchors[-1] = FrameAnchor(first_source, first_source, "four-bar")
+        musical_anchors = [FrameAnchor(first_source, first_source, "four-bar")]
         for bar_index in range(4, len(downbeat_frames), 4):
             source_frame = downbeat_frames[bar_index]
             target_frame = first_source + _target_offset_frames(
                 bar_index * meter_numerator, target_bpm, sample_rate
             )
-            _append_anchor(anchors, FrameAnchor(source_frame, target_frame, "four-bar"))
+            musical_anchors.append(FrameAnchor(source_frame, target_frame, "four-bar"))
+
+        if 0 < first_source < renderer_preroll_frame:
+            first_boundary = musical_anchors[1]
+            if (
+                renderer_preroll_frame >= first_boundary.source_frame
+                or renderer_preroll_frame >= first_boundary.target_frame
+            ):
+                raise TempoMapError(
+                    "the first complete four-bar region is too short for renderer pre-roll"
+                )
+            _append_anchor(
+                anchors,
+                FrameAnchor(
+                    renderer_preroll_frame,
+                    renderer_preroll_frame,
+                    "renderer-preroll",
+                ),
+            )
+            renderer_preroll_added = True
+        else:
+            _append_anchor(anchors, musical_anchors[0])
+        for anchor in musical_anchors[1:]:
+            _append_anchor(anchors, anchor)
         # A trailing downbeat not on a four-bar boundary is review information,
         # not an implicit extra render anchor.  Tail timing follows the last
         # complete approved four-bar segment.
         _extend_tail(anchors, total_frames)
         regions, residuals = _four_bar_diagnostics(
-            anchors=anchors,
+            musical_anchors=musical_anchors,
+            render_anchors=anchors,
             beat_frames=beat_frames,
             first_downbeat_beat_index=downbeat_beat_indices[0],
             sample_rate=sample_rate,
@@ -430,17 +474,58 @@ def build_tempo_map(
         )
     else:
         first_beat_index = downbeat_beat_indices[0]
+        beat_anchors = [FrameAnchor(first_source, first_source, "first-downbeat")]
         for beat_index in range(first_beat_index, len(beat_frames)):
             source_frame = beat_frames[beat_index]
             target_frame = first_source + _target_offset_frames(
                 beat_index - first_beat_index, target_bpm, sample_rate
             )
-            _append_anchor(anchors, FrameAnchor(source_frame, target_frame, "beat"))
+            candidate = FrameAnchor(source_frame, target_frame, "beat")
+            if candidate.source_frame == beat_anchors[-1].source_frame:
+                if candidate.target_frame != beat_anchors[-1].target_frame:
+                    raise TempoMapError("one beat maps to conflicting target frames")
+                continue
+            beat_anchors.append(candidate)
+
+        if 0 < first_source < renderer_preroll_frame:
+            for anchor in beat_anchors[1:]:
+                if anchor.source_frame > renderer_preroll_frame:
+                    break
+                if anchor.target_frame != anchor.source_frame:
+                    raise TempoMapError("an early beat changes timing inside the renderer pre-roll")
+            if renderer_preroll_frame >= total_frames:
+                raise TempoMapError("the source is too short for renderer pre-roll")
+            _append_anchor(
+                anchors,
+                FrameAnchor(
+                    renderer_preroll_frame,
+                    renderer_preroll_frame,
+                    "renderer-preroll",
+                ),
+            )
+            renderer_preroll_added = True
+        else:
+            _append_anchor(anchors, beat_anchors[0])
+        for anchor in beat_anchors[1:]:
+            if anchor.source_frame < renderer_preroll_frame and renderer_preroll_added:
+                continue
+            if anchor.source_frame == renderer_preroll_frame and renderer_preroll_added:
+                if anchor.target_frame != renderer_preroll_frame:
+                    raise TempoMapError(
+                        "an early beat conflicts with the renderer pre-roll boundary"
+                    )
+                continue
+            _append_anchor(anchors, anchor)
         _extend_tail(anchors, total_frames)
         regions = ()
         residuals = ()
 
     warnings: list[str] = []
+    if renderer_preroll_added:
+        warnings.append(
+            "A renderer-safe identity pre-roll preserves the reviewed first downbeat "
+            f"through frame {renderer_preroll_frame}."
+        )
     for index, (left, right) in enumerate(zip(anchors, anchors[1:], strict=False)):
         source_delta = right.source_frame - left.source_frame
         target_delta = right.target_frame - left.target_frame
@@ -454,7 +539,7 @@ def build_tempo_map(
             )
 
     return TempoMap(
-        algorithm_version="opusloops.shared-tempo-map.v1",
+        algorithm_version=TEMPO_MAP_ALGORITHM_VERSION,
         mode=mode,
         sample_rate=sample_rate,
         meter_numerator=meter_numerator,

@@ -108,7 +108,8 @@
             "beat",
             "partial-outro",
             "timeline-end",
-            "user-bar"
+            "user-bar",
+            "renderer-preroll"
           ]
         }
       }
@@ -130,7 +131,9 @@
         "notes"
       ],
       "properties": {
-        "map_algorithm_version": { "const": "opusloops.shared-tempo-map.v1" },
+        "map_algorithm_version": {
+          "enum": ["opusloops.shared-tempo-map.v1", "opusloops.shared-tempo-map.v2"]
+        },
         "mode": { "enum": ["musical-4bar", "rigid-beat", "no-conform"] },
         "meter": {
           "type": "object",
@@ -164,6 +167,22 @@
           "if": { "properties": { "mode": { "const": "no-conform" } } },
           "then": { "properties": { "target_bpm": { "type": "null" } } },
           "else": { "properties": { "target_bpm": { "type": "number" } } }
+        },
+        {
+          "if": {
+            "properties": {
+              "map_algorithm_version": { "const": "opusloops.shared-tempo-map.v1" }
+            }
+          },
+          "then": {
+            "properties": {
+              "anchors": {
+                "items": {
+                  "properties": { "kind": { "not": { "const": "renderer-preroll" } } }
+                }
+              }
+            }
+          }
         }
       ]
     }

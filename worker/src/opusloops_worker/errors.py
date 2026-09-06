@@ -39,3 +39,14 @@ class HarnessError(WorkerError):
 
     def __init__(self, message: str, *, retryable: bool = False) -> None:
         super().__init__("calibration_stage_failed", message, retryable=retryable)
+
+
+class TempoMapCompatibilityError(WorkerError):
+    """An approved tempo map cannot be consumed safely by the pinned renderer."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "tempo_map_preroll_invalid",
+            "The approved tempo map needs a renderer-safe proposal before rendering",
+            retryable=False,
+        )

@@ -1,6 +1,6 @@
 begin;
 
-select '1..7';
+select '1..8';
 
 do $$
 declare
@@ -73,6 +73,7 @@ begin
     'public.get_stem_inspection_retry_source(uuid,uuid,bigint)',
     'public.retry_stem_inspection(uuid,uuid,bigint,bigint,text)',
     'public.retry_stem_proposal(uuid,uuid,bigint)',
+    'public.repair_stem_render_proposal(uuid,uuid,bigint,text)',
     'public.approve_stem_analysis(uuid,uuid,bigint,text,jsonb,boolean,boolean,boolean,boolean)',
     'public.request_stem_proposal(uuid,uuid,bigint,text,text,numeric,text,jsonb,integer,integer,numeric)',
     'public.approve_stem_tempo(uuid,uuid,bigint,text,jsonb,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean)',
@@ -170,5 +171,27 @@ end;
 $$;
 
 select 'ok 7 - public stem SECURITY DEFINER functions pin an empty search path';
+
+do $$
+declare
+  v_signature text := 'public.get_stem_import_event_snapshot(uuid,bigint)';
+begin
+  if not has_function_privilege('authenticated', v_signature, 'EXECUTE')
+     or has_function_privilege('anon', v_signature, 'EXECUTE')
+     or has_function_privilege('service_role', v_signature, 'EXECUTE')
+     or exists (
+       select 1
+       from pg_proc as procedure
+       join pg_namespace as namespace on namespace.oid = procedure.pronamespace
+       where namespace.nspname = 'public'
+         and procedure.proname = 'get_stem_import_event_snapshot'
+         and procedure.prosecdef
+     ) then
+    raise exception '% must be authenticated-only and SECURITY INVOKER', v_signature;
+  end if;
+end;
+$$;
+
+select 'ok 8 - atomic stem snapshots are authenticated-only and run as the caller';
 
 rollback;

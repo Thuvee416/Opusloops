@@ -116,6 +116,9 @@ orphan whose event IDs and paths do not match.
 `musical-4bar` is the default product behavior. It anchors approximately every
 four bars to keep phrasing musical. `rigid-beat` is the optional tighter mode;
 `no-conform` records an identity decision when the source is already suitable.
+Tempo-map v2 replaces a reviewed downbeat inside the pinned renderer's pre-roll
+with a deterministic identity guard while retaining that downbeat as reviewed
+metadata and in the logical four-bar diagnostics.
 
 ```bash
 .venv/bin/opus-stem-cal propose-map \
