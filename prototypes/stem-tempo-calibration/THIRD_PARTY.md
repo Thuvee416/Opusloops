@@ -14,8 +14,10 @@
   `third_party/signalsmith-stretch`. The harness compares linked multichannel and
   independent stereo-stem processing.
 - **Igor Pavlov SHA-256 (2010-06-11)** — public domain, reused from the vendored
-  `third_party/llama.cpp/examples/gguf-hash/deps` sources. The native renderer
-  uses it only to verify its bound TSV inputs and canonical source WAVs.
+  upstream implementation and kept with the native renderer under
+  `native/third_party/sha256`. It is self-contained so renderer and worker builds
+  do not depend on the optional llama.cpp submodule. The native renderer uses it
+  only to verify its bound TSV inputs and canonical source WAVs.
 - **Rubber Band** — optional external quality-ceiling comparison only. It is not
   vendored or shipped. Proprietary deployment requires a commercial-license decision.
 

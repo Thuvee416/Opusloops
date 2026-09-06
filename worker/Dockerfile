@@ -18,7 +18,6 @@ RUN apt-get update \
 
 WORKDIR /src
 COPY third_party/signalsmith-stretch third_party/signalsmith-stretch
-COPY third_party/llama.cpp/examples/gguf-hash/deps third_party/llama.cpp/examples/gguf-hash/deps
 COPY prototypes/stem-tempo-calibration prototypes/stem-tempo-calibration
 COPY worker worker
 
