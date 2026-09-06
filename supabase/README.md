@@ -14,9 +14,19 @@ make offline reconciliation durable.
 
 Direct Supabase signup is disabled. `create-opusloops-account` accepts only an
 email-bound, single-use invitation hash and creates a confirmed user with the
-fixed Opusloops claim. Invitation issue, claim, completion, and revocation
+fixed Opusloops claim. Invitation issue, reservation, completion, and revocation
 functions are executable only by `service_role`. Plaintext invitation codes are
 delivered once out of band and must never enter Git, URLs, analytics, or logs.
+
+Account creation reserves an invitation and deterministic Auth user ID before
+calling the Auth Admin API. Same-token/email retries reuse that identity, so
+validation, network, server, and existing-account responses leave the
+reservation intact for safe reconciliation. The release RPC is reserved for an
+explicit service-side repair and clears both reservation fields. A 201 response
+is returned only after completion transactionally verifies the reserved user ID
+and normalized Auth email, grants the Opusloops membership claim, and finalizes
+the invitation. A durable completion timestamp prevents a consumed invitation
+from becoming reusable if its Auth user is later deleted.
 
 An authenticated operator can issue a 72-hour invitation with:
 

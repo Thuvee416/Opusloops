@@ -737,6 +737,7 @@
     if (code === "invalid_credentials") return "Email or password is incorrect";
     if (["user_already_exists", "email_exists", "account_exists"].includes(code)) return "An account already uses this email";
     if (code === "weak_password") return "Choose a stronger password with at least 8 characters";
+    if (code === "invalid_account_details") return "Check the email and password, then try again";
     if (code === "email_address_invalid") return "Enter a valid email address";
     if (code === "invite_invalid") return "That invitation is invalid, expired, or assigned to another email";
     if (code === "signup_unavailable") return "Account creation is temporarily unavailable";

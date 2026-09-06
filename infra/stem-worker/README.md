@@ -10,7 +10,7 @@ in `us-east-1`:
 - 4 vCPU, 16 GiB RAM, 50 GiB Fargate ephemeral storage, and a 30-minute hard timeout;
 - CloudWatch logs, no inbound network rules, and no AWS API permission in the runtime task role;
 - an EventBridge/Lambda fallback that reports AWS Batch `FAILED` states when the worker cannot report its own failure;
-- a ten-minute, identifier-only queue watchdog that cancels jobs before user JWT freshness becomes ambiguous;
+- a bounded, once-per-minute queue watchdog that cancels pre-run jobs at ten minutes before user JWT freshness becomes ambiguous;
 - an hourly, bounded invocation of the production `stem-retention` Edge Function.
 
 The job definitions use an ECR **digest**, not `latest` or another mutable tag.
@@ -120,6 +120,13 @@ aws codebuild batch-get-builds \
   --query 'builds[0].{status:buildStatus,logs:logs.deepLink}'
 ```
 
+CodeBuild pushes mutable `latest` first and the immutable
+`git-$REPOSITORY_COMMIT` tag as its final command. If the mutable push fails,
+the exact commit remains rerunnable; after the immutable push succeeds, there
+is no later build command that can fail and strand a successful immutable tag
+behind a failed build status. The digest lookup stays in this deployment
+runbook rather than the build phase.
+
 After CodeBuild reports `SUCCEEDED`, resolve the immutable tag to its registry
 digest and update every job definition to that digest:
 
@@ -147,7 +154,16 @@ aws cloudformation deploy \
 ```
 
 Confirm the output `WorkerImage` contains the resolved digest and all four job
-definition outputs name a current revision before enabling dispatch.
+definition outputs name a current revision before enabling dispatch. The
+`QueueWatchdogScheduleArn` output must resolve to the enabled one-minute rule.
+
+The three Lambda functions intentionally have no reserved-concurrency setting.
+They share the regional unreserved pool, which allows this stack to deploy in
+the account's current ten-concurrent-execution quota. The watchdog caps each
+scan and has a 30-second timeout; its one-minute schedule cannot fan out from
+queue depth. Revisit regional concurrency and alarms if other workloads are
+added to the account; do not add per-function reservations without checking
+the remaining unreserved quota first.
 
 ## Dispatcher IAM policy
 
@@ -270,21 +286,39 @@ VPC-wide policy and intentionally remains outside this stack.
 
 ## Queue-age watchdog
 
-An exact `SUBMITTED` event is transformed to only `createdAt`, AWS job ID, job
-name, queue, and job definition before entering an encrypted SQS delay queue.
-The user-scoped storage session fields are not copied. After ten minutes, a
-minimal Lambda re-reads the authoritative Batch record, verifies every binding,
-and terminates it only if it is still `SUBMITTED`, `PENDING`, `RUNNABLE`, or
-`STARTING`. `RUNNING` and terminal jobs are left untouched.
+EventBridge invokes the watchdog on `rate(1 minute)`. The Lambda accepts only a
+scheduled event bound to the stack's exact named rule ARN. This does not depend
+on a `SUBMITTED` state-change event: AWS Batch does not emit a state-change
+event for the initial submission. On each invocation the Lambda calls
+`ListJobs` for the stack's exact queue in each pre-run state: `SUBMITTED`,
+`PENDING`, `RUNNABLE`, and `STARTING`.
+
+The scan is deliberately bounded to two 100-result pages per state and the 25
+oldest eligible candidates found in those pages. Each selected AWS job ID is
+then passed to `DescribeJobs`. Before termination, the authoritative record
+must match the candidate AWS job ID, creation timestamp, exact stack queue,
+one of the four current job-definition revision ARNs, and the canonical
+`opusloops-<stage>-<job UUID prefix>-<attempt UUID prefix>` name. The name's
+lowercase eight-hex UUID prefixes and stage must match the job-definition
+stage. The authoritative status must still be pre-run and its authoritative
+`createdAt` must be at least 600 seconds old. `RUNNING` and terminal jobs are
+left untouched. A `truncated: true` summary means the next scheduled invocation
+will continue draining eligible work; alert if that state persists.
+
+`DescribeJobs` returns a complete Batch record, which includes the parameters
+map. The watchdog never accesses, serializes, or logs that map, the
+`payload_base64` value, status reasons, session credentials, or callback token.
+It logs only bounded aggregate counts and validated job ID/stage/status/outcome
+fields. There is no EventBridge archive, transformed submission event, or SQS
+copy of the payload.
 
 The resulting Batch `FAILED` event reaches the standard fallback, which emits
 the signed `batch_queue_timeout` callback with `dispatchJobId` when the exact
 fixed termination reason is present. That AWS reason stays out of logs and the
-callback body. The watchdog's broad
-`batch:DescribeJobs` grant is required because that API has no resource-level
-IAM type; the function receives job IDs only from the stack-owned encrypted
-queue, and `batch:TerminateJob` is restricted to job ARNs in this account and
-region.
+callback body. `batch:ListJobs` and `batch:DescribeJobs` require `Resource: "*"`
+because AWS Batch exposes no resource-level IAM type for those reads. The
+function always supplies the exact stack queue to `ListJobs`, and
+`batch:TerminateJob` remains restricted to job ARNs in this account and region.
 
 ## Hourly retention invocation
 

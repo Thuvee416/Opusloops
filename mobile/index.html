@@ -17,8 +17,8 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=26" />
-    <link rel="stylesheet" href="./color-bends.css?v=1" />
+    <link rel="stylesheet" href="./styles.css?v=27" />
+    <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <title>Opusloops</title>
   </head>
   <body>
@@ -462,21 +462,24 @@
         </div>
       </section>
 
-      <nav class="bottom-nav" aria-label="Primary" data-color-bends-dock data-color-bends-state="fallback">
-        <div class="dock-color-bends" aria-hidden="true"></div>
-        <button class="nav-item is-active" type="button" data-view-target="create" data-color-bends="create" aria-current="page">
+      <nav class="bottom-nav" aria-label="Primary" data-pixel-dock data-pixel-dock-state="fallback">
+        <button class="nav-item is-active" type="button" data-view-target="create" data-pixel-card="create" aria-current="page">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4v-8.5Z" /></svg>
           <span>Create</span>
         </button>
-        <button class="nav-item" type="button" data-view-target="studio" data-color-bends="studio">
+        <button class="nav-item" type="button" data-view-target="studio" data-pixel-card="studio">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14M12 8v8m7-13v18M3 9h4m3 3h4m3-4h4" /></svg>
           <span>Studio</span>
         </button>
-        <button class="nav-item" type="button" data-view-target="mix" data-color-bends="mix">
+        <button class="nav-item" type="button" data-view-target="mix" data-pixel-card="mix">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16m6-16v16m6-16v16M3 9h6m0 6h6m0-7h6" /></svg>
           <span>Mix</span>
         </button>
-        <button class="nav-item" type="button" data-view-target="projects" data-color-bends="projects">
+        <button class="nav-item" type="button" data-view-target="projects" data-pixel-card="projects">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6l2 2h8v11H4V6Z" /></svg>
           <span>Projects</span>
         </button>
@@ -563,7 +566,7 @@
     <script src="./stem-import-core.js?v=1" defer></script>
     <script src="./stem-player.js?v=1" defer></script>
     <script src="./stem-import.js?v=1" defer></script>
-    <script src="./app.js?v=20" defer></script>
-    <script src="./color-bends.mjs?v=1" type="module"></script>
+    <script src="./app.js?v=21" defer></script>
+    <script src="./pixel-dock.mjs?v=1" type="module"></script>
   </body>
 </html>

@@ -1,27 +1,23 @@
 const CACHE_PREFIX = "opusloops-pwa-";
 const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
-const CACHE_NAME = `${CACHE_PREFIX}v30`;
+const CACHE_NAME = `${CACHE_PREFIX}v31`;
 const APP_SHELL = [
   "./",
   "./index.html",
   "./frame-guard.js?v=1",
-  "./styles.css?v=26",
-  "./color-bends.css?v=1",
+  "./styles.css?v=27",
+  "./pixel-dock.css?v=1",
   "./config.js?v=1",
   "./cloud-client.js?v=4",
   "./stem-import-core.js?v=1",
   "./stem-player.js?v=1",
   "./stem-import.js?v=1",
-  "./app.js?v=20",
-  "./color-bends.mjs?v=1",
+  "./app.js?v=21",
+  "./pixel-dock.mjs?v=1",
   "./manifest.webmanifest?v=5",
   "./icons/icon-192.png?v=3",
   "./icons/icon-512.png?v=3",
   "./icons/apple-touch-icon.png?v=3"
-];
-const COLOR_BENDS_ASSETS = [
-  "./vendor/three.module.min.js?v=1851",
-  "./vendor/three.core.min.js"
 ];
 
 self.addEventListener("install", (event) => {
@@ -46,20 +42,6 @@ self.addEventListener("activate", (event) => {
         )
       )
       .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data?.type !== "CACHE_COLOR_BENDS") return;
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      Promise.all(
-        COLOR_BENDS_ASSETS.map(async (asset) => {
-          const request = new Request(new URL(asset, self.registration.scope));
-          if (!(await cache.match(request))) await cache.add(request);
-        })
-      )
-    )
   );
 });
 

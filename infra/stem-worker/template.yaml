@@ -178,18 +178,14 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
+                Action: batch:ListJobs
+                Resource: '*'
+              - Effect: Allow
                 Action: batch:DescribeJobs
                 Resource: '*'
               - Effect: Allow
                 Action: batch:TerminateJob
                 Resource: !Sub arn:${AWS::Partition}:batch:${AWS::Region}:${AWS::AccountId}:job/*
-              - Effect: Allow
-                Action:
-                  - sqs:ReceiveMessage
-                  - sqs:DeleteMessage
-                  - sqs:GetQueueAttributes
-                  - sqs:ChangeMessageVisibility
-                Resource: !GetAtt QueueWatchdogDelayQueue.Arn
               - Effect: Allow
                 Action:
                   - logs:CreateLogStream
@@ -295,9 +291,8 @@ Resources:
               commands:
                 - set -euo pipefail
                 - export IMAGE_TAG="git-$OPUSLOOPS_GIT_REF"
-                - docker push "${WorkerRepository.RepositoryUri}:$IMAGE_TAG"
                 - docker push "${WorkerRepository.RepositoryUri}:latest"
-                - aws ecr describe-images --repository-name opusloops/stem-worker --image-ids imageTag="$IMAGE_TAG" --region "$AWS_DEFAULT_REGION" --query 'imageDetails[0].{tag:imageTags[0],digest:imageDigest}' --output json
+                - docker push "${WorkerRepository.RepositoryUri}:$IMAGE_TAG"
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_LARGE
@@ -547,7 +542,6 @@ Resources:
       Role: !GetAtt BootstrapFailureRole.Arn
       MemorySize: 128
       Timeout: 30
-      ReservedConcurrentExecutions: 1
       Environment:
         Variables:
           OPUSLOOPS_CALLBACK_URL: !Ref WorkerCallbackUrl
@@ -781,67 +775,6 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt BootstrapFailureRule.Arn
 
-  QueueWatchdogDelayQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: opusloops-stem-worker-queue-watchdog
-      DelaySeconds: 600
-      MessageRetentionPeriod: 86400
-      VisibilityTimeout: 60
-      SqsManagedSseEnabled: true
-
-  QueueWatchdogQueuePolicy:
-    Type: AWS::SQS::QueuePolicy
-    Properties:
-      Queues:
-        - !Ref QueueWatchdogDelayQueue
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: AllowOnlyStemWorkerSubmittedRule
-            Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action: sqs:SendMessage
-            Resource: !GetAtt QueueWatchdogDelayQueue.Arn
-            Condition:
-              ArnEquals:
-                aws:SourceArn: !GetAtt QueueWatchdogEnqueueRule.Arn
-              StringEquals:
-                aws:SourceAccount: !Ref AWS::AccountId
-
-  QueueWatchdogEnqueueRule:
-    Type: AWS::Events::Rule
-    Properties:
-      Description: Delay each submitted stem job by ten minutes, then verify that it has started.
-      State: ENABLED
-      EventPattern:
-        source: [aws.batch]
-        detail-type: [Batch Job State Change]
-        detail:
-          status: [SUBMITTED]
-          jobQueue:
-            - !Ref JobQueue
-          jobDefinition:
-            - !Ref InspectJobDefinition
-            - !Ref AnalyzeJobDefinition
-            - !Ref ProposeJobDefinition
-            - !Ref RenderJobDefinition
-      Targets:
-        - Arn: !GetAtt QueueWatchdogDelayQueue.Arn
-          Id: StemWorkerQueueWatchdogDelay
-          InputTransformer:
-            InputPathsMap:
-              createdAt: $.detail.createdAt
-              jobDefinition: $.detail.jobDefinition
-              jobId: $.detail.jobId
-              jobName: $.detail.jobName
-              jobQueue: $.detail.jobQueue
-            InputTemplate: '{"createdAt":<createdAt>,"jobDefinition":"<jobDefinition>","jobId":"<jobId>","jobName":"<jobName>","jobQueue":"<jobQueue>"}'
-          RetryPolicy:
-            MaximumEventAgeInSeconds: 3600
-            MaximumRetryAttempts: 12
-
   QueueWatchdogLambda:
     Type: AWS::Lambda::Function
     DependsOn: QueueWatchdogLogGroup
@@ -854,10 +787,9 @@ Resources:
       Role: !GetAtt QueueWatchdogRole.Arn
       MemorySize: 128
       Timeout: 30
-      ReservedConcurrentExecutions: 1
       Environment:
         Variables:
-          OPUSLOOPS_WATCHDOG_QUEUE_ARN: !GetAtt QueueWatchdogDelayQueue.Arn
+          OPUSLOOPS_WATCHDOG_SCHEDULE_ARN: !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/opusloops-stem-worker-queue-watchdog
           OPUSLOOPS_JOB_QUEUE_ARN: !Ref JobQueue
           OPUSLOOPS_INSPECT_JOB_DEFINITION_ARN: !Ref InspectJobDefinition
           OPUSLOOPS_ANALYZE_JOB_DEFINITION_ARN: !Ref AnalyzeJobDefinition
@@ -874,8 +806,11 @@ Resources:
           import boto3
 
           MINIMUM_QUEUE_AGE_MS = 10 * 60 * 1000
-          EXPECTED_EVENT_SOURCE = "aws:sqs"
-          EXPECTED_WATCHDOG_QUEUE = os.environ["OPUSLOOPS_WATCHDOG_QUEUE_ARN"]
+          LIST_PAGE_SIZE = 100
+          MAX_LIST_PAGES_PER_STATUS = 2
+          MAX_CANDIDATES_PER_RUN = 25
+          DESCRIBE_BATCH_SIZE = 100
+          EXPECTED_SCHEDULE = os.environ["OPUSLOOPS_WATCHDOG_SCHEDULE_ARN"]
           EXPECTED_JOB_QUEUE = os.environ["OPUSLOOPS_JOB_QUEUE_ARN"]
           JOB_DEFINITIONS = {
               os.environ["OPUSLOOPS_INSPECT_JOB_DEFINITION_ARN"]: "inspect",
@@ -883,7 +818,8 @@ Resources:
               os.environ["OPUSLOOPS_PROPOSE_JOB_DEFINITION_ARN"]: "propose",
               os.environ["OPUSLOOPS_RENDER_JOB_DEFINITION_ARN"]: "render",
           }
-          PRE_RUN_STATUSES = {"SUBMITTED", "PENDING", "RUNNABLE", "STARTING"}
+          LIST_STATUSES = ("SUBMITTED", "PENDING", "RUNNABLE", "STARTING")
+          PRE_RUN_STATUSES = set(LIST_STATUSES)
           JOB_NAME = re.compile(
               r"^opusloops-(inspect|analyze|propose|render)-[0-9a-f]{8}-[0-9a-f]{8}$"
           )
@@ -892,18 +828,29 @@ Resources:
           class ValidationError(Exception):
               pass
 
-          def _uuid(value):
+          def _uuid(value, label="job-id"):
               if not isinstance(value, str):
-                  raise ValidationError("job-id")
+                  raise ValidationError(label)
               try:
                   parsed = uuid.UUID(value)
               except (ValueError, AttributeError):
-                  raise ValidationError("job-id") from None
-              if str(parsed) != value.lower():
-                  raise ValidationError("job-id")
+                  raise ValidationError(label) from None
+              if str(parsed) != value:
+                  raise ValidationError(label)
               return str(parsed)
 
-          def _log(job_id, stage, batch_status, outcome):
+          def _integer(value, label):
+              if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                  raise ValidationError(label)
+              return value
+
+          def _job_name(value, stage=None):
+              match = JOB_NAME.fullmatch(value) if isinstance(value, str) else None
+              if match is None or (stage is not None and match.group(1) != stage):
+                  raise ValidationError("job-name")
+              return value, match.group(1)
+
+          def _log_job(job_id, stage, batch_status, outcome):
               print(json.dumps({
                   "dispatchJobId": job_id,
                   "stage": stage if stage in JOB_DEFINITIONS.values() else None,
@@ -911,89 +858,193 @@ Resources:
                   "outcome": outcome,
               }, sort_keys=True, separators=(",", ":")))
 
-          def _message(event):
-              records = event.get("Records") if isinstance(event, dict) else None
-              if not isinstance(records, list) or len(records) != 1:
-                  raise ValidationError("records")
-              record = records[0]
+          def _scheduled_event(event):
               if (
-                  not isinstance(record, dict)
-                  or record.get("eventSource") != EXPECTED_EVENT_SOURCE
-                  or record.get("eventSourceARN") != EXPECTED_WATCHDOG_QUEUE
+                  not isinstance(event, dict)
+                  or event.get("source") != "aws.events"
+                  or event.get("detail-type") != "Scheduled Event"
+                  or event.get("resources") != [EXPECTED_SCHEDULE]
               ):
-                  raise ValidationError("event-source")
-              try:
-                  message = json.loads(record.get("body"))
-              except (TypeError, ValueError, json.JSONDecodeError):
-                  raise ValidationError("body") from None
-              expected_fields = {"createdAt", "jobDefinition", "jobId", "jobName", "jobQueue"}
-              if not isinstance(message, dict) or set(message) != expected_fields:
-                  raise ValidationError("contract")
-              job_id = _uuid(message.get("jobId"))
-              job_definition = message.get("jobDefinition")
-              stage = JOB_DEFINITIONS.get(job_definition)
-              if stage is None or message.get("jobQueue") != EXPECTED_JOB_QUEUE:
-                  raise ValidationError("scope")
-              job_name = message.get("jobName")
-              match = JOB_NAME.fullmatch(job_name) if isinstance(job_name, str) else None
-              if match is None or match.group(1) != stage:
-                  raise ValidationError("job-name")
-              created_at = message.get("createdAt")
-              if isinstance(created_at, bool) or not isinstance(created_at, int) or created_at <= 0:
-                  raise ValidationError("created-at")
-              return message, stage, job_id
+                  raise ValidationError("scheduled-event")
 
-          def _inspect(message, stage, job_id):
-              if int(time.time() * 1000) - message["createdAt"] < MINIMUM_QUEUE_AGE_MS:
-                  raise RuntimeError("queue age threshold has not elapsed")
-              response = BATCH.describe_jobs(jobs=[job_id])
-              jobs = response.get("jobs") if isinstance(response, dict) else None
-              if not isinstance(jobs, list) or len(jobs) != 1 or not isinstance(jobs[0], dict):
-                  raise RuntimeError("authoritative Batch job was not found")
-              job = jobs[0]
-              bindings = (
-                  job.get("jobId") == job_id
-                  and job.get("jobName") == message["jobName"]
-                  and job.get("jobQueue") == EXPECTED_JOB_QUEUE
-                  and job.get("jobDefinition") == message["jobDefinition"]
-                  and job.get("createdAt") == message["createdAt"]
+          def _candidate(summary, listed_status, cutoff_ms):
+              if not isinstance(summary, dict) or summary.get("status") != listed_status:
+                  raise ValidationError("job-summary")
+              job_id = _uuid(summary.get("jobId"))
+              job_name, _ = _job_name(summary.get("jobName"))
+              created_at = _integer(summary.get("createdAt"), "created-at")
+              if created_at > cutoff_ms:
+                  return None
+              return {
+                  "jobId": job_id,
+                  "jobName": job_name,
+                  "createdAt": created_at,
+              }
+
+          def _list_candidates(cutoff_ms):
+              candidates = {}
+              listed = 0
+              rejected = 0
+              truncated = False
+              for status in LIST_STATUSES:
+                  next_token = None
+                  seen_tokens = set()
+                  for _ in range(MAX_LIST_PAGES_PER_STATUS):
+                      request = {
+                          "jobQueue": EXPECTED_JOB_QUEUE,
+                          "jobStatus": status,
+                          "maxResults": LIST_PAGE_SIZE,
+                      }
+                      if next_token is not None:
+                          request["nextToken"] = next_token
+                      response = BATCH.list_jobs(**request)
+                      summaries = response.get("jobSummaryList") if isinstance(response, dict) else None
+                      if not isinstance(summaries, list):
+                          raise RuntimeError("Batch list response was invalid")
+                      listed += len(summaries)
+                      for summary in summaries:
+                          try:
+                              candidate = _candidate(summary, status, cutoff_ms)
+                          except ValidationError:
+                              rejected += 1
+                              continue
+                          if candidate is None:
+                              continue
+                          prior = candidates.get(candidate["jobId"])
+                          if prior is not None and prior != candidate:
+                              raise RuntimeError("Batch list binding changed during scan")
+                          candidates[candidate["jobId"]] = candidate
+                      token = response.get("nextToken")
+                      if token is None:
+                          next_token = None
+                          break
+                      if not isinstance(token, str) or not token or token in seen_tokens:
+                          raise RuntimeError("Batch list pagination token was invalid")
+                      seen_tokens.add(token)
+                      next_token = token
+                  if next_token is not None:
+                      truncated = True
+              ordered = sorted(
+                  candidates.values(),
+                  key=lambda candidate: (candidate["createdAt"], candidate["jobId"]),
               )
-              if not bindings:
-                  raise RuntimeError("authoritative Batch job did not match")
+              if len(ordered) > MAX_CANDIDATES_PER_RUN:
+                  truncated = True
+                  ordered = ordered[:MAX_CANDIDATES_PER_RUN]
+              return ordered, listed, rejected, truncated
+
+          def _authoritative_jobs(candidates):
+              jobs = {}
+              candidate_ids = {candidate["jobId"] for candidate in candidates}
+              for offset in range(0, len(candidates), DESCRIBE_BATCH_SIZE):
+                  job_ids = [
+                      candidate["jobId"]
+                      for candidate in candidates[offset:offset + DESCRIBE_BATCH_SIZE]
+                  ]
+                  response = BATCH.describe_jobs(jobs=job_ids)
+                  described = response.get("jobs") if isinstance(response, dict) else None
+                  if not isinstance(described, list):
+                      raise RuntimeError("Batch describe response was invalid")
+                  for job in described:
+                      if not isinstance(job, dict):
+                          raise RuntimeError("Batch describe response was invalid")
+                      try:
+                          job_id = _uuid(job.get("jobId"))
+                      except ValidationError:
+                          raise RuntimeError("Batch describe job ID was invalid") from None
+                      if job_id not in candidate_ids or job_id in jobs:
+                          raise RuntimeError("Batch describe response was not bound to candidates")
+                      jobs[job_id] = job
+              return jobs
+
+          def _inspect(candidate, job, now_ms):
+              job_id = candidate["jobId"]
+              if not isinstance(job, dict):
+                  raise ValidationError("missing-job")
+              if _uuid(job.get("jobId")) != job_id:
+                  raise ValidationError("job-id-binding")
+              job_definition = job.get("jobDefinition")
+              stage = JOB_DEFINITIONS.get(job_definition)
+              if stage is None or job.get("jobQueue") != EXPECTED_JOB_QUEUE:
+                  raise ValidationError("job-scope")
+              job_name, _ = _job_name(job.get("jobName"), stage)
+              created_at = _integer(job.get("createdAt"), "created-at")
+              if job_name != candidate["jobName"] or created_at != candidate["createdAt"]:
+                  raise ValidationError("job-binding")
               status = job.get("status")
-              if status in PRE_RUN_STATUSES:
-                  BATCH.terminate_job(
-                      jobId=job_id,
-                      reason="Opusloops queue credential freshness limit exceeded.",
-                  )
-                  return status, "terminated"
-              if status in {"RUNNING", "SUCCEEDED", "FAILED"}:
-                  return status, "no-action"
-              raise RuntimeError("authoritative Batch status was invalid")
+              if status not in PRE_RUN_STATUSES | {"RUNNING", "SUCCEEDED", "FAILED"}:
+                  raise ValidationError("job-status")
+              if status not in PRE_RUN_STATUSES or now_ms - created_at < MINIMUM_QUEUE_AGE_MS:
+                  return stage, status, "no-action"
+              BATCH.terminate_job(
+                  jobId=job_id,
+                  reason="Opusloops queue credential freshness limit exceeded.",
+              )
+              return stage, status, "terminated"
 
           def handler(event, context):
-              job_id = None
-              stage = None
               try:
-                  message, stage, job_id = _message(event)
-                  status, outcome = _inspect(message, stage, job_id)
+                  _scheduled_event(event)
               except ValidationError:
-                  _log(job_id, stage, None, "rejected-message")
-                  raise RuntimeError("queue watchdog message was rejected") from None
+                  print('{"outcome":"rejected-event"}')
+                  return {"status": "rejected-event"}
+              now_ms = int(time.time() * 1000)
+              try:
+                  candidates, listed, rejected, truncated = _list_candidates(
+                      now_ms - MINIMUM_QUEUE_AGE_MS
+                  )
+                  jobs = _authoritative_jobs(candidates)
+                  terminated = 0
+                  checked = 0
+                  for candidate in candidates:
+                      job_id = candidate["jobId"]
+                      try:
+                          stage, status, outcome = _inspect(
+                              candidate, jobs.get(job_id), now_ms
+                          )
+                      except ValidationError:
+                          rejected += 1
+                          _log_job(job_id, None, None, "rejected-job")
+                          continue
+                      checked += 1
+                      if outcome == "terminated":
+                          terminated += 1
+                      _log_job(job_id, stage, status, outcome)
               except Exception:
-                  _log(job_id, stage, None, "watchdog-failed")
-                  raise RuntimeError("queue watchdog could not settle the job") from None
-              _log(job_id, stage, status, outcome)
-              return {"status": outcome}
+                  print('{"outcome":"watchdog-failed"}')
+                  raise RuntimeError("queue watchdog scan failed") from None
+              summary = {
+                  "status": "completed",
+                  "listed": listed,
+                  "checked": checked,
+                  "terminated": terminated,
+                  "rejected": rejected,
+                  "truncated": truncated,
+              }
+              print(json.dumps(summary, sort_keys=True, separators=(",", ":")))
+              return summary
 
-  QueueWatchdogEventSource:
-    Type: AWS::Lambda::EventSourceMapping
+  QueueWatchdogSchedule:
+    Type: AWS::Events::Rule
     Properties:
-      BatchSize: 1
-      Enabled: true
-      EventSourceArn: !GetAtt QueueWatchdogDelayQueue.Arn
+      Name: opusloops-stem-worker-queue-watchdog
+      Description: Inspect and terminate stem jobs that remain pre-run for ten minutes.
+      ScheduleExpression: rate(1 minute)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt QueueWatchdogLambda.Arn
+          Id: StemWorkerQueueWatchdog
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 60
+            MaximumRetryAttempts: 1
+
+  AllowEventBridgeQueueWatchdogInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
       FunctionName: !Ref QueueWatchdogLambda
-      MaximumBatchingWindowInSeconds: 0
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt QueueWatchdogSchedule.Arn
 
   RetentionInvokerLambda:
     Type: AWS::Lambda::Function
@@ -1007,7 +1058,6 @@ Resources:
       Role: !GetAtt RetentionInvokerRole.Arn
       MemorySize: 128
       Timeout: 30
-      ReservedConcurrentExecutions: 1
       Environment:
         Variables:
           OPUSLOOPS_RETENTION_URL: !Ref RetentionUrl
@@ -1142,10 +1192,8 @@ Outputs:
     Value: !Ref WorkerLogGroup
   BootstrapFailureRuleArn:
     Value: !GetAtt BootstrapFailureRule.Arn
-  QueueWatchdogRuleArn:
-    Value: !GetAtt QueueWatchdogEnqueueRule.Arn
-  QueueWatchdogQueueArn:
-    Value: !GetAtt QueueWatchdogDelayQueue.Arn
+  QueueWatchdogScheduleArn:
+    Value: !GetAtt QueueWatchdogSchedule.Arn
   RetentionScheduleArn:
     Value: !GetAtt RetentionSchedule.Arn
   WorkerImage:

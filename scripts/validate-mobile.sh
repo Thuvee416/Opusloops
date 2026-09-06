@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for required in index.html frame-guard.js styles.css color-bends.css color-bends.mjs config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png vendor/three.core.min.js vendor/three.module.min.js vendor/three.LICENSE.txt vendor/README.md; do
+for required in index.html frame-guard.js styles.css pixel-dock.css pixel-dock.mjs REACT_BITS_LICENSE.md config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
   if [[ ! -s "mobile/$required" ]]; then
     echo "Required mobile asset is missing or empty: mobile/$required" >&2
     exit 1
@@ -11,7 +11,6 @@ done
 
 python3 - <<'PY'
 import json
-import hashlib
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -26,6 +25,7 @@ class PageParser(HTMLParser):
         self.local_assets = []
         self.ids = []
         self.dock_palettes = []
+        self.pixel_canvases = 0
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
@@ -36,7 +36,9 @@ class PageParser(HTMLParser):
         if tag == "link" and "manifest" in attributes.get("rel", "").lower().split():
             self.has_manifest = True
         if tag == "button" and "nav-item" in attributes.get("class", "").split():
-            self.dock_palettes.append(attributes.get("data-color-bends"))
+            self.dock_palettes.append(attributes.get("data-pixel-card"))
+        if tag == "canvas" and "pixel-canvas" in attributes.get("class", "").split():
+            self.pixel_canvases += 1
         for attribute in ("href", "src"):
             value = attributes.get(attribute)
             if value:
@@ -50,7 +52,8 @@ manifest_path = root / "manifest.webmanifest"
 service_worker_path = root / "service-worker.js"
 cloud_client_path = root / "cloud-client.js"
 stem_import_path = root / "stem-import.js"
-color_bends_path = root / "color-bends.mjs"
+pixel_dock_path = root / "pixel-dock.mjs"
+pixel_dock_css_path = root / "pixel-dock.css"
 
 
 def local_path(reference, label):
@@ -74,7 +77,8 @@ index_source = index_path.read_text(encoding="utf-8")
 service_worker_source = service_worker_path.read_text(encoding="utf-8")
 cloud_client_source = cloud_client_path.read_text(encoding="utf-8")
 stem_import_source = stem_import_path.read_text(encoding="utf-8")
-color_bends_source = color_bends_path.read_text(encoding="utf-8")
+pixel_dock_source = pixel_dock_path.read_text(encoding="utf-8")
+pixel_dock_css_source = pixel_dock_css_path.read_text(encoding="utf-8")
 parser.feed(index_source)
 if not parser.has_viewport:
     raise SystemExit(f"{index_path}: mobile viewport metadata is required")
@@ -84,13 +88,15 @@ duplicate_ids = sorted({value for value in parser.ids if parser.ids.count(value)
 if duplicate_ids:
     raise SystemExit(f"{index_path}: duplicate element ids: {', '.join(duplicate_ids)}")
 if parser.dock_palettes != ["create", "studio", "mix", "projects"]:
-    raise SystemExit(f"{index_path}: all four dock buttons need distinct ColorBends palettes")
+    raise SystemExit(f"{index_path}: all four dock buttons need distinct PixelCard palettes")
+if parser.pixel_canvases != 4:
+    raise SystemExit(f"{index_path}: each dock button needs its own PixelCard canvas")
 
 for asset in (
     "frame-guard.js",
     "styles.css",
-    "color-bends.css",
-    "color-bends.mjs",
+    "pixel-dock.css",
+    "pixel-dock.mjs",
     "config.js",
     "cloud-client.js",
     "stem-import-core.js",
@@ -106,26 +112,26 @@ for asset in (
             f"{asset}: index and service-worker asset versions must exist and match"
         )
 
-for reference in ("./vendor/three.module.min.js?v=1851", "./vendor/three.core.min.js"):
-    if reference not in service_worker_source:
-        raise SystemExit(f"{service_worker_path}: lazy ColorBends asset is missing: {reference}")
-
-if 'import(`./vendor/three.module.min.js?v=${THREE_ASSET_VERSION}`)' not in color_bends_source:
-    raise SystemExit(f"{color_bends_path}: Three.js must remain a lazy local import")
-if 'matchMedia("(prefers-reduced-motion: reduce)")' not in color_bends_source:
-    raise SystemExit(f"{color_bends_path}: reduced-motion gating is required")
-if 'webglcontextlost' not in color_bends_source or 'webglcontextrestored' not in color_bends_source:
-    raise SystemExit(f"{color_bends_path}: WebGL context fallback handling is required")
-
-vendor_hashes = {
-    "vendor/three.core.min.js": "05b2609338c76cd65daf74f3ac515bc9a5045e1b3b33edc07d8c9bd55250fa90",
-    "vendor/three.module.min.js": "86bcee248b64f44bcfc23c331ae74619061957d59cab040171dcb6fb5900beb6",
-}
-for relative_path, expected_hash in vendor_hashes.items():
-    payload = (root / relative_path).read_bytes()
-    actual_hash = hashlib.sha256(payload).hexdigest()
-    if actual_hash != expected_hash:
-        raise SystemExit(f"{root / relative_path}: vendored Three.js hash does not match 0.185.1")
+if 'matchMedia("(prefers-reduced-motion: reduce)")' not in pixel_dock_source:
+    raise SystemExit(f"{pixel_dock_path}: reduced-motion handling is required")
+if "ResizeObserver" not in pixel_dock_source or "requestAnimationFrame" not in pixel_dock_source:
+    raise SystemExit(f"{pixel_dock_path}: responsive canvas animation is required")
+if "gradient(" in pixel_dock_css_source:
+    raise SystemExit(f"{pixel_dock_css_path}: gradient dock styling must not return")
+if "gap: 0" not in pixel_dock_css_source or "border-radius: 0" not in pixel_dock_css_source:
+    raise SystemExit(f"{pixel_dock_css_path}: dock segments must remain edge-to-edge")
+for retired_path in (
+    "color-bends.css",
+    "color-bends.mjs",
+    "vendor/three.core.min.js",
+    "vendor/three.module.min.js",
+    "vendor/three.LICENSE.txt",
+    "vendor/README.md",
+):
+    if (root / retired_path).exists():
+        raise SystemExit(f"{root / retired_path}: retired ColorBends asset must be removed")
+if "color-bends" in index_source.lower() or "color_bends" in service_worker_source.lower():
+    raise SystemExit("ColorBends wiring must not remain in the mobile app shell")
 
 for reference in parser.local_assets:
     asset_path = local_path(reference, index_path)
@@ -175,7 +181,7 @@ for icon in manifest["icons"]:
 PY
 
 node --check mobile/app.js
-node --check mobile/color-bends.mjs
+node --check mobile/pixel-dock.mjs
 node --check mobile/config.js
 node --check mobile/cloud-client.js
 node --check mobile/stem-import-core.js
@@ -183,19 +189,22 @@ node --check mobile/stem-player.js
 node --check mobile/stem-import.js
 node --check mobile/frame-guard.js
 node --check mobile/service-worker.js
-node --input-type=module --check < mobile/vendor/three.core.min.js
-node --input-type=module --check < mobile/vendor/three.module.min.js
-
+node --check supabase/functions/create-opusloops-account/handler.mjs
+node --check supabase/functions/create-opusloops-account/policy.mjs
+node --test \
+  supabase/functions/create-opusloops-account/handler.test.mjs \
+  supabase/functions/create-opusloops-account/policy.test.mjs
 node --input-type=module <<'NODE'
 import assert from 'node:assert/strict';
-import { DOCK_COLOR_BENDS_PALETTES } from './mobile/color-bends.mjs';
+import { DOCK_PIXEL_PALETTES } from './mobile/pixel-dock.mjs';
 
-assert.deepEqual(Object.keys(DOCK_COLOR_BENDS_PALETTES), ['create', 'studio', 'mix', 'projects']);
-const signatures = Object.values(DOCK_COLOR_BENDS_PALETTES).map((palette) => palette.colors.join(','));
-assert.equal(new Set(signatures).size, 4, 'every dock button must use a different gradient palette');
-Object.values(DOCK_COLOR_BENDS_PALETTES).forEach((palette) => {
-  assert.ok(palette.speed > 0, 'every ColorBends palette must animate');
-  assert.ok(palette.colors.length >= 3 && palette.colors.length <= 8);
+assert.deepEqual(Object.keys(DOCK_PIXEL_PALETTES), ['create', 'studio', 'mix', 'projects']);
+const signatures = Object.values(DOCK_PIXEL_PALETTES).map((palette) => palette.colors.join(','));
+assert.equal(new Set(signatures).size, 4, 'every dock button must use a different pixel palette');
+Object.values(DOCK_PIXEL_PALETTES).forEach((palette) => {
+  assert.ok(palette.speed > 0, 'every PixelCard palette must animate');
+  assert.ok(palette.gap >= 3, 'PixelCard gap must remain usable at dock scale');
+  assert.equal(palette.colors.length, 3);
 });
 NODE
 
@@ -425,15 +434,32 @@ test "$(grep -c '^create policy ' "$migration")" -eq 4
 atomic_sync='supabase/migrations/20260905123000_add_atomic_project_sync.sql'
 membership='supabase/migrations/20260905135000_require_opusloops_membership_for_sync.sql'
 invites='supabase/migrations/20260905130000_create_single_use_signup_invites.sql'
-test -s "$atomic_sync" -a -s "$membership" -a -s "$invites"
+invite_recovery='supabase/migrations/20260905220000_add_signup_invite_reservation_recovery.sql'
+test -s "$atomic_sync" -a -s "$membership" -a -s "$invites" -a -s "$invite_recovery"
 grep -Fq 'pg_advisory_xact_lock' "$atomic_sync"
 grep -Fq "'app_metadata' ->> 'opusloops'" "$membership"
 grep -Fq 'grant execute on function public.sync_projects(jsonb) to authenticated' "$membership"
 grep -Fq 'grant execute on function public.claim_opusloops_signup_invite(text, text) to service_role' "$invites"
+grep -Fq 'returns boolean' "$invite_recovery"
+grep -Fq 'drop function if exists public.claim_opusloops_signup_invite(text, text)' "$invite_recovery"
+grep -Fq 'create unique index if not exists opusloops_signup_invites_reserved_user_id_key' "$invite_recovery"
+grep -Fq 'grant execute on function public.reserve_opusloops_signup_invite(text, text)' "$invite_recovery"
+grep -Fq 'grant execute on function public.release_opusloops_signup_invite(uuid)' "$invite_recovery"
+account_handler='supabase/functions/create-opusloops-account/handler.mjs'
+grep -Fq 'OPUSLOOPS_PUBLISHABLE_KEY_HASH' "$account_handler"
+grep -Fq 'X-Supabase-Api-Version' "$account_handler"
+grep -Fq '2024-01-01' "$account_handler"
+grep -Fq '/rest/v1/rpc/reserve_opusloops_signup_invite' "$account_handler"
+grep -Fq 'async function completeReservation' "$account_handler"
+grep -Fq '      2,' "$account_handler"
+if grep -Fq '/rest/v1/rpc/release_opusloops_signup_invite' "$account_handler"; then
+  echo 'Account handler must preserve deterministic reservations for safe retries.' >&2
+  exit 1
+fi
 test "$(grep -c '^enable_signup = false$' supabase/config.toml)" -eq 2
 grep -Fq 'site_url = "https://opusloops.com/"' supabase/config.toml
 grep -Fq '"https://www.opusloops.com/**"' supabase/config.toml
 grep -Fq 'verify_jwt = false' supabase/config.toml
-grep -Fq 'OPUSLOOPS_PUBLISHABLE_KEY_HASH' supabase/functions/create-opusloops-account/index.ts
-grep -Fq '"https://opusloops.com"' supabase/functions/create-opusloops-account/index.ts
-grep -Fq '"https://www.opusloops.com"' supabase/functions/create-opusloops-account/index.ts
+grep -Fq 'Deno.serve(createOpusloopsAccountHandler' supabase/functions/create-opusloops-account/index.ts
+grep -Fq '"https://opusloops.com"' "$account_handler"
+grep -Fq '"https://www.opusloops.com"' "$account_handler"

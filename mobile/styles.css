@@ -2291,7 +2291,7 @@ h2 {
   width: 100%;
   min-height: calc(72px + env(safe-area-inset-bottom));
   margin: 0 auto;
-  padding: 7px 10px calc(7px + env(safe-area-inset-bottom));
+  padding: 0;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(22px);
@@ -2303,12 +2303,12 @@ h2 {
   place-items: center;
   align-content: center;
   gap: 4px;
-  min-height: 54px;
+  min-height: calc(72px + env(safe-area-inset-bottom));
   padding: 2px;
   color: var(--faint);
   background: transparent;
   border: 0;
-  border-radius: 12px;
+  border-radius: 0;
   font-size: 10px;
   font-weight: 700;
 }

@@ -20,6 +20,9 @@ CALLBACK_URL = (
     "https://abcdefghijklmnopqrst.supabase.co/functions/v1/stem-worker-callback"
 )
 QUEUE_ARN = "arn:aws:batch:us-east-1:123456789012:job-queue/opusloops"
+WATCHDOG_SCHEDULE_ARN = (
+    "arn:aws:events:us-east-1:123456789012:rule/opusloops-stem-worker-queue-watchdog"
+)
 JOB_DEFINITION_ARNS = {
     "inspect": "arn:aws:batch:us-east-1:123456789012:job-definition/inspect:1",
     "analyze": "arn:aws:batch:us-east-1:123456789012:job-definition/analyze:1",
@@ -66,14 +69,31 @@ class _FakeSecretsManager:
 
 
 class _FakeBatch:
-    def __init__(self, job):
-        self.job = job
+    def __init__(self, jobs=None, summaries_by_status=None, list_responder=None):
+        self.jobs = {job["jobId"]: job for job in (jobs or [])}
+        self.summaries_by_status = summaries_by_status or {}
+        self.list_responder = list_responder
+        self.list_calls = []
         self.describe_calls = []
         self.terminate_calls = []
 
+    def list_jobs(self, **kwargs):
+        self.list_calls.append(kwargs)
+        if self.list_responder is not None:
+            return self.list_responder(kwargs)
+        return {
+            "jobSummaryList": list(
+                self.summaries_by_status.get(kwargs["jobStatus"], [])
+            )
+        }
+
     def describe_jobs(self, **kwargs):
         self.describe_calls.append(kwargs)
-        return {"jobs": [self.job]}
+        return {
+            "jobs": [
+                self.jobs[job_id] for job_id in kwargs["jobs"] if job_id in self.jobs
+            ]
+        }
 
     def terminate_job(self, **kwargs):
         self.terminate_calls.append(kwargs)
@@ -116,9 +136,7 @@ def _load_queue_watchdog(batch):
     boto3 = types.ModuleType("boto3")
     boto3.client = lambda service: batch if service == "batch" else None
     environment = {
-        "OPUSLOOPS_WATCHDOG_QUEUE_ARN": (
-            "arn:aws:sqs:us-east-1:123456789012:opusloops-watchdog"
-        ),
+        "OPUSLOOPS_WATCHDOG_SCHEDULE_ARN": WATCHDOG_SCHEDULE_ARN,
         "OPUSLOOPS_JOB_QUEUE_ARN": QUEUE_ARN,
         "OPUSLOOPS_INSPECT_JOB_DEFINITION_ARN": JOB_DEFINITION_ARNS["inspect"],
         "OPUSLOOPS_ANALYZE_JOB_DEFINITION_ARN": JOB_DEFINITION_ARNS["analyze"],
@@ -203,7 +221,7 @@ def _event(payload=None, stage="inspect"):
     }
 
 
-def _queue_message(created_at, status="RUNNABLE"):
+def _scheduled_job(created_at, status="RUNNABLE", listed_status=None):
     job = {
         "jobId": AWS_JOB_ID,
         "jobName": f"opusloops-inspect-{JOB_ID[:8]}-{ATTEMPT_ID[:8]}",
@@ -214,22 +232,14 @@ def _queue_message(created_at, status="RUNNABLE"):
         "parameters": {"payload_base64": USER_SESSION},
         "statusReason": USER_SESSION,
     }
-    message = {
-        field: job[field]
-        for field in ("createdAt", "jobDefinition", "jobId", "jobName", "jobQueue")
-    }
+    summary = {field: job[field] for field in ("createdAt", "jobId", "jobName")}
+    summary["status"] = listed_status or status
     event = {
-        "Records": [
-            {
-                "eventSource": "aws:sqs",
-                "eventSourceARN": (
-                    "arn:aws:sqs:us-east-1:123456789012:opusloops-watchdog"
-                ),
-                "body": json.dumps(message, separators=(",", ":")),
-            }
-        ]
+        "source": "aws.events",
+        "detail-type": "Scheduled Event",
+        "resources": [WATCHDOG_SCHEDULE_ARN],
     }
-    return job, event
+    return job, summary, event
 
 
 class BootstrapFailureCallbackTests(unittest.TestCase):
@@ -353,7 +363,7 @@ class BootstrapFailureCallbackTests(unittest.TestCase):
         self.assertEqual(callback["dispatchJobId"], AWS_JOB_ID)
         self.assertNotIn(event["detail"]["statusReason"], requests[0].data.decode())
 
-    def test_template_has_no_project_wide_storage_secret_and_scopes_watchdog_lookup(
+    def test_template_has_no_project_wide_storage_secret_and_scopes_watchdog_access(
         self,
     ):
         template = TEMPLATE_PATH.read_text(encoding="utf-8")
@@ -371,18 +381,57 @@ class BootstrapFailureCallbackTests(unittest.TestCase):
         self.assertNotIn("ToPort: 53", template)
         self.assertIn("Type: AWS::Events::Rule", template)
         self.assertIn("status: [FAILED]", template)
+        self.assertIn("ScheduleExpression: rate(1 minute)", template)
+        self.assertEqual(template.count("Action: batch:ListJobs"), 1)
         self.assertEqual(template.count("Action: batch:DescribeJobs"), 1)
+        self.assertEqual(template.count("Action: batch:TerminateJob"), 1)
         self.assertIn(
             "Resource: !Sub arn:${AWS::Partition}:batch:${AWS::Region}:${AWS::AccountId}:job/*",
             template,
         )
+        for obsolete in (
+            "ReservedConcurrentExecutions",
+            "AWS::SQS::Queue",
+            "AWS::SQS::QueuePolicy",
+            "sqs:",
+            "QueueWatchdogDelayQueue",
+            "QueueWatchdogEnqueueRule",
+            "QueueWatchdogEventSource",
+            "OPUSLOOPS_WATCHDOG_QUEUE_ARN",
+        ):
+            self.assertNotIn(obsolete, template)
+
+    def test_scheduled_watchdog_never_reads_or_logs_batch_parameters(self):
+        source = _inline_lambda_source("QueueWatchdogLambda")
+        for forbidden in (
+            "payload_base64",
+            '.get("parameters")',
+            '["parameters"]',
+            "statusReason",
+        ):
+            self.assertNotIn(forbidden, source)
+
+    def test_codebuild_publishes_immutable_commit_tag_last(self):
+        template = TEMPLATE_PATH.read_text(encoding="utf-8")
+        post_build_start = template.index("            post_build:")
+        post_build_end = template.index("      Environment:", post_build_start)
+        commands = [
+            line.strip()
+            for line in template[post_build_start:post_build_end].splitlines()
+            if line.startswith("                - ")
+        ]
+        latest_push = '- docker push "${WorkerRepository.RepositoryUri}:latest"'
+        immutable_push = '- docker push "${WorkerRepository.RepositoryUri}:$IMAGE_TAG"'
+
+        self.assertLess(commands.index(latest_push), commands.index(immutable_push))
+        self.assertEqual(commands[-1], immutable_push)
 
 
 class QueueWatchdogTests(unittest.TestCase):
     def test_stale_pre_run_job_is_terminated_without_logging_describe_payload(self):
         created_at = 1_700_000_000_000
-        job, event = _queue_message(created_at)
-        batch = _FakeBatch(job)
+        job, summary, event = _scheduled_job(created_at)
+        batch = _FakeBatch(jobs=[job], summaries_by_status={"RUNNABLE": [summary]})
         module = _load_queue_watchdog(batch)
         module.time.time = lambda: (created_at + 600_001) / 1000
         output = io.StringIO()
@@ -390,7 +439,22 @@ class QueueWatchdogTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             result = module.handler(event, None)
 
-        self.assertEqual(result, {"status": "terminated"})
+        self.assertEqual(
+            result,
+            {
+                "status": "completed",
+                "listed": 1,
+                "checked": 1,
+                "terminated": 1,
+                "rejected": 0,
+                "truncated": False,
+            },
+        )
+        self.assertEqual(
+            [call["jobStatus"] for call in batch.list_calls],
+            ["SUBMITTED", "PENDING", "RUNNABLE", "STARTING"],
+        )
+        self.assertTrue(all(call["jobQueue"] == QUEUE_ARN for call in batch.list_calls))
         self.assertEqual(batch.describe_calls, [{"jobs": [AWS_JOB_ID]}])
         self.assertEqual(
             batch.terminate_calls,
@@ -402,19 +466,139 @@ class QueueWatchdogTests(unittest.TestCase):
             ],
         )
         self.assertNotIn(USER_SESSION, output.getvalue())
-        self.assertNotIn("payload_base64", event["Records"][0]["body"])
+        self.assertNotIn("payload_base64", output.getvalue())
 
     def test_running_job_is_not_terminated(self):
         created_at = 1_700_000_000_000
-        job, event = _queue_message(created_at, status="RUNNING")
-        batch = _FakeBatch(job)
+        job, summary, event = _scheduled_job(
+            created_at, status="RUNNING", listed_status="RUNNABLE"
+        )
+        batch = _FakeBatch(jobs=[job], summaries_by_status={"RUNNABLE": [summary]})
         module = _load_queue_watchdog(batch)
         module.time.time = lambda: (created_at + 600_001) / 1000
 
         with contextlib.redirect_stdout(io.StringIO()):
             result = module.handler(event, None)
 
-        self.assertEqual(result, {"status": "no-action"})
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(result["checked"], 1)
+        self.assertEqual(result["terminated"], 0)
+        self.assertEqual(batch.terminate_calls, [])
+
+    def test_authoritative_binding_mismatch_fails_closed_per_job(self):
+        created_at = 1_700_000_000_000
+        changes = {
+            "jobQueue": "arn:aws:batch:us-east-1:123456789012:job-queue/other",
+            "jobDefinition": JOB_DEFINITION_ARNS["analyze"],
+            "jobName": f"opusloops-analyze-{JOB_ID[:8]}-{ATTEMPT_ID[:8]}",
+            "createdAt": created_at + 1,
+        }
+        for field, wrong_value in changes.items():
+            with self.subTest(field=field):
+                job, summary, event = _scheduled_job(created_at)
+                job[field] = wrong_value
+                batch = _FakeBatch(
+                    jobs=[job], summaries_by_status={"RUNNABLE": [summary]}
+                )
+                module = _load_queue_watchdog(batch)
+                module.time.time = lambda: (created_at + 600_001) / 1000
+
+                with contextlib.redirect_stdout(io.StringIO()):
+                    result = module.handler(event, None)
+
+                self.assertEqual(result["checked"], 0)
+                self.assertEqual(result["terminated"], 0)
+                self.assertEqual(result["rejected"], 1)
+                self.assertEqual(batch.terminate_calls, [])
+
+    def test_job_is_terminated_at_exact_ten_minute_threshold(self):
+        created_at = 1_700_000_000_000
+        job, summary, event = _scheduled_job(created_at, status="SUBMITTED")
+        batch = _FakeBatch(jobs=[job], summaries_by_status={"SUBMITTED": [summary]})
+        module = _load_queue_watchdog(batch)
+        module.time.time = lambda: (created_at + 600_000) / 1000
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = module.handler(event, None)
+
+        self.assertEqual(result["terminated"], 1)
+        self.assertEqual(len(batch.terminate_calls), 1)
+
+    def test_fresh_job_is_not_described_or_terminated(self):
+        created_at = 1_700_000_000_000
+        job, summary, event = _scheduled_job(created_at)
+        batch = _FakeBatch(jobs=[job], summaries_by_status={"RUNNABLE": [summary]})
+        module = _load_queue_watchdog(batch)
+        module.time.time = lambda: (created_at + 599_999) / 1000
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = module.handler(event, None)
+
+        self.assertEqual(result["checked"], 0)
+        self.assertEqual(batch.describe_calls, [])
+        self.assertEqual(batch.terminate_calls, [])
+
+    def test_list_pagination_is_bounded_and_reports_truncation(self):
+        def list_responder(request):
+            page = 1 if "nextToken" not in request else 2
+            return {
+                "jobSummaryList": [],
+                "nextToken": f"{request['jobStatus']}-{page}",
+            }
+
+        batch = _FakeBatch(list_responder=list_responder)
+        module = _load_queue_watchdog(batch)
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = module.handler(
+                {
+                    "source": "aws.events",
+                    "detail-type": "Scheduled Event",
+                    "resources": [WATCHDOG_SCHEDULE_ARN],
+                },
+                None,
+            )
+
+        self.assertEqual(len(batch.list_calls), 8)
+        self.assertTrue(all(call["maxResults"] == 100 for call in batch.list_calls))
+        self.assertTrue(result["truncated"])
+        self.assertEqual(batch.describe_calls, [])
+
+    def test_candidate_processing_is_bounded_to_oldest_twenty_five(self):
+        created_at = 1_700_000_000_000
+        summaries = [
+            {
+                "jobId": f"{index:08x}-0000-4000-8000-000000000000",
+                "jobName": f"opusloops-inspect-{index:08x}-{index + 100:08x}",
+                "createdAt": created_at + index,
+                "status": "RUNNABLE",
+            }
+            for index in range(1, 31)
+        ]
+        batch = _FakeBatch(summaries_by_status={"RUNNABLE": list(reversed(summaries))})
+        module = _load_queue_watchdog(batch)
+
+        candidates, listed, rejected, truncated = module._list_candidates(
+            created_at + 600_000
+        )
+
+        self.assertEqual(listed, 30)
+        self.assertEqual(rejected, 0)
+        self.assertTrue(truncated)
+        self.assertEqual(len(candidates), 25)
+        self.assertEqual(candidates[0]["jobId"], summaries[0]["jobId"])
+        self.assertEqual(candidates[-1]["jobId"], summaries[24]["jobId"])
+
+    def test_non_schedule_event_is_rejected_before_batch_access(self):
+        batch = _FakeBatch()
+        module = _load_queue_watchdog(batch)
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = module.handler({"source": "manual"}, None)
+
+        self.assertEqual(result, {"status": "rejected-event"})
+        self.assertEqual(batch.list_calls, [])
+        self.assertEqual(batch.describe_calls, [])
         self.assertEqual(batch.terminate_calls, [])
 
 
