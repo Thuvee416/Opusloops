@@ -85,6 +85,12 @@
   let playbackProjectId = null;
   let playbackScrubbing = false;
   let resumeAfterSeek = false;
+  let playbackScrubPosition = 0;
+  let playbackScrubSource = "project";
+  let playbackScrubAuditionKey = "";
+  let playbackSource = "project";
+  let auditionPlayback = null;
+  let auditionErrorKey = "";
   let stemPlayer = null;
   let stemImportController = null;
   let preparedStemProject = null;
@@ -99,6 +105,7 @@
     persistentPlayButton: document.querySelector("#persistent-play-button"),
     persistentPlayerTitle: document.querySelector("#persistent-player-title"),
     persistentSeek: document.querySelector("#persistent-seek"),
+    persistentSeekLabel: document.querySelector("#persistent-seek-label"),
     persistentCurrentTime: document.querySelector("#persistent-current-time"),
     persistentDuration: document.querySelector("#persistent-duration"),
     keyButton: document.querySelector("#key-button"),
@@ -474,6 +481,8 @@
     preparedStemProject = null;
     writeCurrent(state);
     renderAll();
+    if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+    else stemImportController?.stop({ preserveJob: false });
     queueCloudSync();
   }
 
@@ -666,12 +675,18 @@
       const current = merged.find((project) => project.id === state.id);
       let nextState = current || state;
       if (!current && nextDeletions[state.id]) nextState = merged[0] || makeProject();
+      const projectChanged = nextState.id !== state.id;
       const audioChanged = playbackAudioFingerprint(nextState) !== playbackAudioFingerprint(state);
-      const playbackSnapshot = audioChanged ? capturePlaybackMutation() : null;
+      const playbackSnapshot = audioChanged && !projectChanged ? capturePlaybackMutation() : null;
+      if (projectChanged) resetPlaybackSession();
       state = nextState;
       writeCurrent(state);
       renderAll();
       if (playbackSnapshot) restorePlaybackMutation(playbackSnapshot);
+      if (projectChanged) {
+        if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+        else stemImportController?.stop({ preserveJob: false });
+      }
       setSaveStatus("Saved to account");
       if (announce) showToast("Your projects are synced");
       return true;
@@ -767,7 +782,9 @@
       showToast("The device loops are still safe. Free some browser storage and try again");
       return;
     }
-    const playbackSnapshot = capturePlaybackMutation();
+    const projectChanged = nextState.id !== state.id;
+    const playbackSnapshot = projectChanged ? null : capturePlaybackMutation();
+    if (projectChanged) resetPlaybackSession();
     state = nextState;
     try {
       localStorage.removeItem(STORAGE_CURRENT);
@@ -778,6 +795,10 @@
     }
     renderAll();
     restorePlaybackMutation(playbackSnapshot);
+    if (projectChanged) {
+      if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+      else stemImportController?.stop({ preserveJob: false });
+    }
     renderAuth();
     queueCloudSync();
     showToast(`${guests.length} device ${guests.length === 1 ? "loop" : "loops"} moved to your account`);
@@ -1287,7 +1308,14 @@
     return wrapped < 0 ? wrapped + duration : wrapped;
   }
 
-  function currentPlaybackPosition() {
+  function activeAuditionState() {
+    if (playbackSource !== "tempo-audition") return null;
+    const current = stemImportController?.getAuditionState?.();
+    if (current) auditionPlayback = current;
+    return auditionPlayback?.engaged ? auditionPlayback : null;
+  }
+
+  function currentProjectPlaybackPosition() {
     const duration = loopDuration();
     if (state.kind === "stem-import") {
       return clamp(stemPlayer?.position() ?? playbackOffset, 0, duration);
@@ -1299,6 +1327,27 @@
     return clamp(playbackOffset, 0, duration);
   }
 
+  function activePlaybackDuration() {
+    const audition = activeAuditionState();
+    return audition ? Math.max(0, Number(audition.duration) || 0) : loopDuration();
+  }
+
+  function currentPlaybackPosition() {
+    const audition = activeAuditionState();
+    if (audition) return clamp(Number(audition.position) || 0, 0, activePlaybackDuration());
+    return currentProjectPlaybackPosition();
+  }
+
+  function activePlaybackPlaying() {
+    const audition = activeAuditionState();
+    return audition ? Boolean(audition.playing) : playing;
+  }
+
+  function activePlaybackStarting() {
+    const audition = activeAuditionState();
+    return audition ? Boolean(audition.loading) : playbackStarting;
+  }
+
   function formatPlaybackTime(seconds) {
     const totalTenths = Math.max(0, Math.round(seconds * 10));
     const minutes = Math.floor(totalTenths / 600);
@@ -1308,7 +1357,8 @@
 
   function renderPlaybackPosition(position = currentPlaybackPosition(), { forceSeek = false } = {}) {
     if (playbackScrubbing && !forceSeek) return;
-    const duration = loopDuration();
+    const audition = activeAuditionState();
+    const duration = activePlaybackDuration();
     const bounded = clamp(position, 0, duration);
     const ratio = duration > 0 ? bounded / duration : 0;
     const rangeValue = Math.round(ratio * 1000);
@@ -1318,7 +1368,7 @@
 
     dom.persistentSeek.value = String(rangeValue);
     dom.persistentSeek.style.setProperty("--seek-progress", `${ratio * 100}%`);
-    dom.persistentSeek.setAttribute("aria-valuetext", state.kind === "stem-import"
+    dom.persistentSeek.setAttribute("aria-valuetext", audition || state.kind === "stem-import"
       ? `${currentLabel} of ${durationLabel}`
       : `${currentLabel} of ${durationLabel}, step ${stepIndex + 1} of ${STEPS}`);
     dom.persistentCurrentTime.textContent = currentLabel;
@@ -1326,19 +1376,29 @@
   }
 
   function renderPlaybackMetadata() {
-    dom.persistentPlayerTitle.textContent = state.name;
+    const audition = activeAuditionState();
+    dom.persistentPlayerTitle.textContent = audition?.title || state.name;
     renderPlaybackPosition();
   }
 
   function renderPlaybackControls() {
-    const active = playing || playbackStarting;
-    [dom.playButton, dom.persistentPlayButton].forEach((button) => {
-      button.classList.toggle("is-playing", active);
-      button.setAttribute("aria-pressed", String(active));
-      button.setAttribute("aria-label", active ? "Pause project" : "Play project");
-    });
-    dom.persistentPlayer.hidden = !playbackSessionVisible;
-    document.body.classList.toggle("has-persistent-player", playbackSessionVisible);
+    const audition = activeAuditionState();
+    const projectActive = playing || playbackStarting;
+    const persistentActive = activePlaybackPlaying() || activePlaybackStarting();
+    const playerVisible = Boolean(audition) || playbackSessionVisible;
+    dom.playButton.classList.toggle("is-playing", projectActive);
+    dom.playButton.setAttribute("aria-pressed", String(projectActive));
+    dom.playButton.setAttribute("aria-label", projectActive ? "Pause project" : "Play project");
+    dom.persistentPlayButton.classList.toggle("is-playing", persistentActive);
+    dom.persistentPlayButton.setAttribute("aria-pressed", String(persistentActive));
+    dom.persistentPlayButton.setAttribute("aria-label", audition
+      ? `${persistentActive ? "Pause" : "Play"} timing audition`
+      : `${persistentActive ? "Pause" : "Play"} project`);
+    dom.persistentPlayer.setAttribute("aria-label", audition ? "Timing audition player" : "Project player");
+    dom.persistentSeekLabel.textContent = audition ? "Seek within timing audition" : "Seek within project";
+    dom.persistentSeek.disabled = activePlaybackDuration() <= 0 || Boolean(audition && !audition.canSeek);
+    dom.persistentPlayer.hidden = !playerVisible;
+    document.body.classList.toggle("has-persistent-player", playerVisible);
     renderPlaybackMetadata();
   }
 
@@ -1350,7 +1410,7 @@
   function startProgressTicker() {
     stopProgressTicker();
     const tick = () => {
-      if (!playing) {
+      if (!activePlaybackPlaying()) {
         playbackProgressFrame = 0;
         return;
       }
@@ -1358,6 +1418,41 @@
       playbackProgressFrame = window.requestAnimationFrame(tick);
     };
     playbackProgressFrame = window.requestAnimationFrame(tick);
+  }
+
+  function handleAuditionState(snapshot) {
+    const nextAudition = snapshot && typeof snapshot === "object" ? snapshot : null;
+    if (
+      playbackScrubbing
+      && playbackScrubSource === "tempo-audition"
+      && (!nextAudition?.engaged || nextAudition.key !== playbackScrubAuditionKey)
+    ) {
+      playbackScrubbing = false;
+      resumeAfterSeek = false;
+      playbackScrubPosition = 0;
+      playbackScrubSource = "project";
+      playbackScrubAuditionKey = "";
+    }
+    auditionPlayback = nextAudition;
+    if (auditionPlayback?.engaged) {
+      playbackSource = "tempo-audition";
+      if (playing || playbackStarting) stopPlayback({ resetPosition: false });
+    } else if (playbackSource === "tempo-audition") {
+      playbackSource = "project";
+    }
+
+    if (playbackSource === "tempo-audition" && auditionPlayback?.playing) {
+      if (!playbackProgressFrame) startProgressTicker();
+    } else if (!playing) {
+      stopProgressTicker();
+    }
+
+    const nextErrorKey = auditionPlayback?.error
+      ? `${auditionPlayback.key || auditionPlayback.jobId}:${auditionPlayback.error}`
+      : "";
+    if (nextErrorKey && nextErrorKey !== auditionErrorKey) showToast(auditionPlayback.error);
+    auditionErrorKey = nextErrorKey;
+    renderPlaybackControls();
   }
 
   function playbackAudioFingerprint(project) {
@@ -1389,7 +1484,7 @@
     const engaged = playbackSessionVisible && playbackProjectId === state.id;
     const duration = loopDuration();
     const wasPlaying = engaged && (playing || playbackStarting);
-    const ratio = engaged && duration > 0 ? currentPlaybackPosition() / duration : 0;
+    const ratio = engaged && duration > 0 ? currentProjectPlaybackPosition() / duration : 0;
     const snapshot = { engaged, projectId: state.id, ratio, wasPlaying };
     if (wasPlaying) stopPlayback({ resetPosition: false });
     return snapshot;
@@ -1430,10 +1525,15 @@
   }
 
   function resetPlaybackSession({ fade = true } = {}) {
+    if (activeAuditionState()) stemImportController?.deactivateAudition?.({ resetPosition: false });
+    playbackSource = "project";
     playbackSessionVisible = false;
     playbackProjectId = null;
     playbackScrubbing = false;
     resumeAfterSeek = false;
+    playbackScrubPosition = 0;
+    playbackScrubSource = "project";
+    playbackScrubAuditionKey = "";
     stopPlayback({ fade, resetPosition: true });
   }
 
@@ -1516,6 +1616,7 @@
 
   async function startPlayback() {
     if (playing || playbackStarting) return;
+    if (activeAuditionState()) stemImportController?.deactivateAudition?.({ resetPosition: false });
     const requestId = ++playbackStartRequest;
     playbackStarting = true;
     renderPlaybackControls();
@@ -1580,7 +1681,7 @@
   }
 
   function stopPlayback({ fade = true, resetPosition = false } = {}) {
-    const stoppedAt = resetPosition ? 0 : currentPlaybackPosition();
+    const stoppedAt = resetPosition ? 0 : currentProjectPlaybackPosition();
     playbackStartRequest += 1;
     playbackResumeRequest += 1;
     playbackStarting = false;
@@ -1630,28 +1731,57 @@
     document.querySelectorAll(".step.is-current").forEach((step) => step.classList.remove("is-current"));
   }
 
-  function togglePlayback() {
+  function toggleProjectPlayback() {
     if (playing || playbackStarting) stopPlayback({ resetPosition: false });
     else startPlayback();
+  }
+
+  function togglePlayback() {
+    if (activeAuditionState()) {
+      stemImportController?.toggleAudition?.().catch((error) => {
+        showToast(error?.name === "NotAllowedError" ? "Tap play again to start audio" : "Timing audition could not play");
+      });
+      return;
+    }
+    toggleProjectPlayback();
   }
 
   function previewPlaybackSeek() {
     if (!playbackScrubbing) {
       playbackScrubbing = true;
-      resumeAfterSeek = playing || playbackStarting;
-      if (resumeAfterSeek) stopPlayback({ resetPosition: false });
+      playbackScrubSource = activeAuditionState() ? "tempo-audition" : "project";
+      playbackScrubAuditionKey = playbackScrubSource === "tempo-audition"
+        ? String(activeAuditionState()?.key || "")
+        : "";
+      resumeAfterSeek = activePlaybackPlaying() || activePlaybackStarting();
+      if (resumeAfterSeek) {
+        if (playbackScrubSource === "tempo-audition") stemImportController?.pauseAudition?.();
+        else stopPlayback({ resetPosition: false });
+      }
     }
     const ratio = Number(dom.persistentSeek.value) / 1000;
-    playbackOffset = clamp(ratio, 0, 1) * loopDuration();
-    renderPlaybackPosition(playbackOffset, { forceSeek: true });
+    playbackScrubPosition = clamp(ratio, 0, 1) * activePlaybackDuration();
+    if (playbackScrubSource === "project") playbackOffset = playbackScrubPosition;
+    renderPlaybackPosition(playbackScrubPosition, { forceSeek: true });
   }
 
   function commitPlaybackSeek() {
     if (!playbackScrubbing) return;
     const shouldResume = resumeAfterSeek;
+    const source = playbackScrubSource;
+    const position = playbackScrubPosition;
     playbackScrubbing = false;
     resumeAfterSeek = false;
-    renderPlaybackPosition(playbackOffset);
+    playbackScrubPosition = 0;
+    playbackScrubSource = "project";
+    playbackScrubAuditionKey = "";
+    renderPlaybackPosition(position);
+    if (source === "tempo-audition") {
+      stemImportController?.seekAudition?.(position, { resume: shouldResume }).catch(() => {
+        showToast("Could not seek the timing audition");
+      });
+      return;
+    }
     if (state.kind === "stem-import") {
       stemPlayer?.seek(playbackOffset, { resume: shouldResume }).then(() => {
         playing = shouldResume;
@@ -2027,7 +2157,8 @@
       saveProject: saveStemProject,
       prepareProject: prepareStemProject,
       discardProject: discardPreparedStemProject,
-      showToast
+      showToast,
+      onAuditionState: handleAuditionState
     });
   }
 
@@ -2060,6 +2191,7 @@
         writeCurrent(state);
         renderAll();
         if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+        else stemImportController?.stop({ preserveJob: false });
         showView(state.kind === "stem-import" && state.stemImport.status !== "ready" ? "import" : "studio");
         showToast("Project opened");
       }
@@ -2088,6 +2220,8 @@
           state = remaining[0] || makeProject();
           writeCurrent(state);
           renderAll();
+          if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+          else stemImportController?.stop({ preserveJob: false });
         } else {
           renderProjects();
         }
@@ -2127,12 +2261,13 @@
     const prompt = dom.ideaInput.value.trim();
     if (!prompt) return;
     resetPlaybackSession();
+    stemImportController?.stop({ preserveJob: false });
     composeFromPrompt(prompt);
     showView("studio");
     showToast("Your loop is ready to play");
   });
 
-  dom.playButton.addEventListener("click", togglePlayback);
+  dom.playButton.addEventListener("click", toggleProjectPlayback);
   dom.persistentPlayButton.addEventListener("click", togglePlayback);
   dom.persistentSeek.addEventListener("input", previewPlaybackSeek);
   dom.persistentSeek.addEventListener("change", commitPlaybackSeek);
@@ -2203,6 +2338,7 @@
 
   document.querySelector("#new-project-button").addEventListener("click", () => {
     resetPlaybackSession();
+    stemImportController?.stop({ preserveJob: false });
     state = makeProject();
     renderAll();
     persist();
@@ -2338,13 +2474,19 @@
       playbackResumeRequest += 1;
       resumeAfterSeek = false;
       playbackScrubbing = false;
-      if (playing || playbackStarting) stopPlayback();
+      playbackScrubPosition = 0;
+      playbackScrubSource = "project";
+      playbackScrubAuditionKey = "";
+      if (activeAuditionState() && (activePlaybackPlaying() || activePlaybackStarting())) {
+        stemImportController?.pauseAudition?.();
+      } else if (playing || playbackStarting) stopPlayback();
       else renderPlaybackControls();
       flushSave();
     }
   });
 
   window.addEventListener("pagehide", () => {
+    stemImportController?.deactivateAudition?.({ resetPosition: false });
     flushSave();
     clearPendingAudioExport();
     if (audioContext?.state === "running") audioContext.suspend().catch(() => {});

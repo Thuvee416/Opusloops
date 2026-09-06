@@ -169,6 +169,7 @@
             <p class="form-error" id="stem-process-error" role="alert" hidden></p>
             <button class="primary-action" id="stem-retry-inspection" type="button" hidden>Retry inspection</button>
             <button class="primary-action" id="stem-retry-proposal" type="button" hidden>Retry timing proposal</button>
+            <button class="primary-action" id="stem-repair-render" type="button" hidden>Repair timing map</button>
             <button class="text-button cancel-import" id="stem-cancel-button" type="button">Cancel import</button>
           </section>
 
@@ -269,7 +270,7 @@
                 <p>Region BPM and stretch values are derived from the approved grid. To change them, revise beats before building a new proposal.</p>
               </div>
             </div>
-            <button class="click-audition" id="stem-click-audition" type="button">
+            <button class="click-audition" id="stem-click-audition" type="button" aria-pressed="false">
               <span class="click-audition-icon" aria-hidden="true">▶</span>
               <span><strong>Play click audition</strong><small id="stem-click-audition-copy">Compare the click against the reference</small></span>
             </button>
@@ -432,7 +433,7 @@
           class="persistent-play-button"
           id="persistent-play-button"
           type="button"
-          aria-label="Play loop"
+          aria-label="Play project"
           aria-pressed="false"
         >
           <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
@@ -447,7 +448,7 @@
               <span id="persistent-duration">0:02.5</span>
             </span>
           </div>
-          <label class="sr-only" for="persistent-seek">Seek within loop</label>
+          <label class="sr-only" id="persistent-seek-label" for="persistent-seek">Seek within project</label>
           <input
             class="persistent-seek"
             id="persistent-seek"
@@ -561,11 +562,11 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
-    <script src="./cloud-client.js?v=6" defer></script>
-    <script src="./stem-import-core.js?v=5" defer></script>
+    <script src="./cloud-client.js?v=7" defer></script>
+    <script src="./stem-import-core.js?v=6" defer></script>
     <script src="./stem-player.js?v=1" defer></script>
-    <script src="./stem-import.js?v=5" defer></script>
-    <script src="./app.js?v=22" defer></script>
+    <script src="./stem-import.js?v=7" defer></script>
+    <script src="./app.js?v=23" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
   </body>
 </html>

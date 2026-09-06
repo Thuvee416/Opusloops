@@ -2,6 +2,32 @@
   "use strict";
 
   const core = window.OpusloopsStemCore;
+  const AUDITION_LISTEN_THRESHOLD_SECONDS = 0.25;
+
+  function advanceAuditionListening(progress = {}, sample = {}) {
+    const currentTime = Number(sample.currentTime);
+    const previousTime = typeof progress.lastPosition === "number" ? progress.lastPosition : Number.NaN;
+    const isAdvancing = Boolean(sample.playing) && !sample.seeking && Number.isFinite(currentTime);
+    const delta = isAdvancing && Number.isFinite(previousTime) && currentTime > previousTime
+      ? currentTime - previousTime
+      : 0;
+    const listenedSeconds = Math.max(0, Number(progress.listenedSeconds) || 0) + delta;
+    return {
+      listenedSeconds,
+      lastPosition: isAdvancing ? currentTime : null,
+      complete: Boolean(progress.complete) || listenedSeconds >= AUDITION_LISTEN_THRESHOLD_SECONDS
+    };
+  }
+
+  function selectArtifact(assetsValue, pattern, contentType = "", preferredVariant = "") {
+    const matches = (Array.isArray(assetsValue) ? assetsValue : []).filter((asset) => {
+      const normalized = core.normalizeAsset(asset);
+      return pattern.test(`${normalized.kind} ${normalized.variant}`)
+        && (!contentType || normalized.contentType.includes(contentType));
+    });
+    if (!preferredVariant) return matches[0];
+    return matches.find((asset) => core.normalizeAsset(asset).variant === preferredVariant);
+  }
 
   function create({
     cloud,
@@ -13,7 +39,8 @@
     saveProject,
     prepareProject,
     discardProject,
-    showToast
+    showToast,
+    onAuditionState
   } = {}) {
     const dom = {
       uploadPanel: document.querySelector("#stem-upload-panel"),
@@ -33,6 +60,7 @@
       processError: document.querySelector("#stem-process-error"),
       retryInspection: document.querySelector("#stem-retry-inspection"),
       retryProposal: document.querySelector("#stem-retry-proposal"),
+      repairRender: document.querySelector("#stem-repair-render"),
       cancelButton: document.querySelector("#stem-cancel-button"),
       gateAPanel: document.querySelector("#stem-gate-a-panel"),
       reviewList: document.querySelector("#stem-review-list"),
@@ -91,6 +119,7 @@
     let events = [];
     let lastSequence = 0;
     let pollingTimer = 0;
+    let pollRequestSequence = 0;
     let generation = 0;
     let uploadController = null;
     let uploadInstructions = null;
@@ -111,10 +140,21 @@
     let clickObjectUrl = "";
     let clickAssetId = "";
     let clickPlayed = false;
+    let clickAuditionEngaged = false;
+    let clickAuditionLoading = false;
+    let clickAuditionEnded = false;
+    let clickAuditionError = "";
+    let clickSeeking = false;
+    let clickLoadToken = 0;
+    let clickPlayToken = 0;
+    let clickListenProgress = advanceAuditionListening();
     let dispatchSatisfiedKey = "";
     let dispatchRetryAt = 0;
     let dispatchRetryDelay = 1500;
     let dispatchInFlight = null;
+    let automaticRepairKey = "";
+    let automaticRepairTimer = 0;
+    const repairRequests = new Map();
     const jsonArtifacts = new Map();
 
     function field(id) {
@@ -759,12 +799,8 @@
       return proposalRegions();
     }
 
-    function artifactMatching(pattern, contentType = "") {
-      return assets.find((asset) => {
-        const normalized = core.normalizeAsset(asset);
-        return pattern.test(`${normalized.kind} ${normalized.variant}`)
-          && (!contentType || normalized.contentType.includes(contentType));
-      });
+    function artifactMatching(pattern, contentType = "", preferredVariant = "") {
+      return selectArtifact(assets, pattern, contentType, preferredVariant);
     }
 
     function tracksFromPublishedAssets() {
@@ -795,7 +831,7 @@
 
     async function fetchArtifact(assetValue, { json = false } = {}) {
       const asset = core.normalizeAsset(assetValue);
-      if (jsonArtifacts.has(asset.id)) return jsonArtifacts.get(asset.id);
+      if (json && jsonArtifacts.has(asset.id)) return jsonArtifacts.get(asset.id);
       const signed = await cloud.signStemArtifact(job.id, asset.id, 900);
       const response = await fetch(signed.signedUrl, { cache: "no-store" });
       if (!response.ok) throw new Error(`Artifact download failed (${response.status})`);
@@ -805,22 +841,35 @@
         if (actual !== asset.sha256.toLowerCase()) throw new Error("Downloaded review artifact did not match its SHA-256");
       }
       const result = json ? JSON.parse(await blob.text()) : blob;
-      jsonArtifacts.set(asset.id, result);
+      if (json) jsonArtifacts.set(asset.id, result);
       return result;
     }
 
     async function hydrateReviewArtifacts(localGeneration) {
       if (!job || localGeneration !== generation) return;
+      const expectedJobId = job.id;
+      const expectedProposalId = job.proposalId;
+      const expectedStatus = job.status;
+      const stillCurrent = () => localGeneration === generation
+        && job?.id === expectedJobId
+        && job?.proposalId === expectedProposalId
+        && job?.status === expectedStatus;
       if (job.status === "awaiting_analysis_confirmation" && !job.tracks.length) {
         const manifest = artifactMatching(/run_manifest inspection|inspection run_manifest|inspection_manifest/i, "json");
-        if (manifest) inspectionDocument = await fetchArtifact(manifest, { json: true });
+        if (manifest) {
+          const document = await fetchArtifact(manifest, { json: true });
+          if (!stillCurrent()) return;
+          inspectionDocument = document;
+        }
         const publishedTracks = tracksFromPublishedAssets();
         if (!inspectionDocument && publishedTracks.length) rawJob = { ...rawJob, tracks: publishedTracks };
       }
       if (["awaiting_map_request", "proposal_queued", "proposing", "awaiting_tempo_confirmation"].includes(job.status) && !gridDocument) {
-        const grid = artifactMatching(/\bgrid\b|tempo_grid|reviewed_grid/i, "json");
+        const grid = artifactMatching(/\bgrid\b|tempo_grid|reviewed_grid/i, "json", "analysis");
         if (grid) {
-          gridDocument = await fetchArtifact(grid, { json: true });
+          const document = await fetchArtifact(grid, { json: true });
+          if (!stillCurrent()) return;
+          gridDocument = document;
           gridSourceInvalid = gridDocumentHasInvalidTimes(gridDocument);
           detectedGridEvents = gridFromDocument(gridDocument).map((event) => ({ ...event }));
           gridEvents = detectedGridEvents.map((event) => ({ ...event }));
@@ -839,10 +888,26 @@
         }
       }
       if (job.status === "awaiting_tempo_confirmation") {
-        const proposal = artifactMatching(/proposal_manifest|tempo.*proposal|tempo.*approval/i, "json");
-        if (proposal) proposalDocument = await fetchArtifact(proposal, { json: true });
+        if (!job.proposalId) {
+          proposalDocument = null;
+          clearClick();
+          dom.clickAudition.disabled = true;
+          dom.clickAuditionCopy.textContent = "Waiting for the bound timing proposal";
+          return;
+        }
+        const proposal = artifactMatching(
+          /proposal_manifest|tempo.*proposal|tempo.*approval/i,
+          "json",
+          job.proposalId
+        );
+        if (proposal) {
+          const document = await fetchArtifact(proposal, { json: true });
+          if (!stillCurrent()) return;
+          proposalDocument = document;
+        }
         else if (!proposalDocument && Object.keys(job.proposal || {}).length) proposalDocument = job.proposal;
-        await prepareClickAudition();
+        await prepareClickAudition(localGeneration);
+        if (!stillCurrent()) return;
       }
       if (inspectionDocument) {
         rawJob = { ...rawJob, inspection: inspectionDocument };
@@ -850,9 +915,75 @@
       job = core.normalizeJob(rawJob);
     }
 
-    async function prepareClickAudition() {
-      const rawAsset = artifactMatching(/\bclick\b|click_audition/i);
+    function clickDuration() {
+      const mediaDuration = Number(dom.clickAudio.duration);
+      if (Number.isFinite(mediaDuration) && mediaDuration > 0) return mediaDuration;
+      return Math.max(0, Number(job?.durationSeconds) || 0);
+    }
+
+    function auditionTitle() {
+      const projectName = String(currentProject()?.name || job?.sourceName || "Imported stems")
+        .replace(/\.zip$/i, "")
+        .trim();
+      return `Timing audition · ${projectName || "Imported stems"}`;
+    }
+
+    function getAuditionState() {
+      const available = Boolean(clickAssetId && dom.clickAudio.src);
+      const duration = clickDuration();
+      const position = Math.max(0, Math.min(duration || Number.MAX_SAFE_INTEGER, Number(dom.clickAudio.currentTime) || 0));
+      return {
+        kind: "tempo-audition",
+        key: job?.id && clickAssetId ? `${job.id}:${clickAssetId}` : "",
+        jobId: job?.id || "",
+        assetId: clickAssetId,
+        title: auditionTitle(),
+        position,
+        duration,
+        playing: available && clickAuditionEngaged && !dom.clickAudio.paused && !dom.clickAudio.ended,
+        loading: available && clickAuditionEngaged && clickAuditionLoading,
+        ended: available && clickAuditionEngaged && clickAuditionEnded,
+        available,
+        engaged: available && clickAuditionEngaged,
+        canSeek: available && dom.clickAudio.readyState >= 1 && Number.isFinite(Number(dom.clickAudio.duration)),
+        listened: clickPlayed,
+        error: clickAuditionError
+      };
+    }
+
+    function emitAuditionState() {
+      try {
+        onAuditionState?.(getAuditionState());
+      } catch {
+        // Playback remains usable even if a host view is being torn down.
+      }
+    }
+
+    function renderAuditionControl() {
+      const snapshot = getAuditionState();
+      const active = snapshot.playing || snapshot.loading;
+      dom.clickAuditionIcon.textContent = active ? "Ⅱ" : "▶";
+      dom.clickAudition.setAttribute("aria-pressed", String(active));
+      dom.clickAudition.setAttribute("aria-label", active ? "Pause timing audition" : "Play timing audition");
+      dom.clickAudition.toggleAttribute("aria-busy", snapshot.loading);
+      if (snapshot.error) dom.clickAuditionCopy.textContent = snapshot.error;
+      else if (snapshot.loading) dom.clickAuditionCopy.textContent = "Loading timing audition…";
+      else if (snapshot.playing) dom.clickAuditionCopy.textContent = "Click audition playing";
+      else if (snapshot.listened) dom.clickAuditionCopy.textContent = "Listened · replay the timing reference";
+      else if (snapshot.available) dom.clickAuditionCopy.textContent = `${core.formatDuration(snapshot.duration)} timing reference`;
+    }
+
+    function unlockClickConfirmation() {
+      if (clickPlayed || !clickListenProgress.complete) return;
+      clickPlayed = true;
+      const confirmation = field("confirm-tempo-click");
+      if (confirmation) confirmation.disabled = false;
+    }
+
+    async function prepareClickAudition(expectedGeneration = generation) {
+      const rawAsset = artifactMatching(/\bclick\b|click_audition/i, "", job?.proposalId);
       if (!rawAsset) {
+        clearClick();
         dom.clickAudition.disabled = true;
         dom.clickAuditionCopy.textContent = "Click audition is not available yet";
         return;
@@ -860,15 +991,39 @@
       const asset = core.normalizeAsset(rawAsset);
       if (clickAssetId === asset.id && dom.clickAudio.src) return;
       clearClick();
+      const expectedJobId = job?.id || "";
+      const expectedProposalId = job?.proposalId || "";
+      const loadToken = clickLoadToken;
+      dom.clickAudition.disabled = true;
+      dom.clickAuditionCopy.textContent = "Loading timing audition…";
       const blob = await fetchArtifact(rawAsset);
-      clickObjectUrl = URL.createObjectURL(blob);
+      if (expectedGeneration !== generation || loadToken !== clickLoadToken
+          || job?.id !== expectedJobId || job?.proposalId !== expectedProposalId
+          || job?.status !== "awaiting_tempo_confirmation") return;
+      const objectUrl = URL.createObjectURL(blob);
+      if (expectedGeneration !== generation || loadToken !== clickLoadToken
+          || job?.id !== expectedJobId || job?.proposalId !== expectedProposalId
+          || job?.status !== "awaiting_tempo_confirmation") {
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+      clickObjectUrl = objectUrl;
       clickAssetId = asset.id;
       dom.clickAudio.src = clickObjectUrl;
       dom.clickAudition.disabled = false;
-      dom.clickAuditionCopy.textContent = `${core.formatDuration(job.durationSeconds)} timing reference`;
+      renderAuditionControl();
+      emitAuditionState();
     }
 
     function clearClick() {
+      clickLoadToken += 1;
+      clickPlayToken += 1;
+      clickAuditionEngaged = false;
+      clickAuditionLoading = false;
+      clickAuditionEnded = false;
+      clickAuditionError = "";
+      clickSeeking = false;
+      clickListenProgress = advanceAuditionListening();
       dom.clickAudio.pause();
       dom.clickAudio.removeAttribute("src");
       dom.clickAudio.load();
@@ -876,12 +1031,111 @@
       clickObjectUrl = "";
       clickAssetId = "";
       clickPlayed = false;
+      resetConfirmations(gateBConfirmationIds);
       const confirmation = field("confirm-tempo-click");
-      if (confirmation) {
-        confirmation.checked = false;
-        confirmation.disabled = true;
+      if (confirmation) confirmation.disabled = true;
+      renderAuditionControl();
+      emitAuditionState();
+    }
+
+    async function playAudition() {
+      if (!dom.clickAudio.src) await prepareClickAudition();
+      if (!dom.clickAudio.src) throw new Error("Click audition is not available yet");
+      if (dom.clickAudio.ended || (clickDuration() > 0 && dom.clickAudio.currentTime >= clickDuration() - 0.01)) {
+        clickSeeking = true;
+        try {
+          dom.clickAudio.currentTime = 0;
+        } finally {
+          clickSeeking = false;
+          clickListenProgress = { ...clickListenProgress, lastPosition: null };
+        }
       }
-      dom.clickAuditionIcon.textContent = "▶";
+      clickAuditionEngaged = true;
+      clickAuditionLoading = true;
+      clickAuditionEnded = false;
+      clickAuditionError = "";
+      renderAuditionControl();
+      emitAuditionState();
+      const playToken = ++clickPlayToken;
+      try {
+        await dom.clickAudio.play();
+        if (playToken !== clickPlayToken || !clickAuditionEngaged) {
+          dom.clickAudio.pause();
+          return;
+        }
+        clickAuditionLoading = false;
+        renderAuditionControl();
+        emitAuditionState();
+      } catch (error) {
+        if (playToken !== clickPlayToken) return;
+        clickAuditionLoading = false;
+        clickAuditionError = error?.name === "NotAllowedError"
+          ? "Tap play again to start audio"
+          : "Timing audition could not play";
+        renderAuditionControl();
+        emitAuditionState();
+        throw error;
+      }
+    }
+
+    function pauseAudition({ deactivate = false } = {}) {
+      clickPlayToken += 1;
+      if (deactivate) clickAuditionEngaged = false;
+      clickAuditionLoading = false;
+      clickListenProgress = { ...clickListenProgress, lastPosition: null };
+      dom.clickAudio.pause();
+      renderAuditionControl();
+      emitAuditionState();
+    }
+
+    async function toggleAudition() {
+      if (clickAuditionLoading || (!dom.clickAudio.paused && !dom.clickAudio.ended)) {
+        pauseAudition();
+        return;
+      }
+      await playAudition();
+    }
+
+    async function seekAudition(seconds, { resume = false } = {}) {
+      const snapshot = getAuditionState();
+      if (!snapshot.available || !snapshot.canSeek) throw new Error("Timing audition is still loading");
+      clickAuditionEngaged = true;
+      clickAuditionLoading = false;
+      clickAuditionEnded = false;
+      clickAuditionError = "";
+      clickSeeking = true;
+      clickPlayToken += 1;
+      dom.clickAudio.pause();
+      try {
+        dom.clickAudio.currentTime = Math.max(0, Math.min(snapshot.duration, Number(seconds) || 0));
+      } finally {
+        clickSeeking = false;
+        clickListenProgress = { ...clickListenProgress, lastPosition: null };
+      }
+      renderAuditionControl();
+      emitAuditionState();
+      if (resume) await playAudition();
+    }
+
+    function deactivateAudition({ resetPosition = false } = {}) {
+      clickPlayToken += 1;
+      clickAuditionEngaged = false;
+      clickAuditionLoading = false;
+      clickAuditionEnded = false;
+      clickListenProgress = { ...clickListenProgress, lastPosition: null };
+      dom.clickAudio.pause();
+      if (resetPosition && dom.clickAudio.readyState >= 1) {
+        clickSeeking = true;
+        try {
+          dom.clickAudio.currentTime = 0;
+        } catch {
+          // Some browsers reject seeks while metadata is changing.
+        } finally {
+          clickSeeking = false;
+        }
+      }
+      renderAuditionControl();
+      emitAuditionState();
     }
 
     function updateProject() {
@@ -895,8 +1149,9 @@
       const statusKind = job ? core.statusKind(status) : "unknown";
       const retryableInspection = core.canRetryInspection(job);
       const retryableProposal = core.canRetryProposal(job, events);
+      const repairableRender = core.canRepairRenderProposal(job, events);
       dom.uploadPanel.hidden = Boolean(job && (
-        retryableProposal || !["uploading", "failed", "cancelled", "deleted"].includes(status)
+        retryableProposal || repairableRender || !["uploading", "failed", "cancelled", "deleted"].includes(status)
       ));
       dom.processPanel.hidden = !job;
       dom.processPanel.dataset.kind = statusKind;
@@ -905,6 +1160,9 @@
       dom.proposalPanel.hidden = status !== "awaiting_map_request";
       dom.gateBPanel.hidden = status !== "awaiting_tempo_confirmation";
       dom.readyPanel.hidden = status !== "ready";
+      if (status !== "awaiting_tempo_confirmation" && (clickAssetId || clickObjectUrl || clickAuditionEngaged)) {
+        clearClick();
+      }
       if (!job) return;
 
       if (!uploadController) dom.uploadButton.textContent = status === "uploading" ? "Resume upload" : "Upload and inspect";
@@ -917,15 +1175,35 @@
       dom.processState.dataset.kind = statusKind;
       dom.retryInspection.hidden = !retryableInspection;
       dom.retryProposal.hidden = !retryableProposal;
+      dom.repairRender.hidden = !repairableRender;
       dom.cancelButton.hidden = ["ready", "failed", "cancelled", "deleted", "deletion_pending"].includes(status);
-      const failureMessage = retryableProposal
-        ? "Your completed timing analysis is safe. Restart the timing proposal to continue without uploading again."
-        : job.errorMessage || "Processing stopped. The recorded events remain available for review.";
+      const failureMessage = repairableRender
+        ? "Your stems and analysis are safe. An early timing boundary needs a renderer-safe proposal. Repair it, then listen to and approve the corrected timing before rendering."
+        : retryableProposal
+          ? "Your completed timing analysis is safe. Restart the timing proposal to continue without uploading again."
+          : job.errorMessage || "Processing stopped. The recorded events remain available for review.";
       setError(status === "failed"
         ? `${failureMessage}${retryableInspection ? " Retry can reuse the original upload if it remains available." : ""}`
         : "");
       renderEvents();
       renderProgress();
+
+      if (repairableRender) {
+        const repairKey = `${job.id}:${job.revision}:${job.proposalManifestSha256}`;
+        if (automaticRepairKey !== repairKey) {
+          automaticRepairKey = repairKey;
+          window.clearTimeout(automaticRepairTimer);
+          const scheduledGeneration = generation;
+          automaticRepairTimer = window.setTimeout(() => {
+            automaticRepairTimer = 0;
+            if (scheduledGeneration !== generation || automaticRepairKey !== repairKey) return;
+            repairRenderProposal(repairKey);
+          }, 0);
+        }
+      } else if (automaticRepairTimer) {
+        window.clearTimeout(automaticRepairTimer);
+        automaticRepairTimer = 0;
+      }
 
       if (status === "awaiting_analysis_confirmation") {
         renderTracks();
@@ -983,13 +1261,17 @@
     async function ensureQueuedDispatch(localGeneration) {
       const key = currentDispatchKey();
       if (!key || key === dispatchSatisfiedKey || dispatchInFlight || Date.now() < dispatchRetryAt) return;
-      const operation = cloud.dispatchStemImport(job.id);
+      const requestedJobId = job.id;
+      const operation = cloud.dispatchStemImport(requestedJobId);
       dispatchInFlight = operation;
       try {
         const response = await operation;
-        if (localGeneration !== generation || !response?.job) return;
+        if (localGeneration !== generation || key !== currentDispatchKey() || !response?.job) return;
+        const nextJob = core.normalizeJob(response.job);
+        if (job?.id !== requestedJobId || nextJob.id !== requestedJobId || nextJob.revision < job.revision) return;
+        pollRequestSequence += 1;
         rawJob = response.job;
-        job = core.normalizeJob(rawJob);
+        job = nextJob;
         observeDispatch(response);
         render();
       } catch (error) {
@@ -1004,11 +1286,22 @@
 
     async function poll(localGeneration = generation) {
       if (!job?.id || localGeneration !== generation || !getUser?.()) return;
+      const requestedJobId = job.id;
+      const requestSequence = ++pollRequestSequence;
       try {
-        const snapshot = await cloud.getStemImport(job.id, { afterSequence: lastSequence });
-        if (localGeneration !== generation) return;
+        const snapshot = await cloud.getStemImport(requestedJobId, { afterSequence: lastSequence });
+        if (localGeneration !== generation || requestSequence !== pollRequestSequence) return;
+        const nextJob = core.normalizeJob(snapshot.job);
+        if (nextJob.id !== requestedJobId
+            || job?.id !== requestedJobId
+            || nextJob.revision < job.revision) return;
+        const previousProposalId = job.proposalId;
         rawJob = snapshot.job;
-        job = core.normalizeJob(rawJob);
+        job = nextJob;
+        if (previousProposalId !== job.proposalId) {
+          proposalDocument = null;
+          clearClick();
+        }
         const nextEvents = (snapshot.events || []).map(core.normalizeEvent);
         const bySequence = new Map(events.map((event) => [event.sequence, event]));
         nextEvents.forEach((event) => bySequence.set(event.sequence, event));
@@ -1016,12 +1309,12 @@
         lastSequence = events.at(-1)?.sequence || lastSequence;
         assets = snapshot.assets || assets;
         await hydrateReviewArtifacts(localGeneration);
-        if (localGeneration !== generation) return;
+        if (localGeneration !== generation || requestSequence !== pollRequestSequence) return;
         render();
         await ensureQueuedDispatch(localGeneration);
         schedulePoll();
       } catch (error) {
-        if (localGeneration !== generation) return;
+        if (localGeneration !== generation || requestSequence !== pollRequestSequence) return;
         setError(friendlyError(error));
         if (error?.code === "stale_revision") schedulePoll(150);
         else schedulePoll(3500);
@@ -1030,8 +1323,16 @@
 
     function adoptResponse(response) {
       if (!response?.job) return;
+      const nextJob = core.normalizeJob(response.job);
+      if (job?.id === nextJob.id && nextJob.revision < job.revision) return;
+      pollRequestSequence += 1;
+      const previousProposalId = job?.proposalId || "";
       rawJob = response.job;
-      job = core.normalizeJob(rawJob);
+      job = nextJob;
+      if (previousProposalId !== job.proposalId) {
+        proposalDocument = null;
+        clearClick();
+      }
       observeDispatch(response);
       render();
       schedulePoll(100);
@@ -1191,6 +1492,46 @@
       }
     }
 
+    async function repairRenderProposal(expectedKey = "") {
+      if (!job || !core.canRepairRenderProposal(job, events)) return;
+      const requestJobId = job.id;
+      const requestRevision = job.revision;
+      const requestProposalSha256 = job.proposalManifestSha256;
+      const requestKey = `${requestJobId}:${requestRevision}:${requestProposalSha256}`;
+      if (expectedKey && expectedKey !== requestKey) return;
+      const localGeneration = generation;
+      const existingRequest = repairRequests.get(requestKey);
+      if (existingRequest?.generation === localGeneration) return existingRequest.operation;
+      const operation = (async () => {
+        try {
+          setBusy(dom.repairRender, true, "Repairing timing map…");
+          const response = await cloud.repairStemRenderProposal(
+            requestJobId,
+            requestRevision,
+            requestProposalSha256
+          );
+          if (localGeneration !== generation || job?.id !== requestJobId) return;
+          proposalDocument = null;
+          clearClick();
+          adoptResponse(response);
+          showToast?.("A corrected timing proposal is being built from your saved analysis");
+        } catch (error) {
+          if (localGeneration !== generation || job?.id !== requestJobId) return;
+          setError(friendlyError(error));
+          window.setTimeout(() => poll(localGeneration), 100);
+        } finally {
+          if (repairRequests.get(requestKey)?.operation === operation) {
+            repairRequests.delete(requestKey);
+          }
+          if (localGeneration === generation && job?.id === requestJobId) {
+            setBusy(dom.repairRender, false);
+          }
+        }
+      })();
+      repairRequests.set(requestKey, { generation: localGeneration, operation });
+      return operation;
+    }
+
     async function requestProposal() {
       if (!job) return;
       try {
@@ -1233,6 +1574,12 @@
         return;
       }
       try {
+        const documentProposalId = String(
+          proposalDocument?.proposal_id || proposalDocument?.proposalId || ""
+        );
+        if (!job.proposalId || documentProposalId !== job.proposalId) {
+          throw new Error("The current timing proposal is still loading. Review it before approval.");
+        }
         const regions = core.editedRegions(collectRegions());
         setBusy(dom.approveTempo, true, "Recording approval…");
         const response = await cloud.approveStemTempo({
@@ -1240,7 +1587,7 @@
           revision: job.revision,
           proposalManifestSha256: job.proposalManifestSha256,
           approval: {
-            proposalId: proposalDocument?.proposal_id || proposalDocument?.proposalId || job.proposal?.proposalId || job.proposal?.proposal_id,
+            proposalId: job.proposalId,
             reviewedRegions: regions
           },
           confirmations: {
@@ -1280,8 +1627,12 @@
 
     function stop({ preserveJob = true } = {}) {
       generation += 1;
+      pollRequestSequence += 1;
       window.clearTimeout(pollingTimer);
       pollingTimer = 0;
+      window.clearTimeout(automaticRepairTimer);
+      automaticRepairTimer = 0;
+      setBusy(dom.repairRender, false);
       uploadController?.abort();
       uploadController = null;
       dispatchInFlight = null;
@@ -1312,6 +1663,7 @@
         renderedTrackFingerprint = "";
         renderedGridFingerprint = "";
         renderedRegionFingerprint = "";
+        automaticRepairKey = "";
       }
     }
 
@@ -1359,6 +1711,7 @@
     dom.uploadButton.addEventListener("click", beginUpload);
     dom.retryInspection.addEventListener("click", retryInspection);
     dom.retryProposal.addEventListener("click", retryProposal);
+    dom.repairRender.addEventListener("click", () => repairRenderProposal());
     dom.referenceMethod.addEventListener("change", selectFullMixReference);
     dom.approveAnalysis.addEventListener("click", approveAnalysis);
     dom.requestProposal.addEventListener("click", requestProposal);
@@ -1459,33 +1812,95 @@
     });
     dom.clickAudition.addEventListener("click", async () => {
       try {
-        if (!dom.clickAudio.src) await prepareClickAudition();
-        if (dom.clickAudio.paused) await dom.clickAudio.play();
-        else dom.clickAudio.pause();
+        await toggleAudition();
       } catch (error) {
         setError(friendlyError(error));
       }
     });
     dom.clickAudio.addEventListener("play", () => {
-      dom.clickAuditionIcon.textContent = "Ⅱ";
-      dom.clickAuditionCopy.textContent = "Click audition playing";
+      if (!clickAuditionEngaged) {
+        dom.clickAudio.pause();
+        return;
+      }
+      clickAuditionLoading = false;
+      clickAuditionEnded = false;
+      clickListenProgress = { ...clickListenProgress, lastPosition: Number(dom.clickAudio.currentTime) || 0 };
+      renderAuditionControl();
+      emitAuditionState();
+    });
+    dom.clickAudio.addEventListener("playing", () => {
+      clickAuditionLoading = false;
+      renderAuditionControl();
+      emitAuditionState();
+    });
+    dom.clickAudio.addEventListener("waiting", () => {
+      if (!clickAuditionEngaged || dom.clickAudio.paused || dom.clickAudio.ended) return;
+      clickAuditionLoading = true;
+      renderAuditionControl();
+      emitAuditionState();
     });
     dom.clickAudio.addEventListener("pause", () => {
-      dom.clickAuditionIcon.textContent = "▶";
-      if (clickPlayed) dom.clickAuditionCopy.textContent = "Listened · replay the timing reference";
+      clickAuditionLoading = false;
+      clickListenProgress = { ...clickListenProgress, lastPosition: null };
+      renderAuditionControl();
+      emitAuditionState();
     });
     dom.clickAudio.addEventListener("timeupdate", () => {
-      if (clickPlayed || dom.clickAudio.currentTime < 0.25) return;
-      clickPlayed = true;
-      const confirmation = field("confirm-tempo-click");
-      if (confirmation) confirmation.disabled = false;
+      clickListenProgress = advanceAuditionListening(clickListenProgress, {
+        currentTime: dom.clickAudio.currentTime,
+        playing: clickAuditionEngaged && !dom.clickAudio.paused && !dom.clickAudio.ended,
+        seeking: clickSeeking || dom.clickAudio.seeking
+      });
+      unlockClickConfirmation();
+      emitAuditionState();
+    });
+    dom.clickAudio.addEventListener("seeking", () => {
+      clickListenProgress = { ...clickListenProgress, lastPosition: null };
+      emitAuditionState();
+    });
+    dom.clickAudio.addEventListener("seeked", () => {
+      clickListenProgress = {
+        ...clickListenProgress,
+        lastPosition: dom.clickAudio.paused ? null : Number(dom.clickAudio.currentTime) || 0
+      };
+      emitAuditionState();
+    });
+    ["loadedmetadata", "durationchange"].forEach((eventName) => {
+      dom.clickAudio.addEventListener(eventName, emitAuditionState);
+    });
+    dom.clickAudio.addEventListener("ended", () => {
+      clickAuditionLoading = false;
+      clickAuditionEnded = true;
+      clickListenProgress = { ...clickListenProgress, lastPosition: null };
+      renderAuditionControl();
+      emitAuditionState();
+    });
+    dom.clickAudio.addEventListener("error", () => {
+      if (!dom.clickAudio.src) return;
+      clickPlayToken += 1;
+      clickAuditionLoading = false;
+      clickAuditionEnded = false;
+      clickAuditionError = "Timing audition playback failed";
+      clickListenProgress = { ...clickListenProgress, lastPosition: null };
+      dom.clickAudio.pause();
+      renderAuditionControl();
+      emitAuditionState();
     });
     dom.openReady.addEventListener("click", () => showView?.("studio"));
 
     field("confirm-tempo-click").disabled = true;
 
-    return Object.freeze({ accountChanged, resumeProject, stop });
+    return Object.freeze({
+      accountChanged,
+      deactivateAudition,
+      getAuditionState,
+      pauseAudition,
+      resumeProject,
+      seekAudition,
+      stop,
+      toggleAudition
+    });
   }
 
-  window.OpusloopsStemImport = Object.freeze({ create });
+  window.OpusloopsStemImport = Object.freeze({ advanceAuditionListening, create, selectArtifact });
 })();

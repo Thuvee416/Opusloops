@@ -307,7 +307,7 @@
     if (!configured()) throw new CloudError("Stem import is not configured");
     assertSessionUser(boundUserId);
     const requiresWorkerDispatch = [
-      "finalize-upload", "retry-inspection", "retry-proposal", "approve-analysis", "request-proposal", "approve-tempo", "dispatch"
+      "finalize-upload", "retry-inspection", "retry-proposal", "repair-render-proposal", "approve-analysis", "request-proposal", "approve-tempo", "dispatch"
     ].includes(action);
     const tokenLifetime = requiresWorkerDispatch ? STEM_DISPATCH_TOKEN_SECONDS : REFRESH_MARGIN_SECONDS;
     const token = await accessToken(boundUserId, tokenLifetime);
@@ -613,6 +613,10 @@
     return stemAction("retry-proposal", { jobId, revision });
   }
 
+  function repairStemRenderProposal(jobId, revision, proposalManifestSha256) {
+    return stemAction("repair-render-proposal", { jobId, revision, proposalManifestSha256 });
+  }
+
   async function fetchStemAssets(encodedJobId) {
     const assets = [];
     for (let offset = 0; ; offset += STEM_ASSET_PAGE_SIZE) {
@@ -629,15 +633,17 @@
   async function getStemImport(jobId, { afterSequence = 0 } = {}) {
     const encodedJobId = encodeURIComponent(String(jobId));
     const sequence = Math.max(0, Math.trunc(Number(afterSequence) || 0));
-    const [jobs, events, assets] = await Promise.all([
-      dataFetch(`/stem_import_jobs?select=*&id=eq.${encodedJobId}&limit=1`),
-      dataFetch(`/stem_import_events?select=*&job_id=eq.${encodedJobId}&sequence=gt.${sequence}&order=sequence.desc&limit=200`),
-      fetchStemAssets(encodedJobId)
-    ]);
-    if (!Array.isArray(jobs) || !jobs[0]) throw new CloudError("Stem import was not found", 404, "not_found");
+    const snapshot = await dataFetch("/rpc/get_stem_import_event_snapshot", {
+      method: "POST",
+      body: { p_job_id: String(jobId), p_after_sequence: sequence }
+    });
+    if (!snapshot?.job) throw new CloudError("Stem import was not found", 404, "not_found");
+    // The asset read follows the atomic job/event snapshot. If the job is
+    // terminal, its transaction has therefore committed before assets load.
+    const assets = await fetchStemAssets(encodedJobId);
     return {
-      job: jobs[0],
-      events: Array.isArray(events) ? [...events].reverse() : [],
+      job: snapshot.job,
+      events: Array.isArray(snapshot.events) ? snapshot.events : [],
       assets: Array.isArray(assets) ? assets : []
     };
   }
@@ -695,6 +701,7 @@
     finalizeStemUpload,
     retryStemInspection,
     retryStemProposal,
+    repairStemRenderProposal,
     getStemImport,
     approveStemAnalysis,
     requestStemProposal,

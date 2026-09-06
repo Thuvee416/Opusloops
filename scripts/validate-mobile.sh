@@ -253,6 +253,28 @@ assert.equal(core.canRetryProposal({
 assert.equal(core.canRetryProposal({
   status: 'proposing', error_code: 'callback_failed'
 }, failedProposalEvents), false);
+const failedRenderEvents = [
+  { sequence: 12, stage: 'propose', status: 'completed' },
+  { sequence: 20, stage: 'render', status: 'failed' }
+];
+assert.equal(core.canRepairRenderProposal({
+  status: 'failed',
+  error_code: 'tempo_map_preroll_invalid',
+  proposal_manifest_sha256: 'a'.repeat(64)
+}, failedRenderEvents), true);
+assert.equal(core.canRepairRenderProposal({
+  status: 'failed',
+  error_code: 'tempo_map_preroll_invalid',
+  proposal_manifest_sha256: 'a'.repeat(64)
+}, [...failedRenderEvents, { sequence: 21, stage: 'propose', status: 'failed' }]), false);
+assert.equal(core.canRepairRenderProposal({
+  status: 'failed',
+  error_code: 'calibration_stage_failed',
+  proposal_manifest_sha256: 'a'.repeat(64)
+}, failedRenderEvents), false);
+assert.equal(core.canRepairRenderProposal({
+  status: 'failed', error_code: 'tempo_map_preroll_invalid'
+}, failedRenderEvents), false);
 assert.equal(core.eventProgress({ determinate: false, completed: 1, total: 2 }), null);
 assert.deepEqual(
   core.eventProgress({ determinate: true, completed: 3, total: 4, unit: 'files' }),
@@ -474,6 +496,42 @@ NODE
 
 node <<'NODE'
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+
+const context = { window: { OpusloopsStemCore: require('./mobile/stem-import-core.js') } };
+vm.runInNewContext(fs.readFileSync('./mobile/stem-import.js', 'utf8'), context);
+const advance = context.window.OpusloopsStemImport.advanceAuditionListening;
+const selectArtifact = context.window.OpusloopsStemImport.selectArtifact;
+
+let progress = advance();
+progress = advance(progress, { currentTime: 0, playing: true, seeking: false });
+progress = advance(progress, { currentTime: 0.15, playing: true, seeking: false });
+assert.equal(progress.complete, false, 'brief playback must not satisfy the listening gate');
+const heardBeforeSeek = progress.listenedSeconds;
+progress = advance(progress, { currentTime: 12, playing: true, seeking: true });
+assert.equal(progress.listenedSeconds, heardBeforeSeek, 'seeking must not count as listening');
+assert.equal(progress.complete, false, 'seeking forward must not unlock Gate B');
+progress = advance(progress, { currentTime: 12, playing: true, seeking: false });
+progress = advance(progress, { currentTime: 12.11, playing: true, seeking: false });
+assert.equal(progress.complete, true, 'actual forward playback may complete the listening gate');
+
+const oldProposal = { id: 'old', kind: 'proposal_manifest', variant: 'proposal-old', content_type: 'application/json' };
+const currentProposal = { id: 'current', kind: 'proposal_manifest', variant: 'proposal-current', content_type: 'application/json' };
+assert.equal(
+  selectArtifact([oldProposal, currentProposal], /proposal_manifest/i, 'json', 'proposal-current').id,
+  'current',
+  'a repaired job must select artifacts for its current proposal id'
+);
+assert.equal(
+  selectArtifact([oldProposal], /proposal_manifest/i, 'json', 'proposal-current'),
+  undefined,
+  'the old proposal must never substitute for a current repaired proposal'
+);
+NODE
+
+node <<'NODE'
+const assert = require('node:assert/strict');
 
 class FakeAudio {
   static instances = [];
@@ -619,7 +677,7 @@ grep -Fq 'sb_publishable_' mobile/config.js
 grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
 grep -Fq '"Upload-Offset"' mobile/cloud-client.js
 grep -Fq 'onUploadProgress' mobile/cloud-client.js
-for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection retryStemProposal getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
+for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection retryStemProposal repairStemRenderProposal getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
   grep -Fq "$method" mobile/cloud-client.js
 done
 grep -Fq 'order=created_at.asc,asset_id.asc' mobile/cloud-client.js
@@ -654,18 +712,54 @@ grep -Fq 'await cloud.retryStemInspection(job.id, job.revision)' mobile/stem-imp
 grep -Fq 'id="stem-retry-proposal"' mobile/index.html
 grep -Fq 'const retryableProposal = core.canRetryProposal(job, events)' mobile/stem-import.js
 grep -Fq 'dom.retryProposal.hidden = !retryableProposal' mobile/stem-import.js
-grep -Fq 'retryableProposal || !["uploading", "failed", "cancelled", "deleted"].includes(status)' mobile/stem-import.js
 grep -Fq 'await cloud.retryStemProposal(job.id, job.revision)' mobile/stem-import.js
 grep -Fq 'return stemAction("retry-proposal", { jobId, revision })' mobile/cloud-client.js
-grep -Fq 'order=sequence.desc&limit=200' mobile/cloud-client.js
-grep -Fq 'events: Array.isArray(events) ? [...events].reverse() : []' mobile/cloud-client.js
+grep -Fq 'id="stem-repair-render"' mobile/index.html
+grep -Fq 'const repairableRender = core.canRepairRenderProposal(job, events)' mobile/stem-import.js
+grep -Fq 'dom.repairRender.hidden = !repairableRender' mobile/stem-import.js
+grep -Fq 'retryableProposal || repairableRender || !["uploading", "failed", "cancelled", "deleted"].includes(status)' mobile/stem-import.js
+grep -Fq 'await cloud.repairStemRenderProposal(' mobile/stem-import.js
+grep -Fq 'repairRenderProposal(repairKey)' mobile/stem-import.js
+grep -Fq 'if (scheduledGeneration !== generation || automaticRepairKey !== repairKey) return' mobile/stem-import.js
+grep -Fq 'if (repairRequests.has(requestKey)) return repairRequests.get(requestKey)' mobile/stem-import.js
+grep -Fq 'return stemAction("repair-render-proposal", { jobId, revision, proposalManifestSha256 })' mobile/cloud-client.js
+grep -Fq 'job.proposalId' mobile/stem-import.js
+grep -Fq 'resetConfirmations(gateBConfirmationIds)' mobile/stem-import.js
+grep -Fq 'documentProposalId !== job.proposalId' mobile/stem-import.js
+grep -Fq 'proposalId: job.proposalId' mobile/stem-import.js
+grep -Fq 'if (previousProposalId !== job.proposalId)' mobile/stem-import.js
+grep -Fq 'const requestSequence = ++pollRequestSequence' mobile/stem-import.js
+grep -Fq 'requestSequence !== pollRequestSequence' mobile/stem-import.js
+grep -Fq 'nextJob.revision < job.revision' mobile/stem-import.js
+grep -Fq 'dataFetch("/rpc/get_stem_import_event_snapshot"' mobile/cloud-client.js
+grep -Fq 'events: Array.isArray(snapshot.events) ? snapshot.events : []' mobile/cloud-client.js
 grep -Fq 'Your completed timing analysis is safe.' mobile/stem-import.js
+grep -Fq 'onAuditionState: handleAuditionState' mobile/app.js
+grep -Fq 'stemImportController?.toggleAudition?.()' mobile/app.js
+grep -Fq 'stemImportController?.seekAudition?.(position, { resume: shouldResume })' mobile/app.js
+grep -Fq 'dom.persistentSeekLabel.textContent = audition ? "Seek within timing audition" : "Seek within project"' mobile/app.js
+grep -Fq 'advanceAuditionListening(clickListenProgress' mobile/stem-import.js
+grep -Fq 'expectedGeneration !== generation || loadToken !== clickLoadToken' mobile/stem-import.js
+grep -Fq 'aria-pressed="false"' mobile/index.html
+grep -Fq 'id="persistent-seek-label"' mobile/index.html
+if grep -Fq 'dom.clickAudio.currentTime < 0.25' mobile/stem-import.js; then
+  echo 'Gate B listening confirmation must not be unlocked by seeking.' >&2
+  exit 1
+fi
 
 inspection_retry='supabase/migrations/20260905230000_add_failed_inspection_retry.sql'
 inspection_retry_test='supabase/tests/stem_inspection_retry.sql'
 stem_import_function='supabase/functions/stem-import/index.ts'
+render_repair='supabase/migrations/20260906210000_add_render_proposal_repair.sql'
+snapshot_test='supabase/tests/stem_import_event_snapshot.sql'
+test -s "$render_repair" -a -s "$snapshot_test"
+grep -Fq 'create function public.get_stem_import_event_snapshot' "$render_repair"
+grep -Fq 'security invoker' "$render_repair"
+grep -Fq 'to authenticated' "$render_repair"
 test -s "$inspection_retry" -a -s "$inspection_retry_test"
 grep -Fq 'action === "retry-inspection"' "$stem_import_function"
+grep -Fq 'action === "repair-render-proposal"' "$stem_import_function"
+grep -Fq 'job = await rpc("repair_stem_render_proposal"' "$stem_import_function"
 grep -Fq 'get_stem_inspection_retry_source' "$stem_import_function"
 grep -Fq 'job = await rpc("retry_stem_inspection"' "$stem_import_function"
 grep -Fq 'dispatchResult = await durableDispatch' "$stem_import_function"
