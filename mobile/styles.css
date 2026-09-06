@@ -895,11 +895,11 @@ h2 {
   --mix-opacity: 0.28;
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(82px, 1fr) auto;
+  grid-template-rows: auto minmax(82px, 1fr);
   min-width: 0;
-  min-height: 204px;
-  gap: 7px;
-  padding: 10px;
+  min-height: 150px;
+  gap: 5px;
+  padding: 9px;
   overflow: hidden;
   color: var(--ink);
   background: #070708;
@@ -907,7 +907,7 @@ h2 {
   border-radius: 18px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
   contain: paint;
-  contain-intrinsic-size: auto 204px;
+  contain-intrinsic-size: auto 150px;
   content-visibility: auto;
   cursor: pointer;
   isolation: isolate;
@@ -1015,15 +1015,13 @@ h2 {
   overflow: hidden;
   border: 1px solid transparent;
   border-radius: 13px;
-  cursor: pointer;
-  touch-action: pan-y;
+  cursor: ns-resize;
+  touch-action: none;
 }
 
 .mixer-tile.is-active .mixer-gesture {
   background: color-mix(in srgb, var(--track-color) 4%, transparent);
   border-color: color-mix(in srgb, var(--track-color) 15%, transparent);
-  cursor: ns-resize;
-  touch-action: none;
 }
 
 .mixer-waveform {
@@ -1124,42 +1122,6 @@ h2 {
 .mixer-tile.is-active .mixer-hint,
 .mixer-tile.is-adjusting .mixer-amount {
   color: var(--track-color);
-}
-
-.mixer-stepper {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
-  min-height: 44px;
-  align-items: center;
-  gap: 4px;
-}
-
-.mixer-step-button {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  place-items: center;
-  color: var(--muted);
-  background: #050506;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  font-size: 18px;
-  font-weight: 480;
-  cursor: pointer;
-}
-
-.mixer-step-button:active {
-  color: var(--track-color);
-  border-color: var(--track-color);
-}
-
-.mixer-direction {
-  min-width: 0;
-  color: var(--faint);
-  font-size: 11px;
-  font-weight: 760;
-  text-align: center;
 }
 
 .mute-button {
@@ -3136,7 +3098,6 @@ body.has-persistent-player .toast {
   .mixer-tile,
   .mixer-tile.is-active,
   .mixer-tile:focus-within,
-  .mixer-step-button,
   .mute-button,
   .persistent-player,
   .persistent-play-button,
@@ -3156,7 +3117,6 @@ body.has-persistent-player .toast {
 
   .mixer-tile-number,
   .mixer-hint,
-  .mixer-direction,
   .mixer-tile.is-active .mixer-hint,
   .mixer-tile.is-adjusting .mixer-amount {
     color: CanvasText;

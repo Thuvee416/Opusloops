@@ -142,8 +142,7 @@ for token in (
     "function mixerPercentFromDrag",
     'slider.type = "range"',
     'slider.setAttribute("aria-orientation", "vertical")',
-    'decrease.dataset.mixerStep = "-5"',
-    'increase.dataset.mixerStep = "5"',
+    "activateMixerTile(tile);",
     'dom.mixer.addEventListener("pointermove", moveMixerDrag)',
     'stemPlayer?.setMix(track.assetId, track.volume, track.muted)',
 ):
@@ -158,6 +157,8 @@ for token in (
 ):
     if token not in styles_source:
         raise SystemExit(f"{styles_path}: responsive mixer presentation is missing: {token}")
+if "data-mixer-step" in app_source or "mixer-step-button" in styles_source:
+    raise SystemExit("Mixer step buttons must not return; level changes are direct drag controls")
 
 for reference in parser.local_assets:
     asset_path = local_path(reference, index_path)

@@ -1102,7 +1102,7 @@
       const active = tile.dataset.mixerKey === activeMixerKey;
       tile.classList.toggle("is-active", active);
       const hint = tile.querySelector("[data-mixer-hint]");
-      if (hint) hint.textContent = active ? "Swipe up or down" : "Tap to adjust";
+      if (hint) hint.textContent = "Drag up or down";
       if (active) activeTile = tile;
     });
     if (!activeTile) activeMixerKey = "";
@@ -1184,27 +1184,7 @@
     if (stemAssetId) slider.dataset.volumeStem = stemAssetId;
     else slider.dataset.volumeTrack = String(trackIndex);
 
-    const stepper = document.createElement("div");
-    stepper.className = "mixer-stepper";
-    const decrease = document.createElement("button");
-    decrease.className = "mixer-step-button";
-    decrease.type = "button";
-    decrease.dataset.mixerStep = "-5";
-    decrease.setAttribute("aria-label", `Decrease ${name} volume`);
-    decrease.textContent = "−";
-    const direction = document.createElement("span");
-    direction.className = "mixer-direction";
-    direction.setAttribute("aria-hidden", "true");
-    direction.textContent = "↑↓";
-    const increase = document.createElement("button");
-    increase.className = "mixer-step-button";
-    increase.type = "button";
-    increase.dataset.mixerStep = "5";
-    increase.setAttribute("aria-label", `Increase ${name} volume`);
-    increase.textContent = "+";
-    stepper.append(decrease, direction, increase);
-
-    tile.append(header, gesture, slider, stepper);
+    tile.append(header, gesture, slider);
     setMixerTilePresentation(tile, percent, muted);
     return tile;
   }
@@ -1217,11 +1197,12 @@
   function beginMixerDrag(event) {
     const gesture = event.target.closest("[data-mixer-gesture]");
     const tile = gesture?.closest(".mixer-tile");
-    if (!gesture || !tile || !tile.classList.contains("is-active")) return;
+    if (!gesture || !tile) return;
     if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
     const slider = tile.querySelector('input[type="range"]');
     if (!slider) return;
     finishMixerDrag();
+    activateMixerTile(tile);
     mixerDrag = {
       pointerId: event.pointerId,
       startY: event.clientY,
@@ -1275,23 +1256,13 @@
     }
   }
 
-  function stepMixerTile(tile, amount) {
-    const slider = tile?.querySelector('input[type="range"]');
-    if (!slider) return;
-    activateMixerTile(tile, { focus: false });
-    const nextPercent = clamp(Number(slider.value) + amount, 0, 100);
-    if (Number(slider.value) === nextPercent) return;
-    slider.value = String(nextPercent);
-    slider.dispatchEvent(new Event("input", { bubbles: true }));
-  }
-
   function renderMixer() {
     finishMixerDrag();
     dom.mixer.replaceChildren();
     if (state.kind === "stem-import") {
       dom.mixEyebrow.textContent = "Aligned stem mix";
       dom.mixTitle.textContent = "Balance every part.";
-      dom.mixLede.textContent = "Tap a stem, then swipe up or down. Its motion follows the level while the player stays in reach.";
+      dom.mixLede.textContent = "Drag up or down on any stem. The number and motion follow your finger live.";
       state.stemImport.tracks.forEach((track, index) => {
         dom.mixer.append(createMixerTile({
           key: `stem:${track.assetId}`,
@@ -1306,7 +1277,7 @@
     } else {
       dom.mixEyebrow.textContent = "Keep it simple";
       dom.mixTitle.textContent = "Mix by feel.";
-      dom.mixLede.textContent = "Tap a tile, then swipe up or down. Its motion follows the level.";
+      dom.mixLede.textContent = "Drag up or down on any tile. The number and motion follow your finger live.";
       TRACKS.forEach((track, index) => {
         dom.mixer.append(createMixerTile({
           key: `track:${track.id}`,
@@ -2363,11 +2334,6 @@
   dom.mixer.addEventListener("click", (event) => {
     const tile = event.target.closest(".mixer-tile");
     if (!tile) return;
-    const stepButton = event.target.closest("[data-mixer-step]");
-    if (stepButton) {
-      stepMixerTile(tile, Number(stepButton.dataset.mixerStep));
-      return;
-    }
     if (event.target.closest(".mute-button")) return;
     if (
       event.target.closest("[data-mixer-gesture]")
