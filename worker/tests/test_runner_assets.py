@@ -4,10 +4,10 @@ from pathlib import Path
 
 from conftest import job_payload
 
-from opusloops_worker.contracts import parse_job
+from opusloops_worker.contracts import ObjectReference, parse_job
 from opusloops_worker.preview import PreviewSegment
-from opusloops_worker.runner import _meaningful_asset
-from opusloops_worker.storage import StoredObject
+from opusloops_worker.runner import _meaningful_asset, _stage_result
+from opusloops_worker.storage import StateSnapshot, StoredObject
 
 
 def _stored(bucket: str = "opusloops-stem-artifacts") -> StoredObject:
@@ -122,3 +122,63 @@ def test_only_compact_gate_b_click_is_published_to_browser() -> None:
         "first-listen",
         "audio/mp4",
     )
+
+
+def test_propose_does_not_republish_the_reused_analysis_manifest(tmp_path: Path) -> None:
+    job = parse_job(job_payload("propose"))
+    previous_manifest = StoredObject(
+        "opusloops-stem-artifacts",
+        f"{job.storage.run_prefix}/attempts/old-analysis/analyze/files/manifest.json",
+        "d" * 64,
+        100,
+        "application/json",
+    )
+
+    assert (
+        _meaningful_asset(
+            "run-manifest.json",
+            previous_manifest,
+            job=job,
+            variant="first-listen",
+            manifest={"audio_assets": []},
+            previews={},
+        )
+        is None
+    )
+
+    proposal_dir = tmp_path / "proposals" / "first-listen"
+    proposal_dir.mkdir(parents=True)
+    (proposal_dir / "tempo-map.proposal.json").write_text(
+        '{"schema_version":"opusloops.tempo-map-proposal.v1",'
+        '"proposal_id":"first-listen","map":{"target_bpm":120,"regions":[]}}',
+        encoding="utf-8",
+    )
+    state = StateSnapshot(
+        ObjectReference(
+            "opusloops-stem-artifacts",
+            f"{job.storage.run_prefix}/attempts/{job.attempt_id}/propose/state-index.json",
+            "e" * 64,
+        ),
+        (),
+        "first-listen",
+    )
+    assets = [
+        {
+            "id": "proposal-asset",
+            "kind": "proposal_manifest",
+            "variant": "first-listen",
+            "sha256": "f" * 64,
+        },
+        {"id": "click-asset", "kind": "click", "variant": "first-listen"},
+    ]
+
+    result = _stage_result(
+        job=job,
+        run_dir=tmp_path,
+        state=state,
+        assets=assets,
+        source=None,
+    )
+
+    assert result["proposalManifestSha256"] == "f" * 64
+    assert result["clickAssetId"] == "click-asset"

@@ -307,7 +307,7 @@
     if (!configured()) throw new CloudError("Stem import is not configured");
     assertSessionUser(boundUserId);
     const requiresWorkerDispatch = [
-      "finalize-upload", "retry-inspection", "approve-analysis", "request-proposal", "approve-tempo", "dispatch"
+      "finalize-upload", "retry-inspection", "retry-proposal", "approve-analysis", "request-proposal", "approve-tempo", "dispatch"
     ].includes(action);
     const tokenLifetime = requiresWorkerDispatch ? STEM_DISPATCH_TOKEN_SECONDS : REFRESH_MARGIN_SECONDS;
     const token = await accessToken(boundUserId, tokenLifetime);
@@ -609,6 +609,10 @@
     return stemAction("retry-inspection", { jobId, revision });
   }
 
+  function retryStemProposal(jobId, revision) {
+    return stemAction("retry-proposal", { jobId, revision });
+  }
+
   async function fetchStemAssets(encodedJobId) {
     const assets = [];
     for (let offset = 0; ; offset += STEM_ASSET_PAGE_SIZE) {
@@ -627,13 +631,13 @@
     const sequence = Math.max(0, Math.trunc(Number(afterSequence) || 0));
     const [jobs, events, assets] = await Promise.all([
       dataFetch(`/stem_import_jobs?select=*&id=eq.${encodedJobId}&limit=1`),
-      dataFetch(`/stem_import_events?select=*&job_id=eq.${encodedJobId}&sequence=gt.${sequence}&order=sequence.asc&limit=200`),
+      dataFetch(`/stem_import_events?select=*&job_id=eq.${encodedJobId}&sequence=gt.${sequence}&order=sequence.desc&limit=200`),
       fetchStemAssets(encodedJobId)
     ]);
     if (!Array.isArray(jobs) || !jobs[0]) throw new CloudError("Stem import was not found", 404, "not_found");
     return {
       job: jobs[0],
-      events: Array.isArray(events) ? events : [],
+      events: Array.isArray(events) ? [...events].reverse() : [],
       assets: Array.isArray(assets) ? assets : []
     };
   }
@@ -690,6 +694,7 @@
     forgetStemArchiveUpload,
     finalizeStemUpload,
     retryStemInspection,
+    retryStemProposal,
     getStemImport,
     approveStemAnalysis,
     requestStemProposal,

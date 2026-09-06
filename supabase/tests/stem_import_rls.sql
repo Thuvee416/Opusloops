@@ -72,6 +72,7 @@ begin
     'public.get_stem_job_for_finalize(uuid,uuid)',
     'public.get_stem_inspection_retry_source(uuid,uuid,bigint)',
     'public.retry_stem_inspection(uuid,uuid,bigint,bigint,text)',
+    'public.retry_stem_proposal(uuid,uuid,bigint)',
     'public.approve_stem_analysis(uuid,uuid,bigint,text,jsonb,boolean,boolean,boolean,boolean)',
     'public.request_stem_proposal(uuid,uuid,bigint,text,text,numeric,text,jsonb,integer,integer,numeric)',
     'public.approve_stem_tempo(uuid,uuid,bigint,text,jsonb,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean)',

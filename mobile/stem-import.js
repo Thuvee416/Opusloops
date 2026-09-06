@@ -32,6 +32,7 @@
       processEvents: document.querySelector("#stem-process-events"),
       processError: document.querySelector("#stem-process-error"),
       retryInspection: document.querySelector("#stem-retry-inspection"),
+      retryProposal: document.querySelector("#stem-retry-proposal"),
       cancelButton: document.querySelector("#stem-cancel-button"),
       gateAPanel: document.querySelector("#stem-gate-a-panel"),
       reviewList: document.querySelector("#stem-review-list"),
@@ -893,7 +894,10 @@
       const status = job?.status || "";
       const statusKind = job ? core.statusKind(status) : "unknown";
       const retryableInspection = core.canRetryInspection(job);
-      dom.uploadPanel.hidden = Boolean(job && !["uploading", "failed", "cancelled", "deleted"].includes(status));
+      const retryableProposal = core.canRetryProposal(job, events);
+      dom.uploadPanel.hidden = Boolean(job && (
+        retryableProposal || !["uploading", "failed", "cancelled", "deleted"].includes(status)
+      ));
       dom.processPanel.hidden = !job;
       dom.processPanel.dataset.kind = statusKind;
       dom.processPanel.dataset.status = status;
@@ -912,8 +916,11 @@
       setText(dom.processState, core.statusBadgeLabel(status));
       dom.processState.dataset.kind = statusKind;
       dom.retryInspection.hidden = !retryableInspection;
+      dom.retryProposal.hidden = !retryableProposal;
       dom.cancelButton.hidden = ["ready", "failed", "cancelled", "deleted", "deletion_pending"].includes(status);
-      const failureMessage = job.errorMessage || "Processing stopped. The recorded events remain available for review.";
+      const failureMessage = retryableProposal
+        ? "Your completed timing analysis is safe. Restart the timing proposal to continue without uploading again."
+        : job.errorMessage || "Processing stopped. The recorded events remain available for review.";
       setError(status === "failed"
         ? `${failureMessage}${retryableInspection ? " Retry can reuse the original upload if it remains available." : ""}`
         : "");
@@ -1166,6 +1173,24 @@
       }
     }
 
+    async function retryProposal() {
+      if (!job || !core.canRetryProposal(job, events)) return;
+      const localGeneration = generation;
+      try {
+        setBusy(dom.retryProposal, true, "Retrying timing proposal…");
+        const response = await cloud.retryStemProposal(job.id, job.revision);
+        if (localGeneration !== generation) return;
+        adoptResponse(response);
+        showToast?.("Timing proposal restarted using your approved timing");
+      } catch (error) {
+        if (localGeneration !== generation) return;
+        setError(friendlyError(error));
+        window.setTimeout(() => poll(localGeneration), 100);
+      } finally {
+        setBusy(dom.retryProposal, false);
+      }
+    }
+
     async function requestProposal() {
       if (!job) return;
       try {
@@ -1333,6 +1358,7 @@
     });
     dom.uploadButton.addEventListener("click", beginUpload);
     dom.retryInspection.addEventListener("click", retryInspection);
+    dom.retryProposal.addEventListener("click", retryProposal);
     dom.referenceMethod.addEventListener("change", selectFullMixReference);
     dom.approveAnalysis.addEventListener("click", approveAnalysis);
     dom.requestProposal.addEventListener("click", requestProposal);

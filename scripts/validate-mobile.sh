@@ -237,6 +237,22 @@ assert.equal(core.canRetryInspection({
 assert.equal(core.canRetryInspection({
   status: 'inspecting', error_code: 'batch_bootstrap_failed'
 }), false);
+const failedProposalEvents = [
+  { sequence: 4, stage: 'inspect', status: 'failed' },
+  { sequence: 12, stage: 'propose', status: 'failed' }
+];
+assert.equal(core.canRetryProposal({
+  status: 'failed', error_code: 'callback_failed'
+}, failedProposalEvents), true);
+assert.equal(core.canRetryProposal({
+  status: 'failed', error_code: 'callback_failed'
+}, [...failedProposalEvents, { sequence: 13, stage: 'render', status: 'failed' }]), false);
+assert.equal(core.canRetryProposal({
+  status: 'failed', error_code: 'internal_worker_error'
+}, failedProposalEvents), false);
+assert.equal(core.canRetryProposal({
+  status: 'proposing', error_code: 'callback_failed'
+}, failedProposalEvents), false);
 assert.equal(core.eventProgress({ determinate: false, completed: 1, total: 2 }), null);
 assert.deepEqual(
   core.eventProgress({ determinate: true, completed: 3, total: 4, unit: 'files' }),
@@ -603,7 +619,7 @@ grep -Fq 'sb_publishable_' mobile/config.js
 grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
 grep -Fq '"Upload-Offset"' mobile/cloud-client.js
 grep -Fq 'onUploadProgress' mobile/cloud-client.js
-for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
+for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection retryStemProposal getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
   grep -Fq "$method" mobile/cloud-client.js
 done
 grep -Fq 'order=created_at.asc,asset_id.asc' mobile/cloud-client.js
@@ -620,12 +636,30 @@ grep -Fq 'core.timingSeconds(item?.time ?? item)' mobile/stem-import.js
 grep -Fq '.process-panel[data-kind="active"] .process-state::before' mobile/styles.css
 grep -Fq '.process-event.is-current .process-event-marker' mobile/styles.css
 grep -Fq '.import-panel button.is-busy::after' mobile/styles.css
+grep -Fq 'id="account-card-button"' mobile/index.html
+grep -Fq 'id="account-card-initial"' mobile/index.html
+grep -Fq 'dom.accountCardButton.addEventListener' mobile/app.js
+grep -Fq 'querySelector("svg").toggleAttribute("hidden", signedIn)' mobile/app.js
+grep -Fq 'dom.accountCardInitial.textContent = initial' mobile/app.js
+if grep -Eq 'id="(save-status|account-button)"|class="status-dot"' mobile/index.html; then
+  echo "Header save/profile controls must remain in Projects" >&2
+  exit 1
+fi
 grep -Fq 'data-remove-grid-event' mobile/stem-import.js
 grep -Fq 'meterNumerator' mobile/stem-import.js
 grep -Fq 'firstDownbeatSeconds' mobile/stem-import.js
 grep -Fq 'previewAssets' mobile/stem-import-core.js
 grep -Fq 'id="stem-retry-inspection"' mobile/index.html
 grep -Fq 'await cloud.retryStemInspection(job.id, job.revision)' mobile/stem-import.js
+grep -Fq 'id="stem-retry-proposal"' mobile/index.html
+grep -Fq 'const retryableProposal = core.canRetryProposal(job, events)' mobile/stem-import.js
+grep -Fq 'dom.retryProposal.hidden = !retryableProposal' mobile/stem-import.js
+grep -Fq 'retryableProposal || !["uploading", "failed", "cancelled", "deleted"].includes(status)' mobile/stem-import.js
+grep -Fq 'await cloud.retryStemProposal(job.id, job.revision)' mobile/stem-import.js
+grep -Fq 'return stemAction("retry-proposal", { jobId, revision })' mobile/cloud-client.js
+grep -Fq 'order=sequence.desc&limit=200' mobile/cloud-client.js
+grep -Fq 'events: Array.isArray(events) ? [...events].reverse() : []' mobile/cloud-client.js
+grep -Fq 'Your completed timing analysis is safe.' mobile/stem-import.js
 
 inspection_retry='supabase/migrations/20260905230000_add_failed_inspection_retry.sql'
 inspection_retry_test='supabase/tests/stem_inspection_retry.sql'

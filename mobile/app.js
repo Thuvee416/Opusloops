@@ -105,8 +105,6 @@
     sequencer: document.querySelector("#sequencer"),
     mixer: document.querySelector("#mixer"),
     projectsList: document.querySelector("#projects-list"),
-    saveStatusButton: document.querySelector("#save-status"),
-    saveStatus: document.querySelector("#save-status span:last-child"),
     saveAnnouncer: document.querySelector("#save-announcer"),
     saveCopy: document.querySelector("#save-copy"),
     recentName: document.querySelector("#recent-project-name"),
@@ -122,8 +120,6 @@
     exportReadyCopy: document.querySelector("#audio-export-ready-copy"),
     shareAudioButton: document.querySelector("#share-audio-button"),
     downloadAudioLink: document.querySelector("#download-audio-link"),
-    accountButton: document.querySelector("#account-button"),
-    accountInitial: document.querySelector("#account-initial"),
     accountDialog: document.querySelector("#account-dialog"),
     accountForm: document.querySelector("#account-form"),
     accountEmail: document.querySelector("#account-email"),
@@ -140,6 +136,8 @@
     signedInPanel: document.querySelector("#signed-in-panel"),
     signedInAvatar: document.querySelector("#signed-in-avatar"),
     signedInEmail: document.querySelector("#signed-in-email"),
+    accountCardMark: document.querySelector("#account-card-mark"),
+    accountCardInitial: document.querySelector("#account-card-initial"),
     accountCardEyebrow: document.querySelector("#account-card-eyebrow"),
     accountCardTitle: document.querySelector("#account-card-title"),
     accountCardCopy: document.querySelector("#account-card-copy"),
@@ -389,7 +387,7 @@
 
     if (writeCurrent(snapshot) && writeProjects(projects)) {
       hasSavedState = true;
-      setSaveStatus(currentUser ? "Saved on device" : "Saved on device", currentUser ? "syncing" : "local");
+      setSaveStatus("Saved on device");
       renderRecent();
       renderProjects();
       if (sync && currentUser) queueCloudSync();
@@ -440,7 +438,7 @@
       renderProjects();
     }
     if (preparedStemProject?.projectId === normalized.id) preparedStemProject = null;
-    setSaveStatus(currentUser ? "Saved on device" : "Saved on device", currentUser ? "syncing" : "local");
+    setSaveStatus("Saved on device");
     if (currentUser) queueCloudSync();
   }
 
@@ -495,12 +493,7 @@
     persist();
   }
 
-  function setSaveStatus(label, status = "local") {
-    if (dom.saveStatus) dom.saveStatus.textContent = label;
-    if (dom.saveStatusButton) {
-      dom.saveStatusButton.dataset.state = status;
-      dom.saveStatusButton.setAttribute("aria-label", `Open saved projects. ${label}`);
-    }
+  function setSaveStatus(label) {
     if (dom.saveAnnouncer && dom.saveAnnouncer.textContent !== label) dom.saveAnnouncer.textContent = label;
   }
 
@@ -607,10 +600,10 @@
     if (!currentUser || !cloud?.configured()) return;
     window.clearTimeout(cloudTimer);
     if (!navigator.onLine) {
-      setSaveStatus("Offline — sync pending", "offline");
+      setSaveStatus("Offline — sync pending");
       return;
     }
-    setSaveStatus("Syncing…", "syncing");
+    setSaveStatus("Syncing…");
     cloudTimer = window.setTimeout(() => {
       cloudTimer = 0;
       syncCloud();
@@ -620,7 +613,7 @@
   async function syncCloud({ announce = false } = {}) {
     if (!currentUser || !cloud?.configured()) return false;
     if (!navigator.onLine) {
-      setSaveStatus("Offline — sync pending", "offline");
+      setSaveStatus("Offline — sync pending");
       if (announce) showToast("Offline — your changes will sync later");
       return false;
     }
@@ -630,7 +623,7 @@
     }
 
     const syncUserId = currentUser.id;
-    setSaveStatus("Syncing…", "syncing");
+    setSaveStatus("Syncing…");
     cloudSyncPromise = (async () => {
       flushSave();
       const localProjects = readProjects();
@@ -648,7 +641,7 @@
       const latestSnapshot = localSyncSnapshot();
       if (saveTimer || latestSnapshot !== localSnapshot) {
         cloudSyncQueued = true;
-        setSaveStatus("Saved — sync pending", "syncing");
+        setSaveStatus("Saved — sync pending");
         return false;
       }
 
@@ -679,7 +672,7 @@
       writeCurrent(state);
       renderAll();
       if (playbackSnapshot) restorePlaybackMutation(playbackSnapshot);
-      setSaveStatus("Saved to account", "synced");
+      setSaveStatus("Saved to account");
       if (announce) showToast("Your projects are synced");
       return true;
     })()
@@ -690,7 +683,7 @@
           switchUser(null);
           return false;
         }
-        setSaveStatus("Saved — sync pending", "error");
+        setSaveStatus("Saved — sync pending");
         if (announce) showToast(friendlyCloudError(error));
         return false;
       })
@@ -808,18 +801,18 @@
       syncCloud();
       if (state.kind === "stem-import") stemImportController?.resumeProject(state);
     }
-    else setSaveStatus("Saved on device", "local");
+    else setSaveStatus("Saved on device");
   }
 
   function renderAuth() {
     const signedIn = Boolean(currentUser);
     dom.accountForm.hidden = signedIn;
     dom.signedInPanel.hidden = !signedIn;
-    dom.accountButton.classList.toggle("is-signed-in", signedIn);
-    dom.accountInitial.hidden = !signedIn;
     const initial = (currentUser?.email || "O").trim().charAt(0).toUpperCase() || "O";
-    dom.accountInitial.textContent = initial;
-    dom.accountButton.setAttribute("aria-label", signedIn ? `Account: ${currentUser.email}` : "Sign in to Opusloops");
+    dom.accountCardMark.classList.toggle("is-signed-in", signedIn);
+    dom.accountCardMark.querySelector("svg").toggleAttribute("hidden", signedIn);
+    dom.accountCardInitial.hidden = !signedIn;
+    dom.accountCardInitial.textContent = initial;
     dom.saveCopy.textContent = signedIn ? "Saved locally, synced privately" : "Saved on this device";
 
     if (signedIn) {
@@ -2247,7 +2240,6 @@
     showToast("Loop refined");
   });
 
-  dom.accountButton.addEventListener("click", () => openAccountDialog("signin"));
   document.querySelector("#account-close-button").addEventListener("click", closeAccountDialog);
   dom.accountSwitch.addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
 
@@ -2364,7 +2356,7 @@
     }
   });
   window.addEventListener("offline", () => {
-    if (currentUser) setSaveStatus("Offline — sync pending", "offline");
+    if (currentUser) setSaveStatus("Offline — sync pending");
   });
   window.addEventListener("opusloops:auth-session-change", (event) => {
     const nextUser = event.detail?.user || null;
@@ -2386,7 +2378,7 @@
   renderAll();
   renderAuth();
   if (!hasSavedState) persist({ touch: false, sync: false });
-  else setSaveStatus(currentUser ? "Syncing…" : "Saved on device", currentUser ? "syncing" : "local");
+  else setSaveStatus(currentUser ? "Syncing…" : "Saved on device");
   if (storageReadWarning) showToast(storageReadWarning);
   showView("create", { focus: false });
   if (currentUser && state.kind === "stem-import") stemImportController?.resumeProject(state);

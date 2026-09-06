@@ -17,7 +17,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=30" />
+    <link rel="stylesheet" href="./styles.css?v=31" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <title>Opusloops</title>
   </head>
@@ -31,17 +31,7 @@
           <span>Opusloops</span>
         </button>
 
-        <div class="topbar-actions">
-          <button class="status-pill" id="save-status" type="button" data-view-target="projects" aria-label="Open saved projects">
-            <span class="status-dot" aria-hidden="true"></span>
-            <span>Saved on device</span>
-          </button>
-          <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
-          <button class="account-button" id="account-button" type="button" aria-label="Sign in to Opusloops">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
-            <span id="account-initial" hidden></span>
-          </button>
-        </div>
+        <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
       </header>
 
       <main id="main-content">
@@ -178,6 +168,7 @@
             <ol class="process-events" id="stem-process-events" aria-label="Processing activity" aria-live="polite"></ol>
             <p class="form-error" id="stem-process-error" role="alert" hidden></p>
             <button class="primary-action" id="stem-retry-inspection" type="button" hidden>Retry inspection</button>
+            <button class="primary-action" id="stem-retry-proposal" type="button" hidden>Retry timing proposal</button>
             <button class="text-button cancel-import" id="stem-cancel-button" type="button">Cancel import</button>
           </section>
 
@@ -404,8 +395,9 @@
           <div class="projects-list" id="projects-list"></div>
 
           <aside class="account-card" id="account-card">
-            <span class="account-card-mark" aria-hidden="true">
+            <span class="account-card-mark" id="account-card-mark" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
+              <b id="account-card-initial" hidden>O</b>
             </span>
             <div>
               <p class="eyebrow" id="account-card-eyebrow">Private cloud sync</p>
@@ -569,11 +561,11 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
-    <script src="./cloud-client.js?v=5" defer></script>
-    <script src="./stem-import-core.js?v=4" defer></script>
+    <script src="./cloud-client.js?v=6" defer></script>
+    <script src="./stem-import-core.js?v=5" defer></script>
     <script src="./stem-player.js?v=1" defer></script>
-    <script src="./stem-import.js?v=4" defer></script>
-    <script src="./app.js?v=21" defer></script>
+    <script src="./stem-import.js?v=5" defer></script>
+    <script src="./app.js?v=22" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
   </body>
 </html>

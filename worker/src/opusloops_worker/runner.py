@@ -117,7 +117,12 @@ def _meaningful_asset(
                 track_id = candidate_id
                 break
 
-    if entry_path == "run-manifest.json":
+    # The propose command intentionally leaves the analysis run manifest
+    # unchanged. publish_state therefore reuses the analysis object for this
+    # path. Registering it again with the proposal attempt would create a new
+    # asset ID for the same immutable object path, which the callback correctly
+    # rejects as a duplicate binding.
+    if entry_path == "run-manifest.json" and job.stage != "propose":
         kind = "run_manifest"
     elif entry_path == "events.jsonl":
         kind = "report"
@@ -357,24 +362,27 @@ def _stage_result(
     assets: Sequence[Mapping[str, object]],
     source: StoredObject | None,
 ) -> dict[str, object]:
-    manifest = load_run_json(run_dir, "run-manifest.json")
-    manifest_asset = _only_asset(
-        assets,
-        "run_manifest",
-        variant=(
-            "inspection"
-            if job.stage == "inspect"
-            else "analysis"
-            if job.stage == "analyze"
-            else job.inputs.proposal_id
-            if job.stage == "propose"
-            else "render"
-        ),
+    manifest = load_run_json(run_dir, "run-manifest.json") if job.stage != "propose" else {}
+    manifest_asset = (
+        _only_asset(
+            assets,
+            "run_manifest",
+            variant=(
+                "inspection"
+                if job.stage == "inspect"
+                else "analysis"
+                if job.stage == "analyze"
+                else "render"
+            ),
+        )
+        if job.stage != "propose"
+        else None
     )
     state_value = _state_binding(state)
     if job.stage == "inspect":
         if source is None:
             raise IntegrityError("inspection has no measured source binding")
+        assert manifest_asset is not None
         selection = load_run_json(run_dir, "analysis-selection.template.json").get("selection")
         summary_manifest = dict(manifest)
         summary_manifest["analysis_selection"] = selection
@@ -386,6 +394,7 @@ def _stage_result(
             "state": state_value,
         }
     if job.stage == "analyze":
+        assert manifest_asset is not None
         analysis_record = manifest.get("analysis")
         if not isinstance(analysis_record, Mapping) or not isinstance(
             analysis_record.get("artifact"), Mapping
@@ -459,6 +468,7 @@ def _stage_result(
             and not isinstance(duration, bool)
         ):
             preview_ends.append(float(start) + float(duration))
+    assert manifest_asset is not None
     return {
         "renderManifestSha256": str(manifest_asset["sha256"]),
         "renderManifestAssetId": str(manifest_asset["id"]),

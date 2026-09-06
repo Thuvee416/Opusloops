@@ -451,6 +451,18 @@
     return job.status === "failed" && RETRYABLE_INSPECTION_ERRORS.has(job.errorCode);
   }
 
+  function canRetryProposal(jobValue, eventsValue) {
+    const job = normalizeJob(jobValue);
+    if (job.status !== "failed" || job.errorCode !== "callback_failed" || !Array.isArray(eventsValue)) {
+      return false;
+    }
+    const latestFailure = eventsValue
+      .map(normalizeEvent)
+      .filter((event) => event.status === "failed")
+      .reduce((latest, event) => !latest || event.sequence >= latest.sequence ? event : latest, null);
+    return latestFailure?.stage === "propose";
+  }
+
   function normalizeEvent(raw) {
     const determinate = pick(raw, "determinate") === true;
     const completed = finiteNumber(pick(raw, "completed"));
@@ -754,6 +766,7 @@
     autoRepairTimingGrid,
     boundedString,
     canRetryInspection,
+    canRetryProposal,
     editedRegions,
     eventProgress,
     finiteNumber,

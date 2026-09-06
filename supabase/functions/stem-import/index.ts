@@ -614,6 +614,11 @@ Deno.serve(async (request) => {
         p_observed_bytes: observed.bytes, p_storage_etag: observed.etag,
       }) as JsonObject;
       dispatchResult = await durableDispatch(user.id, jobId, user.accessToken, user.expiresAt);
+    } else if (action === "retry-proposal") {
+      job = await rpc("retry_stem_proposal", {
+        p_user_id: user.id, p_job_id: jobId, p_revision: revisionField(body),
+      }) as JsonObject;
+      dispatchResult = await durableDispatch(user.id, jobId, user.accessToken, user.expiresAt);
     } else if (action === "approve-analysis") {
       const [files, roles, reference, originals] = confirmations(body, [
         "files", "roles", "reference", "originalsUnchanged",
