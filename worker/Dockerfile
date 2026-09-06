@@ -80,8 +80,8 @@ RUN apt-get update \
         libsndfile1 \
         passwd \
     && rm -rf /var/lib/apt/lists/* \
-    && groupadd --gid 10001 opusloops \
-    && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin opusloops \
+    && /usr/sbin/groupadd --gid 10001 opusloops \
+    && /usr/sbin/useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin opusloops \
     && install -d -o 10001 -g 10001 -m 0700 /scratch
 
 COPY --from=builder /opt/opusloops /opt/opusloops

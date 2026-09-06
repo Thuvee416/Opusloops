@@ -59,7 +59,8 @@ def test_runtime_installs_account_tools_before_creating_non_root_user() -> None:
     runtime = dockerfile.split("FROM ${PYTHON_BASE} AS runtime", 1)[1]
 
     assert "        passwd \\\n" in runtime
-    assert runtime.index("        passwd \\\n") < runtime.index("groupadd --gid 10001")
+    assert runtime.index("        passwd \\\n") < runtime.index("/usr/sbin/groupadd --gid 10001")
+    assert "/usr/sbin/useradd --uid 10001" in runtime
 
 
 def test_production_callback_uses_attempt_token_not_global_environment(monkeypatch) -> None:
