@@ -721,7 +721,9 @@ grep -Fq 'retryableProposal || repairableRender || !["uploading", "failed", "can
 grep -Fq 'await cloud.repairStemRenderProposal(' mobile/stem-import.js
 grep -Fq 'repairRenderProposal(repairKey)' mobile/stem-import.js
 grep -Fq 'if (scheduledGeneration !== generation || automaticRepairKey !== repairKey) return' mobile/stem-import.js
-grep -Fq 'if (repairRequests.has(requestKey)) return repairRequests.get(requestKey)' mobile/stem-import.js
+grep -Fq 'const existingRequest = repairRequests.get(requestKey)' mobile/stem-import.js
+grep -Fq 'if (existingRequest?.generation === localGeneration) return existingRequest.operation' mobile/stem-import.js
+grep -Fq 'repairRequests.get(requestKey)?.operation === operation' mobile/stem-import.js
 grep -Fq 'return stemAction("repair-render-proposal", { jobId, revision, proposalManifestSha256 })' mobile/cloud-client.js
 grep -Fq 'job.proposalId' mobile/stem-import.js
 grep -Fq 'resetConfirmations(gateBConfirmationIds)' mobile/stem-import.js
@@ -740,6 +742,9 @@ grep -Fq 'stemImportController?.seekAudition?.(position, { resume: shouldResume 
 grep -Fq 'dom.persistentSeekLabel.textContent = audition ? "Seek within timing audition" : "Seek within project"' mobile/app.js
 grep -Fq 'advanceAuditionListening(clickListenProgress' mobile/stem-import.js
 grep -Fq 'expectedGeneration !== generation || loadToken !== clickLoadToken' mobile/stem-import.js
+grep -Fq 'if (!clickAuditionEngaged || dom.clickAudio.paused || dom.clickAudio.ended) return' mobile/stem-import.js
+grep -Fq 'nextAudition.key !== playbackScrubAuditionKey' mobile/app.js
+grep -Fq 'playbackScrubAuditionKey = ""' mobile/app.js
 grep -Fq 'aria-pressed="false"' mobile/index.html
 grep -Fq 'id="persistent-seek-label"' mobile/index.html
 if grep -Fq 'dom.clickAudio.currentTime < 0.25' mobile/stem-import.js; then
