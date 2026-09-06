@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for required in index.html frame-guard.js styles.css config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
+for required in index.html frame-guard.js styles.css color-bends.css color-bends.mjs config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png vendor/three.core.min.js vendor/three.module.min.js vendor/three.LICENSE.txt vendor/README.md; do
   if [[ ! -s "mobile/$required" ]]; then
     echo "Required mobile asset is missing or empty: mobile/$required" >&2
     exit 1
@@ -11,6 +11,7 @@ done
 
 python3 - <<'PY'
 import json
+import hashlib
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -24,6 +25,7 @@ class PageParser(HTMLParser):
         self.has_manifest = False
         self.local_assets = []
         self.ids = []
+        self.dock_palettes = []
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
@@ -33,6 +35,8 @@ class PageParser(HTMLParser):
             self.has_viewport = True
         if tag == "link" and "manifest" in attributes.get("rel", "").lower().split():
             self.has_manifest = True
+        if tag == "button" and "nav-item" in attributes.get("class", "").split():
+            self.dock_palettes.append(attributes.get("data-color-bends"))
         for attribute in ("href", "src"):
             value = attributes.get(attribute)
             if value:
@@ -46,6 +50,7 @@ manifest_path = root / "manifest.webmanifest"
 service_worker_path = root / "service-worker.js"
 cloud_client_path = root / "cloud-client.js"
 stem_import_path = root / "stem-import.js"
+color_bends_path = root / "color-bends.mjs"
 
 
 def local_path(reference, label):
@@ -69,6 +74,7 @@ index_source = index_path.read_text(encoding="utf-8")
 service_worker_source = service_worker_path.read_text(encoding="utf-8")
 cloud_client_source = cloud_client_path.read_text(encoding="utf-8")
 stem_import_source = stem_import_path.read_text(encoding="utf-8")
+color_bends_source = color_bends_path.read_text(encoding="utf-8")
 parser.feed(index_source)
 if not parser.has_viewport:
     raise SystemExit(f"{index_path}: mobile viewport metadata is required")
@@ -77,10 +83,14 @@ if not parser.has_manifest:
 duplicate_ids = sorted({value for value in parser.ids if parser.ids.count(value) > 1})
 if duplicate_ids:
     raise SystemExit(f"{index_path}: duplicate element ids: {', '.join(duplicate_ids)}")
+if parser.dock_palettes != ["create", "studio", "mix", "projects"]:
+    raise SystemExit(f"{index_path}: all four dock buttons need distinct ColorBends palettes")
 
 for asset in (
     "frame-guard.js",
     "styles.css",
+    "color-bends.css",
+    "color-bends.mjs",
     "config.js",
     "cloud-client.js",
     "stem-import-core.js",
@@ -95,6 +105,27 @@ for asset in (
         raise SystemExit(
             f"{asset}: index and service-worker asset versions must exist and match"
         )
+
+for reference in ("./vendor/three.module.min.js?v=1851", "./vendor/three.core.min.js"):
+    if reference not in service_worker_source:
+        raise SystemExit(f"{service_worker_path}: lazy ColorBends asset is missing: {reference}")
+
+if 'import(`./vendor/three.module.min.js?v=${THREE_ASSET_VERSION}`)' not in color_bends_source:
+    raise SystemExit(f"{color_bends_path}: Three.js must remain a lazy local import")
+if 'matchMedia("(prefers-reduced-motion: reduce)")' not in color_bends_source:
+    raise SystemExit(f"{color_bends_path}: reduced-motion gating is required")
+if 'webglcontextlost' not in color_bends_source or 'webglcontextrestored' not in color_bends_source:
+    raise SystemExit(f"{color_bends_path}: WebGL context fallback handling is required")
+
+vendor_hashes = {
+    "vendor/three.core.min.js": "05b2609338c76cd65daf74f3ac515bc9a5045e1b3b33edc07d8c9bd55250fa90",
+    "vendor/three.module.min.js": "86bcee248b64f44bcfc23c331ae74619061957d59cab040171dcb6fb5900beb6",
+}
+for relative_path, expected_hash in vendor_hashes.items():
+    payload = (root / relative_path).read_bytes()
+    actual_hash = hashlib.sha256(payload).hexdigest()
+    if actual_hash != expected_hash:
+        raise SystemExit(f"{root / relative_path}: vendored Three.js hash does not match 0.185.1")
 
 for reference in parser.local_assets:
     asset_path = local_path(reference, index_path)
@@ -144,6 +175,7 @@ for icon in manifest["icons"]:
 PY
 
 node --check mobile/app.js
+node --check mobile/color-bends.mjs
 node --check mobile/config.js
 node --check mobile/cloud-client.js
 node --check mobile/stem-import-core.js
@@ -151,6 +183,21 @@ node --check mobile/stem-player.js
 node --check mobile/stem-import.js
 node --check mobile/frame-guard.js
 node --check mobile/service-worker.js
+node --input-type=module --check < mobile/vendor/three.core.min.js
+node --input-type=module --check < mobile/vendor/three.module.min.js
+
+node --input-type=module <<'NODE'
+import assert from 'node:assert/strict';
+import { DOCK_COLOR_BENDS_PALETTES } from './mobile/color-bends.mjs';
+
+assert.deepEqual(Object.keys(DOCK_COLOR_BENDS_PALETTES), ['create', 'studio', 'mix', 'projects']);
+const signatures = Object.values(DOCK_COLOR_BENDS_PALETTES).map((palette) => palette.colors.join(','));
+assert.equal(new Set(signatures).size, 4, 'every dock button must use a different gradient palette');
+Object.values(DOCK_COLOR_BENDS_PALETTES).forEach((palette) => {
+  assert.ok(palette.speed > 0, 'every ColorBends palette must animate');
+  assert.ok(palette.colors.length >= 3 && palette.colors.length <= 8);
+});
+NODE
 
 node <<'NODE'
 const assert = require('node:assert/strict');
