@@ -12,6 +12,7 @@ from opusloops_worker.contracts import encode_payload, parse_job
 from opusloops_worker.isolation import IsolationError
 
 WORKER_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = WORKER_ROOT.parent
 
 
 def test_entrypoint_fails_before_decoding_when_isolation_is_unavailable(
@@ -63,6 +64,16 @@ def test_runtime_installs_account_tools_before_creating_non_root_user() -> None:
     assert "        passwd \\\n" in runtime
     assert runtime.index("        passwd \\\n") < runtime.index("/usr/sbin/groupadd --gid 10001")
     assert "/usr/sbin/useradd --uid 10001" in runtime
+
+
+def test_runtime_does_not_bundle_a_second_ffmpeg_binary() -> None:
+    calibration_project = (
+        PROJECT_ROOT / "prototypes/stem-tempo-calibration/pyproject.toml"
+    ).read_text(encoding="utf-8")
+    constraints = (WORKER_ROOT / "constraints.txt").read_text(encoding="utf-8")
+
+    assert "imageio-ffmpeg" not in calibration_project
+    assert "imageio-ffmpeg" not in constraints
 
 
 def test_production_callback_uses_attempt_token_not_global_environment(monkeypatch) -> None:

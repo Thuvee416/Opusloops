@@ -2,7 +2,6 @@
 # digest published by CodeBuild is the deployment boundary.
 boto3==1.43.89
 beat-this==1.1.0
-imageio-ffmpeg==0.6.0
 jsonschema==4.25.1
 librosa==0.11.0
 numpy==2.2.6
