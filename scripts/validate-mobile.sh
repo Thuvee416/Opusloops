@@ -615,7 +615,7 @@ grep -Fq 'item.classList.add("is-current")' mobile/stem-import.js
 grep -Fq 'button.setAttribute("aria-busy", "true")' mobile/stem-import.js
 grep -Fq 'if (dom.gridEventList.contains(document.activeElement)) return' mobile/stem-import.js
 grep -Fq 'if (gridIssues().length) throw new Error' mobile/stem-import.js
-grep -Fq 'minimumDownbeats: dom.conformMode.value === "musical-4bar" ? 5 : 1' mobile/stem-import.js
+grep -Fq 'minimumDownbeats: naturalMode ? 5 : 1' mobile/stem-import.js
 grep -Fq 'core.timingSeconds(item?.time ?? item)' mobile/stem-import.js
 grep -Fq '.process-panel[data-kind="active"] .process-state::before' mobile/styles.css
 grep -Fq '.process-event.is-current .process-event-marker' mobile/styles.css
