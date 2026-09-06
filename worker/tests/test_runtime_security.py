@@ -54,6 +54,14 @@ def test_container_uses_the_descriptor_handoff_entrypoint() -> None:
     assert "OPUSLOOPS_JOB_PAYLOAD_BASE64" not in dockerfile
 
 
+def test_runtime_installs_account_tools_before_creating_non_root_user() -> None:
+    dockerfile = (WORKER_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    runtime = dockerfile.split("FROM ${PYTHON_BASE} AS runtime", 1)[1]
+
+    assert "        passwd \\\n" in runtime
+    assert runtime.index("        passwd \\\n") < runtime.index("groupadd --gid 10001")
+
+
 def test_production_callback_uses_attempt_token_not_global_environment(monkeypatch) -> None:
     job = parse_job(job_payload("inspect"))
     captured: dict[str, object] = {}

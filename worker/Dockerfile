@@ -78,6 +78,7 @@ RUN apt-get update \
         ffmpeg \
         libgomp1 \
         libsndfile1 \
+        passwd \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 opusloops \
     && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin opusloops \
