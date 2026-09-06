@@ -1447,7 +1447,10 @@ h2 {
 }
 
 .process-state {
+  display: inline-flex;
+  align-items: center;
   align-self: start;
+  gap: 6px;
   padding: 5px 8px;
   color: var(--success);
   background: rgba(77, 227, 194, 0.08);
@@ -1457,6 +1460,36 @@ h2 {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.process-panel {
+  --process-motion-color: var(--success);
+  --process-motion-glow: rgba(77, 227, 194, 0.38);
+  position: relative;
+}
+
+.process-panel[data-status="inspect_queued"],
+.process-panel[data-status="analysis_queued"],
+.process-panel[data-status="proposal_queued"],
+.process-panel[data-status="render_queued"] {
+  --process-motion-color: var(--warning);
+  --process-motion-glow: rgba(255, 173, 66, 0.34);
+}
+
+.process-panel[data-status="proposing"],
+.process-panel[data-status="rendering"] {
+  --process-motion-color: var(--danger);
+  --process-motion-glow: rgba(255, 107, 157, 0.32);
+}
+
+.process-panel[data-kind="active"] .process-state::before {
+  width: 5px;
+  height: 5px;
+  background: var(--process-motion-color);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--process-motion-glow);
+  content: "";
+  animation: process-pulse 1.4s ease-in-out infinite;
 }
 
 .process-state[data-kind="waiting"] {
@@ -1483,12 +1516,24 @@ h2 {
 }
 
 .process-progress-track span {
+  position: relative;
   display: block;
   width: 0;
   height: 100%;
+  overflow: hidden;
   background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));
   border-radius: inherit;
   transition: width 160ms linear;
+}
+
+.process-panel[data-kind="active"] .process-progress-track span::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28px;
+  background: rgba(255, 255, 255, 0.58);
+  content: "";
+  transform: translateX(-36px) skewX(-18deg);
+  animation: process-progress-glint 1.9s ease-in-out infinite;
 }
 
 .process-progress-copy {
@@ -1502,6 +1547,8 @@ h2 {
 }
 
 .indeterminate-copy {
+  position: relative;
+  overflow: hidden;
   margin: 14px 0 0;
   padding: 10px 12px;
   color: var(--muted);
@@ -1509,6 +1556,19 @@ h2 {
   border-left: 2px solid var(--warning);
   font-size: 11px;
   line-height: 1.45;
+}
+
+.process-panel[data-kind="active"] .indeterminate-copy::before {
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 2px;
+  height: 14px;
+  background: var(--process-motion-color);
+  box-shadow: 0 0 9px var(--process-motion-glow);
+  content: "";
+  transform: translateY(-18px);
+  animation: process-scan 2.2s ease-in-out infinite;
 }
 
 .process-events {
@@ -1545,6 +1605,66 @@ h2 {
 
 .process-event.is-failed .process-event-marker {
   background: var(--danger);
+}
+
+.process-event.is-current {
+  color: var(--ink);
+}
+
+.process-event.is-current .process-event-marker {
+  background: var(--process-motion-color);
+  box-shadow: 0 0 0 0 var(--process-motion-glow);
+  animation: process-marker-pulse 1.7s ease-out infinite;
+}
+
+.import-panel button.is-busy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.import-panel button.is-busy::after {
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: "";
+  opacity: 0.68;
+  animation: process-button-spin 800ms linear infinite;
+}
+
+.cancel-import.is-busy {
+  display: flex;
+  width: max-content;
+}
+
+@keyframes process-pulse {
+  0%, 100% { opacity: 0.42; transform: scale(0.78); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes process-progress-glint {
+  0%, 18% { opacity: 0; transform: translateX(-36px) skewX(-18deg); }
+  42% { opacity: 0.7; }
+  76%, 100% { opacity: 0; transform: translateX(2400%) skewX(-18deg); }
+}
+
+@keyframes process-scan {
+  0%, 10% { opacity: 0; transform: translateY(-18px); }
+  30% { opacity: 0.72; }
+  80% { opacity: 0.4; transform: translateY(66px); }
+  100% { opacity: 0; transform: translateY(66px); }
+}
+
+@keyframes process-marker-pulse {
+  0% { box-shadow: 0 0 0 0 var(--process-motion-glow); }
+  65%, 100% { box-shadow: 0 0 0 5px transparent; }
+}
+
+@keyframes process-button-spin {
+  to { transform: rotate(360deg); }
 }
 
 .cancel-import {
@@ -1699,6 +1819,66 @@ h2 {
   border-radius: 12px;
 }
 
+.timing-suggestion {
+  position: relative;
+  margin-top: 14px;
+  padding: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(77, 227, 194, 0.1), transparent 42%),
+    radial-gradient(circle at 96% 100%, rgba(255, 107, 157, 0.08), transparent 44%),
+    var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.timing-suggestion-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--success);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.timing-suggestion-label i {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 9px rgba(77, 227, 194, 0.42);
+}
+
+.timing-suggestion[data-state="loading"] .timing-suggestion-label i {
+  animation: process-pulse 1.4s ease-in-out infinite;
+}
+
+.timing-suggestion[data-state="ambiguous"] .timing-suggestion-label {
+  color: var(--warning);
+}
+
+.timing-suggestion[data-state="manual"] .timing-suggestion-label {
+  color: var(--danger);
+}
+
+.timing-suggestion strong {
+  display: block;
+  margin-top: 9px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.timing-suggestion p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .analysis-issue strong {
   display: block;
   margin-bottom: 4px;
@@ -1727,6 +1907,11 @@ h2 {
   font-size: 11px;
   font-weight: 750;
   cursor: pointer;
+}
+
+.grid-editor summary:focus-visible {
+  outline: 3px solid var(--accent-ring);
+  outline-offset: 3px;
 }
 
 .grid-event-list {
@@ -1797,8 +1982,49 @@ h2 {
   margin-top: 10px;
 }
 
+.reset-grid {
+  display: block;
+  min-height: 44px;
+  margin: 5px auto -5px;
+  padding: 0 8px;
+  color: var(--faint);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .proposal-controls {
   margin: 14px 0;
+}
+
+.proposal-controls.is-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.advanced-mode-control {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.advanced-mode-control select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  font-size: 12px;
+  text-transform: none;
 }
 
 .click-audition {
@@ -2676,6 +2902,18 @@ body.has-persistent-player .toast {
 }
 
 @media (max-width: 370px) {
+
+  .grid-event-row {
+    grid-template-columns: 18px minmax(0, 1fr) minmax(76px, 0.8fr) 44px;
+    gap: 4px;
+  }
+
+  .grid-event-row input,
+  .grid-event-row select {
+    min-width: 0;
+    padding-right: 7px;
+    padding-left: 7px;
+  }
 
   .transport-card {
     grid-template-columns: 52px minmax(0, 1fr);

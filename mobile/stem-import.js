@@ -38,11 +38,15 @@
       referenceMethod: document.querySelector("#stem-reference-method"),
       approveAnalysis: document.querySelector("#approve-stem-analysis"),
       proposalPanel: document.querySelector("#stem-proposal-panel"),
+      timingSuggestion: document.querySelector("#stem-timing-suggestion"),
+      timingSuggestionTitle: document.querySelector("#stem-timing-suggestion-title"),
+      timingSuggestionCopy: document.querySelector("#stem-timing-suggestion-copy"),
       gridIssue: document.querySelector("#stem-grid-issue"),
       gridIssueCopy: document.querySelector("#stem-grid-issue-copy"),
       gridEditor: document.querySelector("#stem-grid-editor"),
       gridEventList: document.querySelector("#stem-grid-event-list"),
       addGridEvent: document.querySelector("#stem-add-grid-event"),
+      resetGrid: document.querySelector("#stem-reset-grid"),
       meterNumerator: document.querySelector("#stem-meter-numerator"),
       meterDenominator: document.querySelector("#stem-meter-denominator"),
       firstDownbeat: document.querySelector("#stem-first-downbeat"),
@@ -93,8 +97,12 @@
     let inspectionDocument = null;
     let gridDocument = null;
     let proposalDocument = null;
+    let detectedGridEvents = [];
     let gridEvents = [];
+    let gridRepair = null;
+    let gridSourceInvalid = false;
     let gridDirty = false;
+    let gridManuallyEdited = false;
     let gridSettingsInitialized = false;
     let renderedTrackFingerprint = "";
     let renderedGridFingerprint = "";
@@ -135,8 +143,12 @@
       if (busy) {
         if (!button.dataset.idleLabel) button.dataset.idleLabel = button.textContent;
         button.textContent = label;
-      } else if (button.dataset.idleLabel) {
-        button.textContent = button.dataset.idleLabel;
+        button.classList.add("is-busy");
+        button.setAttribute("aria-busy", "true");
+      } else {
+        if (button.dataset.idleLabel) button.textContent = button.dataset.idleLabel;
+        button.classList.remove("is-busy");
+        button.removeAttribute("aria-busy");
       }
       button.disabled = busy;
     }
@@ -144,6 +156,16 @@
     function setError(message = "") {
       dom.processError.textContent = message;
       dom.processError.hidden = !message;
+    }
+
+    function setText(node, value) {
+      const next = String(value);
+      if (node.textContent !== next) node.textContent = next;
+    }
+
+    function setAttribute(node, name, value) {
+      const next = String(value);
+      if (node.getAttribute(name) !== next) node.setAttribute(name, next);
     }
 
     function resetConfirmations(ids) {
@@ -175,18 +197,41 @@
     }
 
     function renderEvents() {
-      dom.processEvents.replaceChildren();
       const visible = events.filter((event) => event.status !== "progress").slice(-8);
-      visible.forEach((event) => {
-        const item = document.createElement("li");
+      const active = core.statusKind(job?.status) === "active";
+      const current = active
+        ? [...visible].reverse().find((event) => {
+            if (event.status !== "started") return false;
+            if (job?.activeAttemptId) return event.attemptId === job.activeAttemptId;
+            return job?.status === "uploading" && event.stage === "upload";
+          })
+        : null;
+      const existing = new Map(
+        Array.from(dom.processEvents.children).map((item) => [item.dataset.sequence, item])
+      );
+      const visibleSequences = new Set(visible.map((event) => String(event.sequence)));
+      existing.forEach((item, sequence) => {
+        if (!visibleSequences.has(sequence)) item.remove();
+      });
+      visible.forEach((event, index) => {
+        const sequence = String(event.sequence);
+        let item = existing.get(sequence);
+        if (!item) {
+          item = document.createElement("li");
+          item.dataset.sequence = sequence;
+          const marker = document.createElement("span");
+          marker.className = "process-event-marker";
+          marker.setAttribute("aria-hidden", "true");
+          const copy = document.createElement("span");
+          item.append(marker, copy);
+        }
         item.className = `process-event is-${event.status || "update"}`;
-        const marker = document.createElement("span");
-        marker.className = "process-event-marker";
-        marker.setAttribute("aria-hidden", "true");
-        const copy = document.createElement("span");
-        copy.textContent = stageCopy(event);
-        item.append(marker, copy);
-        dom.processEvents.append(item);
+        if (current?.sequence === event.sequence) item.classList.add("is-current");
+        const copy = item.lastElementChild;
+        const nextCopy = stageCopy(event);
+        setText(copy, nextCopy);
+        const position = dom.processEvents.children[index];
+        if (position !== item) dom.processEvents.insertBefore(item, position || null);
       });
     }
 
@@ -196,10 +241,10 @@
         dom.processProgress.hidden = false;
         dom.indeterminateCopy.hidden = true;
         dom.processProgressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-        dom.processProgressLabel.textContent = `${core.formatBytes(uploadProgress.completed)} of ${core.formatBytes(uploadProgress.total)} confirmed`;
-        dom.processProgressPercent.textContent = `${Math.floor(percent)}%`;
-        dom.processProgress.setAttribute("aria-valuenow", String(Math.floor(percent)));
-        dom.processProgress.setAttribute("aria-valuetext", `${core.formatBytes(uploadProgress.completed)} of ${core.formatBytes(uploadProgress.total)} confirmed by storage`);
+        setText(dom.processProgressLabel, `${core.formatBytes(uploadProgress.completed)} of ${core.formatBytes(uploadProgress.total)} confirmed`);
+        setText(dom.processProgressPercent, `${Math.floor(percent)}%`);
+        setAttribute(dom.processProgress, "aria-valuenow", Math.floor(percent));
+        setAttribute(dom.processProgress, "aria-valuetext", `${core.formatBytes(uploadProgress.completed)} of ${core.formatBytes(uploadProgress.total)} confirmed by storage`);
         return;
       }
       const activeEvents = job?.activeAttemptId
@@ -215,12 +260,12 @@
       dom.indeterminateCopy.hidden = !active || Boolean(progress);
       if (progress) {
         dom.processProgressFill.style.width = `${Math.max(0, Math.min(100, progress.percent))}%`;
-        dom.processProgressLabel.textContent = progressLabel(progress);
-        dom.processProgressPercent.textContent = `${Math.floor(progress.percent)}%`;
-        dom.processProgress.setAttribute("aria-valuenow", String(Math.floor(progress.percent)));
-        dom.processProgress.setAttribute("aria-valuetext", progressLabel(progress));
+        setText(dom.processProgressLabel, progressLabel(progress));
+        setText(dom.processProgressPercent, `${Math.floor(progress.percent)}%`);
+        setAttribute(dom.processProgress, "aria-valuenow", Math.floor(progress.percent));
+        setAttribute(dom.processProgress, "aria-valuetext", progressLabel(progress));
       } else if (active) {
-        dom.indeterminateCopy.textContent = `${core.statusLabel(job.status)} — this stage has not reported a measurable percentage.`;
+        setText(dom.indeterminateCopy, `${core.statusLabel(job.status)} — this stage has not reported a measurable percentage.`);
       }
     }
 
@@ -319,18 +364,32 @@
       });
     }
 
-    function gridFromDocument(documentValue) {
+    function gridArraysFromDocument(documentValue) {
       if (!documentValue || typeof documentValue !== "object") return [];
       const primary = documentValue.primary && typeof documentValue.primary === "object" ? documentValue.primary : {};
       const beats = documentValue.beats_seconds || documentValue.beatsSeconds || documentValue.beats
         || primary.beats_seconds || primary.beatsSeconds || primary.beats || [];
       const downbeats = documentValue.downbeats_seconds || documentValue.downbeatsSeconds || documentValue.downbeats
         || primary.downbeats_seconds || primary.downbeatsSeconds || primary.downbeats || [];
-      if (!Array.isArray(beats) || !Array.isArray(downbeats)) return [];
-      const downbeatTimes = downbeats.map((item) => Number(item?.time ?? item)).filter(Number.isFinite);
-      const result = beats
-        .map((item) => Number(item?.time ?? item))
-        .filter(Number.isFinite)
+      return { beats, downbeats };
+    }
+
+    function gridDocumentHasInvalidTimes(documentValue) {
+      const arrays = gridArraysFromDocument(documentValue);
+      if (!arrays || !Array.isArray(arrays.beats) || !Array.isArray(arrays.downbeats)) return true;
+      return [...arrays.beats, ...arrays.downbeats]
+        .some((item) => core.timingSeconds(item?.time ?? item) === null);
+    }
+
+    function gridFromDocument(documentValue) {
+      const arrays = gridArraysFromDocument(documentValue);
+      if (!arrays || !Array.isArray(arrays.beats) || !Array.isArray(arrays.downbeats)) return [];
+      const downbeatTimes = arrays.downbeats
+        .map((item) => core.timingSeconds(item?.time ?? item))
+        .filter((time) => time !== null);
+      const result = arrays.beats
+        .map((item) => core.timingSeconds(item?.time ?? item))
+        .filter((time) => time !== null)
         .map((time, index) => ({
           id: `beat-${index + 1}`,
           time,
@@ -362,96 +421,204 @@
     }
 
     function estimatedGridBpm() {
-      const intervals = gridEvents
-        .slice(1)
-        .map((event, index) => event.time - gridEvents[index].time)
-        .filter((gap) => Number.isFinite(gap) && gap > 0.08 && gap < 3)
-        .sort((left, right) => left - right);
-      if (!intervals.length) return null;
-      return 60 / intervals[Math.floor(intervals.length / 2)];
+      return core.timingGridDiagnostics(gridEvents, {
+        meterNumerator: Number(dom.meterNumerator.value),
+        firstDownbeatSeconds: Number(dom.firstDownbeat.value)
+      }).estimatedBpm;
     }
 
     function gridDiagnostics() {
-      const sorted = [...gridEvents].sort((left, right) => left.time - right.time);
-      const messages = [];
-      const flaggedIds = new Set();
-      if (sorted.length < 2) messages.push("Add at least two detected beat events.");
-      const intervals = sorted
-        .slice(1)
-        .map((event, index) => event.time - sorted[index].time)
-        .filter((gap) => gap > 0.02)
-        .sort((left, right) => left - right);
-      const medianGap = intervals.length ? intervals[Math.floor(intervals.length / 2)] : 0.5;
-      const duplicateTolerance = Math.min(0.2, Math.max(0.025, medianGap * 0.45));
-      for (let index = 1; index < sorted.length; index += 1) {
-        const gap = sorted[index].time - sorted[index - 1].time;
-        if (gap < duplicateTolerance) {
-          messages.push(`Events at ${sorted[index - 1].time.toFixed(2)}s and ${sorted[index].time.toFixed(2)}s are only ${gap.toFixed(2)}s apart.`);
-          flaggedIds.add(sorted[index - 1].id);
-          flaggedIds.add(sorted[index].id);
+      const mode = dom.conformMode.value;
+      const naturalMode = mode === "musical-4bar";
+      const diagnostics = core.timingGridDiagnostics(gridEvents, {
+        meterNumerator: Number(dom.meterNumerator.value),
+        firstDownbeatSeconds: Number(dom.firstDownbeat.value),
+        minimumDownbeats: naturalMode ? 5 : 1,
+        requireFullDownbeatCoverage: naturalMode,
+        requireStableBeatContinuity: mode !== "no-conform"
+      });
+      return { ...diagnostics, flaggedIds: new Set(diagnostics.flaggedIds) };
+    }
+
+    function applyAutomaticGridRepair() {
+      initializeGridSettings();
+      gridRepair = core.autoRepairTimingGrid(detectedGridEvents, {
+        meterNumerator: Number(dom.meterNumerator.value)
+      });
+      gridEvents = gridRepair.events.map((event) => ({ ...event }));
+      gridDirty = gridRepair.status === "repaired";
+      gridManuallyEdited = false;
+      const first = gridEvents.find((event) => event.downbeat)?.time;
+      if (Number.isFinite(first)) dom.firstDownbeat.value = String(Number(first.toFixed(6)));
+      renderedGridFingerprint = "";
+    }
+
+    function currentGridAssessment() {
+      const diagnostics = gridDiagnostics();
+      if (dom.conformMode.value !== "musical-4bar") {
+        if (diagnostics.messages.length) {
+          return {
+            status: "ambiguous",
+            summary: {
+              algorithm: "opusloops-grid-validation-v1",
+              totalEdits: 0,
+              estimatedBpm: diagnostics.estimatedBpm,
+              reason: diagnostics.messages[0]
+            }
+          };
         }
-      }
-      const downbeats = sorted.filter((event) => event.downbeat);
-      if (!downbeats.length) messages.push("Mark at least one timing event as a downbeat.");
-      for (let index = 1; index < downbeats.length; index += 1) {
-        const gap = downbeats[index].time - downbeats[index - 1].time;
-        const expectedBarSeconds = medianGap * Math.max(1, Number(dom.meterNumerator.value) || 4);
-        if (gap < Math.max(0.25, expectedBarSeconds * 0.35)) {
-          messages.push(`Downbeats at ${downbeats[index - 1].time.toFixed(2)}s and ${downbeats[index].time.toFixed(2)}s may be duplicates.`);
-          flaggedIds.add(downbeats[index - 1].id);
-          flaggedIds.add(downbeats[index].id);
-        }
-      }
-      const meterNumerator = Math.trunc(Number(dom.meterNumerator.value));
-      if (!Number.isInteger(meterNumerator) || meterNumerator < 1 || meterNumerator > 32) {
-        messages.push("Beats per bar must be a whole number from 1 to 32.");
-      } else {
-        for (let index = 1; index < downbeats.length; index += 1) {
-          const left = downbeats[index - 1];
-          const right = downbeats[index];
-          const count = sorted.filter((event) => event.time >= left.time - 0.0005 && event.time < right.time - 0.0005).length;
-          if (count !== meterNumerator) {
-            messages.push(`The bar from ${left.time.toFixed(2)}s to ${right.time.toFixed(2)}s contains ${count} beat ${count === 1 ? "event" : "events"}; the selected meter expects ${meterNumerator}.`);
-            flaggedIds.add(left.id);
-            flaggedIds.add(right.id);
+        if (!gridManuallyEdited && gridRepair?.status === "repaired") return gridRepair;
+        return {
+          status: "clean",
+          summary: {
+            algorithm: "opusloops-grid-validation-v1",
+            totalEdits: 0,
+            estimatedBpm: diagnostics.estimatedBpm,
+            reason: ""
           }
-        }
+        };
       }
-      const firstDownbeat = Number(dom.firstDownbeat.value);
-      if (!Number.isFinite(firstDownbeat) || firstDownbeat < 0) {
-        messages.push("First downbeat must be a non-negative time in seconds.");
-      } else if (downbeats.length && Math.abs(downbeats[0].time - firstDownbeat) > 0.0005) {
-        messages.push("First downbeat must match the first event marked as a downbeat.");
+      if (diagnostics.messages.length && gridRepair?.status !== "ambiguous") {
+        return {
+          status: "ambiguous",
+          summary: {
+            algorithm: "opusloops-grid-validation-v1",
+            totalEdits: 0,
+            estimatedBpm: diagnostics.estimatedBpm,
+            reason: diagnostics.messages[0]
+          }
+        };
       }
-      return { messages: Array.from(new Set(messages)), flaggedIds };
+      if (!gridManuallyEdited) return gridRepair;
+      return core.autoRepairTimingGrid(gridEvents, {
+        meterNumerator: Number(dom.meterNumerator.value)
+      });
+    }
+
+    function gridReviewNotes() {
+      if (gridManuallyEdited) return "Edited and reviewed in the Opusloops advanced timing controls.";
+      if (gridRepair?.status === "repaired") {
+        return `Accepted Opusloops automatic timing ${gridRepair.summary.algorithm}; ${gridRepair.summary.removedBeats} removed, ${gridRepair.summary.insertedBeats} inserted, ${gridRepair.summary.downbeatCorrections} bar-start corrections.`;
+      }
+      return gridDirty
+        ? "Edited and reviewed in the Opusloops advanced timing controls."
+        : "Accepted the analyzed timing suggestion in Opusloops.";
+    }
+
+    function gridReviewDocument() {
+      return {
+        schema_version: gridDocument?.schema_version || "opusloops.tempo-grid-review.v1",
+        analysis_sha256: gridDocument?.analysis_sha256 || job?.analysisSha256,
+        attempt_id: gridDocument?.attempt_id || job?.analysis?.attemptId || job?.analysis?.attempt_id,
+        beats_seconds: gridEvents.map((event) => Number(event.time.toFixed(6))),
+        downbeats_seconds: gridEvents.filter((event) => event.downbeat).map((event) => Number(event.time.toFixed(6))),
+        notes: gridReviewNotes(),
+        reviewed: true
+      };
+    }
+
+    function jsonbSizeEstimate(value) {
+      const serialized = JSON.stringify(value);
+      const formattingBytes = (serialized.match(/[,:]/g) || []).length;
+      return new TextEncoder().encode(serialized).byteLength + formattingBytes;
+    }
+
+    function gridPayloadIssues() {
+      if (!gridDocument) return [];
+      const downbeatCount = gridEvents.filter((event) => event.downbeat).length;
+      const issues = [];
+      if (gridEvents.length > 20_000) issues.push("The timing grid exceeds the 20,000-beat review limit.");
+      if (downbeatCount > 5_000) issues.push("The timing grid exceeds the 5,000-bar-start review limit.");
+      if (jsonbSizeEstimate(gridReviewDocument()) > 131_072) {
+        issues.push("The timing grid is too large to submit safely from this device.");
+      }
+      return issues;
+    }
+
+    function renderTimingSuggestion() {
+      const meter = Math.trunc(Number(dom.meterNumerator.value)) || 4;
+      const denominator = Math.trunc(Number(dom.meterDenominator.value)) || 4;
+      const assessment = currentGridAssessment();
+      const bpm = Number(assessment?.summary?.estimatedBpm ?? gridRepair?.summary?.estimatedBpm ?? estimatedGridBpm());
+      const pulse = Number.isFinite(bpm) ? `${Math.round(bpm * 10) / 10} BPM · ${meter}/${denominator}` : `${meter}/${denominator}`;
+      const state = gridManuallyEdited && assessment?.status === "clean"
+        ? "manual"
+        : assessment?.status || "loading";
+      dom.timingSuggestion.dataset.state = state;
+      if (state === "manual") {
+        setText(dom.timingSuggestionTitle, `Custom timing · ${pulse}`);
+        setText(dom.timingSuggestionCopy, "Your advanced timing changes will be used for the listening check. Nothing has changed yet.");
+      } else if (gridManuallyEdited && state === "repaired") {
+        setText(dom.timingSuggestionTitle, "The edited grid still needs a timing pass");
+        setText(dom.timingSuggestionCopy, "Reapply automatic timing or continue editing before preparing the listening check.");
+      } else if (state === "repaired") {
+        setText(dom.timingSuggestionTitle, `Likely source pulse · ${pulse}`);
+        const edits = assessment.summary.totalEdits;
+        setText(dom.timingSuggestionCopy, `Beat This found the pulse. Opusloops resolved ${edits} irregular ${edits === 1 ? "detection" : "detections"} automatically. Nothing has changed yet.`);
+      } else if (state === "clean") {
+        setText(dom.timingSuggestionTitle, `Likely source pulse · ${pulse}`);
+        setText(dom.timingSuggestionCopy, "Beat This found a coherent bar-aligned grid. Nothing has changed yet.");
+      } else if (state === "ambiguous") {
+        setText(dom.timingSuggestionTitle, "This song needs one quick timing decision");
+        setText(dom.timingSuggestionCopy, `${assessment.summary.reason} Open Advanced timing controls to make a precise correction.`);
+      } else {
+        setText(dom.timingSuggestionTitle, "Finding the musical pulse…");
+        setText(dom.timingSuggestionCopy, "The analyzed timing grid is loading.");
+      }
+      const rawDetection = gridRepair?.summary?.algorithm === "raw-beat-this-grid";
+      setText(dom.resetGrid, gridManuallyEdited || rawDetection ? "Reapply automatic timing" : "Restore original AI detection");
+      dom.resetGrid.hidden = !detectedGridEvents.length
+        || (!gridManuallyEdited && state !== "repaired" && !rawDetection);
     }
 
     function gridIssues() {
       const issues = [...gridDiagnostics().messages];
+      if (gridSourceInvalid) issues.unshift("The analyzed grid contains an invalid timing value and cannot be submitted safely.");
+      const assessment = currentGridAssessment();
+      if (assessment?.status === "ambiguous" && assessment.summary.reason) {
+        issues.unshift(assessment.summary.reason);
+      } else if (gridManuallyEdited && assessment?.status === "repaired") {
+        issues.unshift("The edited grid still contains timing inconsistencies. Reapply automatic timing or continue editing.");
+      }
       const reported = job?.analysis?.issues || job?.analysis?.flags || [];
-      if (Array.isArray(reported)) reported.forEach((issue) => issues.push(core.boundedString(issue?.message || issue, 240)));
-      return Array.from(new Set(issues.filter(Boolean)));
+      if (Array.isArray(reported)) reported.forEach((issue) => {
+        const message = core.boundedString(issue?.message || issue, 240);
+        if (message && !/^confirm the detected beat grid, meter, and first downbeat\.?$/i.test(message)) issues.push(message);
+      });
+      issues.push(...gridPayloadIssues());
+      return Array.from(new Set(issues));
     }
 
     function renderGridIssues() {
       const issues = gridIssues();
       dom.gridIssue.hidden = !issues.length;
-      dom.gridIssueCopy.textContent = issues.slice(0, 3).join(" ");
-      if (issues.length) dom.gridEditor.open = true;
+      setText(dom.gridIssueCopy, issues.slice(0, 3).join(" "));
+      const meterInvalid = issues.some((message) => /^Beats per bar must/i.test(message));
+      const firstDownbeatInvalid = issues.some((message) => /^First downbeat must/i.test(message));
+      dom.meterNumerator.setAttribute("aria-invalid", String(meterInvalid));
+      dom.firstDownbeat.setAttribute("aria-invalid", String(firstDownbeatInvalid));
       return issues;
     }
 
     function renderGrid() {
       initializeGridSettings();
       const diagnostics = gridDiagnostics();
+      renderTimingSuggestion();
+      renderGridIssues();
+      if (!dom.gridEditor.open) {
+        if (dom.gridEventList.childElementCount) dom.gridEventList.replaceChildren();
+        renderedGridFingerprint = "";
+        return;
+      }
       const fingerprint = JSON.stringify([gridEvents, [...diagnostics.flaggedIds]]);
       if (fingerprint === renderedGridFingerprint) return;
+      if (dom.gridEventList.contains(document.activeElement)) return;
       renderedGridFingerprint = fingerprint;
       dom.gridEventList.replaceChildren();
-      renderGridIssues();
       gridEvents.forEach((event, index) => {
         const row = document.createElement("div");
-        row.className = `grid-event-row${diagnostics.flaggedIds.has(event.id) ? " is-flagged" : ""}`;
+        const flagged = diagnostics.flaggedIds.has(event.id);
+        row.className = `grid-event-row${flagged ? " is-flagged" : ""}`;
         row.dataset.gridId = event.id;
         const number = document.createElement("span");
         number.className = "grid-event-number";
@@ -464,9 +631,17 @@
         time.step = "0.001";
         time.value = event.time.toFixed(3);
         time.setAttribute("aria-label", `Timing event ${index + 1} in seconds`);
+        if (flagged) {
+          time.setAttribute("aria-invalid", "true");
+          time.setAttribute("aria-describedby", "stem-grid-issue-copy");
+        }
         const type = document.createElement("select");
         type.className = "grid-event-type";
         type.setAttribute("aria-label", `Timing event ${index + 1} type`);
+        if (flagged) {
+          type.setAttribute("aria-invalid", "true");
+          type.setAttribute("aria-describedby", "stem-grid-issue-copy");
+        }
         [[false, "Beat"], [true, "Downbeat"]].forEach(([value, label]) => {
           const option = document.createElement("option");
           option.value = value ? "downbeat" : "beat";
@@ -503,17 +678,8 @@
     function reviewedGrid() {
       if (!gridDocument) throw new Error("The analyzed beat grid is still loading");
       syncGridFromDom();
-      const diagnostics = gridDiagnostics();
-      if (diagnostics.messages.length) throw new Error("Resolve the flagged beat and downbeat issues before building a proposal");
-      return {
-        schema_version: gridDocument.schema_version || "opusloops.tempo-grid-review.v1",
-        analysis_sha256: gridDocument.analysis_sha256 || job.analysisSha256,
-        attempt_id: gridDocument.attempt_id || job.analysis.attemptId || job.analysis.attempt_id,
-        beats_seconds: gridEvents.map((event) => Number(event.time.toFixed(6))),
-        downbeats_seconds: gridEvents.filter((event) => event.downbeat).map((event) => Number(event.time.toFixed(6))),
-        notes: gridDirty ? "Edited and reviewed in the Opusloops timing editor." : "Reviewed in the Opusloops timing editor.",
-        reviewed: true
-      };
+      if (gridIssues().length) throw new Error("Open Advanced timing controls to resolve the remaining timing issue");
+      return gridReviewDocument();
     }
 
     function proposalRegions() {
@@ -654,16 +820,20 @@
         const grid = artifactMatching(/\bgrid\b|tempo_grid|reviewed_grid/i, "json");
         if (grid) {
           gridDocument = await fetchArtifact(grid, { json: true });
-          gridEvents = gridFromDocument(gridDocument);
-          renderedGridFingerprint = "";
+          gridSourceInvalid = gridDocumentHasInvalidTimes(gridDocument);
+          detectedGridEvents = gridFromDocument(gridDocument).map((event) => ({ ...event }));
+          gridEvents = detectedGridEvents.map((event) => ({ ...event }));
           gridSettingsInitialized = false;
+          applyAutomaticGridRepair();
         } else {
           const inlineGrid = job.analysis?.grid || job.analysis?.gridTemplate || job.analysis?.grid_template || job.analysis?.primary;
           if (gridFromDocument(inlineGrid).length) {
             gridDocument = { ...inlineGrid, analysis_sha256: inlineGrid.analysis_sha256 || job.analysisSha256 };
-            gridEvents = gridFromDocument(gridDocument);
-            renderedGridFingerprint = "";
+            gridSourceInvalid = gridDocumentHasInvalidTimes(gridDocument);
+            detectedGridEvents = gridFromDocument(gridDocument).map((event) => ({ ...event }));
+            gridEvents = detectedGridEvents.map((event) => ({ ...event }));
             gridSettingsInitialized = false;
+            applyAutomaticGridRepair();
           }
         }
       }
@@ -721,9 +891,12 @@
 
     function render() {
       const status = job?.status || "";
+      const statusKind = job ? core.statusKind(status) : "unknown";
       const retryableInspection = core.canRetryInspection(job);
       dom.uploadPanel.hidden = Boolean(job && !["uploading", "failed", "cancelled", "deleted"].includes(status));
       dom.processPanel.hidden = !job;
+      dom.processPanel.dataset.kind = statusKind;
+      dom.processPanel.dataset.status = status;
       dom.gateAPanel.hidden = status !== "awaiting_analysis_confirmation";
       dom.proposalPanel.hidden = status !== "awaiting_map_request";
       dom.gateBPanel.hidden = status !== "awaiting_tempo_confirmation";
@@ -735,9 +908,9 @@
         dom.uploadNote.textContent = "Choose the same ZIP to resume from the byte offset already confirmed by private storage.";
       }
 
-      dom.processTitle.textContent = core.statusLabel(status);
-      dom.processState.textContent = core.statusKind(status) === "waiting" ? "Needs you" : status === "ready" ? "Complete" : status === "failed" ? "Stopped" : "Live";
-      dom.processState.dataset.kind = core.statusKind(status);
+      setText(dom.processTitle, core.statusLabel(status));
+      setText(dom.processState, core.statusBadgeLabel(status));
+      dom.processState.dataset.kind = statusKind;
       dom.retryInspection.hidden = !retryableInspection;
       dom.cancelButton.hidden = ["ready", "failed", "cancelled", "deleted", "deletion_pending"].includes(status);
       const failureMessage = job.errorMessage || "Processing stopped. The recorded events remain available for review.";
@@ -754,11 +927,15 @@
       if (status === "awaiting_map_request") {
         const suggested = Number(job.analysis?.medianBpm ?? job.analysis?.median_bpm ?? estimatedGridBpm() ?? job.targetBpm);
         if (Number.isFinite(suggested) && !dom.targetBpm.dataset.touched) dom.targetBpm.value = String(Math.round(suggested * 10) / 10);
-        dom.requestProposal.disabled = !gridDocument;
-        if (gridDocument) renderGrid();
+        if (gridDocument) {
+          renderGrid();
+          dom.requestProposal.disabled = Boolean(gridIssues().length);
+        }
         else {
+          renderTimingSuggestion();
+          dom.requestProposal.disabled = true;
           dom.gridIssue.hidden = false;
-          dom.gridIssueCopy.textContent = "Loading the hash-bound analysis grid before this proposal can be requested.";
+          setText(dom.gridIssueCopy, "Loading the analyzed timing grid before this check can be prepared.");
         }
       }
       if (status === "awaiting_tempo_confirmation") renderRegions();
@@ -1002,7 +1179,7 @@
         if (![1, 2, 4, 8, 16, 32].includes(meterDenominator)) throw new Error("Choose a valid beat unit");
         if (!Number.isFinite(firstDownbeatSeconds) || firstDownbeatSeconds < 0) throw new Error("Choose a valid first downbeat");
         const request = core.proposalRequest(dom.targetBpm.value, dom.conformMode.value, grid);
-        setBusy(dom.requestProposal, true, "Building request…");
+        setBusy(dom.requestProposal, true, "Preparing check…");
         const response = await cloud.requestStemProposal({
           jobId: job.id,
           revision: job.revision,
@@ -1021,7 +1198,7 @@
         if (error?.code === "stale_revision") schedulePoll(100);
       } finally {
         setBusy(dom.requestProposal, false);
-        if (!gridDocument) dom.requestProposal.disabled = true;
+        dom.requestProposal.disabled = !gridDocument || Boolean(gridIssues().length);
       }
     }
 
@@ -1098,8 +1275,12 @@
         inspectionDocument = null;
         gridDocument = null;
         proposalDocument = null;
+        detectedGridEvents = [];
         gridEvents = [];
+        gridRepair = null;
+        gridSourceInvalid = false;
         gridDirty = false;
+        gridManuallyEdited = false;
         gridSettingsInitialized = false;
         delete dom.targetBpm.dataset.touched;
         jsonArtifacts.clear();
@@ -1158,34 +1339,97 @@
     dom.approveTempo.addEventListener("click", approveTempo);
     dom.cancelButton.addEventListener("click", cancel);
     dom.targetBpm.addEventListener("input", () => { dom.targetBpm.dataset.touched = "true"; });
+    dom.conformMode.addEventListener("change", () => {
+      renderGridIssues();
+      dom.requestProposal.disabled = Boolean(gridIssues().length);
+    });
     [dom.meterNumerator, dom.meterDenominator, dom.firstDownbeat].forEach((input) => {
       input.addEventListener("input", () => {
         gridDirty = true;
+        if (input !== dom.meterNumerator) gridManuallyEdited = true;
         renderGridIssues();
+        renderTimingSuggestion();
+        dom.requestProposal.disabled = Boolean(gridIssues().length);
       });
       input.addEventListener("change", () => {
+        if (input === dom.meterNumerator && detectedGridEvents.length && !gridManuallyEdited) {
+          applyAutomaticGridRepair();
+        } else {
+          gridManuallyEdited = true;
+        }
         renderedGridFingerprint = "";
         renderGrid();
+        dom.requestProposal.disabled = Boolean(gridIssues().length);
       });
     });
-    dom.gridEventList.addEventListener("input", () => { syncGridFromDom(); });
+    dom.gridEditor.addEventListener("toggle", () => {
+      renderedGridFingerprint = "";
+      renderGrid();
+    });
+    dom.gridEventList.addEventListener("input", () => {
+      syncGridFromDom();
+      gridManuallyEdited = true;
+      renderTimingSuggestion();
+      dom.requestProposal.disabled = Boolean(gridIssues().length);
+    });
+    dom.gridEventList.addEventListener("focusout", () => {
+      window.setTimeout(() => {
+        if (!dom.gridEventList.contains(document.activeElement)) renderGrid();
+      }, 0);
+    });
     dom.gridEventList.addEventListener("click", (event) => {
       const button = event.target.closest("[data-remove-grid-event]");
       if (!button) return;
       syncGridFromDom();
       gridEvents = gridEvents.filter((item) => item.id !== button.dataset.removeGridEvent);
       gridDirty = true;
+      gridManuallyEdited = true;
       renderedGridFingerprint = "";
+      button.blur();
       renderGrid();
+      dom.requestProposal.disabled = Boolean(gridIssues().length);
     });
     dom.addGridEvent.addEventListener("click", () => {
       syncGridFromDom();
       const lastTime = gridEvents.at(-1)?.time || 0;
       gridEvents.push({ id: `manual-${Date.now().toString(36)}`, time: lastTime + 0.5, downbeat: false });
       gridDirty = true;
+      gridManuallyEdited = true;
       renderedGridFingerprint = "";
       renderGrid();
+      dom.requestProposal.disabled = Boolean(gridIssues().length);
       dom.gridEventList.lastElementChild?.querySelector("input")?.focus();
+    });
+    dom.resetGrid.addEventListener("click", () => {
+      if (gridManuallyEdited || gridRepair?.summary?.algorithm === "raw-beat-this-grid") {
+        applyAutomaticGridRepair();
+        renderedGridFingerprint = "";
+        renderGrid();
+        dom.requestProposal.disabled = Boolean(gridIssues().length);
+        return;
+      }
+      gridEvents = detectedGridEvents.map((event) => ({ ...event }));
+      gridDirty = true;
+      gridManuallyEdited = false;
+      gridRepair = {
+        status: "ambiguous",
+        events: gridEvents,
+        summary: {
+          algorithm: "raw-beat-this-grid",
+          removedBeats: 0,
+          insertedBeats: 0,
+          downbeatCorrections: 0,
+          totalEdits: 0,
+          estimatedBpm: estimatedGridBpm(),
+          reason: "The original AI detection was restored."
+        }
+      };
+      const first = gridEvents.find((event) => event.downbeat)?.time;
+      if (Number.isFinite(first)) dom.firstDownbeat.value = String(Number(first.toFixed(6)));
+      renderedGridFingerprint = "";
+      renderGrid();
+      dom.requestProposal.disabled = Boolean(gridIssues().length);
+      dom.gridEventList.firstElementChild?.querySelector("input")?.focus();
     });
     dom.clickAudition.addEventListener("click", async () => {
       try {

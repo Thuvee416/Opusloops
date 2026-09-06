@@ -17,7 +17,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=28" />
+    <link rel="stylesheet" href="./styles.css?v=30" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <title>Opusloops</title>
   </head>
@@ -210,22 +210,34 @@
             <div class="import-panel-heading">
               <span class="stage-number">03</span>
               <div>
-                <p class="eyebrow">Tempo shape</p>
-                <h2 id="stem-proposal-title">Choose the intended pulse</h2>
-                <p>Musical mode corrects about every four bars. Rigid mode follows each beat more tightly.</p>
+                <p class="eyebrow">Timing suggestion</p>
+                <h2 id="stem-proposal-title">Choose where the song should land.</h2>
+                <p>Opusloops finds the pulse and resolves clear timing inconsistencies before asking you to listen.</p>
               </div>
             </div>
-            <div class="analysis-issue" id="stem-grid-issue" hidden>
-              <strong>Timing grid needs a decision</strong>
+            <div class="timing-suggestion" id="stem-timing-suggestion" data-state="loading" aria-live="polite" aria-atomic="true">
+              <span class="timing-suggestion-label"><i aria-hidden="true"></i> AI timing pass</span>
+              <strong id="stem-timing-suggestion-title">Finding the musical pulse…</strong>
+              <p id="stem-timing-suggestion-copy">The analyzed timing grid is loading.</p>
+            </div>
+            <div class="analysis-issue" id="stem-grid-issue" role="status" aria-live="polite" aria-atomic="true" hidden>
+              <strong>Quick timing check needed</strong>
               <p id="stem-grid-issue-copy"></p>
             </div>
+            <div class="proposal-controls is-single">
+              <label>
+                <span>Target BPM</span>
+                <input id="stem-target-bpm" type="number" inputmode="decimal" min="20" max="400" step="0.1" value="120" />
+              </label>
+            </div>
+            <button class="primary-action" id="request-stem-proposal" type="button" aria-describedby="stem-grid-issue-copy">Prepare timing check</button>
             <details class="grid-editor" id="stem-grid-editor">
-              <summary>Review detected beats and downbeats</summary>
-              <p>Remove duplicate or incorrect events before requesting a proposal. Times are seconds from the source start.</p>
+              <summary>Advanced timing controls</summary>
+              <p>The automatic pass is designed for normal use. Open these controls only when the timing check needs a precise correction.</p>
               <div class="grid-settings">
                 <label>
                   <span>Beats per bar</span>
-                  <input id="stem-meter-numerator" type="number" inputmode="numeric" min="1" max="32" step="1" value="4" />
+                  <input id="stem-meter-numerator" type="number" inputmode="numeric" min="1" max="32" step="1" value="4" aria-describedby="stem-grid-issue-copy" />
                 </label>
                 <label>
                   <span>Beat unit</span>
@@ -240,27 +252,21 @@
                 </label>
                 <label>
                   <span>First downbeat · seconds</span>
-                  <input id="stem-first-downbeat" type="number" inputmode="decimal" min="0" step="0.001" value="0" />
+                  <input id="stem-first-downbeat" type="number" inputmode="decimal" min="0" step="0.001" value="0" aria-describedby="stem-grid-issue-copy" />
                 </label>
               </div>
-              <div class="grid-event-list" id="stem-grid-event-list"></div>
-              <button class="secondary-action add-grid-event" id="stem-add-grid-event" type="button">Add timing event</button>
-            </details>
-            <div class="proposal-controls">
-              <label>
-                <span>Target BPM</span>
-                <input id="stem-target-bpm" type="number" inputmode="decimal" min="20" max="400" step="0.1" value="120" />
-              </label>
-              <label>
-                <span>Conform mode</span>
+              <label class="advanced-mode-control">
+                <span>Timing feel</span>
                 <select id="stem-conform-mode">
-                  <option value="musical-4bar">Musical · four-bar anchors</option>
-                  <option value="rigid-beat">Rigid · every beat</option>
-                  <option value="no-conform">No conform · preserve timing</option>
+                  <option value="musical-4bar">Natural · follow the phrasing</option>
+                  <option value="rigid-beat">Tight · lock every beat</option>
+                  <option value="no-conform">Keep original timing</option>
                 </select>
               </label>
-            </div>
-            <button class="primary-action" id="request-stem-proposal" type="button">Build listening proposal</button>
+              <div class="grid-event-list" id="stem-grid-event-list"></div>
+              <button class="secondary-action add-grid-event" id="stem-add-grid-event" type="button">Add timing event</button>
+              <button class="quiet-action reset-grid" id="stem-reset-grid" type="button" hidden>Restore original AI detection</button>
+            </details>
           </section>
 
           <section class="import-panel" id="stem-gate-b-panel" aria-labelledby="stem-gate-b-title" hidden>
@@ -564,9 +570,9 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
     <script src="./cloud-client.js?v=5" defer></script>
-    <script src="./stem-import-core.js?v=2" defer></script>
+    <script src="./stem-import-core.js?v=4" defer></script>
     <script src="./stem-player.js?v=1" defer></script>
-    <script src="./stem-import.js?v=2" defer></script>
+    <script src="./stem-import.js?v=4" defer></script>
     <script src="./app.js?v=21" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
   </body>

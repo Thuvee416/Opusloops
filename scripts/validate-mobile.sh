@@ -218,6 +218,13 @@ const core = require('./mobile/stem-import-core.js');
 
 assert.equal(core.normalizeStatus('analysis-ready-for-review'), 'awaiting_map_request');
 assert.equal(core.statusLabel('analyzing'), 'Analyzing musical timing');
+assert.equal(core.statusBadgeLabel('inspect_queued'), 'Live');
+assert.equal(core.statusBadgeLabel('awaiting_tempo_confirmation'), 'Needs you');
+assert.equal(core.statusBadgeLabel('ready'), 'Complete');
+assert.equal(core.statusBadgeLabel('failed'), 'Stopped');
+assert.equal(core.statusBadgeLabel('cancelled'), 'Stopped');
+assert.equal(core.statusBadgeLabel('deleted'), 'Removed');
+assert.equal(core.statusBadgeLabel('unexpected_state'), 'Status');
 assert.equal(core.canRetryInspection({
   status: 'failed', error_code: 'batch_bootstrap_failed'
 }), true);
@@ -281,6 +288,172 @@ const asset = core.normalizeAsset({
 assert.equal(asset.trackId, 'drums');
 assert.equal(asset.segmentIndex, 4);
 assert.equal(asset.durationSeconds, 8);
+
+const events = (times, downbeats = []) => {
+  const downbeatSet = new Set(downbeats.map(String));
+  return times.map((time, index) => ({
+    id: `beat-${index + 1}`,
+    time,
+    downbeat: downbeatSet.has(String(time))
+  }));
+};
+const cleanGrid = events(
+  Array.from({ length: 13 }, (_, index) => index * 0.5),
+  [0, 2, 4, 6]
+);
+assert.deepEqual(core.timingGridDiagnostics(cleanGrid, {
+  meterNumerator: 4, firstDownbeatSeconds: 0
+}).messages, []);
+assert.deepEqual(core.autoRepairTimingGrid(cleanGrid, { meterNumerator: 4 }), {
+  status: 'clean',
+  events: cleanGrid,
+  summary: {
+    algorithm: 'opusloops-bar-grid-v1', removedBeats: 0, insertedBeats: 0,
+    downbeatCorrections: 0, totalEdits: 0, estimatedBpm: 120, reason: ''
+  }
+});
+for (const invalidTime of [null, '', false, true, undefined, Number.NaN, Number.POSITIVE_INFINITY]) {
+  const malformedGrid = cleanGrid.map((event) => ({ ...event }));
+  malformedGrid[0].time = invalidTime;
+  assert.ok(core.timingGridDiagnostics(malformedGrid, { meterNumerator: 4 }).messages.length > 0);
+  assert.equal(core.autoRepairTimingGrid(malformedGrid, { meterNumerator: 4 }).status, 'ambiguous');
+}
+assert.equal(core.timingSeconds('0'), null);
+assert.equal(core.timingSeconds(0), 0);
+
+const productionExcerpt = events([
+  107.42, 107.96, 108.56, 109.02, 109.12, 109.68, 110.12, 110.24,
+  110.66, 111.22, 111.76, 112.34, 112.88, 113.44, 113.98, 114.26,
+  114.54, 115.08, 115.62, 116.18, 116.72
+], [107.96, 110.12, 110.24, 112.34, 114.54, 116.72]);
+const productionSnapshot = JSON.stringify(productionExcerpt);
+const repairedExcerpt = core.autoRepairTimingGrid(productionExcerpt, { meterNumerator: 4 });
+assert.equal(repairedExcerpt.status, 'repaired');
+assert.deepEqual(repairedExcerpt.events.map((event) => event.time), [
+  107.42, 107.96, 108.56, 109.02, 109.68, 110.12, 110.66, 111.22,
+  111.76, 112.34, 112.88, 113.44, 113.98, 114.54, 115.08, 115.62,
+  116.18, 116.72
+]);
+assert.deepEqual(repairedExcerpt.events.filter((event) => event.downbeat).map((event) => event.time),
+  [107.96, 110.12, 112.34, 114.54, 116.72]);
+assert.equal(JSON.stringify(productionExcerpt), productionSnapshot, 'repair must not mutate model output');
+assert.deepEqual(
+  core.autoRepairTimingGrid(productionExcerpt, { meterNumerator: 4 }),
+  repairedExcerpt,
+  'repair output must be deterministic'
+);
+
+const productionGrid = require('./scripts/fixtures/timing-grid-anomaly.json');
+const productionDownbeats = new Set(productionGrid.downbeats_seconds.map(String));
+const productionEvents = productionGrid.beats_seconds.map((time, index) => ({
+  id: `production-beat-${index + 1}`,
+  time,
+  downbeat: productionDownbeats.has(String(time))
+}));
+const repairedProductionGrid = core.autoRepairTimingGrid(productionEvents, { meterNumerator: 4 });
+assert.equal(repairedProductionGrid.status, 'repaired');
+assert.equal(repairedProductionGrid.events.length, 328);
+assert.equal(repairedProductionGrid.events.filter((event) => event.downbeat).length, 82);
+assert.deepEqual(repairedProductionGrid.summary, {
+  algorithm: 'opusloops-bar-grid-v1', removedBeats: 3, insertedBeats: 2,
+  downbeatCorrections: 1, totalEdits: 6, estimatedBpm: 107.14285714285806, reason: ''
+});
+assert.deepEqual(
+  productionEvents.filter((event) => !new Set(repairedProductionGrid.events.map((item) => item.id)).has(event.id))
+    .map((event) => event.time),
+  [109.12, 110.24, 114.26]
+);
+assert.deepEqual(
+  repairedProductionGrid.events.filter((event) => event.id.startsWith('auto-')).map((event) => event.time),
+  [99.675, 179.5]
+);
+assert.deepEqual(core.timingGridDiagnostics(repairedProductionGrid.events, {
+  meterNumerator: 4,
+  firstDownbeatSeconds: repairedProductionGrid.events.find((event) => event.downbeat).time,
+  minimumDownbeats: 5
+}).messages, []);
+
+const missingBeatExcerpt = events([
+  96.88, 97.42, 98, 98.56, 99.12, 100.26, 100.82, 101.34,
+  101.86, 102.46, 103, 103.52
+], [96.88, 99.12, 101.34, 103.52]);
+const repairedMissingBeat = core.autoRepairTimingGrid(missingBeatExcerpt, { meterNumerator: 4 });
+assert.equal(repairedMissingBeat.status, 'repaired');
+assert.ok(repairedMissingBeat.events.some((event) => event.time === 99.675));
+
+const tailExcerpt = events([
+  173.96, 174.54, 175.1, 175.64, 176.18, 176.72, 177.28, 177.84,
+  178.4, 178.94, 180.06
+], [173.96, 176.18, 178.4, 180.06]);
+const repairedTail = core.autoRepairTimingGrid(tailExcerpt, { meterNumerator: 4 });
+assert.equal(repairedTail.status, 'repaired');
+assert.ok(repairedTail.events.some((event) => event.time === 179.5));
+assert.equal(repairedTail.events.find((event) => event.time === 180.06).downbeat, false);
+
+const threeFour = events([0, 0.5, 1, 1.5, 2, 2.5, 3], [0, 1.5, 3]);
+assert.equal(core.autoRepairTimingGrid(threeFour, { meterNumerator: 3 }).status, 'clean');
+const ambiguousDownbeat = events(
+  [0, 0.5, 1, 1.5, 2, 2.2, 2.7, 3.2, 3.7, 4.2],
+  [0, 2, 2.2, 4.2]
+);
+assert.equal(core.autoRepairTimingGrid(ambiguousDownbeat, { meterNumerator: 4 }).status, 'ambiguous');
+const tooManyMissing = events([0, 2, 2.5, 3, 3.5, 4], [0, 2, 4]);
+assert.equal(core.autoRepairTimingGrid(tooManyMissing, { meterNumerator: 4 }).status, 'ambiguous');
+const oneFrameApart = events(
+  [0, 0.49, 0.53, 1, 1.5, 2, 2.5, 3, 3.5, 4],
+  [0, 2, 4]
+);
+assert.equal(core.autoRepairTimingGrid(oneFrameApart, { meterNumerator: 4 }).status, 'ambiguous');
+const oneBarStart = events(
+  Array.from({ length: 21 }, (_, index) => index * 0.5),
+  [0]
+);
+assert.equal(core.autoRepairTimingGrid(oneBarStart, { meterNumerator: 4 }).status, 'ambiguous');
+assert.deepEqual(core.timingGridDiagnostics(oneBarStart, {
+  meterNumerator: 4,
+  firstDownbeatSeconds: 0,
+  minimumDownbeats: 1,
+  requireFullDownbeatCoverage: false
+}).messages, []);
+const missingRigidBeat = events([0, 0.5, 1, 1.5, 2, 3, 3.5, 4, 4.5, 5], [0]);
+assert.match(core.timingGridDiagnostics(missingRigidBeat, {
+  meterNumerator: 4,
+  firstDownbeatSeconds: 0,
+  minimumDownbeats: 1,
+  requireFullDownbeatCoverage: false,
+  requireStableBeatContinuity: true
+}).messages.join(' '), /likely beat is missing/i);
+assert.deepEqual(core.timingGridDiagnostics(missingRigidBeat, {
+  meterNumerator: 4,
+  firstDownbeatSeconds: 0,
+  minimumDownbeats: 1,
+  requireFullDownbeatCoverage: false,
+  requireStableBeatContinuity: false
+}).messages, []);
+const partialBarStarts = events(
+  Array.from({ length: 41 }, (_, index) => index * 0.5),
+  [0, 2, 4, 6, 8]
+);
+assert.equal(core.autoRepairTimingGrid(partialBarStarts, { meterNumerator: 4 }).status, 'ambiguous');
+assert.ok(core.timingGridDiagnostics(partialBarStarts, { meterNumerator: 4 })
+  .messages.includes('Detected bar starts do not cover the full song.'));
+assert.ok(core.timingGridDiagnostics(cleanGrid, { meterNumerator: 4, minimumDownbeats: 5 })
+  .messages.includes('At least 5 reliable bar starts are required.'));
+const oversizedGrid = Array.from({ length: 20_001 }, (_, index) => ({
+  id: `oversized-${index}`,
+  time: index * 0.5,
+  downbeat: index % 4 === 0
+}));
+assert.match(core.autoRepairTimingGrid(oversizedGrid, { meterNumerator: 4 }).summary.reason, /too large/i);
+
+const excessiveEdits = [];
+for (let index = 0; index <= 40; index += 1) {
+  excessiveEdits.push({ id: `regular-${index}`, time: index * 0.5, downbeat: index % 4 === 0 });
+  if (index % 4 === 1 && index < 36) {
+    excessiveEdits.push({ id: `extra-${index}`, time: index * 0.5 + 0.18, downbeat: false });
+  }
+}
+assert.equal(core.autoRepairTimingGrid(excessiveEdits, { meterNumerator: 4 }).status, 'ambiguous');
 NODE
 
 node <<'NODE'
@@ -436,6 +609,17 @@ done
 grep -Fq 'order=created_at.asc,asset_id.asc' mobile/cloud-client.js
 grep -Fq 'disabledSegments: normalized.stemImport.disabledSegments' mobile/app.js
 grep -Fq 'this stage does not expose a measurable percentage' mobile/index.html
+grep -Fq 'dom.processPanel.dataset.kind = statusKind' mobile/stem-import.js
+grep -Fq 'dom.processPanel.dataset.status = status' mobile/stem-import.js
+grep -Fq 'item.classList.add("is-current")' mobile/stem-import.js
+grep -Fq 'button.setAttribute("aria-busy", "true")' mobile/stem-import.js
+grep -Fq 'if (dom.gridEventList.contains(document.activeElement)) return' mobile/stem-import.js
+grep -Fq 'if (gridIssues().length) throw new Error' mobile/stem-import.js
+grep -Fq 'minimumDownbeats: dom.conformMode.value === "musical-4bar" ? 5 : 1' mobile/stem-import.js
+grep -Fq 'core.timingSeconds(item?.time ?? item)' mobile/stem-import.js
+grep -Fq '.process-panel[data-kind="active"] .process-state::before' mobile/styles.css
+grep -Fq '.process-event.is-current .process-event-marker' mobile/styles.css
+grep -Fq '.import-panel button.is-busy::after' mobile/styles.css
 grep -Fq 'data-remove-grid-event' mobile/stem-import.js
 grep -Fq 'meterNumerator' mobile/stem-import.js
 grep -Fq 'firstDownbeatSeconds' mobile/stem-import.js
