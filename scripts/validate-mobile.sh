@@ -54,6 +54,8 @@ cloud_client_path = root / "cloud-client.js"
 stem_import_path = root / "stem-import.js"
 pixel_dock_path = root / "pixel-dock.mjs"
 pixel_dock_css_path = root / "pixel-dock.css"
+app_path = root / "app.js"
+styles_path = root / "styles.css"
 
 
 def local_path(reference, label):
@@ -79,6 +81,8 @@ cloud_client_source = cloud_client_path.read_text(encoding="utf-8")
 stem_import_source = stem_import_path.read_text(encoding="utf-8")
 pixel_dock_source = pixel_dock_path.read_text(encoding="utf-8")
 pixel_dock_css_source = pixel_dock_css_path.read_text(encoding="utf-8")
+app_source = app_path.read_text(encoding="utf-8")
+styles_source = styles_path.read_text(encoding="utf-8")
 parser.feed(index_source)
 if not parser.has_viewport:
     raise SystemExit(f"{index_path}: mobile viewport metadata is required")
@@ -132,6 +136,28 @@ for retired_path in (
         raise SystemExit(f"{root / retired_path}: retired ColorBends asset must be removed")
 if "color-bends" in index_source.lower() or "color_bends" in service_worker_source.lower():
     raise SystemExit("ColorBends wiring must not remain in the mobile app shell")
+
+for token in (
+    "function createMixerTile",
+    "function mixerPercentFromDrag",
+    'slider.type = "range"',
+    'slider.setAttribute("aria-orientation", "vertical")',
+    'decrease.dataset.mixerStep = "-5"',
+    'increase.dataset.mixerStep = "5"',
+    'dom.mixer.addEventListener("pointermove", moveMixerDrag)',
+    'stemPlayer?.setMix(track.assetId, track.volume, track.muted)',
+):
+    if token not in app_source:
+        raise SystemExit(f"{app_path}: mobile tile mixer requirement is missing: {token}")
+for token in (
+    "grid-template-columns: repeat(2, minmax(0, 1fr))",
+    ".mixer-tile.is-active .mixer-gesture",
+    "touch-action: none",
+    "@keyframes mixer-wave",
+    "animation: none !important",
+):
+    if token not in styles_source:
+        raise SystemExit(f"{styles_path}: responsive mixer presentation is missing: {token}")
 
 for reference in parser.local_assets:
     asset_path = local_path(reference, index_path)

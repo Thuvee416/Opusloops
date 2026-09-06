@@ -94,6 +94,9 @@
   let stemPlayer = null;
   let stemImportController = null;
   let preparedStemProject = null;
+  let activeMixerKey = "";
+  let mixerDrag = null;
+  let suppressedMixerClick = { key: "", until: 0 };
 
   const dom = {
     composerForm: document.querySelector("#composer-form"),
@@ -514,6 +517,7 @@
   }
 
   function showView(name, { focus = true } = {}) {
+    if (name !== "mix") finishMixerDrag();
     const navigationName = name === "import" ? "create" : name;
     document.querySelectorAll("[data-view]").forEach((view) => {
       view.classList.toggle("is-active", view.dataset.view === name);
@@ -1065,63 +1069,257 @@
     });
   }
 
+  function mixerPresentation(percent) {
+    const level = clamp(Number(percent) || 0, 0, 100) / 100;
+    return {
+      percent: Math.round(level * 100),
+      energy: 0.08 + level * 0.92,
+      floor: 0.05 + level * 0.13,
+      duration: 2.35 - level * 1.08,
+      opacity: 0.28 + level * 0.72
+    };
+  }
+
+  function setMixerTilePresentation(tile, percent, muted) {
+    if (!tile) return;
+    const presentation = mixerPresentation(percent);
+    tile.style.setProperty("--mix-level", `${presentation.percent}%`);
+    tile.style.setProperty("--mix-energy", presentation.energy.toFixed(3));
+    tile.style.setProperty("--mix-floor", presentation.floor.toFixed(3));
+    tile.style.setProperty("--mix-duration", `${presentation.duration.toFixed(2)}s`);
+    tile.style.setProperty("--mix-opacity", presentation.opacity.toFixed(3));
+    tile.classList.toggle("is-silent", presentation.percent === 0);
+    tile.classList.toggle("is-muted", Boolean(muted));
+    const amount = tile.querySelector("[data-mixer-amount]");
+    if (amount) amount.textContent = `${presentation.percent}%`;
+    const slider = tile.querySelector('input[type="range"]');
+    if (slider) slider.setAttribute("aria-valuetext", `${presentation.percent} percent${muted ? ", muted" : ""}`);
+  }
+
+  function updateMixerTileSelection() {
+    let activeTile = null;
+    dom.mixer.querySelectorAll(".mixer-tile").forEach((tile) => {
+      const active = tile.dataset.mixerKey === activeMixerKey;
+      tile.classList.toggle("is-active", active);
+      const hint = tile.querySelector("[data-mixer-hint]");
+      if (hint) hint.textContent = active ? "Swipe up or down" : "Tap to adjust";
+      if (active) activeTile = tile;
+    });
+    if (!activeTile) activeMixerKey = "";
+  }
+
+  function activateMixerTile(tile, { focus = true } = {}) {
+    if (!tile) return;
+    activeMixerKey = tile.dataset.mixerKey || "";
+    updateMixerTileSelection();
+    if (focus) tile.querySelector('input[type="range"]')?.focus({ preventScroll: true });
+  }
+
+  function createMixerTile({ key, index, name, color, percent, muted, stemAssetId = "", trackIndex = null }) {
+    const tile = document.createElement("article");
+    const idPrefix = stemAssetId ? "stem" : "track";
+    const labelId = `mixer-${idPrefix}-label-${index}`;
+    const hintId = `mixer-${idPrefix}-hint-${index}`;
+    tile.className = "mixer-tile";
+    tile.dataset.mixerKey = key;
+    tile.style.setProperty("--track-color", color);
+    tile.setAttribute("role", "group");
+    tile.setAttribute("aria-labelledby", labelId);
+
+    const header = document.createElement("header");
+    header.className = "mixer-tile-header";
+    const label = document.createElement("div");
+    label.className = "mixer-tile-label";
+    const number = document.createElement("span");
+    number.className = "mixer-tile-number";
+    number.textContent = String(index + 1).padStart(2, "0");
+    const title = document.createElement("strong");
+    title.id = labelId;
+    title.textContent = name;
+    title.title = name;
+    label.append(number, title);
+
+    const mute = document.createElement("button");
+    mute.className = "mute-button";
+    mute.type = "button";
+    if (stemAssetId) mute.dataset.muteStem = stemAssetId;
+    else mute.dataset.muteTrack = String(trackIndex);
+    mute.setAttribute("aria-label", `${muted ? "Unmute" : "Mute"} ${name}`);
+    mute.setAttribute("aria-pressed", String(muted));
+    mute.textContent = "M";
+    header.append(label, mute);
+
+    const gesture = document.createElement("div");
+    gesture.className = "mixer-gesture";
+    gesture.dataset.mixerGesture = "";
+    const waveform = document.createElement("span");
+    waveform.className = "mixer-waveform";
+    waveform.setAttribute("aria-hidden", "true");
+    for (let barIndex = 0; barIndex < 7; barIndex += 1) {
+      const bar = document.createElement("i");
+      bar.className = "mixer-wave-bar";
+      waveform.append(bar);
+    }
+    const amount = document.createElement("span");
+    amount.className = "mixer-amount";
+    amount.dataset.mixerAmount = "";
+    amount.setAttribute("aria-hidden", "true");
+    const hint = document.createElement("span");
+    hint.className = "mixer-hint";
+    hint.id = hintId;
+    hint.dataset.mixerHint = "";
+    gesture.append(waveform, amount, hint);
+
+    const slider = document.createElement("input");
+    slider.className = "sr-only mixer-native-range";
+    slider.id = `mixer-${idPrefix}-volume-${index}`;
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "100";
+    slider.step = "1";
+    slider.value = String(Math.round(percent));
+    slider.setAttribute("aria-label", `${name} volume`);
+    slider.setAttribute("aria-describedby", hintId);
+    slider.setAttribute("aria-orientation", "vertical");
+    if (stemAssetId) slider.dataset.volumeStem = stemAssetId;
+    else slider.dataset.volumeTrack = String(trackIndex);
+
+    const stepper = document.createElement("div");
+    stepper.className = "mixer-stepper";
+    const decrease = document.createElement("button");
+    decrease.className = "mixer-step-button";
+    decrease.type = "button";
+    decrease.dataset.mixerStep = "-5";
+    decrease.setAttribute("aria-label", `Decrease ${name} volume`);
+    decrease.textContent = "−";
+    const direction = document.createElement("span");
+    direction.className = "mixer-direction";
+    direction.setAttribute("aria-hidden", "true");
+    direction.textContent = "↑↓";
+    const increase = document.createElement("button");
+    increase.className = "mixer-step-button";
+    increase.type = "button";
+    increase.dataset.mixerStep = "5";
+    increase.setAttribute("aria-label", `Increase ${name} volume`);
+    increase.textContent = "+";
+    stepper.append(decrease, direction, increase);
+
+    tile.append(header, gesture, slider, stepper);
+    setMixerTilePresentation(tile, percent, muted);
+    return tile;
+  }
+
+  function mixerPercentFromDrag(startValue, startY, currentY, travel) {
+    const delta = ((startY - currentY) / Math.max(travel, 1)) * 100;
+    return clamp(Math.round(startValue + delta), 0, 100);
+  }
+
+  function beginMixerDrag(event) {
+    const gesture = event.target.closest("[data-mixer-gesture]");
+    const tile = gesture?.closest(".mixer-tile");
+    if (!gesture || !tile || !tile.classList.contains("is-active")) return;
+    if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
+    const slider = tile.querySelector('input[type="range"]');
+    if (!slider) return;
+    finishMixerDrag();
+    mixerDrag = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startValue: Number(slider.value),
+      gesture,
+      tile,
+      slider,
+      adjusting: false
+    };
+    tile.classList.add("is-gesture-ready");
+    gesture.setPointerCapture?.(event.pointerId);
+  }
+
+  function moveMixerDrag(event) {
+    if (!mixerDrag || event.pointerId !== mixerDrag.pointerId) return;
+    const distance = mixerDrag.startY - event.clientY;
+    if (!mixerDrag.adjusting && Math.abs(distance) < 7) return;
+    mixerDrag.adjusting = true;
+    mixerDrag.tile.classList.remove("is-gesture-ready");
+    mixerDrag.tile.classList.add("is-adjusting");
+    const nextPercent = mixerPercentFromDrag(
+      mixerDrag.startValue,
+      mixerDrag.startY,
+      event.clientY,
+      mixerDrag.gesture.clientHeight
+    );
+    if (Number(mixerDrag.slider.value) !== nextPercent) {
+      mixerDrag.slider.value = String(nextPercent);
+      mixerDrag.slider.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (event.cancelable) event.preventDefault();
+  }
+
+  function finishMixerDrag(event) {
+    if (!mixerDrag || (event && event.pointerId !== mixerDrag.pointerId)) return;
+    const finished = mixerDrag;
+    mixerDrag = null;
+    finished.tile.classList.remove("is-gesture-ready", "is-adjusting");
+    if (finished.adjusting) {
+      suppressedMixerClick = {
+        key: finished.tile.dataset.mixerKey || "",
+        until: performance.now() + 300
+      };
+    }
+    try {
+      if (finished.gesture.hasPointerCapture?.(finished.pointerId)) {
+        finished.gesture.releasePointerCapture(finished.pointerId);
+      }
+    } catch {
+      // Pointer capture may already be released after cancellation.
+    }
+  }
+
+  function stepMixerTile(tile, amount) {
+    const slider = tile?.querySelector('input[type="range"]');
+    if (!slider) return;
+    activateMixerTile(tile, { focus: false });
+    const nextPercent = clamp(Number(slider.value) + amount, 0, 100);
+    if (Number(slider.value) === nextPercent) return;
+    slider.value = String(nextPercent);
+    slider.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
   function renderMixer() {
+    finishMixerDrag();
     dom.mixer.replaceChildren();
     if (state.kind === "stem-import") {
       dom.mixEyebrow.textContent = "Aligned stem mix";
       dom.mixTitle.textContent = "Balance every part.";
-      dom.mixLede.textContent = "These controls follow the compact player across Studio, Mix, Projects, and Create.";
+      dom.mixLede.textContent = "Tap a stem, then swipe up or down. Its motion follows the level while the player stays in reach.";
       state.stemImport.tracks.forEach((track, index) => {
-        const channel = document.createElement("section");
-        channel.className = "mixer-channel stem-mixer-channel";
-        channel.style.setProperty("--track-color", track.color || STEM_COLORS[index % STEM_COLORS.length]);
-        const label = document.createElement("div");
-        label.className = "mixer-label";
-        const strong = document.createElement("strong");
-        strong.textContent = track.name;
-        const amount = document.createElement("span");
-        amount.textContent = `${Math.round(track.volume * 100)}%`;
-        label.append(strong, amount);
-        const sliderLabel = document.createElement("label");
-        sliderLabel.className = "sr-only";
-        sliderLabel.htmlFor = `stem-volume-${index}`;
-        sliderLabel.textContent = `${track.name} volume`;
-        const slider = document.createElement("input");
-        slider.id = `stem-volume-${index}`;
-        slider.type = "range";
-        slider.min = "0";
-        slider.max = "100";
-        slider.value = String(Math.round(track.volume * 100));
-        slider.dataset.volumeStem = track.assetId;
-        const mute = document.createElement("button");
-        mute.className = "mute-button";
-        mute.type = "button";
-        mute.dataset.muteStem = track.assetId;
-        mute.setAttribute("aria-label", `${track.muted ? "Unmute" : "Mute"} ${track.name}`);
-        mute.setAttribute("aria-pressed", String(track.muted));
-        mute.textContent = "M";
-        channel.append(label, sliderLabel, slider, mute);
-        dom.mixer.append(channel);
+        dom.mixer.append(createMixerTile({
+          key: `stem:${track.assetId}`,
+          index,
+          name: track.name,
+          color: track.color || STEM_COLORS[index % STEM_COLORS.length],
+          percent: track.volume * 100,
+          muted: track.muted,
+          stemAssetId: track.assetId
+        }));
       });
-      return;
+    } else {
+      dom.mixEyebrow.textContent = "Keep it simple";
+      dom.mixTitle.textContent = "Mix by feel.";
+      dom.mixLede.textContent = "Tap a tile, then swipe up or down. Its motion follows the level.";
+      TRACKS.forEach((track, index) => {
+        dom.mixer.append(createMixerTile({
+          key: `track:${track.id}`,
+          index,
+          name: track.name,
+          color: track.color,
+          percent: state.volumes[index] * 100,
+          muted: state.muted[index],
+          trackIndex: index
+        }));
+      });
     }
-    dom.mixEyebrow.textContent = "Keep it simple";
-    dom.mixTitle.textContent = "Mix by feel.";
-    dom.mixLede.textContent = "Four voices, one clear balance. Nothing is hidden behind a desktop panel.";
-    TRACKS.forEach((track, index) => {
-      const channel = document.createElement("section");
-      channel.className = "mixer-channel";
-      channel.style.setProperty("--track-color", track.color);
-      channel.innerHTML = `
-        <div class="mixer-label">
-          <strong>${track.name}</strong>
-          <span>${Math.round(state.volumes[index] * 100)}%</span>
-        </div>
-        <label class="sr-only" for="volume-${track.id}">${track.name} volume</label>
-        <input id="volume-${track.id}" type="range" min="0" max="100" value="${Math.round(state.volumes[index] * 100)}" data-volume-track="${index}" />
-        <button class="mute-button" type="button" data-mute-track="${index}" aria-label="${state.muted[index] ? "Unmute" : "Mute"} ${track.name}" aria-pressed="${state.muted[index]}">M</button>`;
-      dom.mixer.append(channel);
-    });
+    updateMixerTileSelection();
   }
 
   function renderStemArrangement() {
@@ -2162,6 +2360,36 @@
     });
   }
 
+  dom.mixer.addEventListener("click", (event) => {
+    const tile = event.target.closest(".mixer-tile");
+    if (!tile) return;
+    const stepButton = event.target.closest("[data-mixer-step]");
+    if (stepButton) {
+      stepMixerTile(tile, Number(stepButton.dataset.mixerStep));
+      return;
+    }
+    if (event.target.closest(".mute-button")) return;
+    if (
+      event.target.closest("[data-mixer-gesture]")
+      && suppressedMixerClick.key === tile.dataset.mixerKey
+      && performance.now() < suppressedMixerClick.until
+    ) {
+      event.preventDefault();
+      return;
+    }
+    activateMixerTile(tile);
+  });
+  dom.mixer.addEventListener("focusin", (event) => {
+    const tile = event.target.closest(".mixer-tile");
+    if (tile) activateMixerTile(tile, { focus: false });
+  });
+  dom.mixer.addEventListener("pointerdown", beginMixerDrag);
+  dom.mixer.addEventListener("pointermove", moveMixerDrag);
+  dom.mixer.addEventListener("pointerup", finishMixerDrag);
+  dom.mixer.addEventListener("pointercancel", finishMixerDrag);
+  dom.mixer.addEventListener("lostpointercapture", finishMixerDrag);
+  window.addEventListener("pagehide", () => finishMixerDrag());
+
   document.addEventListener("click", (event) => {
     const target = event.target.closest("button");
     if (!target) return;
@@ -2243,7 +2471,7 @@
       const track = stemTrack(stemSlider.dataset.volumeStem);
       if (!track) return;
       track.volume = Number(stemSlider.value) / 100;
-      stemSlider.closest(".mixer-channel").querySelector(".mixer-label span").textContent = `${stemSlider.value}%`;
+      setMixerTilePresentation(stemSlider.closest(".mixer-tile"), stemSlider.value, track.muted);
       stemPlayer?.setMix(track.assetId, track.volume, track.muted);
       queueSave();
       return;
@@ -2252,7 +2480,7 @@
     if (!slider) return;
     const trackIndex = Number(slider.dataset.volumeTrack);
     state.volumes[trackIndex] = Number(slider.value) / 100;
-    slider.closest(".mixer-channel").querySelector(".mixer-label span").textContent = `${slider.value}%`;
+    setMixerTilePresentation(slider.closest(".mixer-tile"), slider.value, state.muted[trackIndex]);
     queueSave();
   });
 
