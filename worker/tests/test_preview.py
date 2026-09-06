@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import wave
 from pathlib import Path
 
@@ -13,6 +14,29 @@ from opusloops_worker.preview import (
     create_mobile_click_audition,
 )
 from opusloops_worker.storage import sha256_file
+
+
+def test_preview_commands_restrict_ffmpeg_to_local_files(monkeypatch, tmp_path: Path) -> None:
+    source = tmp_path / "source.wav"
+    source.write_bytes(b"audio")
+    destination = tmp_path / "preview.m4a"
+    captured: list[str] = []
+
+    def run(command, **_kwargs):
+        captured.extend(command)
+        destination.write_bytes(b"preview")
+        return subprocess.CompletedProcess(command, 0, b"", b"")
+
+    monkeypatch.setattr(subprocess, "run", run)
+
+    create_mobile_click_audition(
+        source=source,
+        destination=destination,
+        ffmpeg=Path("/usr/bin/ffmpeg"),
+    )
+
+    input_index = captured.index("-i")
+    assert captured[input_index - 2 : input_index] == ["-protocol_whitelist", "file"]
 
 
 @pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="FFmpeg is unavailable")

@@ -58,6 +58,8 @@ def test_runtime_installs_account_tools_before_creating_non_root_user() -> None:
     dockerfile = (WORKER_ROOT / "Dockerfile").read_text(encoding="utf-8")
     runtime = dockerfile.split("FROM ${PYTHON_BASE} AS runtime", 1)[1]
 
+    assert runtime.index("apt-get update") < runtime.index("apt-get upgrade -y")
+    assert runtime.index("apt-get upgrade -y") < runtime.index("apt-get install -y")
     assert "        passwd \\\n" in runtime
     assert runtime.index("        passwd \\\n") < runtime.index("/usr/sbin/groupadd --gid 10001")
     assert "/usr/sbin/useradd --uid 10001" in runtime

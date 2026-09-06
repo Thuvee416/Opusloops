@@ -73,6 +73,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     OPUSLOOPS_SCRATCH_ROOT=/scratch
 
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         ffmpeg \
