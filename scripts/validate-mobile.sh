@@ -191,9 +191,11 @@ node --check mobile/frame-guard.js
 node --check mobile/service-worker.js
 node --check supabase/functions/create-opusloops-account/handler.mjs
 node --check supabase/functions/create-opusloops-account/policy.mjs
+node --check supabase/functions/stem-import/aws-dispatch.mjs
 node --test \
   supabase/functions/create-opusloops-account/handler.test.mjs \
-  supabase/functions/create-opusloops-account/policy.test.mjs
+  supabase/functions/create-opusloops-account/policy.test.mjs \
+  supabase/functions/stem-import/aws-dispatch.test.mjs
 node --input-type=module <<'NODE'
 import assert from 'node:assert/strict';
 import { DOCK_PIXEL_PALETTES } from './mobile/pixel-dock.mjs';

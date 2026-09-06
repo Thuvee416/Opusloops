@@ -135,7 +135,10 @@ deterministic Batch job name, binds a discovered AWS job ID, and submits only
 when no accepted job exists. A callback that wins the SubmitJob-response race
 may bind the first authoritative `dispatchJobId`; every competing ID is rejected
 under the job lock. A late SubmitJob recorder is idempotent and cannot regress a
-running attempt.
+running attempt. Network and response-body failures plus HTTP 408, 429, and 5xx
+responses are treated as potentially accepted submissions and enter durable
+`ListJobs` reconciliation. Other HTTP 4xx responses are deterministic dispatch
+errors and return the attempt directly to the queued path.
 
 Dispatch requires a freshly validated user JWT with at least 2,700 seconds
 remaining (the browser should refresh at 3,000 seconds). The Batch payload uses

@@ -1,3 +1,9 @@
+import {
+  DispatchError,
+  dispatchFailureRpcName,
+  fetchAwsBatch,
+  requireAwsBatchJson,
+} from "./aws-dispatch.mjs";
 import { canonicalAssetUuid, canonicalV4Uuid } from "./validation.ts";
 
 const allowedOrigins = new Set([
@@ -24,12 +30,6 @@ class ApiError extends Error {
     message: string,
   ) {
     super(message);
-  }
-}
-
-class DispatchError extends Error {
-  constructor(readonly ambiguous: boolean) {
-    super("AWS Batch dispatch failed");
   }
 }
 
@@ -339,23 +339,17 @@ async function awsBatchRequest(path: string, body: JsonObject): Promise<JsonObje
   const authorization = `AWS4-HMAC-SHA256 Credential=${accessKey}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
-  let response: Response;
   try {
-    response = await fetch(`https://${host}${path}`, {
+    const response = await fetchAwsBatch(fetch, `https://${host}${path}`, {
       method: "POST",
       headers: { ...headers, authorization },
       body: requestBody,
       signal: controller.signal,
     });
-  } catch {
-    throw new DispatchError(true);
+    return await requireAwsBatchJson(response) as JsonObject;
   } finally {
     clearTimeout(timeout);
   }
-  const result = await readResponse(response) as JsonObject | null;
-  if (!response.ok) throw new DispatchError(false);
-  if (!result || typeof result !== "object" || Array.isArray(result)) throw new DispatchError(true);
-  return result;
 }
 
 async function submitBatchJob(payload: JsonObject, jobName: string): Promise<string> {
@@ -488,9 +482,7 @@ async function dispatch(
   try {
     externalJobId = await submitBatchJob(workerPayload, jobName);
   } catch (error) {
-    const rpcName = error instanceof DispatchError && error.ambiguous
-      ? "record_stem_dispatch_unknown"
-      : "record_stem_dispatch_error";
+    const rpcName = dispatchFailureRpcName(error);
     const rpcBody: JsonObject = {
       p_attempt_id: attemptId,
       p_claim_id: claimId,
