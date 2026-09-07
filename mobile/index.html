@@ -673,6 +673,7 @@
             <h3 id="profile-security-title">Change password</h3>
           </div>
           <form id="password-form" novalidate>
+            <input id="password-username" name="username" type="email" autocomplete="username" tabindex="-1" aria-hidden="true" hidden />
             <label for="password-current">Current password</label>
             <input id="password-current" name="current-password" type="password" autocomplete="current-password" aria-describedby="password-error" required />
             <label for="password-new">New password</label>
@@ -706,7 +707,7 @@
     <script src="./stem-import-core.js?v=9" defer></script>
     <script src="./stem-player.js?v=5" defer></script>
     <script src="./stem-import.js?v=9" defer></script>
-    <script src="./app.js?v=34" defer></script>
+    <script src="./app.js?v=35" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
     <script src="./grainient-mixer.mjs?v=2" type="module"></script>
     <script src="./soft-aurora-player.mjs?v=1" type="module"></script>

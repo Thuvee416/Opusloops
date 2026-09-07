@@ -183,6 +183,7 @@
     profileStatus: document.querySelector("#profile-status"),
     profileSubmit: document.querySelector("#profile-submit"),
     passwordForm: document.querySelector("#password-form"),
+    passwordUsername: document.querySelector("#password-username"),
     passwordCurrent: document.querySelector("#password-current"),
     passwordNew: document.querySelector("#password-new"),
     passwordConfirm: document.querySelector("#password-confirm"),
@@ -1084,6 +1085,7 @@
     dom.profileSummaryEmail.textContent = "";
     dom.profilePendingEmail.textContent = "";
     dom.profilePendingEmail.hidden = true;
+    dom.passwordUsername.value = "";
     [dom.profileError, dom.profileStatus, dom.passwordError, dom.passwordStatus]
       .forEach((element) => setProfileMessage(element));
     [dom.profileDisplayName, dom.profileEmail, dom.passwordCurrent, dom.passwordNew, dom.passwordConfirm]
@@ -1123,6 +1125,7 @@
     dom.profileDisplayName.value = currentUser.displayName || "";
     dom.profileEmail.value = currentUser.email;
     dom.passwordForm.reset();
+    dom.passwordUsername.value = currentUser.email;
     setProfileMessage(dom.profileError);
     setProfileMessage(dom.profileStatus);
     setProfileMessage(dom.passwordError);
