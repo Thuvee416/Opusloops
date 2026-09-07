@@ -1213,7 +1213,11 @@
       adjusting: false
     };
     tile.classList.add("is-gesture-ready");
-    gesture.setPointerCapture?.(event.pointerId);
+    try {
+      gesture.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Window-level listeners keep the drag alive when capture is unavailable.
+    }
   }
 
   function moveMixerDrag(event) {
@@ -2350,11 +2354,14 @@
     if (tile) activateMixerTile(tile, { focus: false });
   });
   dom.mixer.addEventListener("pointerdown", beginMixerDrag);
-  dom.mixer.addEventListener("pointermove", moveMixerDrag);
-  dom.mixer.addEventListener("pointerup", finishMixerDrag);
-  dom.mixer.addEventListener("pointercancel", finishMixerDrag);
-  dom.mixer.addEventListener("lostpointercapture", finishMixerDrag);
+  window.addEventListener("pointermove", moveMixerDrag, { passive: false });
+  window.addEventListener("pointerup", finishMixerDrag);
+  window.addEventListener("pointercancel", finishMixerDrag);
+  window.addEventListener("blur", () => finishMixerDrag());
   window.addEventListener("pagehide", () => finishMixerDrag());
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) finishMixerDrag();
+  });
 
   document.addEventListener("click", (event) => {
     const target = event.target.closest("button");

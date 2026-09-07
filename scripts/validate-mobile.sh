@@ -143,7 +143,9 @@ for token in (
     'slider.type = "range"',
     'slider.setAttribute("aria-orientation", "vertical")',
     "activateMixerTile(tile);",
-    'dom.mixer.addEventListener("pointermove", moveMixerDrag)',
+    'window.addEventListener("pointermove", moveMixerDrag, { passive: false })',
+    'window.addEventListener("pointerup", finishMixerDrag)',
+    "Window-level listeners keep the drag alive when capture is unavailable.",
     'stemPlayer?.setMix(track.assetId, track.volume, track.muted)',
 ):
     if token not in app_source:
