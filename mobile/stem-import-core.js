@@ -564,6 +564,7 @@
       channels: Math.max(0, Math.trunc(finiteNumber(pick(source, "channels"), 0))),
       sampleRate: Math.max(0, Math.trunc(finiteNumber(pick(source, "sampleRate", "sample_rate"), 0))),
       muted: Boolean(pick(source, "muted")),
+      soloed: Boolean(pick(source, "soloed")),
       volume: Math.max(0, Math.min(1, finiteNumber(pick(source, "volume"), 1))),
       color: boundedString(pick(source, "color"), 30)
     };
@@ -811,7 +812,8 @@
       return {
         ...track,
         volume: finiteNumber(previousTrack?.volume, track.volume),
-        muted: Boolean(previousTrack?.muted ?? track.muted)
+        muted: Boolean(previousTrack?.muted ?? track.muted),
+        soloed: Boolean(previousTrack?.soloed ?? track.soloed)
       };
     });
     const previewAssets = assets.filter((asset) =>
@@ -827,7 +829,7 @@
     });
     const analyzedTempo = finiteNumber(pick(job.analysis, "medianBpm", "median_bpm"), 120);
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       kind: "stem-import",
       id: job.projectId,
       name: boundedString(previous?.name || job.sourceName.replace(/\.(zip)$/i, "") || "Imported stems", 48),

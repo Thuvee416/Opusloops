@@ -257,7 +257,7 @@ class MixerGrainientRenderer {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "data-mix-color", "data-mix-index", "data-mix-level", "data-mix-muted"]
+      attributeFilter: ["class", "data-mix-color", "data-mix-index", "data-mix-level", "data-mix-audible"]
     });
     if (this.mixView) {
       this.viewObserver = new MutationObserver(() => this.queueDraw());
@@ -351,7 +351,7 @@ class MixerGrainientRenderer {
   }
 
   hasMovingTile() {
-    return this.tiles().some((tile) => tile.dataset.mixMuted !== "true" && Number(tile.dataset.mixLevel) > 0);
+    return this.tiles().some((tile) => tile.dataset.mixAudible === "true" && Number(tile.dataset.mixLevel) > 0);
   }
 
   canDraw() {
@@ -470,7 +470,8 @@ class MixerGrainientRenderer {
       gl.scissor(clippedLeft, clippedBottom, clippedRight - clippedLeft, clippedTop - clippedBottom);
 
       const level = clamp(Number(tile.dataset.mixLevel) || 0, 0, 1);
-      const muted = tile.dataset.mixMuted === "true";
+      const audible = tile.dataset.mixAudible === "true";
+      const muted = !audible;
       const index = Math.max(0, Math.trunc(Number(tile.dataset.mixIndex) || 0));
       const interaction = tile.classList.contains("is-adjusting") ? 1 : tile.classList.contains("is-active") ? 0.55 : 0;
       const palette = this.paletteFor(tile);

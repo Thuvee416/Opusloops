@@ -5,7 +5,8 @@
   const STORAGE_PROJECTS = "opusloops.mobile.projects.v1";
   const STORAGE_RECOVERY = "opusloops.mobile.recovery.v1";
   const STORAGE_DELETIONS = "opusloops.mobile.deletions.v1";
-  const PROJECT_SCHEMA_VERSION = 3;
+  const STORAGE_PREFERENCES = "opusloops.mobile.preferences.v1";
+  const PROJECT_SCHEMA_VERSION = 4;
   const AUDIO_ENGINE_VERSION = 1;
   const CLOUD_SAVE_DELAY = 650;
   const STEM_PREVIEW_ASSET_LIMIT = 16 * 512;
@@ -42,6 +43,7 @@
     patterns: defaultPatterns(),
     volumes: [0.88, 0.68, 0.6, 0.48],
     muted: [false, false, false, false],
+    soloed: [false, false, false, false],
     stemImport: null,
     updatedAt: new Date().toISOString()
   });
@@ -50,6 +52,7 @@
   const stemAssetsByJob = new Map();
   let currentUser = cloud?.getSession()?.user || null;
   let storageReadWarning = "";
+  let preferences = readPreferences();
   const storedState = readCurrent();
   let state = storedState || makeProject();
   let hasSavedState = Boolean(storedState);
@@ -64,6 +67,7 @@
   let audioContext = null;
   let masterGain = null;
   let masterLimiter = null;
+  let generatedTrackGains = [];
   let noiseBuffer = null;
   let noiseSeed = null;
   const activeVoices = new Map();
@@ -98,9 +102,12 @@
   let activeMixerKey = "";
   let mixerDrag = null;
   let suppressedMixerClick = { key: "", until: 0 };
-  let studioWindowBars = 8;
+  let studioWindowBars = preferences.studioWindowBars;
   let studioWindowStart = 0;
   let studioWindowProjectId = "";
+  let studioLoopSelection = false;
+  let studioLoopScopeLabel = "";
+  let studioLoopRequest = 0;
 
   const dom = {
     composerForm: document.querySelector("#composer-form"),
@@ -120,6 +127,8 @@
     sequencer: document.querySelector("#sequencer"),
     mixer: document.querySelector("#mixer"),
     projectsList: document.querySelector("#projects-list"),
+    libraryStatus: document.querySelector("#library-status"),
+    preferenceLoop: document.querySelector("#preference-loop"),
     saveAnnouncer: document.querySelector("#save-announcer"),
     saveCopy: document.querySelector("#save-copy"),
     recentName: document.querySelector("#recent-project-name"),
@@ -167,6 +176,7 @@
     stemWindowLabel: document.querySelector("#stem-window-label"),
     stemWindowPrevious: document.querySelector("#stem-window-previous"),
     stemWindowNext: document.querySelector("#stem-window-next"),
+    stemWindowLoop: document.querySelector("#stem-window-loop"),
     tempoAdjustments: document.querySelector("#tempo-adjustments"),
     keyDetail: document.querySelector("#key-detail"),
     mixEyebrow: document.querySelector("#mix-eyebrow"),
@@ -269,6 +279,7 @@
       ),
       volumes: TRACKS.map((_, index) => clamp(Number(candidate.volumes?.[index] ?? base.volumes[index]), 0, 1)),
       muted: TRACKS.map((_, index) => Boolean(candidate.muted?.[index])),
+      soloed: TRACKS.map((_, index) => Boolean(candidate.soloed?.[index])),
       stemImport: kind === "stem-import" ? stemImport : null,
       updatedAt: normalizeTimestamp(candidate.updatedAt, base.updatedAt)
     };
@@ -353,6 +364,24 @@
       return true;
     } catch {
       showToast("This browser could not save the project");
+      return false;
+    }
+  }
+
+  function readPreferences() {
+    const stored = readJson(STORAGE_PREFERENCES, {});
+    return {
+      studioWindowBars: Number(stored?.studioWindowBars) === 4 ? 4 : 8,
+      loopWhileEditing: Boolean(stored?.loopWhileEditing)
+    };
+  }
+
+  function writePreferences() {
+    try {
+      localStorage.setItem(STORAGE_PREFERENCES, JSON.stringify(preferences));
+      return true;
+    } catch {
+      showToast("This browser could not save the device setting");
       return false;
     }
   }
@@ -580,6 +609,7 @@
       patterns: normalized.patterns,
       volumes: normalized.volumes,
       muted: normalized.muted,
+      soloed: normalized.soloed,
       stemImport: persistedStemImport,
       updatedAt: normalized.updatedAt
     };
@@ -867,16 +897,16 @@
         dom.accountCardButton.textContent = "Manage account";
         dom.accountCardButton.dataset.action = "manage";
       }
-      dom.projectsEyebrow.textContent = "Private cloud library";
-      dom.projectsLede.textContent = "Available offline here and synced privately to your account when connected.";
+      dom.projectsEyebrow.textContent = "Library, account & settings";
+      dom.projectsLede.textContent = "Projects stay available offline and sync privately to your account when connected.";
     } else {
       dom.accountCardEyebrow.textContent = "Private cloud sync";
       dom.accountCardTitle.textContent = "Keep every loop with you.";
       dom.accountCardCopy.textContent = "Sign in to bring your projects to another phone without giving up offline access.";
       dom.accountCardButton.textContent = "Sign in";
       dom.accountCardButton.dataset.action = "signin";
-      dom.projectsEyebrow.textContent = "Device first";
-      dom.projectsLede.textContent = "Create and play offline. Sign in to privately sync your work across devices.";
+      dom.projectsEyebrow.textContent = "Library, account & settings";
+      dom.projectsLede.textContent = "Manage your projects, private sync and device preferences in one place.";
     }
   }
 
@@ -991,6 +1021,7 @@
       key: KEYS[seed % KEYS.length],
       swing: playful ? 0.18 : warm ? 0.12 : 0.06,
       patterns,
+      soloed: [false, false, false, false],
       updatedAt: new Date().toISOString()
     });
 
@@ -1010,8 +1041,8 @@
     dom.tempoAdjustments.classList.toggle("is-readonly", stems);
     dom.keyDetail.hidden = stems;
     if (stems) {
-      renderStemArrangement();
       stemPlayer?.loadProject(state);
+      renderStemArrangement();
     } else {
       renderSequencer();
     }
@@ -1087,17 +1118,30 @@
     };
   }
 
-  function setMixerTilePresentation(tile, percent, muted) {
+  function generatedTrackIsAudible(project, trackIndex) {
+    const hasSolo = TRACKS.some((_, index) => Boolean(project.soloed?.[index]));
+    return !project.muted?.[trackIndex] && (!hasSolo || Boolean(project.soloed?.[trackIndex]));
+  }
+
+  function setMixerTilePresentation(tile, percent, muted, soloed = false, soloSuppressed = false) {
     if (!tile) return;
     const presentation = mixerPresentation(percent);
     tile.dataset.mixLevel = presentation.level.toFixed(2);
     tile.dataset.mixMuted = String(Boolean(muted));
+    tile.dataset.mixAudible = String(!muted && !soloSuppressed);
     tile.classList.toggle("is-silent", presentation.percent === 0);
     tile.classList.toggle("is-muted", Boolean(muted));
+    tile.classList.toggle("is-soloed", Boolean(soloed));
+    tile.classList.toggle("is-solo-suppressed", Boolean(soloSuppressed));
     const amountValue = tile.querySelector("[data-mixer-value]");
     if (amountValue) amountValue.textContent = String(presentation.percent);
     const slider = tile.querySelector('input[type="range"]');
-    if (slider) slider.setAttribute("aria-valuetext", `${presentation.percent} percent${muted ? ", muted" : ""}`);
+    if (slider) {
+      const mixState = [muted ? "muted" : "", soloed ? "soloed" : "", soloSuppressed ? "not in solo" : ""]
+        .filter(Boolean)
+        .join(", ");
+      slider.setAttribute("aria-valuetext", `${presentation.percent} percent${mixState ? `, ${mixState}` : ""}`);
+    }
   }
 
   function updateMixerTileSelection() {
@@ -1117,7 +1161,18 @@
     if (focus) tile.querySelector('input[type="range"]')?.focus({ preventScroll: true });
   }
 
-  function createMixerTile({ key, index, name, color, percent, muted, stemAssetId = "", trackIndex = null }) {
+  function createMixerTile({
+    key,
+    index,
+    name,
+    color,
+    percent,
+    muted,
+    soloed,
+    soloSuppressed,
+    stemAssetId = "",
+    trackIndex = null
+  }) {
     const tile = document.createElement("article");
     const idPrefix = stemAssetId ? "stem" : "track";
     const labelId = `mixer-${idPrefix}-label-${index}`;
@@ -1130,28 +1185,36 @@
     tile.setAttribute("role", "group");
     tile.setAttribute("aria-labelledby", labelId);
 
-    const header = document.createElement("header");
+    const header = document.createElement("div");
     header.className = "mixer-tile-header";
     const label = document.createElement("div");
     label.className = "mixer-tile-label";
-    const number = document.createElement("span");
-    number.className = "mixer-tile-number";
-    number.textContent = String(index + 1).padStart(2, "0");
     const title = document.createElement("strong");
     title.id = labelId;
     title.textContent = name;
     title.title = name;
-    label.append(number, title);
+    label.append(title);
 
+    const controls = document.createElement("div");
+    controls.className = "mixer-mode-buttons";
     const mute = document.createElement("button");
-    mute.className = "mute-button";
+    mute.className = "mix-mode-button mute-button";
     mute.type = "button";
     if (stemAssetId) mute.dataset.muteStem = stemAssetId;
     else mute.dataset.muteTrack = String(trackIndex);
     mute.setAttribute("aria-label", `${muted ? "Unmute" : "Mute"} ${name}`);
     mute.setAttribute("aria-pressed", String(muted));
     mute.textContent = "M";
-    header.append(label, mute);
+    const solo = document.createElement("button");
+    solo.className = "mix-mode-button solo-button";
+    solo.type = "button";
+    if (stemAssetId) solo.dataset.soloStem = stemAssetId;
+    else solo.dataset.soloTrack = String(trackIndex);
+    solo.setAttribute("aria-label", `${soloed ? "Unsolo" : "Solo"} ${name}`);
+    solo.setAttribute("aria-pressed", String(Boolean(soloed)));
+    solo.textContent = "S";
+    controls.append(mute, solo);
+    header.append(label, controls);
 
     const gesture = document.createElement("div");
     gesture.className = "mixer-gesture";
@@ -1190,7 +1253,7 @@
     else slider.dataset.volumeTrack = String(trackIndex);
 
     tile.append(header, gesture, slider);
-    setMixerTilePresentation(tile, percent, muted);
+    setMixerTilePresentation(tile, percent, muted, soloed, soloSuppressed);
     return tile;
   }
 
@@ -1266,12 +1329,22 @@
   }
 
   function renderMixer() {
+    const focusedModeButton = dom.mixer.contains(document.activeElement)
+      ? document.activeElement?.closest?.(".mix-mode-button")
+      : null;
+    const focusSnapshot = focusedModeButton
+      ? {
+          key: focusedModeButton.closest(".mixer-tile")?.dataset.mixerKey || "",
+          mode: focusedModeButton.classList.contains("solo-button") ? "solo" : "mute"
+        }
+      : null;
     finishMixerDrag();
     dom.mixer.replaceChildren();
     if (state.kind === "stem-import") {
       dom.mixEyebrow.textContent = "Aligned stem mix";
       dom.mixTitle.textContent = "Balance every part.";
       dom.mixLede.textContent = "Drag up or down on any stem. The number and motion follow your finger live.";
+      const hasSolo = state.stemImport.tracks.some((track) => track.soloed);
       state.stemImport.tracks.forEach((track, index) => {
         dom.mixer.append(createMixerTile({
           key: `stem:${track.assetId}`,
@@ -1280,6 +1353,8 @@
           color: track.color || STEM_COLORS[index % STEM_COLORS.length],
           percent: track.volume * 100,
           muted: track.muted,
+          soloed: track.soloed,
+          soloSuppressed: hasSolo && !track.soloed,
           stemAssetId: track.assetId
         }));
       });
@@ -1287,6 +1362,7 @@
       dom.mixEyebrow.textContent = "Keep it simple";
       dom.mixTitle.textContent = "Mix by feel.";
       dom.mixLede.textContent = "Drag up or down on any tile. The number and motion follow your finger live.";
+      const hasSolo = TRACKS.some((_, index) => state.soloed[index]);
       TRACKS.forEach((track, index) => {
         dom.mixer.append(createMixerTile({
           key: `track:${track.id}`,
@@ -1295,11 +1371,20 @@
           color: track.color,
           percent: state.volumes[index] * 100,
           muted: state.muted[index],
+          soloed: state.soloed[index],
+          soloSuppressed: hasSolo && !state.soloed[index],
           trackIndex: index
         }));
       });
     }
     updateMixerTileSelection();
+    if (focusSnapshot?.key) {
+      const replacementTile = Array.from(dom.mixer.querySelectorAll(".mixer-tile"))
+        .find((tile) => tile.dataset.mixerKey === focusSnapshot.key);
+      replacementTile
+        ?.querySelector(`.${focusSnapshot.mode}-button`)
+        ?.focus({ preventScroll: true });
+    }
   }
 
   function stemArrangementRegions(stem = state.stemImport) {
@@ -1331,7 +1416,10 @@
     if (studioWindowProjectId !== state.id) {
       studioWindowProjectId = state.id;
       studioWindowStart = 0;
-      studioWindowBars = 8;
+      studioWindowBars = preferences.studioWindowBars;
+      studioLoopSelection = preferences.loopWhileEditing;
+      studioLoopScopeLabel = "";
+      studioLoopRequest += 1;
     }
     const editWindow = stemCore.studioEditWindow(regionCount, studioWindowBars, studioWindowStart);
     studioWindowStart = editWindow.start;
@@ -1340,11 +1428,27 @@
 
   function setStudioWindowBars(bars) {
     const nextBars = Number(bars) === 4 ? 4 : 8;
+    setStudioWindowBarsPreference(nextBars);
     if (nextBars === studioWindowBars || state.kind !== "stem-import") return;
     studioWindowBars = nextBars;
     const size = studioWindowBars / 4;
     studioWindowStart = Math.floor(studioWindowStart / size) * size;
     renderStemArrangement();
+    if (studioLoopSelection) updateStudioLoopSelection(true, { announce: false });
+  }
+
+  function setStudioWindowBarsPreference(bars) {
+    const nextBars = Number(bars) === 4 ? 4 : 8;
+    if (preferences.studioWindowBars === nextBars) return;
+    preferences.studioWindowBars = nextBars;
+    writePreferences();
+    renderDeviceSettings();
+  }
+
+  function setLoopWhileEditingPreference(enabled) {
+    preferences.loopWhileEditing = Boolean(enabled);
+    writePreferences();
+    renderDeviceSettings();
   }
 
   function moveStudioWindow(direction) {
@@ -1357,6 +1461,7 @@
       editWindow.lastStart
     );
     renderStemArrangement();
+    if (studioLoopSelection) updateStudioLoopSelection(true, { announce: false });
   }
 
   function firstStemAssetForSegment(assetsByTrack, segmentIndex) {
@@ -1388,6 +1493,81 @@
       label: `Bars ${firstRange.startBar}–${lastRange.endBar}`,
       actualBars: Math.max(0, lastRange.endBar - firstRange.startBar + 1)
     };
+  }
+
+  function currentStudioLoopDetails() {
+    if (state.kind !== "stem-import" || state.stemImport.status !== "ready") return null;
+    const { assetsByTrack, indexes, count } = stemArrangementRegions(state.stemImport);
+    const editWindow = currentStudioWindow(count);
+    const segmentIndexes = indexes.slice(editWindow.start, editWindow.end);
+    if (!segmentIndexes.length || segmentIndexes.length > 2) return null;
+    const scope = studioWindowScope(
+      state.stemImport,
+      assetsByTrack,
+      indexes,
+      editWindow.start,
+      editWindow.end
+    );
+    return {
+      segmentIndexes,
+      scopeLabel: scope.label,
+      rangeKey: segmentIndexes.join(":")
+    };
+  }
+
+  function activeStudioLoopRange() {
+    if (!studioLoopSelection || state.kind !== "stem-import" || studioWindowProjectId !== state.id) return null;
+    const range = stemPlayer?.loopRange?.();
+    if (!range || !Number.isFinite(range.start) || !Number.isFinite(range.end) || range.end <= range.start) return null;
+    return {
+      ...range,
+      scopeLabel: studioLoopScopeLabel || "Selected bars",
+      rangeKey: range.segmentIndexes.join(":")
+    };
+  }
+
+  function spokenStudioScope(label) {
+    return String(label || "selected bars").replace(/(\d+)–(\d+)/, "$1 through $2").toLowerCase();
+  }
+
+  async function updateStudioLoopSelection(enabled, { announce = true } = {}) {
+    if (state.kind !== "stem-import" || !stemPlayer) return;
+    const nextEnabled = Boolean(enabled);
+    const details = nextEnabled ? currentStudioLoopDetails() : null;
+    if (nextEnabled && !details) {
+      showToast("This bar selection is not ready to loop");
+      return;
+    }
+    const requestId = ++studioLoopRequest;
+    const shouldResume = playing || playbackStarting;
+    playbackStartRequest += 1;
+    studioLoopSelection = nextEnabled;
+    studioLoopScopeLabel = details?.scopeLabel || "";
+    if (nextEnabled) {
+      playbackSessionVisible = true;
+      playbackProjectId = state.id;
+    }
+    renderStemArrangement();
+    renderPlaybackControls();
+    try {
+      const range = await stemPlayer.setLoopRange(
+        nextEnabled ? { segmentIndexes: details.segmentIndexes } : null,
+        { resume: shouldResume, cue: nextEnabled }
+      );
+      if (requestId !== studioLoopRequest) return;
+      playbackOffset = nextEnabled ? range.start : stemPlayer.position();
+      renderStemArrangement();
+      renderPlaybackControls();
+      if (announce) showToast(nextEnabled ? `Looping ${details.scopeLabel.toLowerCase()}` : "Selection loop off");
+    } catch {
+      if (requestId !== studioLoopRequest) return;
+      studioLoopSelection = false;
+      studioLoopScopeLabel = "";
+      stemPlayer.setLoopRange(null, { resume: false, cue: false }).catch(() => {});
+      renderStemArrangement();
+      renderPlaybackControls();
+      showToast("This bar selection could not be looped");
+    }
   }
 
   function renderStemArrangement() {
@@ -1422,6 +1602,17 @@
     dom.stemWindowLabel.textContent = scopeOutput;
     dom.stemWindowPrevious.disabled = regionCount === 0 || editWindow.start === 0;
     dom.stemWindowNext.disabled = regionCount === 0 || editWindow.start >= editWindow.lastStart;
+    const loopAvailable = state.stemImport.status === "ready" && visibleIndexes.length > 0 && visibleIndexes.length <= 2;
+    if (studioLoopSelection) studioLoopScopeLabel = scopeLabel;
+    dom.stemWindowLoop.disabled = !loopAvailable;
+    dom.stemWindowLoop.setAttribute("aria-pressed", String(studioLoopSelection && loopAvailable));
+    dom.stemWindowLoop.setAttribute("aria-label", studioLoopSelection && loopAvailable
+      ? `Stop looping ${spokenStudioScope(scopeLabel)}`
+      : `Loop ${spokenStudioScope(scopeLabel)}`);
+    dom.stemWindowLoop.title = studioLoopSelection && loopAvailable
+      ? `Stop looping ${scopeLabel.toLowerCase()}`
+      : `Loop ${scopeLabel.toLowerCase()}`;
+    dom.stemStudio.dataset.looping = String(studioLoopSelection && loopAvailable);
     const previousWindow = stemCore.studioEditWindow(
       regionCount,
       studioWindowBars,
@@ -1466,9 +1657,11 @@
       return;
     }
 
+    const hasSolo = stem.tracks.some((track) => track.soloed);
     stem.tracks.forEach((track, trackIndex) => {
+      const soloSuppressed = hasSolo && !track.soloed;
       const row = document.createElement("section");
-      row.className = `arrangement-track${track.muted ? " is-muted" : ""}`;
+      row.className = `arrangement-track${track.muted ? " is-muted" : ""}${track.soloed ? " is-soloed" : ""}${soloSuppressed ? " is-solo-suppressed" : ""}`;
       row.style.setProperty("--track-color", track.color || STEM_COLORS[trackIndex % STEM_COLORS.length]);
       const heading = document.createElement("div");
       heading.className = "arrangement-track-heading";
@@ -1477,7 +1670,9 @@
       const name = document.createElement("strong");
       name.textContent = track.name;
       const role = document.createElement("span");
-      role.textContent = track.muted ? "Mix muted" : track.role;
+      role.textContent = track.muted
+        ? "Mix muted"
+        : track.soloed ? "Mix soloed" : soloSuppressed ? "Not in solo" : track.role;
       heading.append(swatch, name, role);
 
       const trackIndexBySegment = assetsByTrack.get(track.assetId) || new Map();
@@ -1495,7 +1690,7 @@
       toggle.disabled = !available;
       toggle.setAttribute("aria-pressed", available && !allEnabled && !allDisabled ? "mixed" : String(allEnabled));
       toggle.setAttribute("aria-label", available
-        ? `${allEnabled ? "Turn off" : "Turn on"} ${track.name} for ${scopeLabel.toLowerCase()}${track.muted ? "; this stem is muted in Mix" : ""}`
+        ? `${allEnabled ? "Turn off" : "Turn on"} ${track.name} for ${scopeLabel.toLowerCase()}${track.muted ? "; this stem is muted in Mix" : soloSuppressed ? "; this stem is outside the active solo mix" : ""}`
         : `${track.name} is unavailable for ${scopeLabel.toLowerCase()}`);
       const stateDescription = document.createElement("span");
       stateDescription.className = "sr-only";
@@ -1504,7 +1699,7 @@
         ? `${visibleIndexes.map((segmentIndex, index) => {
           const range = stemRegionBars(stem, editWindow.start + index, segmentIndex, windowAssets[index]);
           return `Bars ${range.startBar}–${range.endBar} ${enabledSegments[index] ? "on" : "off"}`;
-        }).join(". ")}.${track.muted ? " This stem is muted in Mix." : ""}`
+        }).join(". ")}.${track.muted ? " This stem is muted in Mix." : soloSuppressed ? " This stem is outside the active solo mix." : track.soloed ? " This stem is soloed in Mix." : ""}`
         : `No aligned audio is available for ${scopeLabel.toLowerCase()}.`;
       toggle.setAttribute("aria-describedby", stateDescription.id);
       const texture = document.createElement("span");
@@ -1536,6 +1731,7 @@
 
   function renderProjects() {
     const projects = readProjects().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    renderDeviceSettings(projects);
     dom.projectsList.replaceChildren();
     if (!projects.length) {
       const empty = document.createElement("div");
@@ -1564,6 +1760,27 @@
     });
   }
 
+  function renderDeviceSettings(projects = readProjects()) {
+    document.querySelectorAll("[data-preference-window-bars]").forEach((button) => {
+      const selected = Number(button.dataset.preferenceWindowBars) === preferences.studioWindowBars;
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    if (dom.preferenceLoop) {
+      dom.preferenceLoop.setAttribute("aria-checked", String(preferences.loopWhileEditing));
+      dom.preferenceLoop.setAttribute(
+        "aria-label",
+        `${preferences.loopWhileEditing ? "Disable" : "Enable"} looping visible bars by default`
+      );
+    }
+    if (dom.libraryStatus) {
+      const imported = projects.filter((project) => project.kind === "stem-import").length;
+      const projectCopy = `${projects.length} ${projects.length === 1 ? "project" : "projects"} on this device`;
+      dom.libraryStatus.textContent = imported
+        ? `${projectCopy} · ${imported} ${imported === 1 ? "stem import" : "stem imports"}`
+        : projectCopy;
+    }
+  }
+
   function escapeHtml(value) {
     return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
   }
@@ -1587,6 +1804,15 @@
 
   function toggleMute(trackIndex) {
     state.muted[trackIndex] = !state.muted[trackIndex];
+    applyGeneratedTrackAudibility();
+    renderSequencer();
+    renderMixer();
+    queueSave();
+  }
+
+  function toggleSolo(trackIndex) {
+    state.soloed[trackIndex] = !state.soloed[trackIndex];
+    applyGeneratedTrackAudibility();
     renderSequencer();
     renderMixer();
     queueSave();
@@ -1602,7 +1828,17 @@
     const track = stemTrack(assetId);
     if (!track) return;
     track.muted = !track.muted;
-    stemPlayer?.setMix(track.assetId, track.volume, track.muted);
+    stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed);
+    renderMixer();
+    renderStemArrangement();
+    queueSave();
+  }
+
+  function toggleStemSolo(assetId) {
+    const track = stemTrack(assetId);
+    if (!track) return;
+    track.soloed = !track.soloed;
+    stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed);
     renderMixer();
     renderStemArrangement();
     queueSave();
@@ -1693,13 +1929,16 @@
 
   function activePlaybackDuration() {
     const audition = activeAuditionState();
-    return audition ? Math.max(0, Number(audition.duration) || 0) : loopDuration();
+    if (audition) return Math.max(0, Number(audition.duration) || 0);
+    return activeStudioLoopRange()?.duration || loopDuration();
   }
 
   function currentPlaybackPosition() {
     const audition = activeAuditionState();
     if (audition) return clamp(Number(audition.position) || 0, 0, activePlaybackDuration());
-    return currentProjectPlaybackPosition();
+    const absolutePosition = currentProjectPlaybackPosition();
+    const loopRange = activeStudioLoopRange();
+    return loopRange ? clamp(absolutePosition - loopRange.start, 0, loopRange.duration) : absolutePosition;
   }
 
   function activePlaybackPlaying() {
@@ -1729,11 +1968,14 @@
     const stepIndex = Math.min(STEPS - 1, Math.floor(Math.min(ratio, 0.999999) * STEPS));
     const currentLabel = formatPlaybackTime(bounded);
     const durationLabel = formatPlaybackTime(duration);
+    const loopRange = !audition ? activeStudioLoopRange() : null;
 
     dom.persistentSeek.value = String(rangeValue);
     dom.persistentSeek.style.setProperty("--seek-progress", `${ratio * 100}%`);
-    dom.persistentSeek.setAttribute("aria-valuetext", audition || state.kind === "stem-import"
-      ? `${currentLabel} of ${durationLabel}`
+    dom.persistentSeek.setAttribute("aria-valuetext", loopRange
+      ? `${currentLabel} of ${durationLabel}, looping ${spokenStudioScope(loopRange.scopeLabel)}`
+      : audition || state.kind === "stem-import"
+        ? `${currentLabel} of ${durationLabel}`
       : `${currentLabel} of ${durationLabel}, step ${stepIndex + 1} of ${STEPS}`);
     dom.persistentCurrentTime.textContent = currentLabel;
     dom.persistentDuration.textContent = durationLabel;
@@ -1741,12 +1983,15 @@
 
   function renderPlaybackMetadata() {
     const audition = activeAuditionState();
-    dom.persistentPlayerTitle.textContent = audition?.title || state.name;
+    const loopRange = !audition ? activeStudioLoopRange() : null;
+    dom.persistentPlayerTitle.textContent = audition?.title
+      || (loopRange ? `Loop ${loopRange.scopeLabel.replace(/^Bars /, "")} · ${state.name}` : state.name);
     renderPlaybackPosition();
   }
 
   function renderPlaybackControls() {
     const audition = activeAuditionState();
+    const loopRange = !audition ? activeStudioLoopRange() : null;
     const projectActive = playing || playbackStarting;
     const persistentStarting = activePlaybackStarting();
     const persistentPlaying = activePlaybackPlaying() && !persistentStarting;
@@ -1761,7 +2006,9 @@
     dom.persistentPlayButton.setAttribute("aria-pressed", String(persistentActive));
     dom.persistentPlayButton.setAttribute("aria-label", audition
       ? `${persistentActive ? "Pause" : "Play"} timing audition`
-      : `${persistentActive ? "Pause" : "Play"} project`);
+      : loopRange
+        ? `${persistentActive ? "Pause" : "Play"} looped ${spokenStudioScope(loopRange.scopeLabel)}`
+        : `${persistentActive ? "Pause" : "Play"} project`);
     dom.persistentPlayer.dataset.playbackState = !playerVisible
       ? "idle"
       : playerBuffering
@@ -1775,10 +2022,14 @@
     dom.persistentPlayer.setAttribute("aria-busy", String(playerBuffering));
     dom.persistentPlayer.setAttribute("aria-label", audition
       ? "Timing audition player"
+      : loopRange
+        ? `Project player, looping ${spokenStudioScope(loopRange.scopeLabel)}`
       : playerBuffering
         ? privateRetrying ? "Project player, retrying audio" : "Project player, preparing audio"
         : "Project player");
-    dom.persistentSeekLabel.textContent = audition ? "Seek within timing audition" : "Seek within project";
+    dom.persistentSeekLabel.textContent = audition
+      ? "Seek within timing audition"
+      : loopRange ? `Seek within looped ${spokenStudioScope(loopRange.scopeLabel)}` : "Seek within project";
     dom.persistentSeek.disabled = activePlaybackDuration() <= 0 || Boolean(audition && !audition.canSeek);
     dom.persistentPlayer.hidden = !playerVisible;
     document.body.classList.toggle("has-persistent-player", playerVisible);
@@ -1859,16 +2110,31 @@
       project.swing,
       project.patterns,
       project.volumes,
-      project.muted
+      project.muted,
+      project.soloed
     ]);
   }
 
   function capturePlaybackMutation() {
     const engaged = playbackSessionVisible && playbackProjectId === state.id;
-    const duration = loopDuration();
+    const activeRange = activeStudioLoopRange();
+    const duration = activeRange?.duration || loopDuration();
     const wasPlaying = engaged && (playing || playbackStarting);
-    const ratio = engaged && duration > 0 ? currentProjectPlaybackPosition() / duration : 0;
-    const snapshot = { engaged, projectId: state.id, ratio, wasPlaying };
+    const rangeStart = activeRange?.start || 0;
+    const position = currentProjectPlaybackPosition();
+    const ratio = engaged && duration > 0
+      ? clamp((position - rangeStart) / duration, 0, 1)
+      : 0;
+    const snapshot = {
+      engaged,
+      projectId: state.id,
+      rangeKey: activeRange?.rangeKey || "",
+      loopSegmentIndexes: activeRange?.segmentIndexes ? [...activeRange.segmentIndexes] : [],
+      loopScopeLabel: activeRange?.scopeLabel || "",
+      position,
+      ratio,
+      wasPlaying
+    };
     if (wasPlaying) stopPlayback({ resetPosition: false });
     return snapshot;
   }
@@ -1884,9 +2150,65 @@
     }
     playbackSessionVisible = true;
     playbackProjectId = state.id;
-    playbackOffset = snapshot.ratio * loopDuration();
+    if (
+      state.kind === "stem-import"
+      && stemPlayer
+      && snapshot.loopSegmentIndexes?.length
+    ) {
+      restoreStemLoopPlaybackMutation(snapshot);
+      return;
+    }
+    const activeRange = activeStudioLoopRange();
+    playbackOffset = activeRange && snapshot.rangeKey === activeRange.rangeKey
+      ? activeRange.start + snapshot.ratio * activeRange.duration
+      : snapshot.ratio * loopDuration();
     renderPlaybackControls();
     if (snapshot.wasPlaying) schedulePlaybackResume();
+  }
+
+  async function restoreStemLoopPlaybackMutation(snapshot) {
+    const requestId = ++studioLoopRequest;
+    const projectId = state.id;
+    studioLoopSelection = true;
+    studioLoopScopeLabel = snapshot.loopScopeLabel || studioLoopScopeLabel;
+    playbackOffset = clamp(Number(snapshot.position) || 0, 0, loopDuration());
+    renderPlaybackControls();
+    try {
+      const range = await stemPlayer.setLoopRange(
+        { segmentIndexes: snapshot.loopSegmentIndexes },
+        { resume: false, cue: false }
+      );
+      if (
+        requestId !== studioLoopRequest
+        || state.id !== projectId
+        || playbackProjectId !== projectId
+      ) return;
+      if (!range?.duration) throw new Error("The previous edit loop is no longer available");
+      const loopRatio = Math.min(clamp(Number(snapshot.ratio) || 0, 0, 1), 0.999999);
+      const restoredPosition = range.start + loopRatio * range.duration;
+      await stemPlayer.seek(restoredPosition, { resume: false });
+      if (
+        requestId !== studioLoopRequest
+        || state.id !== projectId
+        || playbackProjectId !== projectId
+      ) return;
+      playbackOffset = restoredPosition;
+      renderPlaybackControls();
+      if (snapshot.wasPlaying) schedulePlaybackResume();
+    } catch {
+      if (
+        requestId !== studioLoopRequest
+        || state.id !== projectId
+        || playbackProjectId !== projectId
+      ) return;
+      studioLoopSelection = false;
+      studioLoopScopeLabel = "";
+      stemPlayer.setLoopRange(null, { resume: false, cue: false }).catch(() => {});
+      playbackOffset = clamp(Number(snapshot.position) || 0, 0, loopDuration());
+      renderStemArrangement();
+      renderPlaybackControls();
+      if (snapshot.wasPlaying) schedulePlaybackResume();
+    }
   }
 
   function schedulePlaybackResume() {
@@ -1918,6 +2240,12 @@
     playbackScrubSource = "project";
     playbackScrubAuditionKey = "";
     stopPlayback({ fade, resetPosition: true });
+    studioLoopSelection = false;
+    studioLoopScopeLabel = "";
+    studioLoopRequest += 1;
+    studioWindowProjectId = "";
+    studioWindowStart = 0;
+    stemPlayer?.setLoopRange(null, { resume: false, cue: false }).catch(() => {});
   }
 
   async function ensureAudio() {
@@ -1937,6 +2265,12 @@
         const master = createMasterChain(audioContext, audioContext.destination);
         masterGain = master.input;
         masterLimiter = master.limiter;
+        generatedTrackGains = TRACKS.map((_, trackIndex) => {
+          const gain = audioContext.createGain();
+          gain.gain.value = generatedTrackIsAudible(state, trackIndex) ? 1 : 0;
+          gain.connect(masterGain);
+          return gain;
+        });
         noiseBuffer = createNoiseBuffer(audioContext, state.audioSeed);
         noiseSeed = state.audioSeed;
         context.addEventListener("statechange", () => {
@@ -1950,6 +2284,7 @@
       const now = audioContext.currentTime;
       masterGain.gain.cancelScheduledValues(now);
       masterGain.gain.setValueAtTime(0.68, now);
+      applyGeneratedTrackAudibility({ smooth: false });
       if (noiseSeed !== state.audioSeed) {
         noiseBuffer = createNoiseBuffer(audioContext, state.audioSeed);
         noiseSeed = state.audioSeed;
@@ -1960,6 +2295,7 @@
       audioContext = null;
       masterGain = null;
       masterLimiter = null;
+      generatedTrackGains = [];
       noiseBuffer = null;
       noiseSeed = null;
       showToast("Audio could not start. Tap play again");
@@ -1977,7 +2313,31 @@
   }
 
   function liveAudioGraph() {
-    return { context: audioContext, destination: masterGain, noiseBuffer, trackSources: true };
+    return {
+      context: audioContext,
+      destination: masterGain,
+      trackDestinations: generatedTrackGains,
+      noiseBuffer,
+      trackSources: true
+    };
+  }
+
+  function applyGeneratedTrackAudibility({ smooth = playing } = {}) {
+    if (!audioContext || !generatedTrackGains.length) return;
+    const now = audioContext.currentTime;
+    generatedTrackGains.forEach((gain, trackIndex) => {
+      const value = generatedTrackIsAudible(state, trackIndex) ? 1 : 0;
+      try {
+        gain.gain.cancelScheduledValues(now);
+        if (smooth && audioContext.state === "running" && typeof gain.gain.setTargetAtTime === "function") {
+          gain.gain.setTargetAtTime(value, now, 0.008);
+        } else {
+          gain.gain.setValueAtTime(value, now);
+        }
+      } catch {
+        gain.gain.value = value;
+      }
+    });
   }
 
   function trackAudioSource(graph, source, nodes = []) {
@@ -1993,7 +2353,7 @@
   }
 
   async function previewTrack(trackIndex, stepIndex) {
-    if (!(await ensureAudio()) || state.muted[trackIndex]) return;
+    if (!(await ensureAudio()) || !generatedTrackIsAudible(state, trackIndex)) return;
     scheduleVoice(liveAudioGraph(), state, trackIndex, audioContext.currentTime + 0.01, stepIndex);
   }
 
@@ -2022,6 +2382,18 @@
         playbackProjectId = state.id;
         playbackSessionVisible = true;
         stemPlayer.loadProject(state);
+        if (studioLoopSelection) {
+          const details = currentStudioLoopDetails();
+          if (!details) throw new Error("The selected loop audio is unavailable");
+          const configuredRange = stemPlayer.loopRange();
+          if (configuredRange?.segmentIndexes.join(":") !== details.rangeKey) {
+            const range = await stemPlayer.setLoopRange(
+              { segmentIndexes: details.segmentIndexes },
+              { resume: false, cue: false }
+            );
+            playbackOffset = range.start;
+          }
+        }
         await stemPlayer.play(playbackOffset);
         if (requestId !== playbackStartRequest) return;
         playbackStarting = false;
@@ -2144,7 +2516,10 @@
     }
     const ratio = Number(dom.persistentSeek.value) / 1000;
     playbackScrubPosition = clamp(ratio, 0, 1) * activePlaybackDuration();
-    if (playbackScrubSource === "project") playbackOffset = playbackScrubPosition;
+    if (playbackScrubSource === "project") {
+      const loopRange = activeStudioLoopRange();
+      playbackOffset = loopRange ? loopRange.start + playbackScrubPosition : playbackScrubPosition;
+    }
     renderPlaybackPosition(playbackScrubPosition, { forceSeek: true });
   }
 
@@ -2188,7 +2563,7 @@
       const swingDelay = currentStep % 2 === 1 ? baseDuration * state.swing : 0;
       const scheduledTime = nextStepTime + swingDelay;
       TRACKS.forEach((_, trackIndex) => {
-        if (state.patterns[trackIndex][currentStep] && !state.muted[trackIndex]) {
+        if (state.patterns[trackIndex][currentStep] && generatedTrackIsAudible(state, trackIndex)) {
           scheduleVoice(liveAudioGraph(), state, trackIndex, scheduledTime, currentStep);
         }
       });
@@ -2211,11 +2586,14 @@
   function scheduleVoice(graph, project, trackIndex, time, stepIndex) {
     const level = project.volumes[trackIndex];
     if (level <= 0 || !graph.context) return;
+    const voiceGraph = graph.trackDestinations?.[trackIndex]
+      ? { ...graph, destination: graph.trackDestinations[trackIndex] }
+      : graph;
     const kind = TRACKS[trackIndex].kind;
-    if (kind === "kick") scheduleKick(graph, time, level);
-    if (kind === "snare") scheduleSnare(graph, time, level);
-    if (kind === "bass") scheduleBass(graph, project, time, level, stepIndex);
-    if (kind === "chords") scheduleChord(graph, project, time, level, stepIndex);
+    if (kind === "kick") scheduleKick(voiceGraph, time, level);
+    if (kind === "snare") scheduleSnare(voiceGraph, time, level);
+    if (kind === "bass") scheduleBass(voiceGraph, project, time, level, stepIndex);
+    if (kind === "chords") scheduleChord(voiceGraph, project, time, level, stepIndex);
   }
 
   function outputGain(graph) {
@@ -2331,7 +2709,7 @@
         const swingDelay = stepIndex % 2 === 1 ? stepDuration * project.swing : 0;
         const time = bar * loopDuration + stepIndex * stepDuration + swingDelay;
         TRACKS.forEach((_, trackIndex) => {
-          if (project.patterns[trackIndex][stepIndex] && !project.muted[trackIndex]) {
+          if (project.patterns[trackIndex][stepIndex] && generatedTrackIsAudible(project, trackIndex)) {
             scheduleVoice(graph, project, trackIndex, time, stepIndex);
           }
         });
@@ -2548,7 +2926,7 @@
   dom.mixer.addEventListener("click", (event) => {
     const tile = event.target.closest(".mixer-tile");
     if (!tile) return;
-    if (event.target.closest(".mute-button")) return;
+    if (event.target.closest(".mix-mode-button")) return;
     if (
       event.target.closest("[data-mixer-gesture]")
       && suppressedMixerClick.key === tile.dataset.mixerKey
@@ -2590,7 +2968,11 @@
 
     if (target.dataset.muteTrack !== undefined) toggleMute(Number(target.dataset.muteTrack));
 
+    if (target.dataset.soloTrack !== undefined) toggleSolo(Number(target.dataset.soloTrack));
+
     if (target.dataset.muteStem) toggleStemMute(target.dataset.muteStem);
+
+    if (target.dataset.soloStem) toggleStemSolo(target.dataset.soloStem);
 
     if (target.dataset.toggleStemWindow) toggleStemWindow(target.dataset.toggleStemWindow);
 
@@ -2654,8 +3036,15 @@
       const track = stemTrack(stemSlider.dataset.volumeStem);
       if (!track) return;
       track.volume = Number(stemSlider.value) / 100;
-      setMixerTilePresentation(stemSlider.closest(".mixer-tile"), stemSlider.value, track.muted);
-      stemPlayer?.setMix(track.assetId, track.volume, track.muted);
+      const hasSolo = state.stemImport.tracks.some((candidate) => candidate.soloed);
+      setMixerTilePresentation(
+        stemSlider.closest(".mixer-tile"),
+        stemSlider.value,
+        track.muted,
+        track.soloed,
+        hasSolo && !track.soloed
+      );
+      stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed);
       queueSave();
       return;
     }
@@ -2663,7 +3052,14 @@
     if (!slider) return;
     const trackIndex = Number(slider.dataset.volumeTrack);
     state.volumes[trackIndex] = Number(slider.value) / 100;
-    setMixerTilePresentation(slider.closest(".mixer-tile"), slider.value, state.muted[trackIndex]);
+    const hasSolo = TRACKS.some((_, index) => state.soloed[index]);
+    setMixerTilePresentation(
+      slider.closest(".mixer-tile"),
+      slider.value,
+      state.muted[trackIndex],
+      state.soloed[trackIndex],
+      hasSolo && !state.soloed[trackIndex]
+    );
     queueSave();
   });
 
@@ -2688,8 +3084,17 @@
   dom.downloadAudioLink.addEventListener("click", () => showToast("Saving WAV"));
   dom.stemWindowPrevious.addEventListener("click", () => moveStudioWindow(-1));
   dom.stemWindowNext.addEventListener("click", () => moveStudioWindow(1));
+  dom.stemWindowLoop.addEventListener("click", () => {
+    updateStudioLoopSelection(!studioLoopSelection);
+  });
   document.querySelectorAll("[data-studio-window-bars]").forEach((button) => {
     button.addEventListener("click", () => setStudioWindowBars(button.dataset.studioWindowBars));
+  });
+  document.querySelectorAll("[data-preference-window-bars]").forEach((button) => {
+    button.addEventListener("click", () => setStudioWindowBarsPreference(button.dataset.preferenceWindowBars));
+  });
+  dom.preferenceLoop.addEventListener("click", () => {
+    setLoopWhileEditingPreference(!preferences.loopWhileEditing);
   });
 
   document.querySelector("#tempo-down").addEventListener("click", () => {
@@ -2736,8 +3141,9 @@
       state.stemImport.tracks.forEach((track) => {
         track.volume = 1;
         track.muted = false;
-        stemPlayer?.setMix(track.assetId, 1, false);
+        track.soloed = false;
       });
+      state.stemImport.tracks.forEach((track) => stemPlayer?.setMix(track.assetId, 1, false, false));
       renderMixer();
       renderStemArrangement();
       queueSave();
@@ -2746,6 +3152,8 @@
     }
     state.volumes = [0.88, 0.68, 0.6, 0.48];
     state.muted = [false, false, false, false];
+    state.soloed = [false, false, false, false];
+    applyGeneratedTrackAudibility();
     renderMixer();
     renderSequencer();
     queueSave();

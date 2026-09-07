@@ -103,6 +103,25 @@ if not parser.has_viewport:
     raise SystemExit(f"{index_path}: mobile viewport metadata is required")
 if not parser.has_manifest:
     raise SystemExit(f"{index_path}: the PWA manifest must be linked")
+if re.search(r'<header\b[^>]*class="[^"]*\btopbar\b', index_source, re.IGNORECASE):
+    raise SystemExit(f"{index_path}: the retired application header must not return")
+for retired_brand_token in ('class="brand"', 'class="brand-mark"'):
+    if retired_brand_token in index_source:
+        raise SystemExit(f"{index_path}: retired header branding must not return: {retired_brand_token}")
+save_announcer_match = re.search(
+    r'<(?P<tag>[a-z][\w-]*)\b(?P<attrs>[^>]*\bid="save-announcer"[^>]*)>',
+    index_source,
+    re.IGNORECASE,
+)
+if index_source.count('id="save-announcer"') != 1 or not save_announcer_match:
+    raise SystemExit(f"{index_path}: the headerless shell must retain one save announcer")
+save_announcer_attrs = save_announcer_match.group("attrs")
+for token in ('class="sr-only"', 'aria-live="polite"', 'aria-atomic="true"'):
+    if token not in save_announcer_attrs:
+        raise SystemExit(f"{index_path}: the save announcer lost its accessible live-region contract: {token}")
+for selector in (".topbar", ".brand", ".brand-mark"):
+    if re.search(rf"(?m)^\s*{re.escape(selector)}(?:\s|[,{{:.#])", styles_source):
+        raise SystemExit(f"{styles_path}: retired header styling must be removed: {selector}")
 duplicate_ids = sorted({value for value in parser.ids if parser.ids.count(value) > 1})
 if duplicate_ids:
     raise SystemExit(f"{index_path}: duplicate element ids: {', '.join(duplicate_ids)}")
@@ -145,6 +164,60 @@ for asset in (
         raise SystemExit(
             f"{asset}: index and service-worker asset versions must exist and match"
         )
+
+for token in (
+    'id="view-projects"',
+    'aria-labelledby="library-title"',
+    'id="library-title"',
+    'id="library-status"',
+    'class="workspace-kicker">Account & sync</p>',
+    'id="account-card"',
+    'class="settings-card" aria-labelledby="settings-title"',
+    'id="settings-title"',
+    '>Default edit window</strong>',
+    'data-preference-window-bars="4"',
+    'data-preference-window-bars="8"',
+    '>Loop while editing</strong>',
+    'id="preference-loop"',
+    'role="switch"',
+    'aria-checked="false"',
+    'class="workspace-kicker">Device & app</p>',
+    '<span>Workspace</span>',
+):
+    if token not in index_source:
+        raise SystemExit(f"{index_path}: Projects workspace requirement is missing: {token}")
+
+for token in (
+    'const STORAGE_PREFERENCES = "opusloops.mobile.preferences.v1";',
+    "function readPreferences()",
+    "function writePreferences()",
+    "studioWindowBars: Number(stored?.studioWindowBars) === 4 ? 4 : 8",
+    "loopWhileEditing: Boolean(stored?.loopWhileEditing)",
+    "preferences.studioWindowBars = nextBars",
+    "preferences.loopWhileEditing = Boolean(enabled)",
+    "function setLoopWhileEditingPreference",
+    "function setStudioWindowBarsPreference",
+    "function renderDeviceSettings",
+    "renderDeviceSettings(projects);",
+    'button.addEventListener("click", () => setStudioWindowBarsPreference(button.dataset.preferenceWindowBars))',
+    "setLoopWhileEditingPreference(!preferences.loopWhileEditing)",
+    'const projectCopy = `${projects.length} ${projects.length === 1 ? "project" : "projects"} on this device`;',
+    'imported === 1 ? "stem import" : "stem imports"',
+):
+    if token not in app_source:
+        raise SystemExit(f"{app_path}: Projects preference or inventory requirement is missing: {token}")
+
+for token in (
+    ".settings-card",
+    ".setting-segment button",
+    ".setting-switch",
+    "width: 44px",
+    "height: 44px",
+    ".import-view {\n  padding-top: calc(16px + env(safe-area-inset-top));",
+    "#view-studio.is-stem-project {\n  padding-top: calc(14px + env(safe-area-inset-top));",
+):
+    if token not in styles_source:
+        raise SystemExit(f"{styles_path}: Projects settings or headerless safe-area requirement is missing: {token}")
 
 if 'matchMedia("(prefers-reduced-motion: reduce)")' not in pixel_dock_source:
     raise SystemExit(f"{pixel_dock_path}: reduced-motion handling is required")
@@ -192,10 +265,16 @@ for token in (
 ):
     if token not in grainient_mixer_css_source:
         raise SystemExit(f"{grainient_mixer_css_path}: Grainient presentation requirement is missing: {token}")
-for token in ("data-grainient-mixer", "grainient-mixer.mjs?v=1", "grainient-mixer.css?v=1"):
+for token in ("data-grainient-mixer", "grainient-mixer.mjs?v=2", "grainient-mixer.css?v=1"):
     if token not in index_source:
         raise SystemExit(f"{index_path}: Grainient mixer wiring is missing: {token}")
-for token in ("tile.dataset.mixColor", "tile.dataset.mixIndex", "tile.dataset.mixLevel", "tile.dataset.mixMuted"):
+for token in (
+    "tile.dataset.mixColor",
+    "tile.dataset.mixIndex",
+    "tile.dataset.mixLevel",
+    "tile.dataset.mixMuted",
+    "tile.dataset.mixAudible",
+):
     if token not in app_source:
         raise SystemExit(f"{app_path}: live Grainient mixer metadata is missing: {token}")
 if "Grainient" not in react_bits_license_source:
@@ -267,13 +346,25 @@ if "clickAuditionLoading = false" in stem_import_source[audition_play_event_star
     raise SystemExit(f"{stem_import_path}: the early play event must not clear buffering before audio is playing")
 
 for token in (
+    "const PROJECT_SCHEMA_VERSION = 4;",
     "function createMixerTile",
     "function setMixerTilePresentation",
     "function mixerPercentFromDrag",
+    "function generatedTrackIsAudible",
+    "function applyGeneratedTrackAudibility",
+    "function toggleSolo",
+    "function toggleStemSolo",
     'slider.type = "range"',
     'slider.setAttribute("aria-orientation", "vertical")',
+    'mute.className = "mix-mode-button mute-button"',
     'mute.textContent = "M"',
     'mute.setAttribute("aria-pressed", String(muted))',
+    'solo.className = "mix-mode-button solo-button"',
+    'solo.textContent = "S"',
+    'solo.setAttribute("aria-pressed", String(Boolean(soloed)))',
+    "target.dataset.soloTrack",
+    "target.dataset.soloStem",
+    'if (event.target.closest(".mix-mode-button")) return;',
     'gesture.dataset.mixerGesture = ""',
     'amountValue.dataset.mixerValue = ""',
     "activateMixerTile(tile);",
@@ -285,25 +376,68 @@ for token in (
     'mixerDrag.slider.dispatchEvent(new Event("input", { bubbles: true }))',
     "Math.max(mixerDrag.gesture.clientHeight, 104)",
     "Window-level listeners keep the drag alive when capture is unavailable.",
-    'stemPlayer?.setMix(track.assetId, track.volume, track.muted)',
+    "const focusSnapshot = focusedModeButton",
+    '?.focus({ preventScroll: true });',
+    'stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed)',
 ):
     if token not in app_source:
         raise SystemExit(f"{app_path}: mobile tile mixer requirement is missing: {token}")
-if app_source.count('stemPlayer?.setMix(track.assetId, track.volume, track.muted)') < 2:
-    raise SystemExit(f"{app_path}: stem mute and live level changes must both reach the audio graph")
+if app_source.count('stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed)') < 3:
+    raise SystemExit(f"{app_path}: stem mute, solo, and live level changes must all reach the audio graph")
+if app_source.count("generatedTrackIsAudible(") < 4:
+    raise SystemExit(f"{app_path}: generated preview, scheduling, and export must all respect Solo")
+for token in (
+    "let generatedTrackGains = [];",
+    "trackDestinations: generatedTrackGains",
+    "generatedTrackGains.forEach((gain, trackIndex)",
+):
+    if token not in app_source:
+        raise SystemExit(f"{app_path}: generated Solo must update live track GainNodes: {token}")
+make_project_start = app_source.index("const makeProject =")
+make_project_end = app_source.index("const cloud =", make_project_start)
+make_project_source = app_source[make_project_start:make_project_end]
+if "soloed: [false, false, false, false]" not in make_project_source:
+    raise SystemExit(f"{app_path}: new generated projects must start with four non-soloed tracks")
+normalize_project_start = app_source.index("function normalizeProject")
+normalize_project_end = app_source.index("function isUuid", normalize_project_start)
+if "soloed:" not in app_source[normalize_project_start:normalize_project_end]:
+    raise SystemExit(f"{app_path}: stored generated projects must normalize the soloed array")
+create_tile_start = app_source.index("function createMixerTile")
+create_tile_end = app_source.index("function renderMixer", create_tile_start)
+create_tile_source = app_source[create_tile_start:create_tile_end]
+if create_tile_source.index('mute.textContent = "M"') > create_tile_source.index('solo.textContent = "S"'):
+    raise SystemExit(f"{app_path}: Solo must remain directly after M in each mixer tile")
+reset_mix_start = app_source.index('document.querySelector("#reset-mix")')
+reset_mix_end = app_source.index('document.querySelector("#new-project-button")', reset_mix_start)
+reset_mix_source = app_source[reset_mix_start:reset_mix_end]
+for token in ("track.soloed = false", "state.soloed = [false, false, false, false]"):
+    if token not in reset_mix_source:
+        raise SystemExit(f"{app_path}: Reset mix must also clear Solo: {token}")
 for token in (
     "hasMovingTile()",
     'Number(tile.dataset.mixLevel)',
-    'tile.dataset.mixMuted === "true"',
-    "muted || level === 0 ? 0",
+    'tile.dataset.mixAudible === "true"',
+    "const muted = !audible;",
 ):
     if token not in grainient_mixer_source:
-        raise SystemExit(f"{grainient_mixer_path}: live level and mute state must continue driving Grainient motion: {token}")
+        raise SystemExit(f"{grainient_mixer_path}: the audible solo/mute state must drive Grainient motion: {token}")
+set_mix_start = stem_player_source.index("function setMix")
+set_mix_end = stem_player_source.index("function clearDecoded", set_mix_start)
+set_mix_source = stem_player_source[set_mix_start:set_mix_end]
+for token in (
+    "function setMix(trackId, volume, muted, soloed)",
+    "track.soloed = Boolean(soloed)",
+    "applyMix(",
+):
+    if token not in set_mix_source:
+        raise SystemExit(f"{stem_player_path}: live Solo mixing requirement is missing: {token}")
 for token in (
     "grid-template-columns: repeat(2, minmax(0, 1fr))",
     "touch-action: none",
+    ".mix-mode-button",
     ".mixer-amount-unit",
     ".mixer-tile:has(.mixer-native-range:focus-visible)",
+    "@media (max-width: 370px)",
 ):
     if token not in styles_source:
         raise SystemExit(f"{styles_path}: responsive mixer presentation is missing: {token}")
@@ -332,10 +466,15 @@ for token in (
     "decodedReservations.set(segment.index, { bytes: required, requestId, token })",
     "if (context.state !== \"running\")",
     "releaseBuffers",
-    "const lateBy = Math.max(0, context.currentTime - plannedWhen)",
+    "const lateBy = Math.max(0, scheduleFloor - plannedWhen)",
     "fillLookahead(segment, requestId)",
     "MAX_PREVIEW_BYTES",
     "validateSegments(project, segments)",
+    "function scheduleLoopHorizon(requestId)",
+    'key: `loop:${cycle}:${segment.index}`',
+    "function normalizeLoopRange(value)",
+    "setLoopRange",
+    "loopRange: currentLoopRange",
 ):
     if token not in stem_player_source:
         raise SystemExit(f"{stem_player_path}: synchronized Web Audio stem playback is missing: {token}")
@@ -354,11 +493,13 @@ for token in (
     'id="stem-window-previous"',
     'id="stem-window-label"',
     'id="stem-window-next"',
+    'id="stem-window-loop"',
+    '>Loop</button>',
 ):
     if token not in index_source:
         raise SystemExit(f"{index_path}: four/eight-bar Studio controls are missing: {token}")
 for token in (
-    "let studioWindowBars = 8;",
+    "let studioWindowBars = preferences.studioWindowBars;",
     "function stemArrangementRegions",
     "const assetsByTrack = new Map();",
     "function stemRegionBars",
@@ -366,6 +507,17 @@ for token in (
     "function setStudioWindowBars",
     "function moveStudioWindow",
     "function toggleStemWindow",
+    "let studioLoopSelection = false;",
+    "function currentStudioLoopDetails",
+    "function activeStudioLoopRange",
+    "function updateStudioLoopSelection",
+    "loopSegmentIndexes: activeRange?.segmentIndexes",
+    "function restoreStemLoopPlaybackMutation",
+    "{ segmentIndexes: snapshot.loopSegmentIndexes }",
+    "await stemPlayer.seek(restoredPosition, { resume: false })",
+    "stemPlayer.setLoopRange(",
+    'dom.stemWindowLoop.setAttribute("aria-pressed"',
+    'dom.stemWindowLoop.addEventListener("click"',
     "function setStemSegmentsEnabled",
     "visibleIndexes.map((segmentIndex) => trackAssets.get(segmentIndex))",
     'toggle.setAttribute("aria-pressed", available && !allEnabled && !allDisabled ? "mixed" : String(allEnabled))',
@@ -382,7 +534,10 @@ for token in (
         raise SystemExit(f"{app_path}: paged four/eight-bar Studio requirement is missing: {token}")
 for token in (
     ".studio-window-controls",
+    ".studio-window-actions",
     ".studio-window-size",
+    ".studio-window-loop",
+    '.studio-window-loop[aria-pressed="true"]',
     ".studio-window-navigation",
     ".arrangement-window-toggle",
     ".arrangement-window-halves",
@@ -620,8 +775,26 @@ const analyzedNoConformJob = core.normalizeJob({
 });
 assert.equal(analyzedNoConformJob.durationSeconds, 184.25);
 const analyzedNoConformProject = core.toStemProject(analyzedNoConformJob);
+assert.equal(analyzedNoConformProject.schemaVersion, 4, 'stem imports must migrate to project schema v4');
 assert.equal(analyzedNoConformProject.tempo, 107.143);
 assert.equal(analyzedNoConformProject.stemImport.durationSeconds, 184.25);
+assert.equal(analyzedNoConformProject.stemImport.tracks[0]?.soloed ?? false, false,
+  'legacy stems must normalize to a non-soloed state');
+assert.equal(core.normalizeTrack({ asset_id: 'solo-stem', soloed: true }).soloed, true,
+  'the persisted stem Solo flag must survive normalization');
+assert.equal(core.normalizeTrack({ asset_id: 'legacy-stem' }).soloed, false,
+  'stems saved before schema v4 must default Solo off');
+const preservedSoloProject = core.toStemProject(job, [], {
+  name: 'Solo mix',
+  stemImport: {
+    tracks: [{ assetId: 'drums', volume: 0.64, muted: false, soloed: true }],
+    arrangement: {},
+    disabledSegments: {}
+  }
+});
+assert.equal(preservedSoloProject.schemaVersion, 4);
+assert.equal(preservedSoloProject.stemImport.tracks[0].soloed, true,
+  'refreshing an imported project must preserve its Solo mix');
 const fullMixSelection = core.analysisSelection(job, [
   { ...job.tracks[0], included: true },
   { assetId: 'mix', name: 'Mix.wav', role: 'full-mix', included: true, gainDb: 0 }
@@ -1059,8 +1232,8 @@ const project = {
     status: 'ready',
     durationSeconds: 16,
     tracks: [
-      { assetId: 'stem-a', volume: 1, muted: false },
-      { assetId: 'stem-b', volume: 1, muted: false }
+      { assetId: 'stem-a', volume: 1, muted: false, soloed: false },
+      { assetId: 'stem-b', volume: 1, muted: false, soloed: false }
     ],
     arrangement: {},
     previewAssets: Array.from({ length: 4 }, (_, segmentIndex) => ['stem-a', 'stem-b'].map((trackId) => ({
@@ -1111,18 +1284,38 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
     ['linear', 0, 4.088]
   ], 'adjacent decoded segments must crossfade over a short shared boundary');
   const startsBeforeMix = context.started.length;
-  player.setMix('stem-a', 0.25, false);
-  assert.equal(stemAGain.gain.value, 0.25, 'live mixer changes must reach the audible GainNode');
-  assert.equal(stemBGain.gain.value, 1, 'changing one stem must not alter another');
-  assert.equal(context.started.length, startsBeforeMix, 'mixing must not restart the transport');
-  player.setMix('stem-a', 0.25, true);
-  assert.equal(stemAGain.gain.value, 0, 'mute must silence the same audible GainNode');
+  player.setMix('stem-a', 0.25, false, true);
+  assert.equal(stemAGain.gain.value, 0.25, 'a soloed stem must retain its live level');
+  assert.equal(stemBGain.gain.value, 0, 'the first Solo selection must isolate every non-soloed stem');
+  assert.equal(context.started.length, startsBeforeMix, 'Solo must not restart the transport');
+  player.setMix('stem-b', 0.6, false, true);
+  assert.equal(stemAGain.gain.value, 0.25, 'adding a second Solo must keep the first Solo audible');
+  assert.equal(stemBGain.gain.value, 0.6, 'multiple selected stems must be audible together');
+  assert.equal(context.started.length, startsBeforeMix, 'multi-Solo changes must stay on the live audio graph');
+  player.setMix('stem-a', 0.25, true, true);
+  assert.equal(stemAGain.gain.value, 0, 'mute must take precedence when the same stem is also soloed');
+  assert.equal(stemBGain.gain.value, 0.6, 'muting one soloed stem must not silence another Solo');
+  player.setMix('stem-a', 0.25, false, false);
+  assert.equal(stemAGain.gain.value, 0, 'a non-soloed stem must remain isolated while any Solo is active');
+  player.setMix('stem-b', 0.6, false, false);
+  assert.equal(stemAGain.gain.value, 0.25, 'clearing the final Solo must restore the other live stem');
+  assert.equal(stemBGain.gain.value, 0.6, 'clearing the final Solo must preserve its own level');
+  assert.equal(context.started.length, startsBeforeMix, 'all mix changes must preserve the scheduled transport');
 
   const remixedProject = JSON.parse(JSON.stringify(project));
   remixedProject.stemImport.tracks[0].volume = 0.35;
   remixedProject.stemImport.tracks[0].muted = false;
+  remixedProject.stemImport.tracks[0].soloed = false;
+  remixedProject.stemImport.tracks[1].volume = 0.8;
+  remixedProject.stemImport.tracks[1].muted = false;
+  remixedProject.stemImport.tracks[1].soloed = true;
   player.loadProject(remixedProject);
-  assert.equal(stemAGain.gain.value, 0.35, 'a cloud-synced mix update must reach active playback');
+  assert.equal(stemAGain.gain.value, 0,
+    'loading a cloud-synced Solo mix must isolate non-soloed tracks on the existing GainNodes');
+  assert.equal(stemBGain.gain.value, 0.8,
+    'loading a cloud-synced Solo mix must preserve the selected live stem level');
+  assert.equal(context.started[0].connections[0].connections[0], stemAGain,
+    'a mix-only loadProject refresh must preserve the live gain graph');
   assert.equal(context.started.length, startsBeforeMix, 'a mix-only project refresh must preserve playback');
 
   context.currentTime = 4.1;
@@ -1409,6 +1602,112 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
   await assert.rejects(() => failedPlay, /expected signer failure/);
   assert.equal(failureContext.started.length, 0, 'a failed segment must remain inaudible after all siblings settle');
   failurePlayer.destroy();
+
+  const loopSignedAssetIds = [];
+  const loopStates = [];
+  const loopCloud = {
+    async signStemArtifact(_jobId, assetId) {
+      loopSignedAssetIds.push(assetId);
+      return {
+        signedUrl: `https://audio.example/${assetId}.m4a`,
+        expiresAt: new Date(Date.now() + 900_000).toISOString()
+      };
+    }
+  };
+  const loopPlayer = window.OpusloopsStemPlayer.create({
+    cloud: loopCloud,
+    onState(snapshot) { loopStates.push(snapshot); }
+  });
+  const loopProject = JSON.parse(JSON.stringify(project));
+  loopProject.id = 'loop-project';
+  loopPlayer.loadProject(loopProject);
+  const configuredLoop = await loopPlayer.setLoopRange({ segmentIndexes: [1, 2] }, { resume: false });
+  assert.deepEqual(configuredLoop, {
+    start: 4,
+    end: 12,
+    duration: 8,
+    startSegmentIndex: 1,
+    endSegmentIndex: 2,
+    segmentIndexes: [1, 2]
+  }, 'an eight-bar loop must resolve to exact aligned preview boundaries');
+  await loopPlayer.play(4);
+  const loopContext = FakeAudioContext.instances.at(-1);
+  assert.deepEqual(loopSignedAssetIds, [
+    'segment-1-stem-a', 'segment-1-stem-b',
+    'segment-2-stem-a', 'segment-2-stem-b'
+  ], 'loop startup must fetch only the selected segments once');
+  assert.deepEqual(loopContext.started.map((source) => Number(source.starts[0][0].toFixed(3))), [
+    0.08, 0.08, 4.08, 4.08, 8.072, 8.072, 12.08, 12.08
+  ], 'two loop cycles must be scheduled on one sample clock with a short wrap crossfade');
+  const roundedEnvelope = (source) => source.connections[0].gain.events.slice(-4)
+    .map(([kind, value, time]) => [kind, value, Number(time.toFixed(3))]);
+  assert.deepEqual(roundedEnvelope(loopContext.started[2]), [
+    ['set', 0, 4.08],
+    ['linear', 1, 4.088],
+    ['set', 1, 8.072],
+    ['linear', 0, 8.08]
+  ], 'the outgoing loop edge must fade across the final eight milliseconds');
+  assert.deepEqual(roundedEnvelope(loopContext.started[4]), [
+    ['set', 0, 8.072],
+    ['linear', 1, 8.08],
+    ['set', 1, 12.08],
+    ['linear', 0, 12.088]
+  ], 'the selected opening audio must fade in over the same loop seam');
+  loopContext.currentTime = 8.10;
+  intervalHandler();
+  assert.ok(Math.abs(loopPlayer.position() - 4.02) < 1e-9,
+    'the absolute stem position must wrap inside the selected range');
+  assert.equal(loopStates.some((snapshot) => snapshot.ended), false,
+    'a loop boundary must never emit a full-project ended state');
+  const liveLoopSources = loopContext.started.filter((source) => {
+    const [when, _offset, bufferDuration] = source.starts[0];
+    return when + bufferDuration / source.playbackRate.value > loopContext.currentTime;
+  });
+  loopPlayer.pause();
+  assert.ok(liveLoopSources.every((source) => source.stopped),
+    'pausing a loop must stop current and pre-scheduled future cycles');
+  await loopPlayer.setLoopRange(null, { resume: false, cue: false });
+  await loopPlayer.play(15.9);
+  loopContext.currentTime = 8.38;
+  intervalHandler();
+  assert.equal(loopStates.some((snapshot) => snapshot.ended), true,
+    'clearing the loop must restore full-project completion');
+  loopPlayer.destroy();
+
+  const singleLoopSignedAssetIds = [];
+  const singleLoopPlayer = window.OpusloopsStemPlayer.create({
+    cloud: {
+      async signStemArtifact(_jobId, assetId) {
+        singleLoopSignedAssetIds.push(assetId);
+        return {
+          signedUrl: `https://audio.example/${assetId}.m4a`,
+          expiresAt: new Date(Date.now() + 900_000).toISOString()
+        };
+      }
+    }
+  });
+  const singleLoopProject = JSON.parse(JSON.stringify(project));
+  singleLoopProject.id = 'single-loop-project';
+  singleLoopPlayer.loadProject(singleLoopProject);
+  await singleLoopPlayer.setLoopRange({ segmentIndexes: [2] }, { resume: false });
+  await singleLoopPlayer.play(8);
+  const singleLoopContext = FakeAudioContext.instances.at(-1);
+  assert.deepEqual(singleLoopContext.started.slice(0, 4).map((source) => Number(source.starts[0][0].toFixed(3))), [
+    0.08, 0.08, 4.072, 4.072
+  ], 'a four-bar loop must schedule its next occurrence before the first can end');
+  assert.deepEqual(singleLoopSignedAssetIds, ['segment-2-stem-a', 'segment-2-stem-b'],
+    'a four-bar loop must decode its selected segment only once');
+  const firstLoopSources = [...singleLoopContext.started];
+  const movedLoop = await singleLoopPlayer.setLoopRange({ segmentIndexes: [3] }, { resume: true });
+  assert.equal(movedLoop.start, 12, 'changing Studio pages must move the active loop to the new audio boundary');
+  assert.equal(singleLoopPlayer.isPlaying(), true, 'changing the selected window must resume an active loop');
+  assert.ok(firstLoopSources.every((source) => source.stopped),
+    'changing the selected window must atomically cancel every old loop occurrence');
+  assert.deepEqual(singleLoopSignedAssetIds, [
+    'segment-2-stem-a', 'segment-2-stem-b',
+    'segment-3-stem-a', 'segment-3-stem-b'
+  ], 'changing loop pages must fetch only the newly selected uncached segment');
+  singleLoopPlayer.destroy();
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
@@ -1501,7 +1800,7 @@ grep -Fq 'Your completed timing analysis is safe.' mobile/stem-import.js
 grep -Fq 'onAuditionState: handleAuditionState' mobile/app.js
 grep -Fq 'stemImportController?.toggleAudition?.()' mobile/app.js
 grep -Fq 'stemImportController?.seekAudition?.(position, { resume: shouldResume })' mobile/app.js
-grep -Fq 'dom.persistentSeekLabel.textContent = audition ? "Seek within timing audition" : "Seek within project"' mobile/app.js
+grep -Fq 'loopRange ? `Seek within looped ${spokenStudioScope(loopRange.scopeLabel)}` : "Seek within project"' mobile/app.js
 grep -Fq 'advanceAuditionListening(clickListenProgress' mobile/stem-import.js
 grep -Fq 'expectedGeneration !== generation || loadToken !== clickLoadToken' mobile/stem-import.js
 grep -Fq 'if (!clickAuditionEngaged || dom.clickAudio.paused || dom.clickAudio.ended) return' mobile/stem-import.js

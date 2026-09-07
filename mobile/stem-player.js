@@ -42,6 +42,7 @@
     let limiter = null;
     let trackGains = new Map();
     let activeIndex = -1;
+    let loopBounds = null;
     let position = 0;
     let anchorPosition = 0;
     let anchorContextTime = 0;
@@ -60,6 +61,7 @@
         duration: duration(),
         available: segments.length > 0 && !manifestError,
         retrying: retryingLoads.size > 0,
+        loopRange: currentLoopRange(),
         ...extra
       });
     }
@@ -172,6 +174,84 @@
       return last ? last.start + last.duration : 0;
     }
 
+    function currentLoopRange() {
+      return loopBounds ? { ...loopBounds, segmentIndexes: [...loopBounds.segmentIndexes] } : null;
+    }
+
+    function selectedLoopSegments(bounds = loopBounds) {
+      if (!bounds) return [];
+      const selected = new Set(bounds.segmentIndexes);
+      return segments.filter((segment) => selected.has(segment.index));
+    }
+
+    function normalizeLoopRange(value) {
+      if (value == null) return null;
+      let requestedIndexes = Array.isArray(value?.segmentIndexes)
+        ? value.segmentIndexes.map(Number)
+        : [];
+      if (!requestedIndexes.length && Number.isSafeInteger(Number(value?.startSegmentIndex))) {
+        const startIndex = Number(value.startSegmentIndex);
+        const endIndex = Number.isSafeInteger(Number(value?.endSegmentIndex))
+          ? Number(value.endSegmentIndex)
+          : startIndex;
+        requestedIndexes = segments
+          .filter((segment) => segment.index >= startIndex && segment.index <= endIndex)
+          .map((segment) => segment.index);
+      }
+      if (!requestedIndexes.length && Number.isFinite(Number(value?.start)) && Number.isFinite(Number(value?.end))) {
+        const start = Number(value.start);
+        const end = Number(value.end);
+        requestedIndexes = segments
+          .filter((segment) => (
+            segment.start >= start - TIMELINE_TOLERANCE_SECONDS
+            && segment.start + segment.duration <= end + TIMELINE_TOLERANCE_SECONDS
+          ))
+          .map((segment) => segment.index);
+      }
+      requestedIndexes = [...new Set(requestedIndexes)].sort((left, right) => left - right);
+      if (!requestedIndexes.length || requestedIndexes.length > 2) {
+        throw new Error("A loop must contain one or two aligned four-bar segments");
+      }
+      const selected = requestedIndexes.map((index) => segments.find((segment) => segment.index === index));
+      if (selected.some((segment) => !segment)) throw new Error("The selected loop audio is unavailable");
+      for (let index = 1; index < selected.length; index += 1) {
+        const previous = selected[index - 1];
+        const current = selected[index];
+        if (
+          current.index !== previous.index + 1
+          || Math.abs(current.start - (previous.start + previous.duration)) > TIMELINE_TOLERANCE_SECONDS
+        ) {
+          throw new Error("The selected loop must use contiguous aligned audio");
+        }
+      }
+      const first = selected[0];
+      const last = selected.at(-1);
+      const start = first.start;
+      const end = last.start + last.duration;
+      if (Number.isFinite(Number(value?.start)) && Math.abs(Number(value.start) - start) > TIMELINE_TOLERANCE_SECONDS) {
+        throw new Error("The loop start must match an aligned audio boundary");
+      }
+      if (Number.isFinite(Number(value?.end)) && Math.abs(Number(value.end) - end) > TIMELINE_TOLERANCE_SECONDS) {
+        throw new Error("The loop end must match an aligned audio boundary");
+      }
+      return {
+        start,
+        end,
+        duration: end - start,
+        startSegmentIndex: first.index,
+        endSegmentIndex: last.index,
+        segmentIndexes: requestedIndexes
+      };
+    }
+
+    function positionInActiveRange(value) {
+      const total = duration();
+      const numeric = Math.max(0, Math.min(total, Number(value) || 0));
+      if (!loopBounds) return numeric;
+      if (numeric >= loopBounds.start && numeric < loopBounds.end) return numeric;
+      return loopBounds.start;
+    }
+
     function segmentForPosition(value) {
       const bounded = Math.max(0, Math.min(duration(), Number(value) || 0));
       let selected = segments[segments.length - 1];
@@ -188,13 +268,15 @@
       const track = project?.stemImport?.tracks?.find((candidate) => candidate.assetId === trackId);
       return {
         muted: Boolean(track?.muted),
+        soloed: Boolean(track?.soloed),
         volume: Math.max(0, Math.min(1, Number(track?.volume ?? 1)))
       };
     }
 
     function targetGain(trackId) {
       const mix = trackMix(trackId);
-      return mix.muted ? 0 : mix.volume;
+      const hasSolo = Boolean(project?.stemImport?.tracks?.some((track) => track.soloed));
+      return mix.muted || (hasSolo && !mix.soloed) ? 0 : mix.volume;
     }
 
     function setParamValue(param, value, { smooth = false } = {}) {
@@ -474,8 +556,10 @@
 
     function reserveDecodedCapacity(segment, requestId) {
       const required = estimatedSegmentBytes(segment);
+      const scheduledIndexes = new Set(Array.from(scheduled.values(), (group) => group.segment.index));
+      const loopIndexes = new Set(loopBounds?.segmentIndexes || []);
       const candidates = Array.from(decoded.entries())
-        .filter(([index]) => !scheduled.has(index))
+        .filter(([index]) => !scheduledIndexes.has(index) && !loopIndexes.has(index))
         .sort(([, left], [, right]) => {
           const current = currentPosition();
           return Math.abs(right.segment.start - current) - Math.abs(left.segment.start - current);
@@ -581,53 +665,62 @@
       scheduled.clear();
     }
 
-    function scheduleEntry(entry, requestId) {
+    function scheduleEntryAt(entry, requestId, {
+      key = entry.segment.index,
+      plannedWhen,
+      initialOffset = 0,
+      nominalDuration = entry.segment.duration - initialOffset,
+      nextSegment = null,
+      earliestWhen = -Infinity,
+      stretchExtension = 0
+    } = {}) {
       if (!context || !masterGain || (!playing && !loading) || requestId !== operation) return null;
-      if (scheduled.has(entry.segment.index)) return scheduled.get(entry.segment.index);
-      const playbackStart = Math.max(anchorPosition, entry.segment.start);
-      const plannedWhen = playbackStart > anchorPosition
-        ? anchorContextTime + (playbackStart - anchorPosition)
-        : anchorContextTime;
-      const lateBy = Math.max(0, context.currentTime - plannedWhen);
-      const offset = Math.max(0, playbackStart - entry.segment.start + lateBy);
-      const nominalDuration = Math.max(0, entry.segment.duration - offset);
-      if (nominalDuration <= 0.001) {
+      if (scheduled.has(key)) return scheduled.get(key);
+      const scheduleFloor = Math.max(context.currentTime, earliestWhen);
+      const lateBy = Math.max(0, scheduleFloor - plannedWhen);
+      const offset = Math.max(0, initialOffset + lateBy);
+      const playableDuration = Math.max(0, nominalDuration - lateBy);
+      if (playableDuration <= 0.001) {
         throw new Error("Preview audio missed its playback window");
       }
-      const when = Math.max(plannedWhen, context.currentTime);
+      const when = Math.max(plannedWhen, scheduleFloor);
       const sources = [];
       const segmentGains = [];
       const launches = [];
-      const segmentPosition = segments.findIndex((segment) => segment.index === entry.segment.index);
-      const nextSegment = segmentPosition >= 0 ? segments[segmentPosition + 1] || null : null;
-      let endsAt = when + nominalDuration;
+      const sharesSourceBoundary = Boolean(nextSegment)
+        && Math.abs(nextSegment.start - (entry.segment.start + entry.segment.duration)) <= TIMELINE_TOLERANCE_SECONDS;
+      let endsAt = when + playableDuration;
       try {
         entry.buffers.forEach(({ asset, buffer }) => {
           if (project?.stemImport?.arrangement?.[asset.id] === false) return;
           const nextAsset = nextSegment?.items.find((candidate) => candidate.trackId === asset.trackId);
-          const continues = Boolean(nextAsset && project?.stemImport?.arrangement?.[nextAsset.id] !== false);
+          const continues = Boolean(
+            sharesSourceBoundary
+            && nextAsset
+            && project?.stemImport?.arrangement?.[nextAsset.id] !== false
+          );
           const fullOverlap = continues
             ? Math.min(SEGMENT_EDGE_FADE_SECONDS, entry.segment.duration / 4)
             : 0;
-          const overlap = Math.min(fullOverlap, nominalDuration / 4);
-          const rateCorrection = buffer.duration / (entry.segment.duration + fullOverlap);
+          const overlap = Math.min(fullOverlap, playableDuration / 4);
+          const rateCorrection = buffer.duration / (entry.segment.duration + fullOverlap + stretchExtension);
           if (!Number.isFinite(rateCorrection) || rateCorrection < 0.8 || rateCorrection > 1.2) {
             throw new Error("Preview audio timing does not match its aligned segment");
           }
           const bufferOffset = Math.min(offset * rateCorrection, Math.max(0, buffer.duration - 0.001));
-          const requestedPlaybackDuration = nominalDuration + overlap;
+          const requestedPlaybackDuration = playableDuration + overlap;
           const bufferDuration = Math.min(
             requestedPlaybackDuration * rateCorrection,
             Math.max(0, buffer.duration - bufferOffset)
           );
           if (bufferDuration <= 0.001) return;
           const playbackDuration = bufferDuration / rateCorrection;
-          const actualOverlap = Math.max(0, playbackDuration - nominalDuration);
+          const actualOverlap = Math.max(0, playbackDuration - playableDuration);
           const source = context.createBufferSource();
           const envelope = context.createGain();
           source.buffer = buffer;
           source.playbackRate.value = rateCorrection;
-          scheduleEdgeEnvelope(envelope.gain, when, nominalDuration, actualOverlap);
+          scheduleEdgeEnvelope(envelope.gain, when, playableDuration, actualOverlap);
           if (asset.trackId) {
             const gain = ensureTrackGain(asset.trackId);
             if (!gain) return;
@@ -655,8 +748,56 @@
         when,
         endsAt
       };
-      scheduled.set(entry.segment.index, group);
+      scheduled.set(key, group);
       return group;
+    }
+
+    function scheduleEntry(entry, requestId) {
+      const playbackStart = Math.max(anchorPosition, entry.segment.start);
+      const plannedWhen = playbackStart > anchorPosition
+        ? anchorContextTime + (playbackStart - anchorPosition)
+        : anchorContextTime;
+      const segmentPosition = segments.findIndex((segment) => segment.index === entry.segment.index);
+      return scheduleEntryAt(entry, requestId, {
+        plannedWhen,
+        initialOffset: Math.max(0, playbackStart - entry.segment.start),
+        nominalDuration: Math.max(0, entry.segment.start + entry.segment.duration - playbackStart),
+        nextSegment: segmentPosition >= 0 ? segments[segmentPosition + 1] || null : null
+      });
+    }
+
+    function scheduleLoopHorizon(requestId) {
+      if (!loopBounds || !context || requestId !== operation) return;
+      const selected = selectedLoopSegments();
+      if (!selected.length) return;
+      const span = loopBounds.duration;
+      const epoch = anchorContextTime - (anchorPosition - loopBounds.start);
+      const scheduleFloor = Math.max(context.currentTime, anchorContextTime);
+      const horizon = scheduleFloor + Math.max(LOOKAHEAD_SECONDS, span + START_DELAY_SECONDS);
+      const firstCycle = Math.max(0, Math.floor((scheduleFloor - epoch) / span));
+      const finalCycle = Math.max(firstCycle, Math.ceil((horizon - epoch) / span));
+      for (let cycle = firstCycle; cycle <= finalCycle; cycle += 1) {
+        for (let index = 0; index < selected.length; index += 1) {
+          const segment = selected[index];
+          const occurrenceStart = epoch + cycle * span + (segment.start - loopBounds.start);
+          const occurrenceEnd = occurrenceStart + segment.duration;
+          if (occurrenceEnd <= scheduleFloor + 0.001 || occurrenceStart > horizon + 0.001) continue;
+          const entry = decoded.get(segment.index);
+          if (!entry) throw new Error("The selected loop could not stay buffered");
+          const nextSegment = index < selected.length - 1 ? selected[index + 1] : selected[0];
+          const seamLead = index === 0 && occurrenceStart > anchorContextTime + 0.001
+            ? Math.min(SEGMENT_EDGE_FADE_SECONDS, segment.duration / 4)
+            : 0;
+          scheduleEntryAt(entry, requestId, {
+            key: `loop:${cycle}:${segment.index}`,
+            plannedWhen: occurrenceStart - seamLead,
+            nominalDuration: segment.duration + seamLead,
+            nextSegment,
+            earliestWhen: anchorContextTime,
+            stretchExtension: seamLead
+          });
+        }
+      }
     }
 
     function startupWindow(firstSegment, fromPosition) {
@@ -674,13 +815,14 @@
 
     function pruneWindow(timelinePosition) {
       const cutoff = Math.max(0, timelinePosition - 0.001);
+      const retainedLoopIndexes = new Set(loopBounds?.segmentIndexes || []);
       decoded.forEach((entry, index) => {
-        if (entry.segment.start + entry.segment.duration <= cutoff) decoded.delete(index);
+        if (!retainedLoopIndexes.has(index) && entry.segment.start + entry.segment.duration <= cutoff) decoded.delete(index);
       });
-      scheduled.forEach((group, index) => {
+      scheduled.forEach((group, key) => {
         if (!context || group.endsAt > context.currentTime + 0.001) return;
         disposeGroup(group, { stop: false });
-        scheduled.delete(index);
+        scheduled.delete(key);
       });
     }
 
@@ -698,9 +840,13 @@
     function currentPosition() {
       if (playing && context && Number.isFinite(context.currentTime)) {
         const elapsed = Math.max(0, context.currentTime - anchorContextTime);
+        if (loopBounds) {
+          const phase = (anchorPosition - loopBounds.start + elapsed) % loopBounds.duration;
+          return loopBounds.start + (phase < 0 ? phase + loopBounds.duration : phase);
+        }
         return Math.max(0, Math.min(duration(), anchorPosition + elapsed));
       }
-      return Math.max(0, Math.min(duration(), position));
+      return positionInActiveRange(position);
     }
 
     function stopScheduler() {
@@ -742,6 +888,10 @@
 
     function fillLookahead(currentSegment, requestId) {
       if (!currentSegment) return;
+      if (loopBounds) {
+        scheduleLoopHorizon(requestId);
+        return;
+      }
       const timelinePosition = currentPosition();
       const horizon = Math.min(
         LOOKAHEAD_SECONDS,
@@ -758,6 +908,26 @@
     function tick(requestId) {
       if (!playing || requestId !== operation) return;
       position = currentPosition();
+      if (loopBounds) {
+        const current = segmentForPosition(position);
+        if (!current) return;
+        const hasScheduledOccurrence = Array.from(scheduled.values()).some((group) => (
+          group.segment.index === current.index
+          && (!context || group.endsAt > context.currentTime + 0.001)
+        ));
+        if (!hasScheduledOccurrence) {
+          failPlayback(new Error("The selected loop could not stay buffered"));
+          return;
+        }
+        activeIndex = current.index;
+        pruneWindow(position);
+        try {
+          scheduleLoopHorizon(requestId);
+        } catch (error) {
+          failPlayback(error);
+        }
+        return;
+      }
       const total = duration();
       if (position >= total - 0.001) {
         position = total;
@@ -802,17 +972,16 @@
       if (manifestError) throw manifestError;
       const total = duration();
       if (!segments.length || !total) throw new Error("Aligned preview audio is not ready");
-      if (fromPosition >= total) fromPosition = 0;
-      position = Math.max(0, Math.min(total, Number(fromPosition) || 0));
+      if (!loopBounds && fromPosition >= total) fromPosition = 0;
+      position = positionInActiveRange(fromPosition);
       const segment = segmentForPosition(position);
       const requestId = ++operation;
       loading = true;
       emit();
       try {
         await ensureContext();
-        const entries = await Promise.all(
-          startupWindow(segment, position).map((candidate) => loadSegment(candidate, requestId))
-        );
+        const startupSegments = loopBounds ? selectedLoopSegments() : startupWindow(segment, position);
+        const entries = await Promise.all(startupSegments.map((candidate) => loadSegment(candidate, requestId)));
         if (requestId !== operation) return;
         if (context.state !== "running") await context.resume();
         if (context.state !== "running") {
@@ -827,7 +996,8 @@
         activeIndex = segment.index;
         loading = false;
         playing = true;
-        entries.forEach((entry) => scheduleEntry(entry, requestId));
+        if (loopBounds) scheduleLoopHorizon(requestId);
+        else entries.forEach((entry) => scheduleEntry(entry, requestId));
         pruneWindow(position);
         fillLookahead(segment, requestId);
         startScheduler(requestId);
@@ -865,22 +1035,38 @@
     }
 
     async function seek(nextPosition, { resume = playing } = {}) {
-      const total = duration();
-      const target = Math.max(0, Math.min(total, Number(nextPosition) || 0));
+      const target = positionInActiveRange(nextPosition);
       pause();
       position = target;
       emit();
       if (resume) await play(target);
     }
 
-    function setMix(trackId, volume, muted) {
+    async function setLoopRange(nextRange, { resume = playing || loading, cue = true } = {}) {
+      const normalized = normalizeLoopRange(nextRange);
+      const unchanged = JSON.stringify(normalized?.segmentIndexes || [])
+        === JSON.stringify(loopBounds?.segmentIndexes || []);
+      if (unchanged && !cue) return currentLoopRange();
+      const shouldResume = Boolean(resume);
+      const previousPosition = currentPosition();
+      pause();
+      loopBounds = normalized;
+      position = normalized
+        ? cue ? normalized.start : positionInActiveRange(previousPosition)
+        : Math.max(0, Math.min(duration(), previousPosition));
+      emit();
+      if (shouldResume) await play(position);
+      return currentLoopRange();
+    }
+
+    function setMix(trackId, volume, muted, soloed) {
       const track = project?.stemImport?.tracks?.find((candidate) => candidate.assetId === trackId);
       if (track) {
         track.volume = Math.max(0, Math.min(1, Number(volume) || 0));
         track.muted = Boolean(muted);
+        if (soloed !== undefined) track.soloed = Boolean(soloed);
       }
-      const gain = trackGains.get(trackId);
-      if (gain) setParamValue(gain.gain, targetGain(trackId), { smooth: playing });
+      applyMix({ smooth: playing });
     }
 
     function clearDecoded() {
@@ -915,6 +1101,7 @@
       trackGains.forEach(disconnectNode);
       trackGains = new Map();
       activeIndex = -1;
+      loopBounds = null;
       position = 0;
       anchorPosition = 0;
       anchorContextTime = 0;
@@ -946,6 +1133,7 @@
       segments = [];
       manifestError = null;
       activeIndex = -1;
+      loopBounds = null;
       position = 0;
       anchorPosition = 0;
       anchorContextTime = 0;
@@ -958,11 +1146,13 @@
       isPlaying: () => playing,
       isLoading: () => loading,
       loadProject,
+      loopRange: currentLoopRange,
       pause,
       play,
       position: currentPosition,
       releaseBuffers,
       seek,
+      setLoopRange,
       setMix
     });
   }

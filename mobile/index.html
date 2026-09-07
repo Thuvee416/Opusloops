@@ -17,7 +17,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=38" />
+    <link rel="stylesheet" href="./styles.css?v=40" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
     <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
@@ -27,15 +27,7 @@
     <a class="skip-link" href="#main-content">Skip to content</a>
 
     <div class="app-shell">
-      <header class="topbar">
-        <button class="brand" type="button" data-view-target="create" aria-label="Opusloops home">
-          <img class="brand-mark" src="./icons/icon-192.png?v=3" width="32" height="32" alt="" />
-          <span>Opusloops</span>
-        </button>
-
-        <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
-      </header>
-
+      <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
       <main id="main-content">
         <section class="view is-active" id="view-create" data-view="create" aria-labelledby="create-title" tabindex="-1">
           <div class="hero-copy">
@@ -372,9 +364,12 @@
               <span id="stem-arrangement-duration">0:00</span>
             </div>
             <div class="studio-window-controls" aria-label="Arrangement edit scope">
-              <div class="studio-window-size" role="group" aria-label="Edit four or eight bars at once">
-                <button type="button" data-studio-window-bars="4" aria-pressed="false">4 bars</button>
-                <button type="button" data-studio-window-bars="8" aria-pressed="true">8 bars</button>
+              <div class="studio-window-actions">
+                <div class="studio-window-size" role="group" aria-label="Edit four or eight bars at once">
+                  <button type="button" data-studio-window-bars="4" aria-pressed="false">4 bars</button>
+                  <button type="button" data-studio-window-bars="8" aria-pressed="true">8 bars</button>
+                </div>
+                <button class="studio-window-loop" id="stem-window-loop" type="button" aria-pressed="false">Loop</button>
               </div>
               <div class="studio-window-navigation">
                 <button id="stem-window-previous" type="button" aria-label="Previous bars">‹</button>
@@ -401,16 +396,25 @@
         </section>
 
         <section class="view" id="view-projects" data-view="projects" aria-labelledby="projects-title" tabindex="-1">
-          <div class="page-heading projects-heading">
-            <div>
-              <p class="eyebrow" id="projects-eyebrow">Device first</p>
-              <h1 id="projects-title">Your loops</h1>
-            </div>
-            <button class="primary-small" id="new-project-button" type="button">New</button>
+          <div class="page-heading">
+            <p class="eyebrow" id="projects-eyebrow">Library, account & settings</p>
+            <h1 id="projects-title">Your workspace</h1>
           </div>
-          <p class="lede" id="projects-lede">Create and play offline. Sign in to privately sync your work across devices.</p>
-          <div class="projects-list" id="projects-list"></div>
+          <p class="lede" id="projects-lede">Manage your projects, private sync and device preferences in one place.</p>
 
+          <section class="workspace-section" aria-labelledby="library-title">
+            <div class="projects-heading">
+              <div>
+                <p class="eyebrow">Library</p>
+                <h2 id="library-title">Projects</h2>
+              </div>
+              <button class="primary-small" id="new-project-button" type="button">New</button>
+            </div>
+            <p class="workspace-status" id="library-status">Saved on this device</p>
+            <div class="projects-list" id="projects-list"></div>
+          </section>
+
+          <p class="workspace-kicker">Account & sync</p>
           <aside class="account-card" id="account-card">
             <span class="account-card-mark" id="account-card-mark" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
@@ -424,6 +428,40 @@
             <button class="secondary-action" id="account-card-button" type="button">Sign in</button>
           </aside>
 
+          <section class="settings-card" aria-labelledby="settings-title">
+            <div>
+              <p class="eyebrow">Device preferences</p>
+              <h2 id="settings-title">Studio settings</h2>
+            </div>
+            <div class="setting-row">
+              <div>
+                <strong>Default edit window</strong>
+                <span>Open stem projects in focused 4 or 8 bar sections.</span>
+              </div>
+              <div class="setting-segment" role="group" aria-label="Default Studio edit window">
+                <button type="button" data-preference-window-bars="4" aria-pressed="false">4</button>
+                <button type="button" data-preference-window-bars="8" aria-pressed="true">8</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <strong>Loop while editing</strong>
+                <span>Start each stem project with its visible bars looped.</span>
+              </div>
+              <button
+                class="setting-switch"
+                id="preference-loop"
+                type="button"
+                role="switch"
+                aria-label="Enable looping visible bars by default"
+                aria-checked="false"
+              >
+                <span aria-hidden="true"></span>
+              </button>
+            </div>
+          </section>
+
+          <p class="workspace-kicker">Device & app</p>
           <aside class="offline-card" id="install-card">
             <div>
               <p class="eyebrow">Install Opusloops</p>
@@ -505,8 +543,8 @@
         </button>
         <button class="nav-item" type="button" data-view-target="projects" data-pixel-card="projects">
           <canvas class="pixel-canvas" aria-hidden="true"></canvas>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6l2 2h8v11H4V6Z" /></svg>
-          <span>Projects</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h5v5H5V5Zm9 0h5v5h-5V5ZM5 14h5v5H5v-5Zm9 0h5v5h-5v-5Z" /></svg>
+          <span>Workspace</span>
         </button>
       </nav>
     </div>
@@ -588,12 +626,12 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
     <script src="./cloud-client.js?v=9" defer></script>
-    <script src="./stem-import-core.js?v=8" defer></script>
-    <script src="./stem-player.js?v=3" defer></script>
+    <script src="./stem-import-core.js?v=9" defer></script>
+    <script src="./stem-player.js?v=5" defer></script>
     <script src="./stem-import.js?v=9" defer></script>
-    <script src="./app.js?v=31" defer></script>
+    <script src="./app.js?v=33" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
-    <script src="./grainient-mixer.mjs?v=1" type="module"></script>
+    <script src="./grainient-mixer.mjs?v=2" type="module"></script>
     <script src="./soft-aurora-player.mjs?v=1" type="module"></script>
   </body>
 </html>
