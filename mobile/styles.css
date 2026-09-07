@@ -2239,50 +2239,96 @@ h2 {
 .stem-studio {
   width: 100%;
   min-width: 0;
-  margin-top: 14px;
-  overflow: hidden;
+  margin-top: 8px;
 }
 
-.arrangement-ruler {
-  --region-count: 1;
+.studio-window-controls {
   display: grid;
-  grid-template-columns: repeat(var(--region-count), minmax(82px, 1fr));
-  width: calc(100% - 104px);
-  min-width: 0;
-  max-width: calc(100% - 104px);
-  margin: 0 0 5px 104px;
-  overflow: hidden;
-  color: var(--faint);
-  font-size: 8px;
-  font-variant-numeric: tabular-nums;
+  grid-template-columns: 106px minmax(0, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px;
+  background: #050506;
+  border: 1px solid var(--line);
+  border-radius: 14px;
 }
 
-.arrangement-ruler span {
-  padding-left: 5px;
-  border-left: 1px solid var(--line);
+.studio-window-size,
+.studio-window-navigation {
+  display: grid;
+  min-width: 0;
+}
+
+.studio-window-size {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 2px;
+  background: var(--paper-deep);
+  border-radius: 10px;
+}
+
+.studio-window-navigation {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+}
+
+.studio-window-size button,
+.studio-window-navigation button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 5px;
+  color: var(--faint);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.studio-window-size button[aria-pressed="true"] {
+  color: #050506;
+  background: var(--ink);
+}
+
+.studio-window-navigation button {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.studio-window-navigation button:disabled {
+  opacity: 0.24;
+}
+
+.studio-window-navigation output {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stem-arrangement {
   display: grid;
+  grid-template-columns: repeat(var(--studio-columns, 1), minmax(0, 1fr));
+  align-items: start;
   gap: 7px;
 }
 
 .arrangement-track {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-rows: 25px 50px;
+  gap: 4px;
   width: 100%;
   min-width: 0;
-  min-height: 54px;
-  padding: 6px;
+  padding: 5px;
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
-}
-
-.arrangement-track.is-muted {
-  opacity: 0.55;
 }
 
 .arrangement-track-heading {
@@ -2291,11 +2337,14 @@ h2 {
   align-content: center;
   column-gap: 6px;
   min-width: 0;
+  padding: 0 3px;
 }
 
 .arrangement-track-heading .track-swatch {
   grid-row: 1 / span 2;
   align-self: center;
+  width: 8px;
+  height: 8px;
 }
 
 .arrangement-track-heading strong,
@@ -2308,82 +2357,130 @@ h2 {
 
 .arrangement-track-heading strong {
   font-family: var(--serif);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
 }
 
 .arrangement-track-heading > span:last-child {
   color: var(--faint);
-  font-size: 8px;
+  font-size: 7px;
   text-transform: capitalize;
 }
 
-.arrangement-scroll {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-width: none;
+.arrangement-track.is-muted .arrangement-track-heading strong {
+  color: var(--muted);
 }
 
-.arrangement-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.arrangement-clips {
-  --region-count: 1;
-  display: grid;
-  grid-template-columns: repeat(var(--region-count), minmax(82px, 1fr));
-  min-width: calc(var(--region-count) * 82px);
-  gap: 3px;
-}
-
-.arrangement-clip,
-.arrangement-gap {
-  min-height: 40px;
-  border-radius: 8px;
-}
-
-.arrangement-gap {
-  display: block;
-  background: rgba(255, 255, 255, 0.018);
-  border: 1px dashed var(--line);
-}
-
-.arrangement-clip {
+.arrangement-window-toggle {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 8px;
   overflow: hidden;
-  padding: 0;
   color: var(--faint);
   background: color-mix(in srgb, var(--track-color) 5%, var(--paper));
   border: 1px solid color-mix(in srgb, var(--track-color) 18%, var(--line));
+  border-radius: 8px;
+  touch-action: manipulation;
 }
 
-.arrangement-clip > span {
+.arrangement-window-texture {
   position: absolute;
-  inset: 9px 5px;
-  opacity: 0.28;
-  background: repeating-linear-gradient(90deg, var(--track-color) 0 2px, transparent 2px 5px);
+  inset: 8px 6px;
+  opacity: 0.16;
+  background: repeating-linear-gradient(90deg, var(--track-color) 0 1px, transparent 1px 5px);
   mask-image: linear-gradient(to bottom, transparent, #000 24%, #000 76%, transparent);
 }
 
-.arrangement-clip small {
-  position: relative;
+.arrangement-window-halves {
+  position: absolute;
   z-index: 1;
-  font-size: 8px;
-  font-variant-numeric: tabular-nums;
+  top: 6px;
+  right: 8px;
+  left: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 3px;
+  height: 2px;
+  pointer-events: none;
 }
 
-.arrangement-clip.is-enabled {
+.arrangement-window-halves i {
+  background: color-mix(in srgb, var(--track-color) 12%, transparent);
+  border-radius: 999px;
+}
+
+.arrangement-window-halves i.is-on {
+  background: color-mix(in srgb, var(--track-color) 88%, white 12%);
+}
+
+.arrangement-window-toggle small,
+.arrangement-window-toggle b {
+  position: relative;
+  z-index: 1;
+}
+
+.arrangement-window-toggle small {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrangement-window-toggle b {
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.arrangement-window-toggle.is-enabled {
   color: var(--ink);
   background: color-mix(in srgb, var(--track-color) 13%, var(--paper));
   border-color: color-mix(in srgb, var(--track-color) 52%, var(--line));
 }
 
+.arrangement-window-toggle.is-enabled .arrangement-window-texture {
+  opacity: 0.28;
+}
+
+.arrangement-window-toggle.is-enabled b {
+  color: var(--ink);
+}
+
+.arrangement-window-toggle.is-mixed {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--track-color) 34%, var(--line));
+  border-style: dashed;
+}
+
+.arrangement-window-toggle:disabled {
+  opacity: 0.4;
+}
+
+.arrangement-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 18px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 12px;
+  text-align: center;
+}
+
 .stem-studio > .secondary-action {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 #view-studio.is-stem-project {
@@ -2433,7 +2530,7 @@ h2 {
 }
 
 .stem-studio[data-density="compact"] {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .stem-studio[data-density="compact"] .step-legend {
@@ -2441,27 +2538,15 @@ h2 {
   font-size: 10px;
 }
 
-.stem-studio[data-density="compact"] .arrangement-ruler {
-  display: none;
-}
-
-.stem-studio[data-density="compact"] .stem-arrangement {
-  grid-template-columns: repeat(var(--studio-columns, 2), minmax(0, 1fr));
-  align-items: start;
-  gap: 6px;
-}
-
 .stem-studio[data-density="compact"] .arrangement-track {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 21px 44px;
+  grid-template-rows: 18px 44px;
   gap: 2px;
-  min-height: 73px;
   padding: 3px;
   border-radius: 10px;
 }
 
 .stem-studio[data-density="compact"] .arrangement-track-heading {
-  grid-template-columns: 7px minmax(0, 1fr) auto;
+  grid-template-columns: 7px minmax(0, 1fr);
   align-content: center;
   gap: 4px;
   padding: 0 3px;
@@ -2478,36 +2563,17 @@ h2 {
 }
 
 .stem-studio[data-density="compact"] .arrangement-track-heading > span:last-child {
-  max-width: 42px;
-  font-size: 7px;
-}
-
-.stem-studio[data-columns="3"] .arrangement-track-heading {
-  grid-template-columns: 7px minmax(0, 1fr);
-}
-
-.stem-studio[data-columns="3"] .arrangement-track-heading > span:last-child {
   display: none;
 }
 
-.stem-studio[data-density="compact"] .arrangement-clips {
-  grid-template-columns: repeat(var(--region-count), minmax(48px, 1fr));
-  min-width: calc(var(--region-count) * 48px);
-  gap: 2px;
+.stem-studio[data-density="compact"] .arrangement-track.is-muted .arrangement-track-heading > span:last-child {
+  display: block;
+  color: #ff718d;
 }
 
-.stem-studio[data-density="compact"] .arrangement-clip,
-.stem-studio[data-density="compact"] .arrangement-gap {
+.stem-studio[data-density="compact"] .arrangement-window-toggle {
   min-height: 44px;
-  border-radius: 7px;
-}
-
-.stem-studio[data-density="compact"] .arrangement-clip > span {
-  inset: 9px 4px;
-}
-
-.stem-studio[data-density="compact"] .arrangement-clip small {
-  font-size: 7px;
+  padding: 6px;
 }
 
 .stem-studio[data-density="compact"] > .secondary-action {
@@ -3087,10 +3153,6 @@ body.has-persistent-player .toast {
 
 @media (max-width: 370px) {
 
-  .stem-studio[data-columns="3"] .stem-arrangement {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .grid-event-row {
     grid-template-columns: 18px minmax(0, 1fr) minmax(76px, 0.8fr) 44px;
     gap: 4px;
@@ -3162,6 +3224,14 @@ body.has-persistent-player .toast {
   .mixer-tile.is-active,
   .mixer-tile:focus-within,
   .mute-button,
+  .studio-window-controls,
+  .studio-window-size,
+  .studio-window-size button,
+  .studio-window-navigation button,
+  .arrangement-track,
+  .arrangement-window-toggle,
+  .arrangement-window-toggle.is-enabled,
+  .arrangement-window-toggle.is-mixed,
   .persistent-player,
   .persistent-play-button,
   .persistent-play-button.is-playing {
@@ -3171,8 +3241,16 @@ body.has-persistent-player .toast {
   }
 
   .persistent-player::after,
-  .persistent-play-button::after {
+  .persistent-play-button::after,
+  .arrangement-window-texture,
+  .arrangement-window-halves {
     display: none;
+  }
+
+  .studio-window-size button[aria-pressed="true"],
+  .arrangement-window-toggle.is-enabled {
+    color: HighlightText;
+    background: Highlight;
   }
 
   .mixer-tile-number,

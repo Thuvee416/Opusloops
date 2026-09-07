@@ -732,6 +732,77 @@
     return result;
   }
 
+  function studioEditWindow(regionCountValue, barsValue, startValue = 0) {
+    const regionCount = Math.max(0, Math.trunc(finiteNumber(regionCountValue, 0)));
+    const requestedBars = Number(barsValue) === 4 ? 4 : 8;
+    const size = requestedBars / 4;
+    const lastStart = regionCount > 0 ? Math.floor((regionCount - 1) / size) * size : 0;
+    const requestedStart = Math.max(0, Math.trunc(finiteNumber(startValue, 0)));
+    const start = Math.min(Math.floor(requestedStart / size) * size, lastStart);
+    const end = Math.min(regionCount, start + size);
+    const segmentCount = Math.max(0, end - start);
+    return {
+      requestedBars,
+      size,
+      start,
+      end,
+      lastStart,
+      segmentCount,
+      actualBars: segmentCount * 4,
+      partial: segmentCount > 0 && segmentCount < size
+    };
+  }
+
+  function studioRegionBars(regionsValue, ordinalValue, segmentIndexValue, asset = null) {
+    const regions = Array.isArray(regionsValue) ? regionsValue : [];
+    const ordinal = Math.max(0, Math.trunc(finiteNumber(ordinalValue, 0)));
+    const segmentIndex = Math.max(0, Math.trunc(finiteNumber(segmentIndexValue, ordinal)));
+    const region = regions.find((candidate) =>
+      Math.trunc(finiteNumber(pick(candidate, "index", "regionIndex", "region_index"), -1)) === segmentIndex
+    );
+    const metadata = parseObject(asset?.metadata, {});
+    const start = finiteNumber(
+      pick(region, "startBar", "start_bar") ?? pick(metadata, "startBar", "start_bar")
+    );
+    const count = finiteNumber(
+      pick(region, "bars", "barCount", "bar_count") ?? pick(metadata, "bars", "barCount", "bar_count")
+    );
+    const end = finiteNumber(
+      pick(region, "endBar", "end_bar") ?? pick(metadata, "endBar", "end_bar")
+    );
+    const fallbackStart = ordinal * 4 + 1;
+    const startBar = Number.isSafeInteger(start) && start > 0 ? start : fallbackStart;
+    const endBar = Number.isSafeInteger(end) && end >= startBar
+      ? end
+      : startBar + (Number.isSafeInteger(count) && count > 0 ? count : 4) - 1;
+    return { startBar, endBar };
+  }
+
+  function studioWindowState(arrangementValue, assetsValue, expectedSegmentsValue) {
+    const arrangement = arrangementValue && typeof arrangementValue === "object"
+      ? arrangementValue
+      : {};
+    const assets = Array.isArray(assetsValue) ? assetsValue : [];
+    const expectedSegments = Math.max(0, Math.trunc(finiteNumber(expectedSegmentsValue, 0)));
+    const available = expectedSegments > 0
+      && assets.length === expectedSegments
+      && assets.every((asset) => asset?.id && Object.prototype.hasOwnProperty.call(arrangement, asset.id));
+    const enabledSegments = available
+      ? assets.map((asset) => arrangement[asset.id] !== false)
+      : [];
+    const enabledCount = enabledSegments.filter(Boolean).length;
+    const allEnabled = available && enabledCount === enabledSegments.length;
+    const allDisabled = available && enabledCount === 0;
+    return {
+      available,
+      enabledSegments,
+      allEnabled,
+      allDisabled,
+      label: !available ? "Unavailable" : allEnabled ? "On" : allDisabled ? "Off" : "Mixed",
+      nextEnabled: available ? !allEnabled : null
+    };
+  }
+
   function toStemProject(jobValue, assetsValue = [], previous = null) {
     const job = normalizeJob(jobValue);
     const assets = Array.isArray(assetsValue) ? assetsValue.map(normalizeAsset) : [];
@@ -821,6 +892,9 @@
     statusKind,
     statusBadgeLabel,
     statusLabel,
+    studioEditWindow,
+    studioRegionBars,
+    studioWindowState,
     timingSeconds,
     timingGridDiagnostics,
     toStemProject

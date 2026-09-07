@@ -1,0 +1,73 @@
+.persistent-player {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.persistent-player-aurora-canvas {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.14;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.persistent-player[data-playback-state="playing"] .persistent-player-aurora-canvas {
+  opacity: 0.24;
+}
+
+.persistent-player[data-soft-aurora-state="loading"] .persistent-player-aurora-canvas,
+.persistent-player[data-soft-aurora-state="fallback"] .persistent-player-aurora-canvas,
+.persistent-player[data-soft-aurora-state="disabled"] .persistent-player-aurora-canvas {
+  display: none;
+}
+
+.persistent-player > .persistent-play-button,
+.persistent-player > .persistent-player-detail {
+  position: relative;
+  z-index: 1;
+}
+
+.persistent-player > .persistent-play-button {
+  background: rgba(3, 3, 4, 0.72);
+}
+
+.persistent-player > .persistent-play-button.is-playing {
+  background: rgba(7, 7, 9, 0.58);
+}
+
+.persistent-player > .persistent-player-detail {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+@media (prefers-contrast: more) {
+  .persistent-player-aurora-canvas {
+    opacity: 0.1;
+  }
+
+  .persistent-player[data-playback-state="playing"] .persistent-player-aurora-canvas {
+    opacity: 0.16;
+  }
+
+  .persistent-player > .persistent-play-button,
+  .persistent-player > .persistent-play-button.is-playing,
+  .persistent-player > .persistent-player-detail {
+    background: rgba(0, 0, 0, 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .persistent-player-aurora-canvas {
+    opacity: 0.14;
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .persistent-player-aurora-canvas {
+    display: none;
+  }
+}

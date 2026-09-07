@@ -1,7 +1,8 @@
 # React Bits notice
 
-The PixelCard-inspired dock effect in `pixel-dock.mjs` and the Grainient mixer
-background in `grainient-mixer.mjs` are adapted from React Bits:
+The PixelCard-inspired dock effect in `pixel-dock.mjs`, the Grainient mixer
+background in `grainient-mixer.mjs`, and the SoftAurora-inspired player
+background in `soft-aurora-player.mjs` are adapted from React Bits:
 <https://github.com/DavidHDev/react-bits>.
 
 ## MIT + Commons Clause License Condition v1.0

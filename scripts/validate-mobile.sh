@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for required in index.html frame-guard.js styles.css pixel-dock.css pixel-dock.mjs grainient-mixer.css grainient-mixer.mjs REACT_BITS_LICENSE.md config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
+for required in index.html frame-guard.js styles.css pixel-dock.css pixel-dock.mjs grainient-mixer.css grainient-mixer.mjs soft-aurora-player.css soft-aurora-player.mjs REACT_BITS_LICENSE.md config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
   if [[ ! -s "mobile/$required" ]]; then
     echo "Required mobile asset is missing or empty: mobile/$required" >&2
     exit 1
@@ -26,6 +26,7 @@ class PageParser(HTMLParser):
         self.ids = []
         self.dock_palettes = []
         self.pixel_canvases = 0
+        self.player_aurora_canvases = 0
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
@@ -39,6 +40,8 @@ class PageParser(HTMLParser):
             self.dock_palettes.append(attributes.get("data-pixel-card"))
         if tag == "canvas" and "pixel-canvas" in attributes.get("class", "").split():
             self.pixel_canvases += 1
+        if tag == "canvas" and "persistent-player-aurora-canvas" in attributes.get("class", "").split():
+            self.player_aurora_canvases += 1
         for attribute in ("href", "src"):
             value = attributes.get(attribute)
             if value:
@@ -57,6 +60,8 @@ pixel_dock_path = root / "pixel-dock.mjs"
 pixel_dock_css_path = root / "pixel-dock.css"
 grainient_mixer_path = root / "grainient-mixer.mjs"
 grainient_mixer_css_path = root / "grainient-mixer.css"
+soft_aurora_player_path = root / "soft-aurora-player.mjs"
+soft_aurora_player_css_path = root / "soft-aurora-player.css"
 react_bits_license_path = root / "REACT_BITS_LICENSE.md"
 app_path = root / "app.js"
 styles_path = root / "styles.css"
@@ -88,6 +93,8 @@ pixel_dock_source = pixel_dock_path.read_text(encoding="utf-8")
 pixel_dock_css_source = pixel_dock_css_path.read_text(encoding="utf-8")
 grainient_mixer_source = grainient_mixer_path.read_text(encoding="utf-8")
 grainient_mixer_css_source = grainient_mixer_css_path.read_text(encoding="utf-8")
+soft_aurora_player_source = soft_aurora_player_path.read_text(encoding="utf-8")
+soft_aurora_player_css_source = soft_aurora_player_css_path.read_text(encoding="utf-8")
 react_bits_license_source = react_bits_license_path.read_text(encoding="utf-8")
 app_source = app_path.read_text(encoding="utf-8")
 styles_source = styles_path.read_text(encoding="utf-8")
@@ -103,6 +110,17 @@ if parser.dock_palettes != ["create", "studio", "mix", "projects"]:
     raise SystemExit(f"{index_path}: all four dock buttons need distinct PixelCard palettes")
 if parser.pixel_canvases != 4:
     raise SystemExit(f"{index_path}: each dock button needs its own PixelCard canvas")
+if parser.player_aurora_canvases != 1:
+    raise SystemExit(f"{index_path}: the persistent player needs exactly one SoftAurora canvas")
+player_id = index_source.index('id="persistent-player"')
+player_end = index_source.index("</section>", player_id)
+aurora_canvas = index_source.index('class="persistent-player-aurora-canvas"', player_id)
+aurora_tag_start = index_source.rfind("<canvas", player_id, aurora_canvas)
+aurora_tag_end = index_source.index(">", aurora_canvas)
+if not (player_id < aurora_canvas < player_end):
+    raise SystemExit(f"{index_path}: the SoftAurora canvas must remain inside the persistent player")
+if 'aria-hidden="true"' not in index_source[aurora_tag_start:aurora_tag_end]:
+    raise SystemExit(f"{index_path}: the decorative SoftAurora canvas must remain hidden from assistive technology")
 
 for asset in (
     "frame-guard.js",
@@ -111,6 +129,8 @@ for asset in (
     "pixel-dock.mjs",
     "grainient-mixer.css",
     "grainient-mixer.mjs",
+    "soft-aurora-player.css",
+    "soft-aurora-player.mjs",
     "config.js",
     "cloud-client.js",
     "stem-import-core.js",
@@ -180,6 +200,71 @@ for token in ("tile.dataset.mixColor", "tile.dataset.mixIndex", "tile.dataset.mi
         raise SystemExit(f"{app_path}: live Grainient mixer metadata is missing: {token}")
 if "Grainient" not in react_bits_license_source:
     raise SystemExit(f"{react_bits_license_path}: Grainient attribution is required")
+
+for token in (
+    "data-soft-aurora-player",
+    'data-playback-state="idle"',
+    'class="persistent-player-aurora-canvas"',
+    'soft-aurora-player.mjs?v=1',
+    'soft-aurora-player.css?v=1',
+):
+    if token not in index_source:
+        raise SystemExit(f"{index_path}: playback-aware SoftAurora wiring is missing: {token}")
+for token in (
+    'getContext("webgl2"',
+    "FRAME_INTERVAL = 1000 / 24",
+    "MAX_DEVICE_PIXEL_RATIO = 1",
+    'powerPreference: "low-power"',
+    'this.player.dataset.playbackState === "playing"',
+    "this.effectTime +=",
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "MutationObserver",
+    'attributeFilter: ["hidden", "data-playback-state"]',
+    "ResizeObserver",
+    "IntersectionObserver",
+    'document.addEventListener("visibilitychange"',
+    'matchMedia("(prefers-reduced-motion: reduce)")',
+    'matchMedia("(forced-colors: active)")',
+    'this.canvas.addEventListener("webglcontextlost"',
+    'this.canvas.addEventListener("webglcontextrestored"',
+):
+    if token not in soft_aurora_player_source:
+        raise SystemExit(f"{soft_aurora_player_path}: lightweight playback lifecycle requirement is missing: {token}")
+for forbidden_listener in (
+    'addEventListener("mousemove"',
+    'addEventListener("pointermove"',
+    'addEventListener("touchmove"',
+):
+    if forbidden_listener in soft_aurora_player_source:
+        raise SystemExit(f"{soft_aurora_player_path}: player effect must not track pointer or touch movement")
+for token in (
+    ".persistent-player-aurora-canvas",
+    "pointer-events: none",
+    '.persistent-player[data-playback-state="playing"]',
+    "opacity: 0.24",
+    "@media (prefers-reduced-motion: reduce)",
+    "@media (forced-colors: active)",
+):
+    if token not in soft_aurora_player_css_source:
+        raise SystemExit(f"{soft_aurora_player_css_path}: subtle player presentation requirement is missing: {token}")
+if "SoftAurora" not in react_bits_license_source:
+    raise SystemExit(f"{react_bits_license_path}: SoftAurora attribution is required")
+for token in (
+    "const persistentPlaying = activePlaybackPlaying() && !persistentStarting;",
+    "dom.persistentPlayer.dataset.playbackState",
+    '? privateRetrying ? "retrying" : "loading"',
+    ': persistentPlaying ? "playing" : "paused";',
+    "dom.persistentPlayer.dataset.playbackSource",
+):
+    if token not in app_source:
+        raise SystemExit(f"{app_path}: truthful player animation state is missing: {token}")
+if "playing: available && clickAuditionEngaged && !clickAuditionLoading" not in stem_import_source:
+    raise SystemExit(f"{stem_import_path}: stalled timing auditions must not report active playback")
+audition_play_event_start = stem_import_source.index('dom.clickAudio.addEventListener("play"')
+audition_playing_event_start = stem_import_source.index('dom.clickAudio.addEventListener("playing"', audition_play_event_start)
+if "clickAuditionLoading = false" in stem_import_source[audition_play_event_start:audition_playing_event_start]:
+    raise SystemExit(f"{stem_import_path}: the early play event must not clear buffering before audio is playing")
 
 for token in (
     "function createMixerTile",
@@ -264,20 +349,74 @@ for token in (
     if token not in cloud_client_source:
         raise SystemExit(f"{cloud_client_path}: cancellable private preview signing is missing: {token}")
 for token in (
-    'dom.stemStudio.dataset.density = stem.tracks.length > 6 ? "compact" : "comfortable"',
-    'dom.stemStudio.dataset.columns = stem.tracks.length > 10 ? "3" : stem.tracks.length > 6 ? "2" : "1"',
-    '#view-studio.is-large-stem-project',
-    '.stem-studio[data-density="compact"] .stem-arrangement',
-    'repeat(var(--studio-columns, 2), minmax(0, 1fr))',
-    '.stem-studio[data-columns="3"] .stem-arrangement',
-    'arrangementScrollFrame = window.requestAnimationFrame',
-    'min-height: 44px',
-    "width: calc(100% - 104px)",
+    'data-studio-window-bars="4"',
+    'data-studio-window-bars="8"',
+    'id="stem-window-previous"',
+    'id="stem-window-label"',
+    'id="stem-window-next"',
+):
+    if token not in index_source:
+        raise SystemExit(f"{index_path}: four/eight-bar Studio controls are missing: {token}")
+for token in (
+    "let studioWindowBars = 8;",
+    "function stemArrangementRegions",
+    "const assetsByTrack = new Map();",
+    "function stemRegionBars",
+    "function currentStudioWindow",
+    "function setStudioWindowBars",
+    "function moveStudioWindow",
+    "function toggleStemWindow",
+    "function setStemSegmentsEnabled",
+    "visibleIndexes.map((segmentIndex) => trackAssets.get(segmentIndex))",
+    'toggle.setAttribute("aria-pressed", available && !allEnabled && !allDisabled ? "mixed" : String(allEnabled))',
+    "stemCore.studioWindowState(",
+    'status.textContent = windowState.label;',
+    'stateDescription.className = "sr-only";',
+    'halves.className = "arrangement-window-halves";',
+    'replacement?.focus({ preventScroll: true });',
+    'dom.stemStudio.dataset.columns = stem.tracks.length >= 5 ? "2" : "1";',
     'if (playing || playbackStarting) stopPlayback({ fade: false, resetPosition: false })',
     "stemPlayer?.releaseBuffers()",
 ):
-    if token not in f"{app_source}\n{styles_source}":
-        raise SystemExit(f"Large-project Studio layout requirement is missing: {token}")
+    if token not in app_source:
+        raise SystemExit(f"{app_path}: paged four/eight-bar Studio requirement is missing: {token}")
+for token in (
+    ".studio-window-controls",
+    ".studio-window-size",
+    ".studio-window-navigation",
+    ".arrangement-window-toggle",
+    ".arrangement-window-halves",
+    "grid-template-columns: repeat(var(--studio-columns, 1), minmax(0, 1fr))",
+    "min-height: 44px",
+    "touch-action: manipulation",
+    "#view-studio.is-large-stem-project",
+):
+    if token not in styles_source:
+        raise SystemExit(f"{styles_path}: compact four/eight-bar Studio presentation is missing: {token}")
+for retired_studio_token in (
+    "arrangementScrollFrame",
+    "arrangementScrollSyncing",
+    'className = "arrangement-scroll"',
+    '.arrangement-scroll',
+    'data-columns="3"',
+    "function toggleStemSegment",
+    "data.toggleStemSegment",
+):
+    if retired_studio_token in f"{app_source}\n{styles_source}":
+        raise SystemExit(f"Nested or three-column Studio layout must not return: {retired_studio_token}")
+
+set_segments_start = app_source.index("function setStemSegmentsEnabled")
+set_segments_end = app_source.index("function toggleStemWindow", set_segments_start)
+set_segments_source = app_source[set_segments_start:set_segments_end]
+for token, count in (
+    ("capturePlaybackMutation()", 1),
+    ("stemPlayer?.loadProject(state)", 1),
+    ("renderStemArrangement()", 1),
+    ("queueSave()", 1),
+    ("restorePlaybackMutation(playbackSnapshot)", 1),
+):
+    if set_segments_source.count(token) != count:
+        raise SystemExit(f"{app_path}: an eight-bar edit must perform {token} exactly once")
 
 for reference in parser.local_assets:
     asset_path = local_path(reference, index_path)
@@ -329,6 +468,7 @@ PY
 node --check mobile/app.js
 node --check mobile/pixel-dock.mjs
 node --check mobile/grainient-mixer.mjs
+node --check mobile/soft-aurora-player.mjs
 node --check mobile/config.js
 node --check mobile/cloud-client.js
 node --check mobile/stem-import-core.js
@@ -500,6 +640,71 @@ const asset = core.normalizeAsset({
 assert.equal(asset.trackId, 'drums');
 assert.equal(asset.segmentIndex, 4);
 assert.equal(asset.durationSeconds, 8);
+
+assert.deepEqual(core.studioEditWindow(1, 8, 0), {
+  requestedBars: 8, size: 2, start: 0, end: 1, lastStart: 0,
+  segmentCount: 1, actualBars: 4, partial: true
+});
+assert.deepEqual(core.studioEditWindow(3, 8, 99), {
+  requestedBars: 8, size: 2, start: 2, end: 3, lastStart: 2,
+  segmentCount: 1, actualBars: 4, partial: true
+});
+assert.deepEqual(core.studioEditWindow(5, 4, 3), {
+  requestedBars: 4, size: 1, start: 3, end: 4, lastStart: 4,
+  segmentCount: 1, actualBars: 4, partial: false
+});
+assert.deepEqual(core.studioEditWindow(5, 8, 3), {
+  requestedBars: 8, size: 2, start: 2, end: 4, lastStart: 4,
+  segmentCount: 2, actualBars: 8, partial: false
+});
+assert.deepEqual(core.studioEditWindow(5, 8, 4), {
+  requestedBars: 8, size: 2, start: 4, end: 5, lastStart: 4,
+  segmentCount: 1, actualBars: 4, partial: true
+});
+assert.deepEqual(core.studioRegionBars([
+  { index: 0, startBar: 1, endBar: 4 },
+  { index: 7, startBar: 29, endBar: 32 }
+], 1, 5, { metadata: { start_bar: 21, end_bar: 24 } }), {
+  startBar: 21, endBar: 24
+}, 'a missing exact region must use its asset metadata, never another ordinal region');
+assert.deepEqual(core.studioRegionBars([], 1, 5), {
+  startBar: 5, endBar: 8
+});
+const studioAssets = [{ id: 'segment-a' }, { id: 'segment-b' }];
+assert.deepEqual(core.studioWindowState({ 'segment-a': true, 'segment-b': true }, studioAssets, 2), {
+  available: true,
+  enabledSegments: [true, true],
+  allEnabled: true,
+  allDisabled: false,
+  label: 'On',
+  nextEnabled: false
+});
+assert.deepEqual(core.studioWindowState({ 'segment-a': true, 'segment-b': false }, studioAssets, 2), {
+  available: true,
+  enabledSegments: [true, false],
+  allEnabled: false,
+  allDisabled: false,
+  label: 'Mixed',
+  nextEnabled: true
+});
+assert.equal(
+  core.studioWindowState({ 'segment-a': false, 'segment-b': false }, studioAssets, 2).label,
+  'Off'
+);
+assert.deepEqual(core.studioWindowState({ 'segment-a': true }, [studioAssets[0]], 2), {
+  available: false,
+  enabledSegments: [],
+  allEnabled: false,
+  allDisabled: false,
+  label: 'Unavailable',
+  nextEnabled: null
+}, 'a missing segment must make the edit a no-op');
+const inheritedArrangement = Object.create({ 'segment-a': true });
+assert.equal(
+  core.studioWindowState(inheritedArrangement, [studioAssets[0]], 1).available,
+  false,
+  'only owned arrangement entries are editable'
+);
 
 const events = (times, downbeats = []) => {
   const downbeatSet = new Set(downbeats.map(String));

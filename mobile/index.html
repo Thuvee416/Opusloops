@@ -17,9 +17,10 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=37" />
+    <link rel="stylesheet" href="./styles.css?v=38" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
+    <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
     <title>Opusloops</title>
   </head>
   <body>
@@ -367,10 +368,20 @@
 
           <section class="stem-studio" id="stem-studio" hidden aria-labelledby="stem-arrangement-title">
             <div class="step-legend">
-              <span id="stem-arrangement-title">Four-bar arrangement</span>
+              <span id="stem-arrangement-title">Arrangement</span>
               <span id="stem-arrangement-duration">0:00</span>
             </div>
-            <div class="arrangement-ruler" id="stem-arrangement-ruler" aria-hidden="true"></div>
+            <div class="studio-window-controls" aria-label="Arrangement edit scope">
+              <div class="studio-window-size" role="group" aria-label="Edit four or eight bars at once">
+                <button type="button" data-studio-window-bars="4" aria-pressed="false">4 bars</button>
+                <button type="button" data-studio-window-bars="8" aria-pressed="true">8 bars</button>
+              </div>
+              <div class="studio-window-navigation">
+                <button id="stem-window-previous" type="button" aria-label="Previous bars">‹</button>
+                <output id="stem-window-label" aria-live="polite">Bars 1–8</output>
+                <button id="stem-window-next" type="button" aria-label="Next bars">›</button>
+              </div>
+            </div>
             <div class="stem-arrangement" id="stem-arrangement"></div>
             <button class="secondary-action" id="review-stem-analysis" type="button">Review import details</button>
           </section>
@@ -433,7 +444,16 @@
         </section>
       </main>
 
-      <section class="persistent-player" id="persistent-player" aria-label="Project player" hidden>
+      <section
+        class="persistent-player"
+        id="persistent-player"
+        aria-label="Project player"
+        data-playback-state="idle"
+        data-soft-aurora-player
+        data-soft-aurora-state="loading"
+        hidden
+      >
+        <canvas class="persistent-player-aurora-canvas" aria-hidden="true"></canvas>
         <button
           class="persistent-play-button"
           id="persistent-play-button"
@@ -568,11 +588,12 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
     <script src="./cloud-client.js?v=9" defer></script>
-    <script src="./stem-import-core.js?v=7" defer></script>
+    <script src="./stem-import-core.js?v=8" defer></script>
     <script src="./stem-player.js?v=3" defer></script>
-    <script src="./stem-import.js?v=8" defer></script>
-    <script src="./app.js?v=30" defer></script>
+    <script src="./stem-import.js?v=9" defer></script>
+    <script src="./app.js?v=31" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
     <script src="./grainient-mixer.mjs?v=1" type="module"></script>
+    <script src="./soft-aurora-player.mjs?v=1" type="module"></script>
   </body>
 </html>

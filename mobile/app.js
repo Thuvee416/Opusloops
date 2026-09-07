@@ -98,11 +98,9 @@
   let activeMixerKey = "";
   let mixerDrag = null;
   let suppressedMixerClick = { key: "", until: 0 };
-  let arrangementScrollFrame = 0;
-  let arrangementScrollUnlockFrame = 0;
-  let arrangementScrollSyncing = false;
-  let arrangementScrollLeft = 0;
-  let arrangementProjectId = "";
+  let studioWindowBars = 8;
+  let studioWindowStart = 0;
+  let studioWindowProjectId = "";
 
   const dom = {
     composerForm: document.querySelector("#composer-form"),
@@ -165,8 +163,10 @@
     stemStudio: document.querySelector("#stem-studio"),
     stemArrangementTitle: document.querySelector("#stem-arrangement-title"),
     stemArrangement: document.querySelector("#stem-arrangement"),
-    stemArrangementRuler: document.querySelector("#stem-arrangement-ruler"),
     stemArrangementDuration: document.querySelector("#stem-arrangement-duration"),
+    stemWindowLabel: document.querySelector("#stem-window-label"),
+    stemWindowPrevious: document.querySelector("#stem-window-previous"),
+    stemWindowNext: document.querySelector("#stem-window-next"),
     tempoAdjustments: document.querySelector("#tempo-adjustments"),
     keyDetail: document.querySelector("#key-detail"),
     mixEyebrow: document.querySelector("#mix-eyebrow"),
@@ -1001,7 +1001,7 @@
   function renderAll() {
     const stems = state.kind === "stem-import";
     dom.studioView.classList.toggle("is-stem-project", stems);
-    dom.studioView.classList.toggle("is-large-stem-project", stems && state.stemImport.tracks.length > 6);
+    dom.studioView.classList.toggle("is-large-stem-project", stems && state.stemImport.tracks.length >= 5);
     dom.studioTitle.textContent = state.name;
     dom.tempoOutput.textContent = `${Math.round(state.tempo * 10) / 10} BPM`;
     dom.keyButton.textContent = state.key;
@@ -1302,35 +1302,170 @@
     updateMixerTileSelection();
   }
 
+  function stemArrangementRegions(stem = state.stemImport) {
+    const assets = Array.isArray(stem?.previewAssets) ? stem.previewAssets : [];
+    const indexSet = new Set(assets.map((asset) => asset.segmentIndex).filter(Number.isSafeInteger));
+    (stem?.regions || []).forEach((region) => {
+      if (Number.isSafeInteger(region?.index)) indexSet.add(region.index);
+    });
+    const indexes = Array.from(indexSet).sort((left, right) => left - right);
+    const assetsByTrack = new Map();
+    assets.forEach((asset) => {
+      if (!asset.trackId || !Number.isSafeInteger(asset.segmentIndex)) return;
+      if (!assetsByTrack.has(asset.trackId)) assetsByTrack.set(asset.trackId, new Map());
+      assetsByTrack.get(asset.trackId).set(asset.segmentIndex, asset);
+    });
+    return {
+      assets,
+      assetsByTrack,
+      indexes,
+      count: indexes.length
+    };
+  }
+
+  function stemRegionBars(stem, ordinal, segmentIndex, asset = null) {
+    return stemCore.studioRegionBars(stem?.regions, ordinal, segmentIndex, asset);
+  }
+
+  function currentStudioWindow(regionCount) {
+    if (studioWindowProjectId !== state.id) {
+      studioWindowProjectId = state.id;
+      studioWindowStart = 0;
+      studioWindowBars = 8;
+    }
+    const editWindow = stemCore.studioEditWindow(regionCount, studioWindowBars, studioWindowStart);
+    studioWindowStart = editWindow.start;
+    return editWindow;
+  }
+
+  function setStudioWindowBars(bars) {
+    const nextBars = Number(bars) === 4 ? 4 : 8;
+    if (nextBars === studioWindowBars || state.kind !== "stem-import") return;
+    studioWindowBars = nextBars;
+    const size = studioWindowBars / 4;
+    studioWindowStart = Math.floor(studioWindowStart / size) * size;
+    renderStemArrangement();
+  }
+
+  function moveStudioWindow(direction) {
+    if (state.kind !== "stem-import") return;
+    const { count } = stemArrangementRegions();
+    const editWindow = currentStudioWindow(count);
+    studioWindowStart = clamp(
+      studioWindowStart + (direction < 0 ? -editWindow.size : editWindow.size),
+      0,
+      editWindow.lastStart
+    );
+    renderStemArrangement();
+  }
+
+  function firstStemAssetForSegment(assetsByTrack, segmentIndex) {
+    for (const trackAssets of assetsByTrack.values()) {
+      const asset = trackAssets.get(segmentIndex);
+      if (asset) return asset;
+    }
+    return null;
+  }
+
+  function studioWindowScope(stem, assetsByTrack, regionIndexes, start, end) {
+    const visibleIndexes = regionIndexes.slice(start, end);
+    if (!visibleIndexes.length) return { label: "Preparing bars…", actualBars: 0 };
+    const firstIndex = visibleIndexes[0];
+    const lastIndex = visibleIndexes.at(-1);
+    const firstRange = stemRegionBars(
+      stem,
+      start,
+      firstIndex,
+      firstStemAssetForSegment(assetsByTrack, firstIndex)
+    );
+    const lastRange = stemRegionBars(
+      stem,
+      Math.max(start, end - 1),
+      lastIndex,
+      firstStemAssetForSegment(assetsByTrack, lastIndex)
+    );
+    return {
+      label: `Bars ${firstRange.startBar}–${lastRange.endBar}`,
+      actualBars: Math.max(0, lastRange.endBar - firstRange.startBar + 1)
+    };
+  }
+
   function renderStemArrangement() {
     const stem = state.stemImport;
-    const existingScroller = dom.stemArrangement.querySelector(".arrangement-scroll");
-    arrangementScrollLeft = arrangementProjectId === state.id
-      ? existingScroller?.scrollLeft ?? arrangementScrollLeft
-      : 0;
-    arrangementProjectId = state.id;
-    window.cancelAnimationFrame(arrangementScrollFrame);
-    window.cancelAnimationFrame(arrangementScrollUnlockFrame);
-    arrangementScrollFrame = 0;
-    arrangementScrollUnlockFrame = 0;
-    arrangementScrollSyncing = false;
-    const assets = stem.previewAssets || [];
-    const regionIndexes = Array.from(new Set(assets.map((asset) => asset.segmentIndex))).sort((a, b) => a - b);
-    const regionCount = Math.max(regionIndexes.length, stem.regions.length, 1);
-    dom.stemStudio.dataset.density = stem.tracks.length > 6 ? "compact" : "comfortable";
-    dom.stemStudio.dataset.columns = stem.tracks.length > 10 ? "3" : stem.tracks.length > 6 ? "2" : "1";
+    const focusedTrackId = dom.stemArrangement.contains(document.activeElement)
+      ? document.activeElement?.dataset?.toggleStemWindow || ""
+      : "";
+    const { assetsByTrack, indexes: regionIndexes, count: regionCount } = stemArrangementRegions(stem);
+    const editWindow = currentStudioWindow(regionCount);
+    const visibleIndexes = regionIndexes.slice(editWindow.start, editWindow.end);
+    const scope = studioWindowScope(
+      stem,
+      assetsByTrack,
+      regionIndexes,
+      editWindow.start,
+      editWindow.end
+    );
+    const scopeLabel = scope.label;
+    const finalPartialWindow = editWindow.end === regionCount
+      && scope.actualBars > 0
+      && scope.actualBars < studioWindowBars;
+    const scopeOutput = finalPartialWindow
+      ? `${scopeLabel.replace(/^Bars /, "")} · final ${scope.actualBars}`
+      : scopeLabel;
+    dom.stemStudio.dataset.density = stem.tracks.length >= 5 ? "compact" : "comfortable";
+    dom.stemStudio.dataset.columns = stem.tracks.length >= 5 ? "2" : "1";
+    dom.stemStudio.dataset.windowBars = String(studioWindowBars);
     dom.stemStudio.style.setProperty("--track-count", String(Math.max(1, stem.tracks.length)));
     dom.stemStudio.style.setProperty("--studio-columns", dom.stemStudio.dataset.columns);
-    dom.stemArrangementTitle.textContent = stem.tracks.length > 6 ? "Arrangement · swipe clips" : "Four-bar arrangement";
+    dom.stemArrangementTitle.textContent = "Arrangement";
     dom.stemArrangementDuration.textContent = stem.durationSeconds ? formatPlaybackTime(stem.durationSeconds).replace(/\.0$/, "") : "Processing";
-    dom.stemArrangementRuler.replaceChildren();
-    for (let index = 0; index < regionCount; index += 1) {
-      const marker = document.createElement("span");
-      marker.textContent = String(index * 4 + 1);
-      dom.stemArrangementRuler.append(marker);
-    }
-    dom.stemArrangementRuler.style.setProperty("--region-count", String(regionCount));
+    dom.stemWindowLabel.textContent = scopeOutput;
+    dom.stemWindowPrevious.disabled = regionCount === 0 || editWindow.start === 0;
+    dom.stemWindowNext.disabled = regionCount === 0 || editWindow.start >= editWindow.lastStart;
+    const previousWindow = stemCore.studioEditWindow(
+      regionCount,
+      studioWindowBars,
+      Math.max(0, editWindow.start - editWindow.size)
+    );
+    const nextWindow = stemCore.studioEditWindow(
+      regionCount,
+      studioWindowBars,
+      Math.min(editWindow.lastStart, editWindow.start + editWindow.size)
+    );
+    const previousScope = studioWindowScope(
+      stem,
+      assetsByTrack,
+      regionIndexes,
+      previousWindow.start,
+      previousWindow.end
+    );
+    const nextScope = studioWindowScope(
+      stem,
+      assetsByTrack,
+      regionIndexes,
+      nextWindow.start,
+      nextWindow.end
+    );
+    dom.stemWindowPrevious.setAttribute("aria-label", `Show ${previousScope.label.toLowerCase()}`);
+    dom.stemWindowNext.setAttribute("aria-label", `Show ${nextScope.label.toLowerCase()}`);
+    document.querySelectorAll("[data-studio-window-bars]").forEach((button) => {
+      const buttonBars = Number(button.dataset.studioWindowBars);
+      const active = buttonBars === studioWindowBars;
+      button.setAttribute("aria-pressed", String(active));
+      button.setAttribute("aria-label", active && finalPartialWindow
+        ? `Edit ${buttonBars} bars at a time; this final window contains ${scope.actualBars} bars`
+        : `Edit ${buttonBars} bars at a time`);
+    });
+
     dom.stemArrangement.replaceChildren();
+    if (!visibleIndexes.length) {
+      const empty = document.createElement("p");
+      empty.className = "arrangement-empty";
+      empty.textContent = "Aligned bars are still being prepared.";
+      dom.stemArrangement.append(empty);
+      return;
+    }
+
     stem.tracks.forEach((track, trackIndex) => {
       const row = document.createElement("section");
       row.className = `arrangement-track${track.muted ? " is-muted" : ""}`;
@@ -1342,55 +1477,61 @@
       const name = document.createElement("strong");
       name.textContent = track.name;
       const role = document.createElement("span");
-      role.textContent = track.role;
+      role.textContent = track.muted ? "Mix muted" : track.role;
       heading.append(swatch, name, role);
-      const scroller = document.createElement("div");
-      scroller.className = "arrangement-scroll";
-      const clips = document.createElement("div");
-      clips.className = "arrangement-clips";
-      clips.style.setProperty("--region-count", String(regionCount));
-      const trackAssets = assets.filter((asset) => asset.trackId === track.assetId);
-      for (let index = 0; index < regionCount; index += 1) {
-        const asset = trackAssets.find((candidate) => candidate.segmentIndex === (regionIndexes[index] ?? index));
-        if (!asset) {
-          const gap = document.createElement("span");
-          gap.className = "arrangement-gap";
-          clips.append(gap);
-          continue;
-        }
-        const enabled = stem.arrangement[asset.id] !== false;
-        const clip = document.createElement("button");
-        clip.type = "button";
-        clip.className = `arrangement-clip${enabled ? " is-enabled" : ""}`;
-        clip.dataset.toggleStemSegment = asset.id;
-        clip.setAttribute("aria-pressed", String(enabled));
-        clip.setAttribute("aria-label", `${enabled ? "Remove" : "Add"} ${track.name}, bars ${index * 4 + 1} to ${index * 4 + 4}`);
-        clip.innerHTML = `<span aria-hidden="true"></span><small>${index * 4 + 1}–${index * 4 + 4}</small>`;
-        clips.append(clip);
-      }
-      scroller.append(clips);
-      scroller.addEventListener("scroll", () => {
-        if (arrangementScrollSyncing) return;
-        arrangementScrollLeft = scroller.scrollLeft;
-        if (arrangementScrollFrame) return;
-        arrangementScrollFrame = window.requestAnimationFrame(() => {
-          arrangementScrollFrame = 0;
-          arrangementScrollSyncing = true;
-          dom.stemArrangement.querySelectorAll(".arrangement-scroll").forEach((other) => {
-            if (other.scrollLeft !== arrangementScrollLeft) other.scrollLeft = arrangementScrollLeft;
-          });
-          dom.stemArrangementRuler.scrollLeft = arrangementScrollLeft;
-          arrangementScrollUnlockFrame = window.requestAnimationFrame(() => {
-            arrangementScrollUnlockFrame = 0;
-            arrangementScrollSyncing = false;
-          });
-        });
-      }, { passive: true });
-      row.append(heading, scroller);
+
+      const trackIndexBySegment = assetsByTrack.get(track.assetId) || new Map();
+      const windowAssets = visibleIndexes.map((segmentIndex) => trackIndexBySegment.get(segmentIndex)).filter(Boolean);
+      const windowState = stemCore.studioWindowState(
+        stem.arrangement,
+        windowAssets,
+        visibleIndexes.length
+      );
+      const { available, enabledSegments, allEnabled, allDisabled } = windowState;
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = `arrangement-window-toggle${allEnabled ? " is-enabled" : ""}${!allEnabled && !allDisabled && available ? " is-mixed" : ""}`;
+      toggle.dataset.toggleStemWindow = track.assetId;
+      toggle.disabled = !available;
+      toggle.setAttribute("aria-pressed", available && !allEnabled && !allDisabled ? "mixed" : String(allEnabled));
+      toggle.setAttribute("aria-label", available
+        ? `${allEnabled ? "Turn off" : "Turn on"} ${track.name} for ${scopeLabel.toLowerCase()}${track.muted ? "; this stem is muted in Mix" : ""}`
+        : `${track.name} is unavailable for ${scopeLabel.toLowerCase()}`);
+      const stateDescription = document.createElement("span");
+      stateDescription.className = "sr-only";
+      stateDescription.id = `stem-window-state-${trackIndex}`;
+      stateDescription.textContent = available
+        ? `${visibleIndexes.map((segmentIndex, index) => {
+          const range = stemRegionBars(stem, editWindow.start + index, segmentIndex, windowAssets[index]);
+          return `Bars ${range.startBar}–${range.endBar} ${enabledSegments[index] ? "on" : "off"}`;
+        }).join(". ")}.${track.muted ? " This stem is muted in Mix." : ""}`
+        : `No aligned audio is available for ${scopeLabel.toLowerCase()}.`;
+      toggle.setAttribute("aria-describedby", stateDescription.id);
+      const texture = document.createElement("span");
+      texture.className = "arrangement-window-texture";
+      texture.setAttribute("aria-hidden", "true");
+      const halves = document.createElement("span");
+      halves.className = "arrangement-window-halves";
+      halves.setAttribute("aria-hidden", "true");
+      enabledSegments.forEach((enabled) => {
+        const half = document.createElement("i");
+        half.className = enabled ? "is-on" : "";
+        halves.append(half);
+      });
+      const range = document.createElement("small");
+      range.textContent = scopeLabel;
+      const status = document.createElement("b");
+      status.textContent = windowState.label;
+      toggle.append(texture, halves, range, status);
+      row.append(heading, toggle, stateDescription);
       dom.stemArrangement.append(row);
-      scroller.scrollLeft = arrangementScrollLeft;
     });
-    dom.stemArrangementRuler.scrollLeft = arrangementScrollLeft;
+
+    if (focusedTrackId) {
+      const replacement = Array.from(dom.stemArrangement.querySelectorAll("[data-toggle-stem-window]"))
+        .find((button) => button.dataset.toggleStemWindow === focusedTrackId);
+      replacement?.focus({ preventScroll: true });
+    }
   }
 
   function renderProjects() {
@@ -1467,25 +1608,42 @@
     queueSave();
   }
 
-  function toggleStemSegment(assetId) {
-    if (state.kind !== "stem-import" || !(assetId in state.stemImport.arrangement)) return;
+  function setStemSegmentsEnabled(assets, enabled) {
+    if (state.kind !== "stem-import" || !assets.length) return;
+    const validAssets = assets.filter((asset) =>
+      asset?.id && Object.prototype.hasOwnProperty.call(state.stemImport.arrangement, asset.id)
+    );
+    if (!validAssets.length) return;
     const playbackSnapshot = capturePlaybackMutation();
-    state.stemImport.arrangement[assetId] = state.stemImport.arrangement[assetId] === false;
-    const asset = state.stemImport.previewAssets.find((candidate) => candidate.id === assetId);
-    if (asset?.trackId && Number.isSafeInteger(asset.segmentIndex)) {
+    validAssets.forEach((asset) => {
+      state.stemImport.arrangement[asset.id] = enabled;
+      if (!asset.trackId || !Number.isSafeInteger(asset.segmentIndex)) return;
       const disabled = new Set(state.stemImport.disabledSegments[asset.trackId] || []);
-      if (state.stemImport.arrangement[assetId] === false) disabled.add(asset.segmentIndex);
-      else disabled.delete(asset.segmentIndex);
+      if (enabled) disabled.delete(asset.segmentIndex);
+      else disabled.add(asset.segmentIndex);
       if (disabled.size) {
         state.stemImport.disabledSegments[asset.trackId] = [...disabled].sort((left, right) => left - right);
       } else {
         delete state.stemImport.disabledSegments[asset.trackId];
       }
-    }
+    });
     stemPlayer?.loadProject(state);
     renderStemArrangement();
     queueSave();
     restorePlaybackMutation(playbackSnapshot);
+  }
+
+  function toggleStemWindow(trackId) {
+    if (state.kind !== "stem-import") return;
+    const { assetsByTrack, indexes, count } = stemArrangementRegions();
+    const editWindow = currentStudioWindow(count);
+    const visibleIndexes = indexes.slice(editWindow.start, editWindow.end);
+    const trackAssets = assetsByTrack.get(trackId) || new Map();
+    const assets = visibleIndexes.map((segmentIndex) => trackAssets.get(segmentIndex)).filter(Boolean);
+    if (!visibleIndexes.length || assets.length !== visibleIndexes.length) return;
+    const windowState = stemCore.studioWindowState(state.stemImport.arrangement, assets, visibleIndexes.length);
+    if (!windowState.available) return;
+    setStemSegmentsEnabled(assets, windowState.nextEnabled);
   }
 
   function createMasterChain(context, destination) {
@@ -1590,12 +1748,12 @@
   function renderPlaybackControls() {
     const audition = activeAuditionState();
     const projectActive = playing || playbackStarting;
-    const persistentActive = activePlaybackPlaying() || activePlaybackStarting();
+    const persistentStarting = activePlaybackStarting();
+    const persistentPlaying = activePlaybackPlaying() && !persistentStarting;
+    const persistentActive = persistentPlaying || persistentStarting;
     const playerVisible = Boolean(audition) || playbackSessionVisible;
     const privateRetrying = !audition && state.kind === "stem-import" && stemPlaybackRetrying;
-    const privateBuffering = !audition
-      && state.kind === "stem-import"
-      && (playbackStarting || privateRetrying);
+    const playerBuffering = persistentStarting || (privateRetrying && !persistentPlaying);
     dom.playButton.classList.toggle("is-playing", projectActive);
     dom.playButton.setAttribute("aria-pressed", String(projectActive));
     dom.playButton.setAttribute("aria-label", projectActive ? "Pause project" : "Play project");
@@ -1604,12 +1762,20 @@
     dom.persistentPlayButton.setAttribute("aria-label", audition
       ? `${persistentActive ? "Pause" : "Play"} timing audition`
       : `${persistentActive ? "Pause" : "Play"} project`);
-    dom.persistentPlayer.classList.toggle("is-buffering", privateBuffering);
+    dom.persistentPlayer.dataset.playbackState = !playerVisible
+      ? "idle"
+      : playerBuffering
+        ? privateRetrying ? "retrying" : "loading"
+        : persistentPlaying ? "playing" : "paused";
+    dom.persistentPlayer.dataset.playbackSource = audition
+      ? "tempo-audition"
+      : state.kind === "stem-import" ? "stems" : "generated";
+    dom.persistentPlayer.classList.toggle("is-buffering", playerBuffering);
     dom.persistentPlayer.classList.toggle("is-retrying", privateRetrying);
-    dom.persistentPlayer.setAttribute("aria-busy", String(privateBuffering));
+    dom.persistentPlayer.setAttribute("aria-busy", String(playerBuffering));
     dom.persistentPlayer.setAttribute("aria-label", audition
       ? "Timing audition player"
-      : privateBuffering
+      : playerBuffering
         ? privateRetrying ? "Project player, retrying audio" : "Project player, preparing audio"
         : "Project player");
     dom.persistentSeekLabel.textContent = audition ? "Seek within timing audition" : "Seek within project";
@@ -2426,7 +2592,7 @@
 
     if (target.dataset.muteStem) toggleStemMute(target.dataset.muteStem);
 
-    if (target.dataset.toggleStemSegment) toggleStemSegment(target.dataset.toggleStemSegment);
+    if (target.dataset.toggleStemWindow) toggleStemWindow(target.dataset.toggleStemWindow);
 
     if (target.dataset.loadProject) {
       const project = readProjects().find((item) => item.id === target.dataset.loadProject);
@@ -2520,6 +2686,11 @@
   dom.exportAudioButton.addEventListener("click", exportAudio);
   dom.shareAudioButton.addEventListener("click", sharePreparedAudio);
   dom.downloadAudioLink.addEventListener("click", () => showToast("Saving WAV"));
+  dom.stemWindowPrevious.addEventListener("click", () => moveStudioWindow(-1));
+  dom.stemWindowNext.addEventListener("click", () => moveStudioWindow(1));
+  document.querySelectorAll("[data-studio-window-bars]").forEach((button) => {
+    button.addEventListener("click", () => setStudioWindowBars(button.dataset.studioWindowBars));
+  });
 
   document.querySelector("#tempo-down").addEventListener("click", () => {
     changeTempo(-2);

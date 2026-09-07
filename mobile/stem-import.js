@@ -944,7 +944,7 @@
         title: auditionTitle(),
         position,
         duration,
-        playing: available && clickAuditionEngaged && !dom.clickAudio.paused && !dom.clickAudio.ended,
+        playing: available && clickAuditionEngaged && !clickAuditionLoading && !dom.clickAudio.paused && !dom.clickAudio.ended,
         loading: available && clickAuditionEngaged && clickAuditionLoading,
         ended: available && clickAuditionEngaged && clickAuditionEnded,
         available,
@@ -1067,9 +1067,6 @@
           dom.clickAudio.pause();
           return;
         }
-        clickAuditionLoading = false;
-        renderAuditionControl();
-        emitAuditionState();
       } catch (error) {
         if (playToken !== clickPlayToken) return;
         clickAuditionLoading = false;
@@ -1893,7 +1890,6 @@
         dom.clickAudio.pause();
         return;
       }
-      clickAuditionLoading = false;
       clickAuditionEnded = false;
       clickListenProgress = { ...clickListenProgress, lastPosition: Number(dom.clickAudio.currentTime) || 0 };
       renderAuditionControl();
