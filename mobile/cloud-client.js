@@ -11,9 +11,10 @@
   const STEM_DISPATCH_TOKEN_SECONDS = 3000;
   const STEM_ASSET_PAGE_SIZE = 500;
   const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024;
-  let session = readSession();
+  let session = normalizeSession(readSession());
   let sessionVersion = 0;
   let refreshOperation = null;
+  let accountMutationOperation = null;
 
   class CloudError extends Error {
     constructor(message, status = 0, code = "") {
@@ -43,7 +44,11 @@
   function announceSessionChange() {
     if (typeof window.dispatchEvent !== "function" || typeof window.CustomEvent !== "function") return;
     window.dispatchEvent(new window.CustomEvent(SESSION_EVENT, {
-      detail: { user: session?.user ? { ...session.user } : null }
+      detail: {
+        user: session?.user
+          ? { ...session.user, user_metadata: { ...session.user.user_metadata } }
+          : null
+      }
     }));
   }
 
@@ -73,10 +78,30 @@
       token_type: String(candidate.token_type || "bearer"),
       expires_in: expiresIn,
       expires_at: expiresAt,
-      user: {
-        id: String(candidate.user.id),
-        email: String(candidate.user.email || "")
-      }
+      user: normalizeUser(candidate.user)
+    };
+  }
+
+  function cleanDisplayName(value) {
+    return String(value || "")
+      .replace(/[\u0000-\u001f\u007f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 40);
+  }
+
+  function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase().slice(0, 254);
+  }
+
+  function normalizeUser(candidate) {
+    const displayName = cleanDisplayName(candidate?.user_metadata?.display_name);
+    return {
+      id: String(candidate?.id || ""),
+      email: normalizeEmail(candidate?.email),
+      new_email: normalizeEmail(candidate?.new_email),
+      created_at: String(candidate?.created_at || "").slice(0, 40),
+      user_metadata: displayName ? { display_name: displayName } : {}
     };
   }
 
@@ -110,7 +135,7 @@
     return session;
   }
 
-  async function timedFetch(url, options, timeoutMs = 15000) {
+  async function timedFetch(url, options, timeoutMs = 15000, consumeResponse = null) {
     const externalSignal = options?.signal;
     const controller = new AbortController();
     let timedOut = false;
@@ -122,7 +147,9 @@
       controller.abort();
     }, timeoutMs);
     try {
-      return await fetch(url, { ...options, signal: controller.signal });
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      if (typeof consumeResponse !== "function") return response;
+      return { response, body: await consumeResponse(response) };
     } catch (error) {
       if (error?.name === "AbortError" && timedOut) {
         throw new CloudError("Cloud request timed out", 0, "network_timeout");
@@ -142,12 +169,11 @@
       "X-Client-Info": "opusloops-web/1.0"
     };
     if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await timedFetch(`${baseUrl}/auth/v1${path}`, {
+    const { response, body: result } = await timedFetch(`${baseUrl}/auth/v1${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body)
-    });
-    const result = await readResponse(response);
+    }, 15000, readResponse);
     if (!response.ok) throw errorFrom(response, result);
     return result;
   }
@@ -263,6 +289,98 @@
     return storeSession(result, expectedVersion);
   }
 
+  async function updateAuthenticatedUser(attributes, expectedUserId = session?.user?.id) {
+    await accessToken(expectedUserId);
+    const activeSession = assertSessionUser(expectedUserId);
+    const expectedVersion = sessionVersion;
+    const user = await authFetch("/user", {
+      method: "PUT",
+      token: activeSession.access_token,
+      body: attributes
+    });
+    assertSessionUser(expectedUserId);
+    if (!user?.id || String(user.id) !== String(expectedUserId)) {
+      throw new CloudError("The active account changed", 409, "session_changed");
+    }
+    return storeSession({ ...activeSession, user }, expectedVersion);
+  }
+
+  async function reauthenticate(currentPassword, expectedUserId = session?.user?.id) {
+    const activeSession = assertSessionUser(expectedUserId);
+    const expectedVersion = sessionVersion;
+    const result = await authFetch("/token?grant_type=password", {
+      body: {
+        email: activeSession.user.email,
+        password: String(currentPassword || "")
+      }
+    });
+    if (!result?.user?.id || String(result.user.id) !== String(expectedUserId)) {
+      throw new CloudError("The active account changed", 409, "session_changed");
+    }
+    return storeSession(result, expectedVersion);
+  }
+
+  async function performProfileUpdate({ displayName, email, currentPassword } = {}) {
+    const activeSession = assertSessionUser();
+    const expectedUserId = activeSession.user.id;
+    const normalizedName = cleanDisplayName(displayName);
+    if (!normalizedName) {
+      throw new CloudError("Enter a display name", 400, "display_name_required");
+    }
+    const normalizedEmail = normalizeEmail(email || activeSession.user.email);
+    const emailChanged = normalizedEmail !== activeSession.user.email;
+    if (emailChanged) {
+      if (!normalizedEmail || !normalizedEmail.includes("@")) {
+        throw new CloudError("Enter a valid email address", 400, "email_address_invalid");
+      }
+      if (!String(currentPassword || "")) {
+        throw new CloudError("Enter your current password", 400, "current_password_required");
+      }
+      await reauthenticate(currentPassword, expectedUserId);
+    }
+    const attributes = { data: { display_name: normalizedName } };
+    if (emailChanged) attributes.email = normalizedEmail;
+    return updateAuthenticatedUser(attributes, expectedUserId);
+  }
+
+  async function performPasswordUpdate({ currentPassword, password } = {}) {
+    const activeSession = assertSessionUser();
+    const current = String(currentPassword || "");
+    const next = String(password || "");
+    if (!current) {
+      throw new CloudError("Enter your current password", 400, "current_password_required");
+    }
+    if (next.length < 8) {
+      throw new CloudError("Choose a password with at least 8 characters", 400, "weak_password");
+    }
+    if (current === next) {
+      throw new CloudError("Choose a password you have not used for this session", 400, "same_password");
+    }
+    await reauthenticate(current, activeSession.user.id);
+    return updateAuthenticatedUser({ current_password: current, password: next }, activeSession.user.id);
+  }
+
+  async function runAccountMutation(action) {
+    if (accountMutationOperation) {
+      throw new CloudError("Another account update is still finishing", 409, "account_update_in_progress");
+    }
+    const operation = Promise.resolve().then(action);
+    accountMutationOperation = operation;
+    try {
+      return await operation;
+    } finally {
+      if (accountMutationOperation === operation) accountMutationOperation = null;
+    }
+  }
+
+  function updateProfile(fields) {
+    return runAccountMutation(() => performProfileUpdate(fields));
+  }
+
+  function updatePassword(fields) {
+    return runAccountMutation(() => performPasswordUpdate(fields));
+  }
+
   async function signOut() {
     const token = session?.access_token;
     storeSession(null);
@@ -302,7 +420,9 @@
   }
 
   function getSession() {
-    return session ? { ...session, user: { ...session.user } } : null;
+    return session
+      ? { ...session, user: { ...session.user, user_metadata: { ...session.user.user_metadata } } }
+      : null;
   }
 
   async function syncProjects(rows) {
@@ -718,6 +838,8 @@
     restoreSession,
     signUp,
     signIn,
+    updateProfile,
+    updatePassword,
     signOut,
     syncProjects,
     createStemImport,

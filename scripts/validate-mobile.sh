@@ -170,8 +170,15 @@ for token in (
     'aria-labelledby="library-title"',
     'id="library-title"',
     'id="library-status"',
-    'class="workspace-kicker">Account & sync</p>',
+    'class="workspace-kicker">Profile</p>',
     'id="account-card"',
+    'id="sync-workspace"',
+    'id="sync-card"',
+    'id="sync-card-button"',
+    'id="profile-dialog"',
+    'id="profile-form"',
+    'id="password-form"',
+    'id="export-data-button"',
     'class="settings-card" aria-labelledby="settings-title"',
     'id="settings-title"',
     '>Default edit window</strong>',
@@ -203,6 +210,13 @@ for token in (
     "setLoopWhileEditingPreference(!preferences.loopWhileEditing)",
     'const projectCopy = `${projects.length} ${projects.length === 1 ? "project" : "projects"} on this device`;',
     'imported === 1 ? "stem import" : "stem imports"',
+    "function normalizeIdentity",
+    "function refreshCurrentUser",
+    "function openProfileDialog",
+    "function downloadProjectData",
+    'cloud.updateProfile({',
+    'cloud.updatePassword({ currentPassword, password })',
+    'dom.exportDataButton.addEventListener("click"',
 ):
     if token not in app_source:
         raise SystemExit(f"{app_path}: Projects preference or inventory requirement is missing: {token}")
@@ -349,6 +363,7 @@ for token in (
     "const PROJECT_SCHEMA_VERSION = 4;",
     "function createMixerTile",
     "function setMixerTilePresentation",
+    "function updateMixerMixStates",
     "function mixerPercentFromDrag",
     "function generatedTrackIsAudible",
     "function applyGeneratedTrackAudibility",
@@ -379,6 +394,9 @@ for token in (
     "const focusSnapshot = focusedModeButton",
     '?.focus({ preventScroll: true });',
     'stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed)',
+    'mixerAudibilityTimers.set(tile, timer)',
+    'const keepSuppressionFade = Boolean(priorTimer && wasSoloSuppressed && soloSuppressed && !muted)',
+    '} else if (!keepSuppressionFade) {',
 ):
     if token not in app_source:
         raise SystemExit(f"{app_path}: mobile tile mixer requirement is missing: {token}")
@@ -438,6 +456,8 @@ for token in (
     ".mixer-amount-unit",
     ".mixer-tile:has(.mixer-native-range:focus-visible)",
     "@media (max-width: 370px)",
+    ".mixer-tile.is-solo-suppressed::after",
+    "transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1)",
 ):
     if token not in styles_source:
         raise SystemExit(f"{styles_path}: responsive mixer presentation is missing: {token}")
@@ -626,6 +646,7 @@ node --check mobile/grainient-mixer.mjs
 node --check mobile/soft-aurora-player.mjs
 node --check mobile/config.js
 node --check mobile/cloud-client.js
+node --check mobile/cloud-client.test.mjs
 node --check mobile/stem-import-core.js
 node --check mobile/stem-player.js
 node --check mobile/stem-import.js
@@ -636,6 +657,7 @@ node --check supabase/functions/create-opusloops-account/policy.mjs
 node --check supabase/functions/stem-import/aws-dispatch.mjs
 node --check supabase/functions/stem-import/storage-credential.mjs
 node --test \
+  mobile/cloud-client.test.mjs \
   supabase/functions/create-opusloops-account/handler.test.mjs \
   supabase/functions/create-opusloops-account/policy.test.mjs \
   supabase/functions/stem-import/aws-dispatch.test.mjs \
@@ -1733,6 +1755,11 @@ grep -Fq 'sb_publishable_' mobile/config.js
 grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
 grep -Fq '"Upload-Offset"' mobile/cloud-client.js
 grep -Fq 'onUploadProgress' mobile/cloud-client.js
+for method in updateProfile updatePassword; do
+  grep -Fq "$method" mobile/cloud-client.js
+done
+grep -Fq 'user_metadata: displayName ? { display_name: displayName } : {}' mobile/cloud-client.js
+grep -Fq 'return storeSession({ ...activeSession, user }, expectedVersion)' mobile/cloud-client.js
 for method in createStemImport uploadStemArchive forgetStemArchiveUpload finalizeStemUpload retryStemInspection retryStemProposal repairStemRenderProposal retryStemRender getStemImport approveStemAnalysis requestStemProposal approveStemTempo dispatchStemImport cancelStemImport signStemArtifact; do
   grep -Fq "$method" mobile/cloud-client.js
 done
@@ -1755,6 +1782,10 @@ grep -Fq 'id="account-card-initial"' mobile/index.html
 grep -Fq 'dom.accountCardButton.addEventListener' mobile/app.js
 grep -Fq 'querySelector("svg").toggleAttribute("hidden", signedIn)' mobile/app.js
 grep -Fq 'dom.accountCardInitial.textContent = initial' mobile/app.js
+if grep -Fq 'id="signed-in-panel"' mobile/index.html; then
+  echo "Account management must live in the dedicated Workspace Profile sheet." >&2
+  exit 1
+fi
 if grep -Eq 'id="(save-status|account-button)"|class="status-dot"' mobile/index.html; then
   echo "Header save/profile controls must remain in Projects" >&2
   exit 1

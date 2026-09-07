@@ -50,7 +50,7 @@
 
   const cloud = window.OpusloopsCloud || null;
   const stemAssetsByJob = new Map();
-  let currentUser = cloud?.getSession()?.user || null;
+  let currentUser = normalizeIdentity(cloud?.getSession()?.user);
   let storageReadWarning = "";
   let preferences = readPreferences();
   const storedState = readCurrent();
@@ -61,6 +61,8 @@
   let cloudSyncPromise = null;
   let cloudSyncQueued = false;
   let authMode = "signin";
+  let profileDialogTrigger = null;
+  let accountMutationActive = false;
   let toastTimer = 0;
   let installPrompt = null;
 
@@ -102,6 +104,7 @@
   let activeMixerKey = "";
   let mixerDrag = null;
   let suppressedMixerClick = { key: "", until: 0 };
+  const mixerAudibilityTimers = new WeakMap();
   let studioWindowBars = preferences.studioWindowBars;
   let studioWindowStart = 0;
   let studioWindowProjectId = "";
@@ -157,15 +160,39 @@
     accountIntro: document.querySelector("#account-intro"),
     accountSubmit: document.querySelector("#account-submit"),
     accountSwitch: document.querySelector("#account-switch-button"),
-    signedInPanel: document.querySelector("#signed-in-panel"),
-    signedInAvatar: document.querySelector("#signed-in-avatar"),
-    signedInEmail: document.querySelector("#signed-in-email"),
     accountCardMark: document.querySelector("#account-card-mark"),
     accountCardInitial: document.querySelector("#account-card-initial"),
     accountCardEyebrow: document.querySelector("#account-card-eyebrow"),
     accountCardTitle: document.querySelector("#account-card-title"),
     accountCardCopy: document.querySelector("#account-card-copy"),
     accountCardButton: document.querySelector("#account-card-button"),
+    syncWorkspace: document.querySelector("#sync-workspace"),
+    syncCardEyebrow: document.querySelector("#sync-card-eyebrow"),
+    syncCardTitle: document.querySelector("#sync-card-title"),
+    syncCardCopy: document.querySelector("#sync-card-copy"),
+    syncCardButton: document.querySelector("#sync-card-button"),
+    profileDialog: document.querySelector("#profile-dialog"),
+    profileAvatar: document.querySelector("#profile-avatar"),
+    profileSummaryName: document.querySelector("#profile-summary-name"),
+    profileSummaryEmail: document.querySelector("#profile-summary-email"),
+    profilePendingEmail: document.querySelector("#profile-pending-email"),
+    profileForm: document.querySelector("#profile-form"),
+    profileDisplayName: document.querySelector("#profile-display-name"),
+    profileEmail: document.querySelector("#profile-email"),
+    profileError: document.querySelector("#profile-error"),
+    profileStatus: document.querySelector("#profile-status"),
+    profileSubmit: document.querySelector("#profile-submit"),
+    passwordForm: document.querySelector("#password-form"),
+    passwordCurrent: document.querySelector("#password-current"),
+    passwordNew: document.querySelector("#password-new"),
+    passwordConfirm: document.querySelector("#password-confirm"),
+    passwordError: document.querySelector("#password-error"),
+    passwordStatus: document.querySelector("#password-status"),
+    passwordSubmit: document.querySelector("#password-submit"),
+    profileSyncStatus: document.querySelector("#profile-sync-status"),
+    syncNowButton: document.querySelector("#sync-now-button"),
+    exportDataButton: document.querySelector("#export-data-button"),
+    signOutButton: document.querySelector("#sign-out-button"),
     projectsEyebrow: document.querySelector("#projects-eyebrow"),
     projectsLede: document.querySelector("#projects-lede"),
     generatedStudio: document.querySelector("#generated-studio"),
@@ -327,6 +354,33 @@
 
   function cleanName(value) {
     return String(value || "").replace(/\s+/g, " ").trim().slice(0, 48);
+  }
+
+  function cleanProfileName(value) {
+    return String(value || "")
+      .replace(/[\u0000-\u001f\u007f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 40);
+  }
+
+  function normalizeIdentity(user) {
+    if (!user?.id) return null;
+    return {
+      id: String(user.id),
+      email: String(user.email || "").trim().toLowerCase().slice(0, 254),
+      newEmail: String(user.new_email || "").trim().toLowerCase().slice(0, 254),
+      displayName: cleanProfileName(user.user_metadata?.display_name),
+      createdAt: String(user.created_at || "").slice(0, 40)
+    };
+  }
+
+  function currentProfileName() {
+    return currentUser?.displayName || "Set your display name";
+  }
+
+  function currentProfileInitial() {
+    return (currentUser?.displayName || currentUser?.email || "O").trim().charAt(0).toUpperCase() || "O";
   }
 
   function clamp(value, min, max) {
@@ -544,6 +598,12 @@
 
   function setSaveStatus(label) {
     if (dom.saveAnnouncer && dom.saveAnnouncer.textContent !== label) dom.saveAnnouncer.textContent = label;
+    if (dom.profileSyncStatus && currentUser) {
+      dom.profileSyncStatus.textContent = `${label}. Projects save to this device first and sync privately when you are online.`;
+    }
+    if (dom.syncCardCopy && currentUser && !guestImportCount()) {
+      dom.syncCardCopy.textContent = `${label}. Device saves remain available offline.`;
+    }
   }
 
   function showToast(message) {
@@ -797,6 +857,27 @@
     return "Cloud sync could not finish. Your device copy is safe";
   }
 
+  function friendlyProfileError(error) {
+    const code = String(error?.code || "");
+    if (code === "invalid_credentials") return "Your current password is incorrect.";
+    if (code === "current_password_required") return "Enter your current password.";
+    if (code === "display_name_required") return "Enter a display name.";
+    if (code === "same_password") return "Choose a different password.";
+    if (code === "account_update_in_progress") return "Another account change is still finishing.";
+    if (["reauthentication_needed", "reauthentication_not_valid"].includes(code)) {
+      return "Confirm your current password and try again.";
+    }
+    if (code === "session_changed") return "The active account changed. Open Profile and try again.";
+    return friendlyCloudError(error);
+  }
+
+  function friendlyPasswordError(error) {
+    if (error instanceof TypeError || error?.status === 0 || error?.code === "network_timeout") {
+      return "We could not confirm whether your password changed. Try signing in with the new password before retrying.";
+    }
+    return friendlyProfileError(error);
+  }
+
   function readGuestProjects() {
     const projects = readJson(STORAGE_PROJECTS, []);
     if (!Array.isArray(projects)) return [];
@@ -847,6 +928,15 @@
   }
 
   function switchUser(user) {
+    const nextUser = normalizeIdentity(user);
+    const identityChanged = (nextUser?.id || null) !== (currentUser?.id || null);
+    if (identityChanged) {
+      closeAccountDialog();
+      closeProfileDialog();
+      clearProfileState();
+      dom.accountPassword.value = "";
+      dom.accountInvite.value = "";
+    }
     flushSave();
     resetPlaybackSession();
     stemPlayer?.destroy();
@@ -854,7 +944,7 @@
     stemAssetsByJob.clear();
     window.clearTimeout(cloudTimer);
     cloudTimer = 0;
-    currentUser = user?.id ? { id: String(user.id), email: String(user.email || "") } : null;
+    currentUser = nextUser;
     const stored = readCurrent();
     state = stored || makeProject();
     hasSavedState = Boolean(stored);
@@ -867,42 +957,54 @@
     else setSaveStatus("Saved on device");
   }
 
+  function refreshCurrentUser(user) {
+    const nextUser = normalizeIdentity(user);
+    if ((nextUser?.id || null) !== (currentUser?.id || null)) {
+      switchUser(user);
+      return;
+    }
+    currentUser = nextUser;
+    renderAuth();
+    renderProfileIdentity();
+  }
+
   function renderAuth() {
     const signedIn = Boolean(currentUser);
-    dom.accountForm.hidden = signedIn;
-    dom.signedInPanel.hidden = !signedIn;
-    const initial = (currentUser?.email || "O").trim().charAt(0).toUpperCase() || "O";
+    const profileName = currentProfileName();
+    const initial = currentProfileInitial();
     dom.accountCardMark.classList.toggle("is-signed-in", signedIn);
     dom.accountCardMark.querySelector("svg").toggleAttribute("hidden", signedIn);
     dom.accountCardInitial.hidden = !signedIn;
     dom.accountCardInitial.textContent = initial;
     dom.saveCopy.textContent = signedIn ? "Saved locally, synced privately" : "Saved on this device";
+    dom.syncWorkspace.hidden = !signedIn;
 
     if (signedIn) {
-      dom.signedInAvatar.textContent = initial;
-      dom.signedInEmail.textContent = currentUser.email || "Opusloops account";
-      dom.accountEyebrow.textContent = "Private cloud sync";
-      dom.accountTitle.textContent = "Your account";
+      dom.accountCardEyebrow.textContent = "Your profile";
+      dom.accountCardTitle.textContent = profileName;
+      dom.accountCardCopy.textContent = currentUser.email || "Opusloops account";
+      dom.accountCardButton.textContent = "Edit profile";
+      dom.accountCardButton.dataset.action = "profile";
       const importCount = guestImportCount();
       if (importCount) {
-        dom.accountCardEyebrow.textContent = "Ready to import";
-        dom.accountCardTitle.textContent = `${importCount} device ${importCount === 1 ? "loop is" : "loops are"} waiting.`;
-        dom.accountCardCopy.textContent = "Move them into this account once, then they will sync with your other projects.";
-        dom.accountCardButton.textContent = "Move to my account";
-        dom.accountCardButton.dataset.action = "import";
+        dom.syncCardEyebrow.textContent = "Ready to import";
+        dom.syncCardTitle.textContent = `${importCount} device ${importCount === 1 ? "loop is" : "loops are"} waiting.`;
+        dom.syncCardCopy.textContent = "Move them into this account once, then they will join your private library.";
+        dom.syncCardButton.textContent = "Move to my account";
+        dom.syncCardButton.dataset.action = "import";
       } else {
-        dom.accountCardEyebrow.textContent = "Private cloud sync";
-        dom.accountCardTitle.textContent = "Your loops travel with you.";
-        dom.accountCardCopy.textContent = `Signed in as ${currentUser.email}. Device saves sync whenever you are online.`;
-        dom.accountCardButton.textContent = "Manage account";
-        dom.accountCardButton.dataset.action = "manage";
+        dom.syncCardEyebrow.textContent = "Private cloud";
+        dom.syncCardTitle.textContent = "Your projects travel with you.";
+        dom.syncCardCopy.textContent = `${dom.saveAnnouncer?.textContent || "Ready to sync"}. Device saves remain available offline.`;
+        dom.syncCardButton.textContent = "Sync now";
+        dom.syncCardButton.dataset.action = "sync";
       }
       dom.projectsEyebrow.textContent = "Library, account & settings";
       dom.projectsLede.textContent = "Projects stay available offline and sync privately to your account when connected.";
     } else {
-      dom.accountCardEyebrow.textContent = "Private cloud sync";
-      dom.accountCardTitle.textContent = "Keep every loop with you.";
-      dom.accountCardCopy.textContent = "Sign in to bring your projects to another phone without giving up offline access.";
+      dom.accountCardEyebrow.textContent = "Your account";
+      dom.accountCardTitle.textContent = "Make this studio yours.";
+      dom.accountCardCopy.textContent = "Sign in to keep a private profile and bring projects to your other devices.";
       dom.accountCardButton.textContent = "Sign in";
       dom.accountCardButton.dataset.action = "signin";
       dom.projectsEyebrow.textContent = "Library, account & settings";
@@ -930,15 +1032,148 @@
   }
 
   function openAccountDialog(mode = authMode) {
-    if (!currentUser) setAuthMode(mode);
+    if (currentUser) {
+      openProfileDialog();
+      return;
+    }
+    setAuthMode(mode);
     if (typeof dom.accountDialog.showModal === "function") dom.accountDialog.showModal();
     else dom.accountDialog.setAttribute("open", "");
-    if (!currentUser) window.setTimeout(() => dom.accountEmail.focus(), 0);
+    window.setTimeout(() => dom.accountEmail.focus(), 0);
   }
 
   function closeAccountDialog() {
     dom.accountDialog.close?.();
     dom.accountDialog.removeAttribute("open");
+  }
+
+  function renderProfileIdentity() {
+    if (!currentUser) return;
+    const name = currentProfileName();
+    dom.profileAvatar.textContent = currentProfileInitial();
+    dom.profileSummaryName.textContent = name;
+    dom.profileSummaryEmail.textContent = currentUser.email;
+    dom.profilePendingEmail.textContent = currentUser.newEmail
+      ? `Email change awaiting confirmation: ${currentUser.newEmail}`
+      : "";
+    dom.profilePendingEmail.hidden = !currentUser.newEmail;
+  }
+
+  function setProfileMessage(element, message = "") {
+    if (!element) return;
+    element.textContent = message;
+    element.hidden = !message;
+  }
+
+  function setProfileBusy(form, busy) {
+    form?.querySelectorAll("input, button").forEach((control) => {
+      control.disabled = Boolean(busy);
+    });
+  }
+
+  function setFieldInvalid(field, invalid) {
+    if (!field) return;
+    if (invalid) field.setAttribute("aria-invalid", "true");
+    else field.removeAttribute("aria-invalid");
+  }
+
+  function clearProfileState() {
+    dom.profileForm.reset();
+    dom.passwordForm.reset();
+    dom.profileSummaryName.textContent = "Opusloops creator";
+    dom.profileSummaryEmail.textContent = "";
+    dom.profilePendingEmail.textContent = "";
+    dom.profilePendingEmail.hidden = true;
+    [dom.profileError, dom.profileStatus, dom.passwordError, dom.passwordStatus]
+      .forEach((element) => setProfileMessage(element));
+    [dom.profileDisplayName, dom.profileEmail, dom.passwordCurrent, dom.passwordNew, dom.passwordConfirm]
+      .forEach((field) => setFieldInvalid(field, false));
+  }
+
+  function setProfileOnlineState() {
+    const online = Boolean(currentUser && navigator.onLine && cloud?.configured());
+    const editable = online && !accountMutationActive;
+    setProfileBusy(dom.profileForm, !editable);
+    setProfileBusy(dom.passwordForm, !editable);
+    dom.syncNowButton.disabled = !editable;
+    dom.exportDataButton.disabled = accountMutationActive;
+    dom.signOutButton.disabled = accountMutationActive;
+    if (!online) {
+      setProfileMessage(dom.profileStatus, "Reconnect to change account details. Your cached profile is still available.");
+    } else if (dom.profileStatus.textContent.startsWith("Reconnect to change")) {
+      setProfileMessage(dom.profileStatus);
+    }
+  }
+
+  function beginAccountMutation() {
+    if (accountMutationActive) return false;
+    accountMutationActive = true;
+    setProfileOnlineState();
+    return true;
+  }
+
+  function endAccountMutation() {
+    accountMutationActive = false;
+    setProfileOnlineState();
+  }
+
+  function populateProfileForm() {
+    if (!currentUser) return;
+    renderProfileIdentity();
+    dom.profileDisplayName.value = currentUser.displayName || "";
+    dom.profileEmail.value = currentUser.email;
+    dom.passwordForm.reset();
+    setProfileMessage(dom.profileError);
+    setProfileMessage(dom.profileStatus);
+    setProfileMessage(dom.passwordError);
+    setProfileMessage(dom.passwordStatus);
+    [dom.profileDisplayName, dom.profileEmail, dom.passwordCurrent, dom.passwordNew, dom.passwordConfirm]
+      .forEach((field) => setFieldInvalid(field, false));
+    setProfileOnlineState();
+  }
+
+  function openProfileDialog() {
+    if (!currentUser) {
+      openAccountDialog("signin");
+      return;
+    }
+    profileDialogTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    populateProfileForm();
+    if (typeof dom.profileDialog.showModal === "function") dom.profileDialog.showModal();
+    else dom.profileDialog.setAttribute("open", "");
+    window.setTimeout(() => dom.profileDisplayName.focus(), 0);
+  }
+
+  function closeProfileDialog() {
+    dom.profileDialog.close?.();
+    dom.profileDialog.removeAttribute("open");
+  }
+
+  function downloadProjectData() {
+    flushSave();
+    const exportedAt = new Date().toISOString();
+    const payload = {
+      format: "opusloops-projects",
+      version: 1,
+      exportedAt,
+      profile: {
+        id: currentUser?.id || null,
+        displayName: currentUser?.displayName || "",
+        email: currentUser?.email || ""
+      },
+      devicePreferences: { ...preferences },
+      projects: readProjects().map(projectDocument).filter(Boolean)
+    };
+    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `opusloops-projects-${exportedAt.slice(0, 10)}.json`;
+    link.hidden = true;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function hashText(text) {
@@ -1126,13 +1361,35 @@
   function setMixerTilePresentation(tile, percent, muted, soloed = false, soloSuppressed = false) {
     if (!tile) return;
     const presentation = mixerPresentation(percent);
+    const hadPresentation = tile.dataset.mixAudible !== undefined;
+    const wasSoloSuppressed = tile.classList.contains("is-solo-suppressed");
+    const priorTimer = mixerAudibilityTimers.get(tile);
+    const keepSuppressionFade = Boolean(priorTimer && wasSoloSuppressed && soloSuppressed && !muted);
+    if (priorTimer && !keepSuppressionFade) window.clearTimeout(priorTimer);
+    if (!keepSuppressionFade) mixerAudibilityTimers.delete(tile);
+    const nextAudible = !muted && !soloSuppressed;
+    if (hadPresentation && wasSoloSuppressed && !soloSuppressed && !muted) {
+      // Brighten the shared Grainient field behind the opaque cover before the cover fades away.
+      tile.dataset.mixAudible = "true";
+    }
     tile.dataset.mixLevel = presentation.level.toFixed(2);
     tile.dataset.mixMuted = String(Boolean(muted));
-    tile.dataset.mixAudible = String(!muted && !soloSuppressed);
     tile.classList.toggle("is-silent", presentation.percent === 0);
     tile.classList.toggle("is-muted", Boolean(muted));
     tile.classList.toggle("is-soloed", Boolean(soloed));
     tile.classList.toggle("is-solo-suppressed", Boolean(soloSuppressed));
+    if (hadPresentation && !wasSoloSuppressed && soloSuppressed && !muted) {
+      // Audio changes immediately; the visual renderer dims only after the 180ms cover transition.
+      const timer = window.setTimeout(() => {
+        mixerAudibilityTimers.delete(tile);
+        if (tile.isConnected && tile.classList.contains("is-solo-suppressed")) {
+          tile.dataset.mixAudible = "false";
+        }
+      }, 180);
+      mixerAudibilityTimers.set(tile, timer);
+    } else if (!keepSuppressionFade) {
+      tile.dataset.mixAudible = String(nextAudible);
+    }
     const amountValue = tile.querySelector("[data-mixer-value]");
     if (amountValue) amountValue.textContent = String(presentation.percent);
     const slider = tile.querySelector('input[type="range"]');
@@ -1255,6 +1512,45 @@
     tile.append(header, gesture, slider);
     setMixerTilePresentation(tile, percent, muted, soloed, soloSuppressed);
     return tile;
+  }
+
+  function updateMixerModeButton(button, pressed, name, mode) {
+    if (!button) return;
+    button.setAttribute("aria-pressed", String(Boolean(pressed)));
+    button.setAttribute("aria-label", `${pressed ? `Un${mode.toLowerCase()}` : mode} ${name}`);
+  }
+
+  function updateMixerMixStates() {
+    const tiles = new Map(Array.from(dom.mixer.querySelectorAll(".mixer-tile"), (tile) => [
+      tile.dataset.mixerKey,
+      tile
+    ]));
+    if (state.kind === "stem-import") {
+      const hasSolo = state.stemImport.tracks.some((track) => track.soloed);
+      state.stemImport.tracks.forEach((track) => {
+        const tile = tiles.get(`stem:${track.assetId}`);
+        if (!tile) return;
+        setMixerTilePresentation(tile, track.volume * 100, track.muted, track.soloed, hasSolo && !track.soloed);
+        updateMixerModeButton(tile.querySelector(".mute-button"), track.muted, track.name, "Mute");
+        updateMixerModeButton(tile.querySelector(".solo-button"), track.soloed, track.name, "Solo");
+      });
+    } else {
+      const hasSolo = TRACKS.some((_, index) => state.soloed[index]);
+      TRACKS.forEach((track, index) => {
+        const tile = tiles.get(`track:${track.id}`);
+        if (!tile) return;
+        setMixerTilePresentation(
+          tile,
+          state.volumes[index] * 100,
+          state.muted[index],
+          state.soloed[index],
+          hasSolo && !state.soloed[index]
+        );
+        updateMixerModeButton(tile.querySelector(".mute-button"), state.muted[index], track.name, "Mute");
+        updateMixerModeButton(tile.querySelector(".solo-button"), state.soloed[index], track.name, "Solo");
+      });
+    }
+    updateMixerTileSelection();
   }
 
   function mixerPercentFromDrag(startValue, startY, currentY, travel) {
@@ -1806,7 +2102,7 @@
     state.muted[trackIndex] = !state.muted[trackIndex];
     applyGeneratedTrackAudibility();
     renderSequencer();
-    renderMixer();
+    updateMixerMixStates();
     queueSave();
   }
 
@@ -1814,7 +2110,7 @@
     state.soloed[trackIndex] = !state.soloed[trackIndex];
     applyGeneratedTrackAudibility();
     renderSequencer();
-    renderMixer();
+    updateMixerMixStates();
     queueSave();
   }
 
@@ -1829,7 +2125,7 @@
     if (!track) return;
     track.muted = !track.muted;
     stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed);
-    renderMixer();
+    updateMixerMixStates();
     renderStemArrangement();
     queueSave();
   }
@@ -1839,7 +2135,7 @@
     if (!track) return;
     track.soloed = !track.soloed;
     stemPlayer?.setMix(track.assetId, track.volume, track.muted, track.soloed);
-    renderMixer();
+    updateMixerMixStates();
     renderStemArrangement();
     queueSave();
   }
@@ -3204,8 +3500,13 @@
   dom.accountSwitch.addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
 
   dom.accountCardButton.addEventListener("click", () => {
-    if (dom.accountCardButton.dataset.action === "import") importGuestProjects();
+    if (dom.accountCardButton.dataset.action === "profile") openProfileDialog();
     else openAccountDialog("signin");
+  });
+
+  dom.syncCardButton.addEventListener("click", async () => {
+    if (dom.syncCardButton.dataset.action === "import") importGuestProjects();
+    else await syncCloud({ announce: true });
   });
 
   dom.accountForm.addEventListener("submit", async (event) => {
@@ -3234,7 +3535,10 @@
         return;
       }
       if (result.session.user?.id !== currentUser?.id) switchUser(result.session.user);
-      else syncCloud();
+      else {
+        refreshCurrentUser(result.session.user);
+        syncCloud();
+      }
       closeAccountDialog();
       dom.accountPassword.value = "";
       dom.accountInvite.value = "";
@@ -3249,27 +3553,192 @@
     }
   });
 
-  document.querySelector("#sync-now-button").addEventListener("click", async () => {
-    await syncCloud({ announce: true });
+  document.querySelector("#profile-close-button").addEventListener("click", closeProfileDialog);
+  dom.profileDialog.addEventListener("close", () => {
+    dom.passwordForm.reset();
+    const trigger = profileDialogTrigger;
+    profileDialogTrigger = null;
+    if (trigger?.isConnected) trigger.focus({ preventScroll: true });
   });
 
-  document.querySelector("#sign-out-button").addEventListener("click", async () => {
-    flushSave();
-    if (navigator.onLine) {
-      const synced = await drainCloudSync();
-      if (!synced && currentUser && !window.confirm(
-        "Cloud sync has not finished. Sign out anyway? Unsynced loops will remain on this device."
-      )) {
-        showToast("Sync is still pending. You are still signed in");
-        return;
-      }
-    } else if (!window.confirm("You have offline changes on this device. Sign out before they sync?")) {
+  dom.profileForm.addEventListener("input", (event) => {
+    setProfileMessage(dom.profileError);
+    setProfileMessage(dom.profileStatus);
+    setFieldInvalid(event.target, false);
+  });
+
+  dom.profileForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setProfileMessage(dom.profileError);
+    setProfileMessage(dom.profileStatus);
+    if (!currentUser || !cloud?.configured() || !navigator.onLine) {
+      setProfileMessage(dom.profileError, "Reconnect to save account changes.");
       return;
     }
-    await cloud?.signOut();
-    if (!cloud?.getSession() && currentUser) switchUser(null);
-    closeAccountDialog();
-    showToast("Signed out. Account projects are hidden on this device");
+    const displayName = cleanProfileName(dom.profileDisplayName.value);
+    const email = dom.profileEmail.value.trim().toLowerCase();
+    if (!displayName) {
+      setProfileMessage(dom.profileError, "Enter a display name.");
+      setFieldInvalid(dom.profileDisplayName, true);
+      dom.profileDisplayName.focus();
+      return;
+    }
+    if (!email || !dom.profileEmail.validity.valid) {
+      setProfileMessage(dom.profileError, "Enter a valid email address.");
+      setFieldInvalid(dom.profileEmail, true);
+      dom.profileEmail.focus();
+      return;
+    }
+    const expectedUserId = currentUser.id;
+    if (!beginAccountMutation()) {
+      setProfileMessage(dom.profileError, "Another account change is still finishing.");
+      return;
+    }
+    dom.profileSubmit.textContent = "Saving…";
+    try {
+      const session = await cloud.updateProfile({
+        displayName,
+        email
+      });
+      if (currentUser?.id !== expectedUserId) throw new Error("The active account changed");
+      refreshCurrentUser(session.user);
+      dom.profileDisplayName.value = currentUser.displayName;
+      dom.profileEmail.value = currentUser.email;
+      const message = currentUser.newEmail
+        ? `Profile saved. Confirm ${currentUser.newEmail} before the address changes.`
+        : "Profile saved.";
+      setProfileMessage(dom.profileStatus, message);
+    } catch (error) {
+      setProfileMessage(dom.profileError, friendlyProfileError(error));
+      if (error?.code === "display_name_required") setFieldInvalid(dom.profileDisplayName, true);
+      if (error?.code === "email_address_invalid") setFieldInvalid(dom.profileEmail, true);
+    } finally {
+      dom.profileSubmit.textContent = "Save profile";
+      endAccountMutation();
+    }
+  });
+
+  dom.passwordForm.addEventListener("input", (event) => {
+    setProfileMessage(dom.passwordError);
+    setProfileMessage(dom.passwordStatus);
+    setFieldInvalid(event.target, false);
+  });
+
+  dom.passwordForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setProfileMessage(dom.passwordError);
+    setProfileMessage(dom.passwordStatus);
+    if (!currentUser || !cloud?.configured() || !navigator.onLine) {
+      setProfileMessage(dom.passwordError, "Reconnect to update your password.");
+      return;
+    }
+    const currentPassword = dom.passwordCurrent.value;
+    const password = dom.passwordNew.value;
+    if (!currentPassword) {
+      setProfileMessage(dom.passwordError, "Enter your current password.");
+      setFieldInvalid(dom.passwordCurrent, true);
+      dom.passwordCurrent.focus();
+      return;
+    }
+    if (password.length < 8) {
+      setProfileMessage(dom.passwordError, "Use at least 8 characters for the new password.");
+      setFieldInvalid(dom.passwordNew, true);
+      dom.passwordNew.focus();
+      return;
+    }
+    if (password === currentPassword) {
+      setProfileMessage(dom.passwordError, "Choose a different password.");
+      setFieldInvalid(dom.passwordNew, true);
+      dom.passwordNew.focus();
+      return;
+    }
+    if (password !== dom.passwordConfirm.value) {
+      setProfileMessage(dom.passwordError, "The new passwords do not match.");
+      setFieldInvalid(dom.passwordConfirm, true);
+      dom.passwordConfirm.focus();
+      return;
+    }
+    const expectedUserId = currentUser.id;
+    if (!beginAccountMutation()) {
+      setProfileMessage(dom.passwordError, "Another account change is still finishing.");
+      return;
+    }
+    dom.passwordSubmit.textContent = "Updating…";
+    let passwordFailure = null;
+    try {
+      const session = await cloud.updatePassword({ currentPassword, password });
+      if (currentUser?.id !== expectedUserId) throw new Error("The active account changed");
+      refreshCurrentUser(session.user);
+      setProfileMessage(dom.passwordStatus, "Password updated.");
+    } catch (error) {
+      passwordFailure = error;
+      setProfileMessage(dom.passwordError, friendlyPasswordError(error));
+    } finally {
+      dom.passwordForm.reset();
+      [dom.passwordCurrent, dom.passwordNew, dom.passwordConfirm]
+        .forEach((field) => setFieldInvalid(field, false));
+      if (["invalid_credentials", "current_password_required"].includes(passwordFailure?.code)) {
+        setFieldInvalid(dom.passwordCurrent, true);
+      }
+      if (["weak_password", "same_password"].includes(passwordFailure?.code)) {
+        setFieldInvalid(dom.passwordNew, true);
+      }
+      dom.passwordSubmit.textContent = "Update password";
+      endAccountMutation();
+    }
+  });
+
+  dom.syncNowButton.addEventListener("click", async () => {
+    if (!beginAccountMutation()) return;
+    try {
+      const synced = await syncCloud();
+      setProfileMessage(dom.profileStatus, synced ? "Projects synced." : "Cloud sync is still pending.");
+    } finally {
+      endAccountMutation();
+    }
+  });
+
+  dom.exportDataButton.addEventListener("click", async () => {
+    if (!currentUser || !beginAccountMutation()) return;
+    const expectedUserId = currentUser.id;
+    dom.exportDataButton.textContent = "Preparing…";
+    try {
+      const synced = navigator.onLine ? await syncCloud() : false;
+      if (currentUser?.id !== expectedUserId) return;
+      downloadProjectData();
+      setProfileMessage(
+        dom.profileStatus,
+        synced ? "Synced device project data downloaded." : "Device project data downloaded — cloud sync is pending."
+      );
+    } finally {
+      dom.exportDataButton.textContent = "Download device data";
+      endAccountMutation();
+    }
+  });
+
+  dom.signOutButton.addEventListener("click", async () => {
+    if (!currentUser || !beginAccountMutation()) return;
+    try {
+      flushSave();
+      if (navigator.onLine) {
+        const synced = await drainCloudSync();
+        if (!synced && currentUser && !window.confirm(
+          "Cloud sync has not finished. Sign out anyway? Unsynced loops will remain on this device."
+        )) {
+          showToast("Sync is still pending. You are still signed in");
+          return;
+        }
+      } else if (!window.confirm("You have offline changes on this device. Sign out before they sync?")) {
+        return;
+      }
+      await cloud?.signOut();
+      if (!cloud?.getSession() && currentUser) switchUser(null);
+      closeAccountDialog();
+      closeProfileDialog();
+      showToast("Signed out. Account projects are hidden on this device");
+    } finally {
+      endAccountMutation();
+    }
   });
 
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -3323,17 +3792,21 @@
     if (audioContext?.state === "running") audioContext.suspend().catch(() => {});
   });
   window.addEventListener("online", () => {
+    if (currentUser && dom.profileDialog.open) setProfileOnlineState();
     if (currentUser) {
       syncCloud();
       if (state.kind === "stem-import") stemImportController?.resumeProject(state);
     }
   });
   window.addEventListener("offline", () => {
-    if (currentUser) setSaveStatus("Offline — sync pending");
+    if (currentUser) {
+      setSaveStatus("Offline — sync pending");
+      if (dom.profileDialog.open) setProfileOnlineState();
+    }
   });
   window.addEventListener("opusloops:auth-session-change", (event) => {
     const nextUser = event.detail?.user || null;
-    if ((nextUser?.id || null) !== (currentUser?.id || null)) switchUser(nextUser);
+    refreshCurrentUser(nextUser);
   });
 
   if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
@@ -3361,6 +3834,7 @@
       const restoredUser = session?.user || null;
       if (restoredUser?.id !== currentUser?.id) switchUser(restoredUser);
       else if (restoredUser) {
+        refreshCurrentUser(restoredUser);
         syncCloud();
         if (state.kind === "stem-import") stemImportController?.resumeProject(state);
       }

@@ -16,6 +16,10 @@ schema_paths = []
 [db.seed]
 enabled = false
 
+[storage]
+enabled = true
+file_size_limit = "2GiB"
+
 [auth]
 enabled = true
 site_url = "https://opusloops.com/"
@@ -35,6 +39,13 @@ minimum_password_length = 8
 enable_signup = false
 enable_confirmations = false
 double_confirm_changes = true
+secure_password_change = true
+max_frequency = "1m"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
 
 [functions.create-opusloops-account]
 enabled = true

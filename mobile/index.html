@@ -17,7 +17,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=40" />
+    <link rel="stylesheet" href="./styles.css?v=41" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
     <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
@@ -414,19 +414,31 @@
             <div class="projects-list" id="projects-list"></div>
           </section>
 
-          <p class="workspace-kicker">Account & sync</p>
+          <p class="workspace-kicker">Profile</p>
           <aside class="account-card" id="account-card">
             <span class="account-card-mark" id="account-card-mark" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
               <b id="account-card-initial" hidden>O</b>
             </span>
             <div>
-              <p class="eyebrow" id="account-card-eyebrow">Private cloud sync</p>
-              <h2 id="account-card-title">Keep every loop with you.</h2>
-              <p id="account-card-copy">Sign in to bring your projects to another phone without giving up offline access.</p>
+              <p class="eyebrow" id="account-card-eyebrow">Your account</p>
+              <h2 id="account-card-title">Make this studio yours.</h2>
+              <p id="account-card-copy">Sign in to keep a private profile and bring projects to your other devices.</p>
             </div>
             <button class="secondary-action" id="account-card-button" type="button">Sign in</button>
           </aside>
+
+          <div id="sync-workspace" hidden>
+            <p class="workspace-kicker">Cloud & data</p>
+            <aside class="sync-card" id="sync-card">
+              <div>
+                <p class="eyebrow" id="sync-card-eyebrow">Private cloud</p>
+                <h2 id="sync-card-title">Your projects travel with you.</h2>
+                <p id="sync-card-copy">Device saves sync whenever you are online.</p>
+              </div>
+              <button class="secondary-action" id="sync-card-button" type="button">Sync now</button>
+            </aside>
+          </div>
 
           <section class="settings-card" aria-labelledby="settings-title">
             <div>
@@ -612,24 +624,89 @@
           <p class="form-note" id="account-note">At least 8 characters. Cloud saves are protected by your account.</p>
         </form>
 
-        <section class="signed-in-panel" id="signed-in-panel" hidden>
-          <span class="signed-in-avatar" id="signed-in-avatar" aria-hidden="true">O</span>
-          <p class="eyebrow">Signed in</p>
-          <h3 id="signed-in-email">Your account</h3>
-          <p>Your projects save locally first, then sync privately whenever you are online.</p>
-          <button class="primary-action" id="sync-now-button" type="button">Sync now</button>
-          <button class="secondary-action" id="sign-out-button" type="button">Sign out</button>
+      </div>
+    </dialog>
+
+    <dialog class="account-dialog profile-dialog" id="profile-dialog" aria-labelledby="profile-title" aria-describedby="profile-intro">
+      <div class="dialog-handle" aria-hidden="true"></div>
+      <div class="account-dialog-inner">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Profile</p>
+            <h2 id="profile-title">Your Opusloops account</h2>
+          </div>
+          <button class="icon-button" id="profile-close-button" type="button" aria-label="Close profile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <div class="profile-summary">
+          <span class="signed-in-avatar" id="profile-avatar" aria-hidden="true">O</span>
+          <div>
+            <strong id="profile-summary-name">Opusloops creator</strong>
+            <span id="profile-summary-email">Your account</span>
+          </div>
+        </div>
+        <p class="profile-pending-email" id="profile-pending-email" role="status" hidden></p>
+        <p class="account-intro" id="profile-intro">Manage the identity, security and private project data tied to this account.</p>
+
+        <section class="profile-section" aria-labelledby="profile-personal-title">
+          <div class="profile-section-heading">
+            <p class="eyebrow">Personal</p>
+            <h3 id="profile-personal-title">Name & email</h3>
+          </div>
+          <form id="profile-form" novalidate>
+            <label for="profile-display-name">Display name</label>
+            <input id="profile-display-name" name="display-name" type="text" autocomplete="name" minlength="1" maxlength="40" aria-describedby="profile-error" required />
+            <label for="profile-email">Email</label>
+            <input id="profile-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" aria-describedby="profile-email-note profile-error" readonly />
+            <p class="form-note profile-form-note" id="profile-email-note">Email changes are unavailable until verified account mail is configured. Your private project sync is unaffected.</p>
+            <p class="form-error" id="profile-error" role="alert" hidden></p>
+            <p class="form-status" id="profile-status" role="status" aria-live="polite" hidden></p>
+            <button class="primary-action" id="profile-submit" type="submit">Save profile</button>
+          </form>
+        </section>
+
+        <section class="profile-section" aria-labelledby="profile-security-title">
+          <div class="profile-section-heading">
+            <p class="eyebrow">Security</p>
+            <h3 id="profile-security-title">Change password</h3>
+          </div>
+          <form id="password-form" novalidate>
+            <label for="password-current">Current password</label>
+            <input id="password-current" name="current-password" type="password" autocomplete="current-password" aria-describedby="password-error" required />
+            <label for="password-new">New password</label>
+            <input id="password-new" name="new-password" type="password" autocomplete="new-password" minlength="8" aria-describedby="password-error" required />
+            <label for="password-confirm">Confirm new password</label>
+            <input id="password-confirm" name="confirm-password" type="password" autocomplete="new-password" minlength="8" aria-describedby="password-error" required />
+            <p class="form-error" id="password-error" role="alert" hidden></p>
+            <p class="form-status" id="password-status" role="status" aria-live="polite" hidden></p>
+            <button class="primary-action" id="password-submit" type="submit">Update password</button>
+          </form>
+        </section>
+
+        <section class="profile-section profile-data-section" aria-labelledby="profile-data-title">
+          <div class="profile-section-heading">
+            <p class="eyebrow">Data & session</p>
+            <h3 id="profile-data-title">Your private library</h3>
+          </div>
+          <p id="profile-sync-status">Projects save to this device first and sync privately when you are online.</p>
+          <div class="profile-actions">
+            <button class="secondary-action" id="sync-now-button" type="button">Sync now</button>
+            <button class="secondary-action" id="export-data-button" type="button">Download device data</button>
+            <button class="text-button profile-sign-out" id="sign-out-button" type="button">Sign out</button>
+          </div>
         </section>
       </div>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=1" defer></script>
-    <script src="./cloud-client.js?v=9" defer></script>
+    <script src="./cloud-client.js?v=10" defer></script>
     <script src="./stem-import-core.js?v=9" defer></script>
     <script src="./stem-player.js?v=5" defer></script>
     <script src="./stem-import.js?v=9" defer></script>
-    <script src="./app.js?v=33" defer></script>
+    <script src="./app.js?v=34" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
     <script src="./grainient-mixer.mjs?v=2" type="module"></script>
     <script src="./soft-aurora-player.mjs?v=1" type="module"></script>
