@@ -91,16 +91,23 @@
   let playbackSource = "project";
   let auditionPlayback = null;
   let auditionErrorKey = "";
+  let stemPlaybackRetrying = false;
   let stemPlayer = null;
   let stemImportController = null;
   let preparedStemProject = null;
   let activeMixerKey = "";
   let mixerDrag = null;
   let suppressedMixerClick = { key: "", until: 0 };
+  let arrangementScrollFrame = 0;
+  let arrangementScrollUnlockFrame = 0;
+  let arrangementScrollSyncing = false;
+  let arrangementScrollLeft = 0;
+  let arrangementProjectId = "";
 
   const dom = {
     composerForm: document.querySelector("#composer-form"),
     ideaInput: document.querySelector("#idea-input"),
+    studioView: document.querySelector("#view-studio"),
     studioTitle: document.querySelector("#studio-title"),
     tempoOutput: document.querySelector("#tempo-output"),
     playButton: document.querySelector("#play-button"),
@@ -156,6 +163,7 @@
     projectsLede: document.querySelector("#projects-lede"),
     generatedStudio: document.querySelector("#generated-studio"),
     stemStudio: document.querySelector("#stem-studio"),
+    stemArrangementTitle: document.querySelector("#stem-arrangement-title"),
     stemArrangement: document.querySelector("#stem-arrangement"),
     stemArrangementRuler: document.querySelector("#stem-arrangement-ruler"),
     stemArrangementDuration: document.querySelector("#stem-arrangement-duration"),
@@ -992,6 +1000,8 @@
 
   function renderAll() {
     const stems = state.kind === "stem-import";
+    dom.studioView.classList.toggle("is-stem-project", stems);
+    dom.studioView.classList.toggle("is-large-stem-project", stems && state.stemImport.tracks.length > 6);
     dom.studioTitle.textContent = state.name;
     dom.tempoOutput.textContent = `${Math.round(state.tempo * 10) / 10} BPM`;
     dom.keyButton.textContent = state.key;
@@ -1299,9 +1309,24 @@
 
   function renderStemArrangement() {
     const stem = state.stemImport;
+    const existingScroller = dom.stemArrangement.querySelector(".arrangement-scroll");
+    arrangementScrollLeft = arrangementProjectId === state.id
+      ? existingScroller?.scrollLeft ?? arrangementScrollLeft
+      : 0;
+    arrangementProjectId = state.id;
+    window.cancelAnimationFrame(arrangementScrollFrame);
+    window.cancelAnimationFrame(arrangementScrollUnlockFrame);
+    arrangementScrollFrame = 0;
+    arrangementScrollUnlockFrame = 0;
+    arrangementScrollSyncing = false;
     const assets = stem.previewAssets || [];
     const regionIndexes = Array.from(new Set(assets.map((asset) => asset.segmentIndex))).sort((a, b) => a - b);
     const regionCount = Math.max(regionIndexes.length, stem.regions.length, 1);
+    dom.stemStudio.dataset.density = stem.tracks.length > 6 ? "compact" : "comfortable";
+    dom.stemStudio.dataset.columns = stem.tracks.length > 10 ? "3" : stem.tracks.length > 6 ? "2" : "1";
+    dom.stemStudio.style.setProperty("--track-count", String(Math.max(1, stem.tracks.length)));
+    dom.stemStudio.style.setProperty("--studio-columns", dom.stemStudio.dataset.columns);
+    dom.stemArrangementTitle.textContent = stem.tracks.length > 6 ? "Arrangement · swipe clips" : "Four-bar arrangement";
     dom.stemArrangementDuration.textContent = stem.durationSeconds ? formatPlaybackTime(stem.durationSeconds).replace(/\.0$/, "") : "Processing";
     dom.stemArrangementRuler.replaceChildren();
     for (let index = 0; index < regionCount; index += 1) {
@@ -1350,14 +1375,27 @@
       }
       scroller.append(clips);
       scroller.addEventListener("scroll", () => {
-        dom.stemArrangement.querySelectorAll(".arrangement-scroll").forEach((other) => {
-          if (other !== scroller && other.scrollLeft !== scroller.scrollLeft) other.scrollLeft = scroller.scrollLeft;
+        if (arrangementScrollSyncing) return;
+        arrangementScrollLeft = scroller.scrollLeft;
+        if (arrangementScrollFrame) return;
+        arrangementScrollFrame = window.requestAnimationFrame(() => {
+          arrangementScrollFrame = 0;
+          arrangementScrollSyncing = true;
+          dom.stemArrangement.querySelectorAll(".arrangement-scroll").forEach((other) => {
+            if (other.scrollLeft !== arrangementScrollLeft) other.scrollLeft = arrangementScrollLeft;
+          });
+          dom.stemArrangementRuler.scrollLeft = arrangementScrollLeft;
+          arrangementScrollUnlockFrame = window.requestAnimationFrame(() => {
+            arrangementScrollUnlockFrame = 0;
+            arrangementScrollSyncing = false;
+          });
         });
-        dom.stemArrangementRuler.scrollLeft = scroller.scrollLeft;
       }, { passive: true });
       row.append(heading, scroller);
       dom.stemArrangement.append(row);
+      scroller.scrollLeft = arrangementScrollLeft;
     });
+    dom.stemArrangementRuler.scrollLeft = arrangementScrollLeft;
   }
 
   function renderProjects() {
@@ -1559,6 +1597,10 @@
     const projectActive = playing || playbackStarting;
     const persistentActive = activePlaybackPlaying() || activePlaybackStarting();
     const playerVisible = Boolean(audition) || playbackSessionVisible;
+    const privateRetrying = !audition && state.kind === "stem-import" && stemPlaybackRetrying;
+    const privateBuffering = !audition
+      && state.kind === "stem-import"
+      && (playbackStarting || privateRetrying);
     dom.playButton.classList.toggle("is-playing", projectActive);
     dom.playButton.setAttribute("aria-pressed", String(projectActive));
     dom.playButton.setAttribute("aria-label", projectActive ? "Pause project" : "Play project");
@@ -1567,7 +1609,14 @@
     dom.persistentPlayButton.setAttribute("aria-label", audition
       ? `${persistentActive ? "Pause" : "Play"} timing audition`
       : `${persistentActive ? "Pause" : "Play"} project`);
-    dom.persistentPlayer.setAttribute("aria-label", audition ? "Timing audition player" : "Project player");
+    dom.persistentPlayer.classList.toggle("is-buffering", privateBuffering);
+    dom.persistentPlayer.classList.toggle("is-retrying", privateRetrying);
+    dom.persistentPlayer.setAttribute("aria-busy", String(privateBuffering));
+    dom.persistentPlayer.setAttribute("aria-label", audition
+      ? "Timing audition player"
+      : privateBuffering
+        ? privateRetrying ? "Project player, retrying audio" : "Project player, preparing audio"
+        : "Project player");
     dom.persistentSeekLabel.textContent = audition ? "Seek within timing audition" : "Seek within project";
     dom.persistentSeek.disabled = activePlaybackDuration() <= 0 || Boolean(audition && !audition.canSeek);
     dom.persistentPlayer.hidden = !playerVisible;
@@ -1956,10 +2005,9 @@
       return;
     }
     if (state.kind === "stem-import") {
-      stemPlayer?.seek(playbackOffset, { resume: shouldResume }).then(() => {
-        playing = shouldResume;
-        renderPlaybackControls();
-      }).catch(() => showToast("Could not seek the private preview"));
+      stemPlayer?.seek(playbackOffset, { resume: shouldResume })
+        .then(() => renderPlaybackControls())
+        .catch(() => showToast("Could not seek the private preview"));
     } else if (shouldResume) schedulePlaybackResume();
   }
 
@@ -2312,6 +2360,7 @@
         playbackOffset = snapshot.position;
         playing = Boolean(snapshot.playing);
         playbackStarting = Boolean(snapshot.loading);
+        stemPlaybackRetrying = Boolean(snapshot.retrying);
         if (snapshot.ended) playbackOffset = snapshot.duration;
         renderPlaybackControls();
         if (snapshot.error) showToast("Private preview playback stopped");
@@ -2682,14 +2731,21 @@
         stemImportController?.pauseAudition?.();
       } else if (playing || playbackStarting) stopPlayback();
       else renderPlaybackControls();
+      if (state.kind === "stem-import") stemPlayer?.releaseBuffers();
       flushSave();
     }
   });
 
   window.addEventListener("pagehide", () => {
     stemImportController?.deactivateAudition?.({ resetPosition: false });
+    if (playing || playbackStarting) stopPlayback({ fade: false, resetPosition: false });
+    else {
+      playbackStartRequest += 1;
+      playbackResumeRequest += 1;
+    }
     flushSave();
     clearPendingAudioExport();
+    if (state.kind === "stem-import") stemPlayer?.releaseBuffers();
     if (audioContext?.state === "running") audioContext.suspend().catch(() => {});
   });
   window.addEventListener("online", () => {

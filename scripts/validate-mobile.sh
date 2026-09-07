@@ -52,6 +52,7 @@ manifest_path = root / "manifest.webmanifest"
 service_worker_path = root / "service-worker.js"
 cloud_client_path = root / "cloud-client.js"
 stem_import_path = root / "stem-import.js"
+stem_player_path = root / "stem-player.js"
 pixel_dock_path = root / "pixel-dock.mjs"
 pixel_dock_css_path = root / "pixel-dock.css"
 app_path = root / "app.js"
@@ -79,6 +80,7 @@ index_source = index_path.read_text(encoding="utf-8")
 service_worker_source = service_worker_path.read_text(encoding="utf-8")
 cloud_client_source = cloud_client_path.read_text(encoding="utf-8")
 stem_import_source = stem_import_path.read_text(encoding="utf-8")
+stem_player_source = stem_player_path.read_text(encoding="utf-8")
 pixel_dock_source = pixel_dock_path.read_text(encoding="utf-8")
 pixel_dock_css_source = pixel_dock_css_path.read_text(encoding="utf-8")
 app_source = app_path.read_text(encoding="utf-8")
@@ -161,6 +163,54 @@ for token in (
         raise SystemExit(f"{styles_path}: responsive mixer presentation is missing: {token}")
 if "data-mixer-step" in app_source or "mixer-step-button" in styles_source:
     raise SystemExit("Mixer step buttons must not return; level changes are direct drag controls")
+
+for token in (
+    "context.createBufferSource()",
+    "context.createGain()",
+    "source.start(launch.when",
+    "source.playbackRate.value = rateCorrection",
+    "scheduleEdgeEnvelope(envelope.gain, when",
+    "setTargetAtTime(bounded, now, MIX_RAMP_SECONDS)",
+    "pending.get(segment.index)",
+    "runBounded(async (signal) =>",
+    "PREVIEW_FETCH_TIMEOUT_MS",
+    "raceWithAbort(() => work.callback(controller.signal)",
+    "MAX_ESTIMATED_SEGMENT_BYTES",
+    "MAX_RESIDENT_DECODED_BYTES",
+    "decodedReservations.set(segment.index, { bytes: required, requestId, token })",
+    "if (context.state !== \"running\")",
+    "releaseBuffers",
+    "const lateBy = Math.max(0, context.currentTime - plannedWhen)",
+    "fillLookahead(segment, requestId)",
+    "MAX_PREVIEW_BYTES",
+    "validateSegments(project, segments)",
+):
+    if token not in stem_player_source:
+        raise SystemExit(f"{stem_player_path}: synchronized Web Audio stem playback is missing: {token}")
+if "new Audio(" in stem_player_source or "audio.volume" in stem_player_source:
+    raise SystemExit(f"{stem_player_path}: iPhone-incompatible HTML media mixing must not return")
+for token in (
+    "const externalSignal = options?.signal",
+    'signal: requestOptions.signal',
+    "requestOptions.timeoutMs || 15000",
+):
+    if token not in cloud_client_source:
+        raise SystemExit(f"{cloud_client_path}: cancellable private preview signing is missing: {token}")
+for token in (
+    'dom.stemStudio.dataset.density = stem.tracks.length > 6 ? "compact" : "comfortable"',
+    'dom.stemStudio.dataset.columns = stem.tracks.length > 10 ? "3" : stem.tracks.length > 6 ? "2" : "1"',
+    '#view-studio.is-large-stem-project',
+    '.stem-studio[data-density="compact"] .stem-arrangement',
+    'repeat(var(--studio-columns, 2), minmax(0, 1fr))',
+    '.stem-studio[data-columns="3"] .stem-arrangement',
+    'arrangementScrollFrame = window.requestAnimationFrame',
+    'min-height: 44px',
+    "width: calc(100% - 104px)",
+    'if (playing || playbackStarting) stopPlayback({ fade: false, resetPosition: false })',
+    "stemPlayer?.releaseBuffers()",
+):
+    if token not in f"{app_source}\n{styles_source}":
+        raise SystemExit(f"Large-project Studio layout requirement is missing: {token}")
 
 for reference in parser.local_assets:
     asset_path = local_path(reference, index_path)
@@ -589,57 +639,133 @@ NODE
 node <<'NODE'
 const assert = require('node:assert/strict');
 
-class FakeAudio {
-  static instances = [];
-
-  constructor() {
-    this.readyState = 1;
-    this.currentTime = 0;
-    this.volume = 1;
-    this.muted = false;
-    this.paused = true;
-    this.preload = '';
-    this.listeners = new Map();
-    this.source = '';
-    FakeAudio.instances.push(this);
+class FakeParam {
+  constructor(value = 1) {
+    this.value = value;
+    this.events = [];
   }
-
-  get src() { return this.source; }
-  set src(value) { this.source = String(value); }
-
-  addEventListener(name, handler, options = {}) {
-    const listeners = this.listeners.get(name) || [];
-    listeners.push({ handler, once: Boolean(options.once) });
-    this.listeners.set(name, listeners);
+  cancelScheduledValues(time) { this.events.push(['cancel', time]); }
+  setValueAtTime(value, time) {
+    this.value = value;
+    this.events.push(['set', value, time]);
   }
-
-  removeEventListener(name, handler) {
-    this.listeners.set(name, (this.listeners.get(name) || []).filter((entry) => entry.handler !== handler));
+  setTargetAtTime(value, time, constant) {
+    this.value = value;
+    this.events.push(['target', value, time, constant]);
   }
-
-  emit(name) {
-    const listeners = [...(this.listeners.get(name) || [])];
-    listeners.forEach((entry) => entry.handler());
-    this.listeners.set(name, (this.listeners.get(name) || []).filter((entry) => !entry.once));
+  linearRampToValueAtTime(value, time) {
+    this.value = value;
+    this.events.push(['linear', value, time]);
   }
-
-  play() {
-    this.paused = false;
-    return Promise.resolve();
-  }
-
-  pause() { this.paused = true; }
-  removeAttribute(name) { if (name === 'src') this.source = ''; }
-  load() {}
 }
 
-global.Audio = FakeAudio;
+class FakeNode {
+  constructor() {
+    this.connections = [];
+    this.disconnected = false;
+  }
+  connect(node) {
+    this.connections.push(node);
+    return node;
+  }
+  disconnect() { this.disconnected = true; }
+}
+
+class FakeGain extends FakeNode {
+  constructor() {
+    super();
+    this.gain = new FakeParam(1);
+  }
+}
+
+class FakeCompressor extends FakeNode {
+  constructor() {
+    super();
+    this.threshold = new FakeParam();
+    this.knee = new FakeParam();
+    this.ratio = new FakeParam();
+    this.attack = new FakeParam();
+    this.release = new FakeParam();
+  }
+}
+
+class FakeSource extends FakeNode {
+  constructor(context) {
+    super();
+    this.context = context;
+    this.buffer = null;
+    this.playbackRate = new FakeParam(1);
+    this.starts = [];
+    this.stopped = false;
+  }
+  start(...args) {
+    this.starts.push(args);
+    this.context.started.push(this);
+  }
+  stop() { this.stopped = true; }
+}
+
+class FakeAudioContext {
+  static instances = [];
+  constructor() {
+    this.currentTime = 0;
+    this.state = 'suspended';
+    this.destination = new FakeNode();
+    this.gains = [];
+    this.sources = [];
+    this.started = [];
+    this.decodeCount = 0;
+    FakeAudioContext.instances.push(this);
+  }
+  createGain() {
+    const gain = new FakeGain();
+    this.gains.push(gain);
+    return gain;
+  }
+  createDynamicsCompressor() { return new FakeCompressor(); }
+  createBufferSource() {
+    const source = new FakeSource(this);
+    this.sources.push(source);
+    return source;
+  }
+  decodeAudioData(_bytes, success) {
+    this.decodeCount += 1;
+    const buffer = { duration: this.decodeCount % 2 ? 4.005333 : 3.989333 };
+    success?.(buffer);
+    return Promise.resolve(buffer);
+  }
+  resume() {
+    this.state = 'running';
+    return Promise.resolve();
+  }
+  suspend() {
+    this.state = 'suspended';
+    return Promise.resolve();
+  }
+  close() {
+    this.state = 'closed';
+    return Promise.resolve();
+  }
+  addEventListener() {}
+}
+
+let intervalHandler = null;
 global.window = {
   OpusloopsStemCore: require('./mobile/stem-import-core.js'),
+  AudioContext: FakeAudioContext,
+  fetch: async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => '16' },
+    arrayBuffer: async () => new ArrayBuffer(16)
+  }),
   setTimeout,
   clearTimeout,
-  requestAnimationFrame: () => 1,
-  cancelAnimationFrame: () => {}
+  setInterval(handler) {
+    intervalHandler = handler;
+    return 1;
+  },
+  clearInterval() { intervalHandler = null; }
 };
 require('./mobile/stem-player.js');
 
@@ -659,55 +785,357 @@ const project = {
     jobId: 'job',
     status: 'ready',
     durationSeconds: 16,
-    tracks: [{ assetId: 'stem', volume: 1, muted: false }],
+    tracks: [
+      { assetId: 'stem-a', volume: 1, muted: false },
+      { assetId: 'stem-b', volume: 1, muted: false }
+    ],
     arrangement: {},
-    previewAssets: Array.from({ length: 4 }, (_, index) => ({
-      id: `segment-${index}`,
+    previewAssets: Array.from({ length: 4 }, (_, segmentIndex) => ['stem-a', 'stem-b'].map((trackId) => ({
+      id: `segment-${segmentIndex}-${trackId}`,
       kind: 'preview_segment',
       contentType: 'audio/mp4',
-      trackId: 'stem',
-      segmentIndex: index,
-      startSeconds: index * 4,
+      trackId,
+      segmentIndex,
+      startSeconds: segmentIndex * 4,
       durationSeconds: 4
-    }))
+    }))).flat()
   }
 };
 const settle = () => new Promise((resolve) => setImmediate(resolve));
-const activeAudio = (assetId) => FakeAudio.instances.find((audio) =>
-  !audio.paused && audio.src.endsWith(`/${assetId}.m4a`)
-);
 
 (async () => {
   const player = window.OpusloopsStemPlayer.create({ cloud });
   player.loadProject(project);
-  await settle();
+  assert.equal(FakeAudioContext.instances.length, 0, 'loading project metadata must not allocate audio memory');
   await player.play(0);
   await settle();
-  assert.deepEqual(signedAssetIds, ['segment-0', 'segment-1']);
-  assert.equal(activeAudio('segment-0').preload, 'auto');
+  assert.deepEqual(signedAssetIds, [
+    'segment-0-stem-a', 'segment-0-stem-b',
+    'segment-1-stem-a', 'segment-1-stem-b'
+  ]);
+  const context = FakeAudioContext.instances[0];
+  assert.equal(context.started.length, 4, 'current and successor segments must be decoded and scheduled once');
+  assert.deepEqual(context.started.slice(0, 2).map((source) => source.starts[0][0]), [0.08, 0.08],
+    'every stem in a segment must share one sample clock start');
+  assert.deepEqual(context.started.slice(2, 4).map((source) => source.starts[0][0]), [4.08, 4.08],
+    'the successor must be scheduled without an ended-event restart');
+  context.started.forEach((source) => {
+    const [when, offset, bufferDuration] = source.starts[0];
+    assert.equal(offset, 0);
+    assert.ok(Math.abs(bufferDuration / source.playbackRate.value - 4.008) < 1e-9,
+      `AAC timing correction must retain the short boundary overlap at ${when}`);
+  });
 
-  const first = activeAudio('segment-0');
+  const stemAEnvelope = context.started[0].connections[0];
+  const stemBEnvelope = context.started[1].connections[0];
+  const stemAGain = stemAEnvelope.connections[0];
+  const stemBGain = stemBEnvelope.connections[0];
+  assert.notEqual(stemAGain, stemBGain, 'each stem needs an independent persistent gain');
+  assert.deepEqual(stemAEnvelope.gain.events.slice(-4), [
+    ['set', 0, 0.08],
+    ['linear', 1, 0.088],
+    ['set', 1, 4.08],
+    ['linear', 0, 4.088]
+  ], 'adjacent decoded segments must crossfade over a short shared boundary');
+  const startsBeforeMix = context.started.length;
+  player.setMix('stem-a', 0.25, false);
+  assert.equal(stemAGain.gain.value, 0.25, 'live mixer changes must reach the audible GainNode');
+  assert.equal(stemBGain.gain.value, 1, 'changing one stem must not alter another');
+  assert.equal(context.started.length, startsBeforeMix, 'mixing must not restart the transport');
+  player.setMix('stem-a', 0.25, true);
+  assert.equal(stemAGain.gain.value, 0, 'mute must silence the same audible GainNode');
+
   const remixedProject = JSON.parse(JSON.stringify(project));
   remixedProject.stemImport.tracks[0].volume = 0.35;
-  remixedProject.stemImport.tracks[0].muted = true;
+  remixedProject.stemImport.tracks[0].muted = false;
   player.loadProject(remixedProject);
-  assert.equal(first.volume, 0.35, 'a synced volume change must update loaded audio');
-  assert.equal(first.muted, true, 'a synced mute change must update loaded audio');
-  assert.equal(first.paused, false, 'a mix-only reload must preserve active playback');
+  assert.equal(stemAGain.gain.value, 0.35, 'a cloud-synced mix update must reach active playback');
+  assert.equal(context.started.length, startsBeforeMix, 'a mix-only project refresh must preserve playback');
 
-  first.emit('ended');
+  context.currentTime = 4.1;
+  const advance = intervalHandler;
+  advance();
+  advance();
   await settle();
   await settle();
-  assert.ok(signedAssetIds.includes('segment-2'), 'the third segment must preload during the first transition');
-  assert.equal(first.src, '', 'the completed segment must be evicted after its successor starts');
-
-  const second = activeAudio('segment-1');
-  second.emit('ended');
-  await settle();
-  await settle();
-  assert.ok(signedAssetIds.includes('segment-3'), 'rolling preload must continue beyond the first successor');
-  assert.equal(second.src, '', 'the two-segment playback window must evict older media');
+  assert.equal(signedAssetIds.filter((id) => id === 'segment-2-stem-a').length, 1,
+    'concurrent scheduler checks must deduplicate in-flight segment loads');
+  assert.equal(signedAssetIds.filter((id) => id === 'segment-2-stem-b').length, 1);
+  assert.equal(context.started.length, 6, 'only one copy of the rolling successor may be scheduled');
+  assert.deepEqual(context.started.slice(4).map((source) => source.starts[0][0]), [8.08, 8.08]);
+  const activeSources = context.started.slice(2);
+  player.pause();
+  assert.ok(activeSources.every((source) => source.stopped), 'pause must atomically stop every scheduled stem');
+  const pausedAt = player.position();
+  const signedBeforeArrangement = signedAssetIds.length;
+  const startsBeforeArrangement = context.started.length;
+  const rearrangedProject = JSON.parse(JSON.stringify(remixedProject));
+  rearrangedProject.stemImport.arrangement['segment-1-stem-a'] = false;
+  player.loadProject(rearrangedProject);
+  assert.equal(player.position(), pausedAt,
+    'an arrangement-only edit must preserve the paused transport position');
+  await player.play(pausedAt);
+  assert.equal(signedAssetIds.length, signedBeforeArrangement,
+    'an arrangement-only edit must reuse decoded audio instead of downloading it again');
+  assert.equal(context.started.length - startsBeforeArrangement, 3,
+    'replay must omit the disabled stem segment while keeping the other cached segments');
+  player.pause();
+  const signedBeforeRelease = signedAssetIds.length;
+  const startsBeforeRelease = context.started.length;
+  player.releaseBuffers();
+  await player.play(pausedAt);
+  assert.equal(signedAssetIds.length, signedBeforeRelease + 4,
+    'explicit background memory release must reacquire every needed stem exactly once');
+  assert.equal(context.started.length - startsBeforeRelease, 3,
+    'reacquisition must preserve the disabled arrangement segment');
+  player.pause();
   player.destroy();
+  assert.equal(context.state, 'closed');
+
+  let releaseLateSegment;
+  const lateSegmentGate = new Promise((resolve) => { releaseLateSegment = resolve; });
+  const lateCloud = {
+    async signStemArtifact(_jobId, assetId) {
+      if (assetId.startsWith('segment-2-')) await lateSegmentGate;
+      return {
+        signedUrl: `https://audio.example/${assetId}.m4a`,
+        expiresAt: new Date(Date.now() + 900_000).toISOString()
+      };
+    }
+  };
+  const latePlayer = window.OpusloopsStemPlayer.create({ cloud: lateCloud });
+  const lateProject = JSON.parse(JSON.stringify(project));
+  lateProject.id = 'late-project';
+  latePlayer.loadProject(lateProject);
+  await latePlayer.play(0);
+  const lateContext = FakeAudioContext.instances[1];
+  lateContext.currentTime = 4.1;
+  const requestLateSegment = intervalHandler;
+  requestLateSegment();
+  await settle();
+  lateContext.currentTime = 8.205;
+  releaseLateSegment();
+  await settle();
+  await settle();
+  const lateSources = lateContext.started.slice(4, 6);
+  assert.equal(lateSources.length, 2, 'the delayed successor must still schedule every stem together');
+  lateSources.forEach((source) => {
+    const [when, offset, bufferDuration] = source.starts[0];
+    const lateBy = lateContext.currentTime - 8.08;
+    assert.equal(when, lateContext.currentTime, 'a delayed decode must never schedule a source in the past');
+    assert.ok(Math.abs(offset - lateBy * source.playbackRate.value) < 1e-9,
+      'a delayed decode must skip the same elapsed timeline on every stem');
+    assert.ok(Math.abs((bufferDuration / source.playbackRate.value) + lateBy - 4.008) < 1e-9,
+      'late-start compensation must retain the shared boundary overlap');
+  });
+  latePlayer.destroy();
+
+  const invalid = JSON.parse(JSON.stringify(project));
+  invalid.id = 'invalid-project';
+  invalid.stemImport.previewAssets = invalid.stemImport.previewAssets.filter((asset) =>
+    !(asset.segmentIndex === 2 && asset.trackId === 'stem-b')
+  );
+  const invalidPlayer = window.OpusloopsStemPlayer.create({ cloud });
+  invalidPlayer.loadProject(invalid);
+  await assert.rejects(() => invalidPlayer.play(0), /missing one or more stems/,
+    'partial segment manifests must fail instead of playing an unmixable project');
+  invalidPlayer.destroy();
+
+  const gapped = JSON.parse(JSON.stringify(project));
+  gapped.id = 'gapped-project';
+  gapped.stemImport.previewAssets.forEach((asset) => {
+    if (asset.segmentIndex === 2) asset.startSeconds = 10;
+  });
+  const gappedPlayer = window.OpusloopsStemPlayer.create({ cloud });
+  gappedPlayer.loadProject(gapped);
+  await assert.rejects(() => gappedPlayer.play(0), /gap or overlap/,
+    'a discontinuous manifest must fail before playback begins');
+  gappedPlayer.destroy();
+
+  const dense = JSON.parse(JSON.stringify(project));
+  dense.id = 'dense-project';
+  dense.stemImport.durationSeconds = 48;
+  dense.stemImport.tracks = Array.from({ length: 9 }, (_, index) => ({
+    assetId: `dense-stem-${index}`,
+    volume: 1,
+    muted: false
+  }));
+  dense.stemImport.previewAssets = dense.stemImport.tracks.map((track, index) => ({
+    id: `dense-segment-${index}`,
+    kind: 'preview_segment',
+    contentType: 'audio/mp4',
+    trackId: track.assetId,
+    segmentIndex: 0,
+    startSeconds: 0,
+    durationSeconds: 48
+  }));
+  const densePlayer = window.OpusloopsStemPlayer.create({ cloud });
+  densePlayer.loadProject(dense);
+  await assert.rejects(() => densePlayer.play(0), /too dense/,
+    'a decoded segment that can exhaust mobile memory must fail before allocation');
+  densePlayer.destroy();
+
+  class RefusingAudioContext extends FakeAudioContext {
+    resume() { return Promise.resolve(); }
+  }
+  window.AudioContext = RefusingAudioContext;
+  const refusingPlayer = window.OpusloopsStemPlayer.create({ cloud });
+  refusingPlayer.loadProject(project);
+  await assert.rejects(
+    () => refusingPlayer.play(0),
+    (error) => error?.name === 'NotAllowedError',
+    'playback must not report success when Safari leaves AudioContext suspended'
+  );
+  refusingPlayer.destroy();
+  window.AudioContext = FakeAudioContext;
+
+  let releaseOldSigners;
+  const oldSignerGate = new Promise((resolve) => { releaseOldSigners = resolve; });
+  const cancellationCalls = [];
+  let cancellationAborts = 0;
+  let activeCancellationSigners = 0;
+  let maxCancellationSigners = 0;
+  const cancellationCloud = {
+    async signStemArtifact(_jobId, assetId, _expires, options = {}) {
+      cancellationCalls.push(assetId);
+      activeCancellationSigners += 1;
+      maxCancellationSigners = Math.max(maxCancellationSigners, activeCancellationSigners);
+      try {
+        if (assetId.startsWith('old-')) {
+          await new Promise((resolve, reject) => {
+            const cancel = () => {
+              cancellationAborts += 1;
+              reject(new DOMException('Playback changed', 'AbortError'));
+            };
+            options.signal?.addEventListener('abort', cancel, { once: true });
+            oldSignerGate.then(resolve);
+          });
+        }
+        return { signedUrl: `https://audio.example/${assetId}.m4a` };
+      } finally {
+        activeCancellationSigners -= 1;
+      }
+    }
+  };
+  const oldTracks = Array.from({ length: 8 }, (_, index) => ({
+    assetId: `old-stem-${index}`,
+    volume: 1,
+    muted: false
+  }));
+  const oldProject = {
+    id: 'old-project',
+    stemImport: {
+      jobId: 'old-job',
+      status: 'ready',
+      durationSeconds: 4,
+      tracks: oldTracks,
+      arrangement: {},
+      previewAssets: oldTracks.map((track, index) => ({
+        id: `old-segment-${index}`,
+        kind: 'preview_segment',
+        contentType: 'audio/mp4',
+        trackId: track.assetId,
+        segmentIndex: 0,
+        startSeconds: 0,
+        durationSeconds: 4
+      }))
+    }
+  };
+  const replacementProject = {
+    id: 'replacement-project',
+    stemImport: {
+      jobId: 'replacement-job',
+      status: 'ready',
+      durationSeconds: 4,
+      tracks: [{ assetId: 'replacement-stem', volume: 1, muted: false }],
+      arrangement: {},
+      previewAssets: [{
+        id: 'replacement-segment',
+        kind: 'preview_segment',
+        contentType: 'audio/mp4',
+        trackId: 'replacement-stem',
+        segmentIndex: 0,
+        startSeconds: 0,
+        durationSeconds: 4
+      }]
+    }
+  };
+  const cancellationPlayer = window.OpusloopsStemPlayer.create({ cloud: cancellationCloud });
+  cancellationPlayer.loadProject(oldProject);
+  const abandonedPlay = cancellationPlayer.play(0);
+  await settle();
+  await settle();
+  assert.equal(cancellationCalls.filter((id) => id.startsWith('old-')).length, 4,
+    'the first load must occupy every bounded signing slot');
+  cancellationPlayer.loadProject(replacementProject);
+  const replacementPlay = cancellationPlayer.play(0);
+  await settle();
+  await settle();
+  assert.equal(cancellationCalls.filter((id) => id === 'replacement-segment').length, 1,
+    'cancelled signing work must not starve replacement playback');
+  assert.equal(cancellationCalls.filter((id) => id.startsWith('old-')).length, 4,
+    'queued work from a cancelled project must never begin');
+  assert.equal(cancellationAborts, 4, 'every active stale signer must receive cancellation');
+  assert.equal(maxCancellationSigners, 4, 'signing concurrency must stay bounded');
+  await replacementPlay;
+  releaseOldSigners();
+  await abandonedPlay;
+  cancellationPlayer.destroy();
+
+  let releaseFinalSibling;
+  const finalSiblingGate = new Promise((resolve) => { releaseFinalSibling = resolve; });
+  const failedCalls = [];
+  const failureCloud = {
+    async signStemArtifact(_jobId, assetId) {
+      failedCalls.push(assetId);
+      if (assetId === 'failure-segment-0') throw new Error('expected signer failure');
+      if (assetId === 'failure-segment-7') await finalSiblingGate;
+      return { signedUrl: `https://audio.example/${assetId}.m4a` };
+    }
+  };
+  const failureTracks = Array.from({ length: 8 }, (_, index) => ({
+    assetId: `failure-stem-${index}`,
+    volume: 1,
+    muted: false
+  }));
+  const failureProject = {
+    id: 'failure-project',
+    stemImport: {
+      jobId: 'failure-job',
+      status: 'ready',
+      durationSeconds: 4,
+      tracks: failureTracks,
+      arrangement: {},
+      previewAssets: failureTracks.map((track, index) => ({
+        id: `failure-segment-${index}`,
+        kind: 'preview_segment',
+        contentType: 'audio/mp4',
+        trackId: track.assetId,
+        segmentIndex: 0,
+        startSeconds: 0,
+        durationSeconds: 4
+      }))
+    }
+  };
+  const failurePlayer = window.OpusloopsStemPlayer.create({ cloud: failureCloud });
+  failurePlayer.loadProject(failureProject);
+  let failedPlaySettled = false;
+  const failedPlay = failurePlayer.play(0);
+  failedPlay.then(
+    () => { failedPlaySettled = true; },
+    () => { failedPlaySettled = true; }
+  );
+  for (let index = 0; index < 8; index += 1) await settle();
+  assert.equal(new Set(failedCalls).size, 8, 'every sibling request must settle once before retry eligibility');
+  assert.ok(failedCalls.every((id) => failedCalls.filter((value) => value === id).length === 1),
+    'one failed asset must not duplicate sibling work');
+  assert.equal(failedPlaySettled, false, 'the failed segment must stay pending until its last sibling settles');
+  const failureContext = FakeAudioContext.instances.at(-1);
+  assert.equal(failureContext.started.length, 0, 'a partial segment must never schedule audio');
+  releaseFinalSibling();
+  await assert.rejects(() => failedPlay, /expected signer failure/);
+  assert.equal(failureContext.started.length, 0, 'a failed segment must remain inaudible after all siblings settle');
+  failurePlayer.destroy();
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

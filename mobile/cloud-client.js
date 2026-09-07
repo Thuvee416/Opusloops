@@ -111,17 +111,26 @@
   }
 
   async function timedFetch(url, options, timeoutMs = 15000) {
+    const externalSignal = options?.signal;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+    let timedOut = false;
+    const forwardAbort = () => controller.abort();
+    if (externalSignal?.aborted) forwardAbort();
+    else externalSignal?.addEventListener?.("abort", forwardAbort, { once: true });
+    const timeout = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
     try {
       return await fetch(url, { ...options, signal: controller.signal });
     } catch (error) {
-      if (error?.name === "AbortError") {
+      if (error?.name === "AbortError" && timedOut) {
         throw new CloudError("Cloud request timed out", 0, "network_timeout");
       }
       throw error;
     } finally {
       window.clearTimeout(timeout);
+      externalSignal?.removeEventListener?.("abort", forwardAbort);
     }
   }
 
@@ -303,7 +312,7 @@
     });
   }
 
-  async function stemAction(action, fields = {}, boundUserId = session?.user?.id) {
+  async function stemAction(action, fields = {}, boundUserId = session?.user?.id, requestOptions = {}) {
     if (!configured()) throw new CloudError("Stem import is not configured");
     assertSessionUser(boundUserId);
     const requiresWorkerDispatch = [
@@ -319,8 +328,9 @@
         "Content-Type": "application/json",
         "X-Client-Info": "opusloops-web/1.0"
       },
-      body: JSON.stringify({ action, ...fields })
-    }, 30000);
+      body: JSON.stringify({ action, ...fields }),
+      signal: requestOptions.signal
+    }, requestOptions.timeoutMs || 30000);
     const result = await readResponse(response);
     assertSessionUser(boundUserId);
     if (response.status === 401 && session?.refresh_token) {
@@ -335,8 +345,9 @@
           "Content-Type": "application/json",
           "X-Client-Info": "opusloops-web/1.0"
         },
-        body: JSON.stringify({ action, ...fields })
-      }, 30000);
+        body: JSON.stringify({ action, ...fields }),
+        signal: requestOptions.signal
+      }, requestOptions.timeoutMs || 30000);
       const retryResult = await readResponse(retryResponse);
       assertSessionUser(boundUserId);
       if (!retryResponse.ok) throw errorFrom(retryResponse, retryResult);
@@ -677,8 +688,13 @@
     return stemAction("cancel", { jobId, revision });
   }
 
-  function signStemArtifact(jobId, assetId, expiresInSeconds = 900) {
-    return stemAction("signed-download", { jobId, assetId, expiresInSeconds });
+  function signStemArtifact(jobId, assetId, expiresInSeconds = 900, requestOptions = {}) {
+    return stemAction(
+      "signed-download",
+      { jobId, assetId, expiresInSeconds },
+      session?.user?.id,
+      { ...requestOptions, timeoutMs: requestOptions.timeoutMs || 15000 }
+    );
   }
 
   if (typeof window.addEventListener === "function") {

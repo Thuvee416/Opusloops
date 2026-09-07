@@ -40,15 +40,23 @@ html.frame-check-pending {
 }
 
 html {
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--paper-deep);
   scroll-padding-bottom: calc(152px + env(safe-area-inset-bottom));
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 100%;
   margin: 0;
+  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
@@ -506,6 +514,12 @@ h2 {
 .studio-heading {
   align-items: center;
   margin-bottom: 18px;
+}
+
+#view-studio {
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .studio-heading > div {
@@ -2332,14 +2346,19 @@ h2 {
 }
 
 .stem-studio {
+  width: 100%;
+  min-width: 0;
   margin-top: 14px;
+  overflow: hidden;
 }
 
 .arrangement-ruler {
   --region-count: 1;
   display: grid;
   grid-template-columns: repeat(var(--region-count), minmax(82px, 1fr));
-  min-width: calc(var(--region-count) * 82px);
+  width: calc(100% - 104px);
+  min-width: 0;
+  max-width: calc(100% - 104px);
   margin: 0 0 5px 104px;
   overflow: hidden;
   color: var(--faint);
@@ -2361,8 +2380,11 @@ h2 {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
   gap: 8px;
+  width: 100%;
+  min-width: 0;
   min-height: 54px;
   padding: 6px;
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -2406,8 +2428,11 @@ h2 {
 }
 
 .arrangement-scroll {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
   scrollbar-width: none;
 }
 
@@ -2470,6 +2495,135 @@ h2 {
   margin-top: 12px;
 }
 
+#view-studio.is-stem-project {
+  padding-top: 18px;
+}
+
+#view-studio.is-stem-project .studio-heading {
+  margin-bottom: 10px;
+}
+
+#view-studio.is-stem-project .studio-heading h1 {
+  min-height: 34px;
+  font-size: clamp(21px, 6.3vw, 25px);
+}
+
+#view-studio.is-stem-project .studio-heading .eyebrow {
+  margin-bottom: 4px;
+  font-size: 9px;
+}
+
+#view-studio.is-stem-project .transport-card {
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 58px;
+  padding: 6px 9px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+#view-studio.is-stem-project .play-button {
+  width: 44px;
+  height: 44px;
+}
+
+#view-studio.is-stem-project .transport-label {
+  margin-bottom: 2px;
+  font-size: 8px;
+}
+
+#view-studio.is-stem-project .tempo-control output {
+  font-size: 12px;
+}
+
+#view-studio.is-large-stem-project {
+  padding-right: 14px;
+  padding-left: 14px;
+}
+
+.stem-studio[data-density="compact"] {
+  margin-top: 8px;
+}
+
+.stem-studio[data-density="compact"] .step-legend {
+  margin: 0 2px 6px;
+  font-size: 10px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-ruler {
+  display: none;
+}
+
+.stem-studio[data-density="compact"] .stem-arrangement {
+  grid-template-columns: repeat(var(--studio-columns, 2), minmax(0, 1fr));
+  align-items: start;
+  gap: 6px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-track {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 21px 44px;
+  gap: 2px;
+  min-height: 73px;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-track-heading {
+  grid-template-columns: 7px minmax(0, 1fr) auto;
+  align-content: center;
+  gap: 4px;
+  padding: 0 3px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-track-heading .track-swatch {
+  grid-row: auto;
+  width: 7px;
+  height: 7px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-track-heading strong {
+  font-size: 9px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-track-heading > span:last-child {
+  max-width: 42px;
+  font-size: 7px;
+}
+
+.stem-studio[data-columns="3"] .arrangement-track-heading {
+  grid-template-columns: 7px minmax(0, 1fr);
+}
+
+.stem-studio[data-columns="3"] .arrangement-track-heading > span:last-child {
+  display: none;
+}
+
+.stem-studio[data-density="compact"] .arrangement-clips {
+  grid-template-columns: repeat(var(--region-count), minmax(48px, 1fr));
+  min-width: calc(var(--region-count) * 48px);
+  gap: 2px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-clip,
+.stem-studio[data-density="compact"] .arrangement-gap {
+  min-height: 44px;
+  border-radius: 7px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-clip > span {
+  inset: 9px 4px;
+}
+
+.stem-studio[data-density="compact"] .arrangement-clip small {
+  font-size: 7px;
+}
+
+.stem-studio[data-density="compact"] > .secondary-action {
+  min-height: 44px;
+  margin-top: 8px;
+}
+
 .persistent-player {
   --player-accent: #45ffd8;
   position: fixed;
@@ -2506,6 +2660,20 @@ h2 {
   content: "";
   opacity: 0.72;
   pointer-events: none;
+}
+
+.persistent-player.is-buffering::after {
+  animation: player-buffering 880ms steps(4, end) infinite;
+}
+
+.persistent-player.is-retrying::after {
+  background: #ffba61;
+  animation-duration: 480ms;
+}
+
+@keyframes player-buffering {
+  0%, 100% { opacity: 0.28; }
+  50% { opacity: 1; }
 }
 
 .persistent-player[hidden] {
@@ -3028,6 +3196,10 @@ body.has-persistent-player .toast {
 
 @media (max-width: 370px) {
 
+  .stem-studio[data-columns="3"] .stem-arrangement {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .grid-event-row {
     grid-template-columns: 18px minmax(0, 1fr) minmax(76px, 0.8fr) 44px;
     gap: 4px;
@@ -3141,6 +3313,11 @@ body.has-persistent-player .toast {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .persistent-player.is-buffering::after {
+    animation: none;
+    opacity: 0.82;
+  }
+
   .mixer-wave-bar,
   .view.is-active .mixer-tile:not(.is-muted):not(.is-silent) .mixer-wave-bar {
     animation: none !important;
