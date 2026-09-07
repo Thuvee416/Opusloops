@@ -1083,27 +1083,19 @@
     const level = clamp(Number(percent) || 0, 0, 100) / 100;
     return {
       percent: Math.round(level * 100),
-      energy: 0.08 + level * 0.92,
-      floor: 0.05 + level * 0.13,
-      duration: 2.35 - level * 1.08,
-      opacity: 0.28 + level * 0.72
+      level
     };
   }
 
   function setMixerTilePresentation(tile, percent, muted) {
     if (!tile) return;
     const presentation = mixerPresentation(percent);
-    tile.style.setProperty("--mix-level", `${presentation.percent}%`);
-    tile.style.setProperty("--mix-energy", presentation.energy.toFixed(3));
-    tile.style.setProperty("--mix-floor", presentation.floor.toFixed(3));
-    tile.style.setProperty("--mix-duration", `${presentation.duration.toFixed(2)}s`);
-    tile.style.setProperty("--mix-opacity", presentation.opacity.toFixed(3));
-    tile.dataset.mixLevel = (presentation.percent / 100).toFixed(2);
+    tile.dataset.mixLevel = presentation.level.toFixed(2);
     tile.dataset.mixMuted = String(Boolean(muted));
     tile.classList.toggle("is-silent", presentation.percent === 0);
     tile.classList.toggle("is-muted", Boolean(muted));
-    const amount = tile.querySelector("[data-mixer-amount]");
-    if (amount) amount.textContent = `${presentation.percent}%`;
+    const amountValue = tile.querySelector("[data-mixer-value]");
+    if (amountValue) amountValue.textContent = String(presentation.percent);
     const slider = tile.querySelector('input[type="range"]');
     if (slider) slider.setAttribute("aria-valuetext", `${presentation.percent} percent${muted ? ", muted" : ""}`);
   }
@@ -1113,8 +1105,6 @@
     dom.mixer.querySelectorAll(".mixer-tile").forEach((tile) => {
       const active = tile.dataset.mixerKey === activeMixerKey;
       tile.classList.toggle("is-active", active);
-      const hint = tile.querySelector("[data-mixer-hint]");
-      if (hint) hint.textContent = "Drag up or down";
       if (active) activeTile = tile;
     });
     if (!activeTile) activeMixerKey = "";
@@ -1166,23 +1156,24 @@
     const gesture = document.createElement("div");
     gesture.className = "mixer-gesture";
     gesture.dataset.mixerGesture = "";
-    const waveform = document.createElement("span");
-    waveform.className = "mixer-waveform";
-    waveform.setAttribute("aria-hidden", "true");
-    for (let barIndex = 0; barIndex < 7; barIndex += 1) {
-      const bar = document.createElement("i");
-      bar.className = "mixer-wave-bar";
-      waveform.append(bar);
-    }
     const amount = document.createElement("span");
     amount.className = "mixer-amount";
     amount.dataset.mixerAmount = "";
     amount.setAttribute("aria-hidden", "true");
+    const amountValue = document.createElement("span");
+    amountValue.className = "mixer-amount-value";
+    amountValue.dataset.mixerValue = "";
+    const amountUnit = document.createElement("span");
+    amountUnit.className = "mixer-amount-unit";
+    amountUnit.textContent = "%";
+    amount.append(amountValue, amountUnit);
     const hint = document.createElement("span");
     hint.className = "mixer-hint";
     hint.id = hintId;
     hint.dataset.mixerHint = "";
-    gesture.append(waveform, amount, hint);
+    hint.textContent = "Drag";
+    hint.setAttribute("aria-label", "Drag up or down to adjust volume");
+    gesture.append(amount, hint);
 
     const slider = document.createElement("input");
     slider.className = "sr-only mixer-native-range";
@@ -1245,7 +1236,7 @@
       mixerDrag.startValue,
       mixerDrag.startY,
       event.clientY,
-      mixerDrag.gesture.clientHeight
+      Math.max(mixerDrag.gesture.clientHeight, 104)
     );
     if (Number(mixerDrag.slider.value) !== nextPercent) {
       mixerDrag.slider.value = String(nextPercent);

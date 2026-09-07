@@ -902,26 +902,20 @@ h2 {
 }
 
 .mixer-tile {
-  --mix-level: 0%;
-  --mix-energy: 0.08;
-  --mix-floor: 0.05;
-  --mix-duration: 2.35s;
-  --mix-opacity: 0.28;
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(82px, 1fr);
+  grid-template-rows: 44px minmax(68px, 1fr);
   min-width: 0;
-  min-height: 150px;
-  gap: 5px;
-  padding: 9px;
+  min-height: 128px;
+  gap: 0;
+  padding: 8px 10px;
   overflow: hidden;
   color: var(--ink);
   background: #070708;
-  border: 1px solid color-mix(in srgb, var(--track-color) 18%, var(--line));
-  border-radius: 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  border: 1px solid color-mix(in srgb, var(--track-color) 14%, var(--line));
+  border-radius: 16px;
   contain: paint;
-  contain-intrinsic-size: auto 150px;
+  contain-intrinsic-size: auto 128px;
   content-visibility: auto;
   cursor: pointer;
   isolation: isolate;
@@ -929,45 +923,12 @@ h2 {
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
-}
-
-.mixer-tile::before,
-.mixer-tile::after {
-  position: absolute;
-  z-index: -1;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  pointer-events: none;
-  content: "";
-}
-
-.mixer-tile::before {
-  height: var(--mix-level);
-  background: color-mix(in srgb, var(--track-color) 8%, transparent);
-  transition: height 120ms linear;
-}
-
-.mixer-tile::after {
-  right: 10px;
-  bottom: var(--mix-level);
-  left: 10px;
-  height: 1px;
-  background: var(--track-color);
-  box-shadow: 0 0 9px color-mix(in srgb, var(--track-color) 48%, transparent);
-  opacity: var(--mix-opacity);
-  transition: bottom 120ms linear, opacity 120ms linear;
 }
 
 .mixer-tile.is-active,
 .mixer-tile:focus-within {
-  background: color-mix(in srgb, var(--track-color) 5%, #070708);
-  border-color: color-mix(in srgb, var(--track-color) 72%, var(--line));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 0 0 1px color-mix(in srgb, var(--track-color) 16%, transparent),
-    0 12px 34px rgba(0, 0, 0, 0.34);
+  background: color-mix(in srgb, var(--track-color) 3%, #070708);
+  border-color: color-mix(in srgb, var(--track-color) 52%, var(--line));
   outline: 0;
 }
 
@@ -975,12 +936,13 @@ h2 {
   outline: 0;
 }
 
+.mixer-tile:has(.mixer-native-range:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--track-color) 76%, white);
+  outline-offset: 2px;
+}
+
 .mixer-tile.is-adjusting {
-  border-color: var(--track-color);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 0 2px color-mix(in srgb, var(--track-color) 25%, transparent),
-    0 0 26px color-mix(in srgb, var(--track-color) 14%, transparent);
+  border-color: color-mix(in srgb, var(--track-color) 76%, white);
 }
 
 .mixer-tile-header {
@@ -989,186 +951,124 @@ h2 {
   min-height: 44px;
   align-items: center;
   justify-content: space-between;
-  gap: 7px;
-}
-
-.mixer-tile-label {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  min-width: 0;
-  align-items: center;
   gap: 6px;
 }
 
+.mixer-tile-label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
 .mixer-tile-number {
-  color: var(--track-color);
-  font-size: 9px;
-  font-weight: 800;
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--track-color) 80%, white);
+  font-size: 8px;
+  font-weight: 720;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .mixer-tile-label strong {
-  display: -webkit-box;
+  display: block;
   min-width: 0;
   overflow: hidden;
-  font-size: 12px;
-  font-weight: 720;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mixer-gesture {
   position: relative;
-  display: grid;
-  min-height: 82px;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: 13px;
+  display: flex;
+  min-height: 68px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 8px;
   cursor: ns-resize;
   touch-action: none;
 }
 
-.mixer-tile.is-active .mixer-gesture {
-  background: color-mix(in srgb, var(--track-color) 4%, transparent);
-  border-color: color-mix(in srgb, var(--track-color) 15%, transparent);
-}
-
-.mixer-waveform {
-  position: absolute;
-  inset: 7px 9px 15px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 5px;
-  opacity: var(--mix-opacity);
-  pointer-events: none;
-  transition: opacity 120ms linear;
-}
-
-.mixer-wave-bar {
-  display: block;
-  width: clamp(3px, 4.4%, 6px);
-  height: 72%;
-  background: var(--track-color);
-  border-radius: 999px;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--track-color) 38%, transparent);
-  transform: scaleY(var(--mix-floor));
-  transform-origin: 50% 100%;
-  animation: mixer-wave var(--mix-duration) ease-in-out infinite alternate;
-  animation-play-state: paused;
-}
-
-.mixer-wave-bar:nth-child(2),
-.mixer-wave-bar:nth-child(6) {
-  height: 48%;
-  animation-delay: -0.42s;
-}
-
-.mixer-wave-bar:nth-child(3),
-.mixer-wave-bar:nth-child(5) {
-  height: 88%;
-  animation-delay: -0.78s;
-}
-
-.mixer-wave-bar:nth-child(4) {
-  height: 60%;
-  animation-delay: -1.08s;
-}
-
-.mixer-wave-bar:nth-child(6) {
-  animation-delay: -1.31s;
-}
-
-.mixer-wave-bar:nth-child(7) {
-  height: 82%;
-  animation-delay: -0.19s;
-}
-
-.view.is-active .mixer-tile:not(.is-muted):not(.is-silent) .mixer-wave-bar {
-  animation-play-state: running;
-}
-
-@keyframes mixer-wave {
-  from {
-    transform: scaleY(var(--mix-floor));
-  }
-  to {
-    transform: scaleY(var(--mix-energy));
-  }
-}
-
 .mixer-amount {
-  position: relative;
-  z-index: 1;
+  display: inline-flex;
+  align-items: baseline;
   color: var(--ink);
-  font-family: var(--serif);
-  font-size: 27px;
+  font-family: var(--sans);
+  font-size: 26px;
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
-  letter-spacing: -0.055em;
+  font-weight: 620;
+  letter-spacing: -0.045em;
   line-height: 1;
-  text-shadow: 0 2px 13px #000000;
+}
+
+.mixer-amount-unit {
+  margin-left: 2px;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 9px;
+  font-weight: 680;
+  letter-spacing: 0;
 }
 
 .mixer-hint {
-  position: absolute;
-  z-index: 1;
-  right: 5px;
-  bottom: 1px;
-  left: 5px;
-  overflow: hidden;
-  color: var(--faint);
+  display: inline-flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.42);
   font-size: 8px;
-  font-weight: 720;
-  letter-spacing: 0.07em;
-  line-height: 1.25;
-  text-align: center;
-  text-overflow: ellipsis;
+  font-weight: 680;
+  letter-spacing: 0.1em;
+  line-height: 1;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
-.mixer-tile.is-active .mixer-hint,
-.mixer-tile.is-adjusting .mixer-amount {
-  color: var(--track-color);
+.mixer-hint::before {
+  color: color-mix(in srgb, var(--track-color) 76%, white);
+  content: "↕";
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .mute-button {
+  position: relative;
   flex: 0 0 auto;
   width: 44px;
   height: 44px;
   padding: 0;
-  color: var(--muted);
-  background: #050506;
-  border: 1px solid var(--line);
+  color: rgba(255, 255, 255, 0.58);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.48) 0 15px, transparent 15.5px);
+  border: 0;
   border-radius: 50%;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: 0.06em;
   cursor: pointer;
 }
 
+.mute-button:hover {
+  color: var(--ink);
+}
+
+.mute-button:focus-visible {
+  color: var(--ink);
+  outline: 2px solid color-mix(in srgb, var(--track-color) 76%, white);
+  outline-offset: -7px;
+}
+
 .mute-button[aria-pressed="true"] {
-  color: var(--track-color);
-  background: color-mix(in srgb, var(--track-color) 13%, #050506);
-  border-color: color-mix(in srgb, var(--track-color) 62%, var(--line));
-}
-
-.mixer-tile.is-muted .mixer-waveform {
-  opacity: 0.16;
-}
-
-.mixer-tile.is-muted .mixer-wave-bar,
-.mixer-tile.is-silent .mixer-wave-bar {
-  animation-play-state: paused;
+  color: color-mix(in srgb, var(--track-color) 82%, white);
+  background: radial-gradient(circle, color-mix(in srgb, var(--track-color) 18%, rgba(0, 0, 0, 0.62)) 0 15px, transparent 15.5px);
 }
 
 .mixer-tile.is-muted .mixer-amount {
-  color: var(--faint);
+  color: rgba(255, 255, 255, 0.44);
 }
 
 .secondary-action,
@@ -3281,9 +3181,7 @@ body.has-persistent-player .toast {
 
   .persistent-player::after,
   .persistent-play-button::after,
-  .mixer-tile::before,
-  .mixer-tile::after,
-  .mixer-waveform {
+  .mixer-hint::before {
     display: none;
   }
 
@@ -3292,6 +3190,19 @@ body.has-persistent-player .toast {
   .mixer-tile.is-active .mixer-hint,
   .mixer-tile.is-adjusting .mixer-amount {
     color: CanvasText;
+  }
+
+  .mixer-tile:has(.mixer-native-range:focus-visible) {
+    outline-color: Highlight;
+  }
+
+  .mute-button[aria-pressed="true"] {
+    color: HighlightText;
+    background: Highlight;
+  }
+
+  .mute-button {
+    border: 1px solid CanvasText;
   }
 
   .persistent-player-time,
@@ -3316,12 +3227,6 @@ body.has-persistent-player .toast {
   .persistent-player.is-buffering::after {
     animation: none;
     opacity: 0.82;
-  }
-
-  .mixer-wave-bar,
-  .view.is-active .mixer-tile:not(.is-muted):not(.is-silent) .mixer-wave-bar {
-    animation: none !important;
-    transform: scaleY(var(--mix-energy));
   }
 
   *,

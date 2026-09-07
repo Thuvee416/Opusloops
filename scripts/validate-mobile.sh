@@ -183,26 +183,48 @@ if "Grainient" not in react_bits_license_source:
 
 for token in (
     "function createMixerTile",
+    "function setMixerTilePresentation",
     "function mixerPercentFromDrag",
     'slider.type = "range"',
     'slider.setAttribute("aria-orientation", "vertical")',
+    'mute.textContent = "M"',
+    'mute.setAttribute("aria-pressed", String(muted))',
+    'gesture.dataset.mixerGesture = ""',
+    'amountValue.dataset.mixerValue = ""',
     "activateMixerTile(tile);",
+    'dom.mixer.addEventListener("pointerdown", beginMixerDrag)',
     'window.addEventListener("pointermove", moveMixerDrag, { passive: false })',
     'window.addEventListener("pointerup", finishMixerDrag)',
+    'window.addEventListener("pointercancel", finishMixerDrag)',
+    "gesture.setPointerCapture?.(event.pointerId)",
+    'mixerDrag.slider.dispatchEvent(new Event("input", { bubbles: true }))',
+    "Math.max(mixerDrag.gesture.clientHeight, 104)",
     "Window-level listeners keep the drag alive when capture is unavailable.",
     'stemPlayer?.setMix(track.assetId, track.volume, track.muted)',
 ):
     if token not in app_source:
         raise SystemExit(f"{app_path}: mobile tile mixer requirement is missing: {token}")
+if app_source.count('stemPlayer?.setMix(track.assetId, track.volume, track.muted)') < 2:
+    raise SystemExit(f"{app_path}: stem mute and live level changes must both reach the audio graph")
+for token in (
+    "hasMovingTile()",
+    'Number(tile.dataset.mixLevel)',
+    'tile.dataset.mixMuted === "true"',
+    "muted || level === 0 ? 0",
+):
+    if token not in grainient_mixer_source:
+        raise SystemExit(f"{grainient_mixer_path}: live level and mute state must continue driving Grainient motion: {token}")
 for token in (
     "grid-template-columns: repeat(2, minmax(0, 1fr))",
-    ".mixer-tile.is-active .mixer-gesture",
     "touch-action: none",
-    "@keyframes mixer-wave",
-    "animation: none !important",
+    ".mixer-amount-unit",
+    ".mixer-tile:has(.mixer-native-range:focus-visible)",
 ):
     if token not in styles_source:
         raise SystemExit(f"{styles_path}: responsive mixer presentation is missing: {token}")
+for retired_equalizer_token in ("mixer-waveform", "mixer-wave-bar", "@keyframes mixer-wave"):
+    if retired_equalizer_token in app_source or retired_equalizer_token in styles_source:
+        raise SystemExit(f"Mixer equalizer presentation must be removed: {retired_equalizer_token}")
 if "data-mixer-step" in app_source or "mixer-step-button" in styles_source:
     raise SystemExit("Mixer step buttons must not return; level changes are direct drag controls")
 
