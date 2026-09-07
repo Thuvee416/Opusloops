@@ -1019,21 +1019,12 @@ h2 {
   display: inline-flex;
   min-height: 20px;
   align-items: center;
-  gap: 4px;
   color: rgba(255, 255, 255, 0.42);
   font-size: 8px;
   font-weight: 680;
   letter-spacing: 0.1em;
   line-height: 1;
   text-transform: uppercase;
-}
-
-.mixer-hint::before {
-  color: color-mix(in srgb, var(--track-color) 76%, white);
-  content: "↕";
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
 }
 
 .mute-button {
@@ -3180,8 +3171,7 @@ body.has-persistent-player .toast {
   }
 
   .persistent-player::after,
-  .persistent-play-button::after,
-  .mixer-hint::before {
+  .persistent-play-button::after {
     display: none;
   }
 

@@ -225,6 +225,9 @@ for token in (
 for retired_equalizer_token in ("mixer-waveform", "mixer-wave-bar", "@keyframes mixer-wave"):
     if retired_equalizer_token in app_source or retired_equalizer_token in styles_source:
         raise SystemExit(f"Mixer equalizer presentation must be removed: {retired_equalizer_token}")
+for retired_drag_icon_token in ('.mixer-hint::before', 'content: "↕"'):
+    if retired_drag_icon_token in styles_source:
+        raise SystemExit(f"Mixer drag hint must remain text-only: {retired_drag_icon_token}")
 if "data-mixer-step" in app_source or "mixer-step-button" in styles_source:
     raise SystemExit("Mixer step buttons must not return; level changes are direct drag controls")
 
