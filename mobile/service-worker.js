@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "opusloops-pwa-";
 const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
-const CACHE_NAME = `${CACHE_PREFIX}v51`;
+const CACHE_NAME = `${CACHE_PREFIX}v52`;
 const APP_SHELL = [
   "./",
   "./index.html",
