@@ -19,6 +19,7 @@
     <script src="./frame-guard.js?v=1"></script>
     <link rel="stylesheet" href="./styles.css?v=35" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
+    <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
     <title>Opusloops</title>
   </head>
   <body>
@@ -381,7 +382,10 @@
             <h1 id="mix-title">Mix by feel.</h1>
             <p class="lede" id="mix-lede">Drag up or down on any tile. The number and motion follow your finger live.</p>
           </div>
-          <div class="mixer" id="mixer"></div>
+          <div class="mixer-surface" data-grainient-mixer data-grainient-state="loading">
+            <canvas class="mixer-grainient-canvas" aria-hidden="true"></canvas>
+            <div class="mixer" id="mixer"></div>
+          </div>
           <button class="secondary-action" id="reset-mix" type="button">Reset mix</button>
         </section>
 
@@ -567,7 +571,8 @@
     <script src="./stem-import-core.js?v=7" defer></script>
     <script src="./stem-player.js?v=3" defer></script>
     <script src="./stem-import.js?v=8" defer></script>
-    <script src="./app.js?v=28" defer></script>
+    <script src="./app.js?v=29" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
+    <script src="./grainient-mixer.mjs?v=1" type="module"></script>
   </body>
 </html>

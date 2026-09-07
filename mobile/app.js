@@ -1098,6 +1098,8 @@
     tile.style.setProperty("--mix-floor", presentation.floor.toFixed(3));
     tile.style.setProperty("--mix-duration", `${presentation.duration.toFixed(2)}s`);
     tile.style.setProperty("--mix-opacity", presentation.opacity.toFixed(3));
+    tile.dataset.mixLevel = (presentation.percent / 100).toFixed(2);
+    tile.dataset.mixMuted = String(Boolean(muted));
     tile.classList.toggle("is-silent", presentation.percent === 0);
     tile.classList.toggle("is-muted", Boolean(muted));
     const amount = tile.querySelector("[data-mixer-amount]");
@@ -1132,6 +1134,8 @@
     const hintId = `mixer-${idPrefix}-hint-${index}`;
     tile.className = "mixer-tile";
     tile.dataset.mixerKey = key;
+    tile.dataset.mixColor = color;
+    tile.dataset.mixIndex = String(index);
     tile.style.setProperty("--track-color", color);
     tile.setAttribute("role", "group");
     tile.setAttribute("aria-labelledby", labelId);

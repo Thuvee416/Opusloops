@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for required in index.html frame-guard.js styles.css pixel-dock.css pixel-dock.mjs REACT_BITS_LICENSE.md config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
+for required in index.html frame-guard.js styles.css pixel-dock.css pixel-dock.mjs grainient-mixer.css grainient-mixer.mjs REACT_BITS_LICENSE.md config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
   if [[ ! -s "mobile/$required" ]]; then
     echo "Required mobile asset is missing or empty: mobile/$required" >&2
     exit 1
@@ -55,6 +55,9 @@ stem_import_path = root / "stem-import.js"
 stem_player_path = root / "stem-player.js"
 pixel_dock_path = root / "pixel-dock.mjs"
 pixel_dock_css_path = root / "pixel-dock.css"
+grainient_mixer_path = root / "grainient-mixer.mjs"
+grainient_mixer_css_path = root / "grainient-mixer.css"
+react_bits_license_path = root / "REACT_BITS_LICENSE.md"
 app_path = root / "app.js"
 styles_path = root / "styles.css"
 
@@ -83,6 +86,9 @@ stem_import_source = stem_import_path.read_text(encoding="utf-8")
 stem_player_source = stem_player_path.read_text(encoding="utf-8")
 pixel_dock_source = pixel_dock_path.read_text(encoding="utf-8")
 pixel_dock_css_source = pixel_dock_css_path.read_text(encoding="utf-8")
+grainient_mixer_source = grainient_mixer_path.read_text(encoding="utf-8")
+grainient_mixer_css_source = grainient_mixer_css_path.read_text(encoding="utf-8")
+react_bits_license_source = react_bits_license_path.read_text(encoding="utf-8")
 app_source = app_path.read_text(encoding="utf-8")
 styles_source = styles_path.read_text(encoding="utf-8")
 parser.feed(index_source)
@@ -103,6 +109,8 @@ for asset in (
     "styles.css",
     "pixel-dock.css",
     "pixel-dock.mjs",
+    "grainient-mixer.css",
+    "grainient-mixer.mjs",
     "config.js",
     "cloud-client.js",
     "stem-import-core.js",
@@ -138,6 +146,40 @@ for retired_path in (
         raise SystemExit(f"{root / retired_path}: retired ColorBends asset must be removed")
 if "color-bends" in index_source.lower() or "color_bends" in service_worker_source.lower():
     raise SystemExit("ColorBends wiring must not remain in the mobile app shell")
+
+if index_source.count('class="mixer-grainient-canvas"') != 1:
+    raise SystemExit(f"{index_path}: the mixer must use exactly one shared Grainient canvas")
+for token in (
+    'getContext("webgl2"',
+    "gl.viewport(",
+    "gl.scissor(",
+    "uViewportOrigin",
+    "roundedMask",
+    'matchMedia("(prefers-reduced-motion: reduce)")',
+    "IntersectionObserver",
+    'document.addEventListener("visibilitychange"',
+    'this.canvas.addEventListener("webglcontextlost"',
+    'this.canvas.addEventListener("webglcontextrestored"',
+    "MAX_DEVICE_PIXEL_RATIO = 1.25",
+):
+    if token not in grainient_mixer_source:
+        raise SystemExit(f"{grainient_mixer_path}: shared mobile Grainient requirement is missing: {token}")
+for token in (
+    ".mixer-grainient-canvas",
+    "pointer-events: none",
+    "@media (forced-colors: active)",
+    'data-grainient-state="fallback"',
+):
+    if token not in grainient_mixer_css_source:
+        raise SystemExit(f"{grainient_mixer_css_path}: Grainient presentation requirement is missing: {token}")
+for token in ("data-grainient-mixer", "grainient-mixer.mjs?v=1", "grainient-mixer.css?v=1"):
+    if token not in index_source:
+        raise SystemExit(f"{index_path}: Grainient mixer wiring is missing: {token}")
+for token in ("tile.dataset.mixColor", "tile.dataset.mixIndex", "tile.dataset.mixLevel", "tile.dataset.mixMuted"):
+    if token not in app_source:
+        raise SystemExit(f"{app_path}: live Grainient mixer metadata is missing: {token}")
+if "Grainient" not in react_bits_license_source:
+    raise SystemExit(f"{react_bits_license_path}: Grainient attribution is required")
 
 for token in (
     "function createMixerTile",
@@ -261,6 +303,7 @@ PY
 
 node --check mobile/app.js
 node --check mobile/pixel-dock.mjs
+node --check mobile/grainient-mixer.mjs
 node --check mobile/config.js
 node --check mobile/cloud-client.js
 node --check mobile/stem-import-core.js
