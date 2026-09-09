@@ -17,7 +17,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=41" />
+    <link rel="stylesheet" href="./styles.css?v=42" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
     <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
@@ -30,78 +30,28 @@
       <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
       <main id="main-content">
         <section class="view is-active" id="view-create" data-view="create" aria-labelledby="create-title" tabindex="-1">
-          <div class="hero-copy">
-            <p class="eyebrow">The AI DAW for music’s next era</p>
-            <h1 id="create-title">What do you want to make?</h1>
-            <p class="lede">Describe the feeling. Opusloops turns it into a playable starting loop on this device.</p>
+          <div class="create-heading">
+            <h1 id="create-title">Create</h1>
+            <button class="text-button" type="button" data-view-target="projects">Projects</button>
           </div>
-
-          <form class="composer" id="composer-form">
-            <label class="sr-only" for="idea-input">Describe your loop</label>
-            <textarea
-              id="idea-input"
-              name="idea"
-              rows="3"
-              maxlength="180"
-              placeholder="A warm, late-night groove with a patient bassline…"
-              required
-            ></textarea>
-            <div class="composer-footer">
-              <span class="privacy-note">
-                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V7a4 4 0 0 1 8 0v2m-9 0h10v8H5V9Z" /></svg>
-                <span id="save-copy">Saved on this device</span>
-              </span>
-              <button class="send-button" type="submit" aria-label="Create loop">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-5 14-2.4-5.6L5 12Z" /></svg>
-              </button>
-            </div>
-          </form>
-
-          <div class="mood-row" role="group" aria-label="Quick ideas">
-            <button class="mood-chip" type="button" data-prompt="A warm soulful pocket groove">Warm</button>
-            <button class="mood-chip" type="button" data-prompt="A focused driving electronic loop">Driving</button>
-            <button class="mood-chip" type="button" data-prompt="A spacious ambient loop with soft movement">Spacious</button>
-            <button class="mood-chip" type="button" data-prompt="A playful syncopated beat with bright chords">Playful</button>
-          </div>
-
-          <button class="stem-import-card" id="open-stem-import" type="button" data-view-target="import">
-            <span class="stem-import-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5M4 12h2m2-2h2m4 1h2m2-3h2" /></svg>
-            </span>
-            <span>
-              <strong>Import Suno stems</strong>
-              <small>Upload a ZIP, review its timing, then mix every track</small>
-            </span>
-            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
-          </button>
-
-          <section class="recent-section" aria-labelledby="recent-title">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Continue</p>
-                <h2 id="recent-title">Your latest sketch</h2>
-              </div>
-              <button class="text-button" type="button" data-view-target="projects">All projects</button>
-            </div>
-            <button class="project-preview" id="recent-project" type="button" data-view-target="studio">
-              <span class="project-art" aria-hidden="true">
-                <span></span><span></span><span></span><span></span><span></span>
-              </span>
-              <span class="project-preview-copy">
-                <strong id="recent-project-name">Untitled loop</strong>
-                <span id="recent-project-meta">96 BPM · C minor</span>
-              </span>
-              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          <div class="create-actions">
+            <button class="create-action" id="create-project-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+              <strong>New project</strong>
+              <small>Stems or loop</small>
             </button>
-          </section>
-
-          <aside class="principle-card">
-            <span class="principle-number">01</span>
-            <div>
-              <h2>Start with sound, not setup.</h2>
-              <p>No plugins, patching, or file management. Make the first bars useful, then shape them.</p>
+            <button class="create-action" id="open-stem-import" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 16v4h14v-4" /></svg>
+              <strong>Upload stems</strong>
+              <small>ZIP archive</small>
+            </button>
+          </div>
+          <section class="create-recent" id="create-recent" aria-labelledby="recent-title" hidden>
+            <div class="section-heading">
+              <h2 id="recent-title">Continue</h2>
             </div>
-          </aside>
+            <div id="create-recent-list"></div>
+          </section>
         </section>
 
         <section class="view import-view" id="view-import" data-view="import" aria-labelledby="import-title" tabindex="-1">
@@ -110,9 +60,8 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
             </button>
             <div>
-              <p class="eyebrow">Stem import</p>
-              <h1 id="import-title">Make every bar land.</h1>
-              <p class="lede">Upload a Suno stem ZIP. You approve the files and timing before Opusloops changes any audio.</p>
+              <h1 id="import-title">Upload stems</h1>
+              <p class="import-project-name" id="import-project-name" hidden></p>
             </div>
           </div>
 
@@ -120,8 +69,8 @@
             <div class="import-panel-heading">
               <span class="stage-number">01</span>
               <div>
-                <h2 id="stem-upload-title">Choose a stem ZIP</h2>
-                <p>The archive uploads directly to your private storage.</p>
+                <h2 id="stem-upload-title">Stem files</h2>
+                <p>ZIP archive · private upload</p>
               </div>
             </div>
             <label class="file-picker" for="stem-zip-input">
@@ -129,7 +78,8 @@
               <span class="file-picker-action">Choose ZIP</span>
               <span id="stem-file-name">No file selected</span>
             </label>
-            <p class="fine-print" id="stem-upload-note">Byte progress comes from the resumable transfer; the service confirms every completed chunk.</p>
+            <p class="fine-print" id="stem-upload-note">Original files stay unchanged.</p>
+            <p class="form-error" id="stem-upload-error" role="alert" hidden></p>
             <button class="primary-action" id="stem-upload-button" type="button">Upload and inspect</button>
           </section>
 
@@ -322,6 +272,11 @@
               <span class="transport-label">Key</span>
               <button class="key-button" id="key-button" type="button">C minor</button>
             </div>
+          </div>
+
+          <div class="project-empty" id="studio-empty" hidden>
+            <p>No stems yet.</p>
+            <button class="secondary-action" type="button" data-upload-current>Upload stems</button>
           </div>
 
           <div id="generated-studio">
@@ -561,6 +516,31 @@
       </nav>
     </div>
 
+    <dialog class="account-dialog create-dialog" id="create-dialog" aria-labelledby="new-project-title">
+      <div class="dialog-handle" aria-hidden="true"></div>
+      <div class="dialog-heading">
+        <h2 id="new-project-title">New project</h2>
+        <button class="icon-button" id="create-close-button" type="button" aria-label="Close new project">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+      <form id="composer-form">
+        <label for="new-project-name">Project name</label>
+        <input id="new-project-name" name="project-name" maxlength="48" placeholder="Untitled project" autocomplete="off" />
+        <label for="new-project-kind">Start with</label>
+        <select id="new-project-kind" name="project-kind">
+          <option value="stems">Stems</option>
+          <option value="loop">Loop sketch</option>
+        </select>
+        <div id="new-project-idea" hidden>
+          <label for="idea-input">Loop idea</label>
+          <textarea id="idea-input" name="idea" rows="2" maxlength="180" placeholder="A warm house groove" disabled></textarea>
+        </div>
+        <p class="form-error" id="create-error" role="alert" hidden></p>
+        <button class="primary-action" type="submit">Create project</button>
+      </form>
+    </dialog>
+
     <dialog class="refine-dialog" id="refine-dialog" aria-labelledby="refine-title">
       <form method="dialog" id="refine-form">
         <div class="dialog-handle" aria-hidden="true"></div>
@@ -706,8 +686,8 @@
     <script src="./cloud-client.js?v=10" defer></script>
     <script src="./stem-import-core.js?v=9" defer></script>
     <script src="./stem-player.js?v=5" defer></script>
-    <script src="./stem-import.js?v=9" defer></script>
-    <script src="./app.js?v=35" defer></script>
+    <script src="./stem-import.js?v=10" defer></script>
+    <script src="./app.js?v=36" defer></script>
     <script src="./pixel-dock.mjs?v=1" type="module"></script>
     <script src="./grainient-mixer.mjs?v=2" type="module"></script>
     <script src="./soft-aurora-player.mjs?v=1" type="module"></script>

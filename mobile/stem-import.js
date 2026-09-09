@@ -48,6 +48,8 @@
       fileName: document.querySelector("#stem-file-name"),
       uploadButton: document.querySelector("#stem-upload-button"),
       uploadNote: document.querySelector("#stem-upload-note"),
+      uploadError: document.querySelector("#stem-upload-error"),
+      projectName: document.querySelector("#import-project-name"),
       processPanel: document.querySelector("#stem-process-panel"),
       processTitle: document.querySelector("#stem-process-title"),
       processState: document.querySelector("#stem-process-state"),
@@ -114,6 +116,10 @@
     ]);
 
     let selectedFile = null;
+    let pendingProjectId = "";
+    let uploadBusy = false;
+    let freshImport = false;
+    const pendingCreates = new Set();
     let rawJob = null;
     let job = null;
     let assets = [];
@@ -201,6 +207,8 @@
     function setError(message = "") {
       dom.processError.textContent = message;
       dom.processError.hidden = !message;
+      dom.uploadError.textContent = message;
+      dom.uploadError.hidden = !message || Boolean(job);
     }
 
     function setText(node, value) {
@@ -1148,6 +1156,9 @@
     function render() {
       const status = job?.status || "";
       const statusKind = job ? core.statusKind(status) : "unknown";
+      const projectName = findProject?.(job?.projectId || pendingProjectId)?.name || "";
+      setText(dom.projectName, projectName);
+      dom.projectName.hidden = !projectName;
       const retryableInspection = core.canRetryInspection(job);
       const retryableProposal = core.canRetryProposal(job, events);
       const repairableRender = core.canRepairRenderProposal(job, events);
@@ -1166,11 +1177,15 @@
       if (status !== "awaiting_tempo_confirmation" && (clickAssetId || clickObjectUrl || clickAuditionEngaged)) {
         clearClick();
       }
-      if (!job) return;
+      if (!job) {
+        if (!uploadBusy) setBusy(dom.uploadButton, false);
+        if (!uploadBusy) dom.uploadButton.textContent = "Upload and inspect";
+        return;
+      }
 
-      if (!uploadController) dom.uploadButton.textContent = status === "uploading" ? "Resume upload" : "Upload and inspect";
+      if (!uploadBusy) dom.uploadButton.textContent = status === "uploading" ? "Resume upload" : "Upload and inspect";
       if (status === "uploading") {
-        dom.uploadNote.textContent = "Choose the same ZIP to resume from the byte offset already confirmed by private storage.";
+        dom.uploadNote.textContent = "Choose the same ZIP to resume your upload.";
       }
 
       setText(dom.processTitle, core.statusLabel(status));
@@ -1378,7 +1393,10 @@
       }
     }
 
-    async function transferAndFinalize(file, upload) {
+    async function transferAndFinalize(file, upload, requestGeneration, userId) {
+      const active = () => generation === requestGeneration && getUser?.()?.id === userId;
+      const uploadJobId = job.id;
+      const uploadRevision = job.revision;
       uploadController = new AbortController();
       uploadProgress = { completed: 0, total: file.size };
       render();
@@ -1386,16 +1404,19 @@
       await cloud.uploadStemArchive({
         file,
         upload,
-        jobId: job.id,
+        jobId: uploadJobId,
         signal: uploadController.signal,
         onProgress(completed, total) {
+          if (!active()) return;
           uploadProgress = { completed, total };
           renderProgress();
         }
       });
+      if (!active()) return;
       setBusy(dom.uploadButton, true, "Finalizing upload…");
-      const finalized = await cloud.finalizeStemUpload(job.id, job.revision);
-      cloud.forgetStemArchiveUpload({ file, upload, jobId: job.id });
+      const finalized = await cloud.finalizeStemUpload(uploadJobId, uploadRevision);
+      if (!active()) return;
+      cloud.forgetStemArchiveUpload({ file, upload, jobId: uploadJobId });
       uploadProgress = null;
       uploadInstructions = null;
       adoptResponse(finalized);
@@ -1403,6 +1424,11 @@
     }
 
     async function beginUpload() {
+      if (uploadBusy) return;
+      if (!job && pendingCreates.has(pendingProjectId)) {
+        setError("This project is still starting its upload. Try again in a moment.");
+        return;
+      }
       if (!getUser?.()) {
         openSignIn?.();
         showToast?.("Sign in to keep imported stems private");
@@ -1418,8 +1444,17 @@
         showToast?.("That ZIP is empty");
         return;
       }
+      if (file.size > 2_147_483_648) {
+        setError("Choose a ZIP smaller than 2 GB.");
+        return;
+      }
       selectedFile = file;
       let preparedProjectId = "";
+      let requestGeneration = generation;
+      const userId = getUser().id;
+      const active = () => generation === requestGeneration && getUser?.()?.id === userId;
+      uploadBusy = true;
+      setError();
       try {
         if (job?.status === "uploading") {
           if ((job.sourceName && file.name !== job.sourceName) || (job.sourceBytes && file.size !== job.sourceBytes)) {
@@ -1427,30 +1462,55 @@
           }
           const upload = uploadContractForJob();
           if (!upload) throw new Error("Upload details are still loading. Try again in a moment");
-          await transferAndFinalize(file, upload);
+          await transferAndFinalize(file, upload, requestGeneration, userId);
           return;
         }
+        const projectId = pendingProjectId || makeId();
         stop({ preserveJob: false });
-        const projectId = makeId();
+        requestGeneration = generation;
+        uploadBusy = true;
+        pendingProjectId = projectId;
+        selectedFile = file;
+        dom.fileName.textContent = `${file.name} · ${core.formatBytes(file.size)}`;
         preparedProjectId = projectId;
         setBusy(dom.uploadButton, true, "Saving private project…");
         await prepareProject?.({ projectId, file });
+        if (!active()) return;
         setBusy(dom.uploadButton, true, "Creating private import…");
-        const created = await cloud.createStemImport({ projectId, file });
+        pendingCreates.add(projectId);
+        let created;
+        try {
+          created = await cloud.createStemImport({ projectId, file });
+        } finally {
+          pendingCreates.delete(projectId);
+        }
+        if (getUser?.()?.id !== userId) return;
+        // Keep an import resumable if its response arrives after switching projects.
+        const project = findProject?.(projectId);
+        if (!project || (project.kind !== "stem-draft" && project.stemImport?.jobId !== created.job.id)) return;
+        saveProject?.(core.toStemProject(created.job, [], project));
+        if (!active()) return;
         uploadInstructions = created.upload;
         rawJob = { ...created.job, sourceName: file.name, sourceBytes: file.size };
         job = core.normalizeJob(rawJob);
-        saveProject?.(core.toStemProject(job, [], findProject?.(projectId)));
+        pendingProjectId = "";
         showView?.("import");
-        await transferAndFinalize(file, created.upload);
+        await transferAndFinalize(file, created.upload, requestGeneration, userId);
       } catch (error) {
-        if (!job && preparedProjectId) discardProject?.(preparedProjectId);
+        if (!active()) return;
+        if (!job && preparedProjectId) {
+          pendingProjectId = discardProject?.(preparedProjectId) || "";
+          render();
+        }
         setError(friendlyError(error));
         if (error?.code === "stale_revision" && job) schedulePoll(100);
       } finally {
-        uploadController = null;
-        setBusy(dom.uploadButton, false);
-        if (job?.status === "uploading") dom.uploadButton.textContent = "Resume upload";
+        if (active()) {
+          uploadBusy = false;
+          uploadController = null;
+          setBusy(dom.uploadButton, false);
+          if (job?.status === "uploading") dom.uploadButton.textContent = "Resume upload";
+        }
       }
     }
 
@@ -1701,12 +1761,21 @@
       setBusy(dom.retryRender, false);
       uploadController?.abort();
       uploadController = null;
+      uploadBusy = false;
+      setBusy(dom.uploadButton, false);
       dispatchInFlight = null;
       dispatchSatisfiedKey = "";
       dispatchRetryAt = 0;
       dispatchRetryDelay = 1500;
       clearClick();
       if (!preserveJob) {
+        freshImport = false;
+        pendingProjectId = "";
+        selectedFile = null;
+        dom.fileInput.value = "";
+        dom.fileName.textContent = "No file selected";
+        dom.uploadNote.textContent = "Original files stay unchanged.";
+        setError();
         rawJob = null;
         job = null;
         assets = [];
@@ -1732,6 +1801,15 @@
         automaticRepairKey = "";
         automaticRenderRetryKey = "";
       }
+    }
+
+    function beginNew({ projectId = "" } = {}) {
+      stop({ preserveJob: false });
+      freshImport = true;
+      pendingProjectId = projectId;
+      resetConfirmations(gateAConfirmationIds);
+      resetConfirmations(gateBConfirmationIds);
+      render();
     }
 
     function resumeProject(project) {
@@ -1763,8 +1841,15 @@
       poll(generation);
     }
 
-    function accountChanged() {
+    function accountChanged({ preserveSelection = false } = {}) {
+      const fresh = preserveSelection && freshImport;
+      const file = preserveSelection && !job ? selectedFile : null;
+      const projectId = preserveSelection && !job ? pendingProjectId : "";
       stop({ preserveJob: false });
+      selectedFile = file;
+      pendingProjectId = projectId;
+      freshImport = fresh;
+      if (file) dom.fileName.textContent = `${file.name} · ${core.formatBytes(file.size)}`;
       render();
     }
 
@@ -1772,8 +1857,9 @@
       selectedFile = dom.fileInput.files?.[0] || null;
       dom.fileName.textContent = selectedFile ? `${selectedFile.name} · ${core.formatBytes(selectedFile.size)}` : "No file selected";
       dom.uploadNote.textContent = selectedFile
-        ? "Ready for a private resumable upload. Closing this page may require choosing the same file again."
-        : "Byte progress comes from the resumable transfer; the service confirms every completed chunk.";
+        ? "Ready to upload."
+        : "Original files stay unchanged.";
+      setError();
     });
     dom.uploadButton.addEventListener("click", beginUpload);
     dom.retryInspection.addEventListener("click", retryInspection);
@@ -1959,12 +2045,15 @@
 
     return Object.freeze({
       accountChanged,
+      beginNew,
       deactivateAudition,
       getAuditionState,
+      hasPendingUpload: () => freshImport || uploadBusy || Boolean(selectedFile),
       pauseAudition,
       resumeProject,
       seekAudition,
       stop,
+      targetProjectId: () => pendingProjectId,
       toggleAudition
     });
   }

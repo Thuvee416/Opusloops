@@ -48,13 +48,21 @@
     updatedAt: new Date().toISOString()
   });
 
+  const makeStemDraft = (name = "Untitled project") => ({
+    ...makeProject(),
+    kind: "stem-draft",
+    name,
+    patterns: TRACKS.map(() => Array(STEPS).fill(0)),
+    key: "—"
+  });
+
   const cloud = window.OpusloopsCloud || null;
   const stemAssetsByJob = new Map();
   let currentUser = normalizeIdentity(cloud?.getSession()?.user);
   let storageReadWarning = "";
   let preferences = readPreferences();
   const storedState = readCurrent();
-  let state = storedState || makeProject();
+  let state = storedState || makeStemDraft();
   let hasSavedState = Boolean(storedState);
   let saveTimer = 0;
   let cloudTimer = 0;
@@ -101,6 +109,8 @@
   let stemPlayer = null;
   let stemImportController = null;
   let preparedStemProject = null;
+  let pendingGuestStemDraft = null;
+  let createDialogTrigger = null;
   let activeMixerKey = "";
   let mixerDrag = null;
   let suppressedMixerClick = { key: "", until: 0 };
@@ -114,6 +124,11 @@
 
   const dom = {
     composerForm: document.querySelector("#composer-form"),
+    createDialog: document.querySelector("#create-dialog"),
+    newProjectName: document.querySelector("#new-project-name"),
+    newProjectKind: document.querySelector("#new-project-kind"),
+    newProjectIdea: document.querySelector("#new-project-idea"),
+    createError: document.querySelector("#create-error"),
     ideaInput: document.querySelector("#idea-input"),
     studioView: document.querySelector("#view-studio"),
     studioTitle: document.querySelector("#studio-title"),
@@ -133,9 +148,8 @@
     libraryStatus: document.querySelector("#library-status"),
     preferenceLoop: document.querySelector("#preference-loop"),
     saveAnnouncer: document.querySelector("#save-announcer"),
-    saveCopy: document.querySelector("#save-copy"),
-    recentName: document.querySelector("#recent-project-name"),
-    recentMeta: document.querySelector("#recent-project-meta"),
+    createRecent: document.querySelector("#create-recent"),
+    createRecentList: document.querySelector("#create-recent-list"),
     refineDialog: document.querySelector("#refine-dialog"),
     refineForm: document.querySelector("#refine-form"),
     refineInput: document.querySelector("#refine-input"),
@@ -283,7 +297,8 @@
     if (!candidate || typeof candidate !== "object") return null;
     const base = makeProject();
     const stemImport = normalizeStemImport(candidate.stemImport);
-    const kind = candidate.kind === "stem-import" && stemImport?.jobId ? "stem-import" : "generated";
+    const kind = candidate.kind === "stem-import" && stemImport?.jobId
+      ? "stem-import" : candidate.kind === "stem-draft" ? "stem-draft" : "generated";
     const patterns = Array.isArray(candidate.patterns) ? candidate.patterns : base.patterns;
     const rawId = String(candidate.id || "");
     const candidateId = isUuid(rawId) ? rawId : rawId ? legacyProjectId(rawId) : base.id;
@@ -296,7 +311,7 @@
       name: cleanName(candidate.name) || base.name,
       prompt: String(candidate.prompt || "").replace(/\s+/g, " ").trim().slice(0, 180),
       tempo: clamp(Number(candidate.tempo) || base.tempo, kind === "stem-import" ? 20 : 56, kind === "stem-import" ? 400 : 180),
-      key: kind === "stem-import"
+      key: kind !== "generated"
         ? String(candidate.key || "—").replace(/\s+/g, " ").trim().slice(0, 24) || "—"
         : KEYS.includes(candidate.key) ? candidate.key : base.key,
       swing: clamp(Number(candidate.swing) || 0, 0, 0.28),
@@ -494,7 +509,9 @@
       renderProjects();
       if (sync && currentUser) queueCloudSync();
       if (announce) showToast(currentUser ? "Saved — syncing privately" : "Saved on this device");
+      return true;
     }
+    return false;
   }
 
   function findProjectById(id) {
@@ -547,38 +564,55 @@
   async function prepareStemProject({ projectId, file }) {
     if (!currentUser || !isUuid(projectId)) throw new Error("Sign in to create a private stem project");
     const sourceName = cleanName(String(file?.name || "Imported stems").replace(/\.zip$/i, "")) || "Imported stems";
+    flushSave();
     const previousState = clone(state);
+    const existing = readProjects().find((project) => project.id === projectId);
+    if (existing && existing.kind !== "stem-draft") throw new Error("Choose a new project for these stems");
     const shell = normalizeProject({
-      ...makeProject(),
+      ...makeStemDraft(),
       id: projectId,
-      name: sourceName,
+      name: existing?.name && existing.name !== "Untitled project" ? existing.name : sourceName,
       prompt: ""
     });
-    preparedStemProject = { projectId, previousState };
+    preparedStemProject = { projectId, previousState, existing, userId: currentUser.id };
     resetPlaybackSession();
     state = shell;
     renderAll();
-    persist({ touch: false });
+    if (!persist()) throw new Error("This browser could not save the project");
+    const expectedUserId = currentUser.id;
     const synced = await drainCloudSync(20000);
+    if (currentUser?.id !== expectedUserId) throw new Error("The active account changed");
     if (!synced) throw new Error("The private project could not be saved before upload");
     return shell;
   }
 
   function discardPreparedStemProject(projectId) {
     if (!preparedStemProject || preparedStemProject.projectId !== projectId) return;
+    if (preparedStemProject.userId !== currentUser?.id) {
+      preparedStemProject = null;
+      return;
+    }
     const projects = readProjects();
-    const discarded = projects.find((project) => project.id === projectId);
-    const remaining = projects.filter((project) => project.id !== projectId);
-    const deletedAt = nextTimestamp(discarded?.updatedAt);
-    writeProjects(remaining);
-    writeDeletions({ ...readDeletions(), [projectId]: deletedAt });
-    state = normalizeProject(preparedStemProject.previousState) || remaining[0] || makeProject();
+    const previousState = preparedStemProject.previousState;
+    const existing = preparedStemProject.existing;
+    if (existing) {
+      const restored = { ...existing, updatedAt: nextTimestamp() };
+      writeProjects([...projects.filter((project) => project.id !== projectId), restored]);
+    } else {
+      const discarded = projects.find((project) => project.id === projectId);
+      const remaining = projects.filter((project) => project.id !== projectId);
+      const deletedAt = nextTimestamp(discarded?.updatedAt);
+      writeProjects(remaining);
+      writeDeletions({ ...readDeletions(), [projectId]: deletedAt });
+    }
+    if (state.id === projectId) {
+      state = normalizeProject(existing || previousState) || makeStemDraft();
+      writeCurrent(state);
+    }
     preparedStemProject = null;
-    writeCurrent(state);
     renderAll();
-    if (state.kind === "stem-import") stemImportController?.resumeProject(state);
-    else stemImportController?.stop({ preserveJob: false });
     queueCloudSync();
+    return existing?.id || "";
   }
 
   function queueSave() {
@@ -631,7 +665,42 @@
       document.querySelector(`#view-${name}`)?.focus({ preventScroll: true });
     }
     if (name === "projects") renderProjects();
-    if (name === "import" && state.kind === "stem-import") stemImportController?.resumeProject(state);
+    if (name === "create") renderRecent();
+  }
+
+  function openStemUpload(project = null) {
+    pendingGuestStemDraft = null;
+    flushSave();
+    if (project?.kind === "stem-import") stemImportController?.resumeProject(project);
+    else stemImportController?.beginNew({ projectId: project?.kind === "stem-draft" ? project.id : "" });
+    showView("import");
+  }
+
+  function openCreateDialog() {
+    pendingGuestStemDraft = null;
+    createDialogTrigger = document.activeElement;
+    dom.composerForm.reset();
+    dom.newProjectIdea.hidden = true;
+    dom.ideaInput.disabled = true;
+    dom.ideaInput.required = false;
+    dom.createError.hidden = true;
+    dom.createDialog.showModal();
+  }
+
+  function openProject(id) {
+    flushSave();
+    const project = readProjects().find((item) => item.id === id);
+    if (!project) return;
+    resetPlaybackSession();
+    state = normalizeProject(project);
+    writeCurrent(state);
+    renderAll();
+    if (state.kind === "stem-draft") openStemUpload(state);
+    else {
+      if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+      else stemImportController?.stop({ preserveJob: false });
+      showView(state.kind === "stem-import" && state.stemImport.status !== "ready" ? "import" : "studio");
+    }
   }
 
   function projectTimestamp(project) {
@@ -777,7 +846,7 @@
 
       const current = merged.find((project) => project.id === state.id);
       let nextState = current || state;
-      if (!current && nextDeletions[state.id]) nextState = merged[0] || makeProject();
+      if (!current && nextDeletions[state.id]) nextState = merged[0] || makeStemDraft();
       const projectChanged = nextState.id !== state.id;
       const audioChanged = playbackAudioFingerprint(nextState) !== playbackAudioFingerprint(state);
       const playbackSnapshot = audioChanged && !projectChanged ? capturePlaybackMutation() : null;
@@ -932,6 +1001,7 @@
     const nextUser = normalizeIdentity(user);
     const identityChanged = (nextUser?.id || null) !== (currentUser?.id || null);
     if (identityChanged) {
+      dom.createDialog.close();
       closeAccountDialog();
       closeProfileDialog();
       clearProfileState();
@@ -941,19 +1011,23 @@
     flushSave();
     resetPlaybackSession();
     stemPlayer?.destroy();
-    stemImportController?.accountChanged();
+    const guestDraft = !currentUser && nextUser ? pendingGuestStemDraft : null;
+    pendingGuestStemDraft = null;
+    stemImportController?.accountChanged({ preserveSelection: !currentUser && Boolean(nextUser) });
+    preparedStemProject = null;
     stemAssetsByJob.clear();
     window.clearTimeout(cloudTimer);
     cloudTimer = 0;
     currentUser = nextUser;
     const stored = readCurrent();
-    state = stored || makeProject();
+    state = guestDraft || stored || makeStemDraft();
     hasSavedState = Boolean(stored);
+    if (guestDraft) persist();
     renderAll();
     renderAuth();
     if (currentUser) {
       syncCloud();
-      if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+      if (state.kind === "stem-import" && !stemImportController?.hasPendingUpload()) stemImportController?.resumeProject(state);
     }
     else setSaveStatus("Saved on device");
   }
@@ -977,7 +1051,6 @@
     dom.accountCardMark.querySelector("svg").toggleAttribute("hidden", signedIn);
     dom.accountCardInitial.hidden = !signedIn;
     dom.accountCardInitial.textContent = initial;
-    dom.saveCopy.textContent = signedIn ? "Saved locally, synced privately" : "Saved on this device";
     dom.syncWorkspace.hidden = !signedIn;
 
     if (signedIn) {
@@ -1210,7 +1283,7 @@
     return words.map((word) => word[0].toUpperCase() + word.slice(1).toLowerCase()).join(" ");
   }
 
-  function composeFromPrompt(prompt) {
+  function composeFromPrompt(prompt, { name = "" } = {}) {
     const text = prompt.toLowerCase();
     const seed = hashText(prompt);
     const random = seededRandom(seed);
@@ -1247,13 +1320,13 @@
     }
 
     state = normalizeProject({
-      ...state,
+      ...makeProject(),
       kind: "generated",
       stemImport: null,
       id: makeId(),
       audioEngineVersion: AUDIO_ENGINE_VERSION,
       audioSeed: seed,
-      name: projectNameFromPrompt(prompt),
+      name: name || projectNameFromPrompt(prompt),
       prompt,
       tempo: ambient ? 74 + Math.floor(random() * 12) : driving ? 118 + Math.floor(random() * 14) : 88 + Math.floor(random() * 20),
       key: KEYS[seed % KEYS.length],
@@ -1264,24 +1337,27 @@
     });
 
     renderAll();
-    persist();
+    return persist();
   }
 
   function renderAll() {
     const stems = state.kind === "stem-import";
+    const draft = state.kind === "stem-draft";
     dom.studioView.classList.toggle("is-stem-project", stems);
     dom.studioView.classList.toggle("is-large-stem-project", stems && state.stemImport.tracks.length >= 5);
     dom.studioTitle.textContent = state.name;
     dom.tempoOutput.textContent = `${Math.round(state.tempo * 10) / 10} BPM`;
     dom.keyButton.textContent = state.key;
-    dom.generatedStudio.hidden = stems;
+    dom.generatedStudio.hidden = stems || draft;
+    document.querySelector("#studio-empty").hidden = !draft;
+    document.querySelector(".transport-card").hidden = draft;
     dom.stemStudio.hidden = !stems;
     dom.tempoAdjustments.classList.toggle("is-readonly", stems);
     dom.keyDetail.hidden = stems;
     if (stems) {
       stemPlayer?.loadProject(state);
       renderStemArrangement();
-    } else {
+    } else if (!draft) {
       renderSequencer();
     }
     renderMixer();
@@ -1291,10 +1367,32 @@
   }
 
   function renderRecent() {
-    dom.recentName.textContent = state.name;
-    dom.recentMeta.textContent = state.kind === "stem-import"
-      ? `${Math.round(state.tempo * 10) / 10} BPM · ${state.stemImport.tracks.length} stems · ${stemCore.statusLabel(state.stemImport.status)}`
-      : `${state.tempo} BPM · ${state.key}`;
+    const projects = readProjects().sort((a, b) => projectTimestamp(b) - projectTimestamp(a)).slice(0, 3);
+    dom.createRecent.hidden = !projects.length;
+    dom.createRecentList.replaceChildren();
+    projects.forEach((project) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "create-recent-project";
+      button.dataset.loadProject = project.id;
+      const name = document.createElement("strong");
+      name.textContent = project.name;
+      const meta = document.createElement("span");
+      meta.textContent = projectSummary(project);
+      button.append(name, meta);
+      dom.createRecentList.append(button);
+    });
+  }
+
+  function projectSummary(project) {
+    if (project.kind === "stem-draft") return "Awaiting stems";
+    if (project.kind === "stem-import") {
+      const stem = project.stemImport;
+      return stem.status === "ready"
+        ? `${stem.tracks.length} stems · ${Math.round(project.tempo * 10) / 10} BPM`
+        : stemCore.statusLabel(stem.status);
+    }
+    return `${project.tempo} BPM · ${project.key}`;
   }
 
   function renderSequencer() {
@@ -1639,6 +1737,19 @@
       : null;
     finishMixerDrag();
     dom.mixer.replaceChildren();
+    document.querySelector("#reset-mix").hidden = state.kind === "stem-draft";
+    if (state.kind === "stem-draft") {
+      dom.mixEyebrow.textContent = "Mix";
+      dom.mixTitle.textContent = state.name;
+      dom.mixLede.textContent = "No stems yet.";
+      const upload = document.createElement("button");
+      upload.className = "secondary-action";
+      upload.type = "button";
+      upload.dataset.uploadCurrent = "";
+      upload.textContent = "Upload stems";
+      dom.mixer.append(upload);
+      return;
+    }
     if (state.kind === "stem-import") {
       dom.mixEyebrow.textContent = "Aligned stem mix";
       dom.mixTitle.textContent = "Balance every part.";
@@ -2029,13 +2140,14 @@
   }
 
   function renderProjects() {
+    renderRecent();
     const projects = readProjects().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     renderDeviceSettings(projects);
     dom.projectsList.replaceChildren();
     if (!projects.length) {
       const empty = document.createElement("div");
       empty.className = "empty-state";
-      empty.innerHTML = "<h2>No saved loops yet.</h2><p>Your first idea will appear here automatically.</p>";
+      empty.innerHTML = "<p>No projects yet.</p>";
       dom.projectsList.append(empty);
       return;
     }
@@ -2046,7 +2158,7 @@
       const date = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(project.updatedAt));
       const projectMeta = project.kind === "stem-import"
         ? `${Math.round(project.tempo * 10) / 10} BPM · ${project.stemImport.tracks.length} stems · ${stemCore.statusLabel(project.stemImport.status)} · ${date}`
-        : `${project.tempo} BPM · ${project.key} · ${date}`;
+        : `${projectSummary(project)} · ${date}`;
       row.innerHTML = `
         <button class="project-load" type="button" data-load-project="${escapeAttribute(project.id)}">
           <strong>${escapeHtml(project.name)}</strong>
@@ -2658,6 +2770,10 @@
 
   async function startPlayback() {
     if (playing || playbackStarting) return;
+    if (state.kind === "stem-draft") {
+      openStemUpload(state);
+      return;
+    }
     if (activeAuditionState()) stemImportController?.deactivateAudition?.({ resetPosition: false });
     const requestId = ++playbackStartRequest;
     playbackStarting = true;
@@ -3211,7 +3327,11 @@
       cloud,
       getUser: () => currentUser,
       makeId,
-      openSignIn: () => openAccountDialog("signin"),
+      openSignIn: () => {
+        pendingGuestStemDraft = !currentUser && state.kind === "stem-draft"
+          && stemImportController?.targetProjectId() === state.id ? clone(state) : null;
+        openAccountDialog("signin");
+      },
       showView,
       findProject: findProjectById,
       saveProject: saveStemProject,
@@ -3256,10 +3376,7 @@
 
     if (target.dataset.viewTarget) showView(target.dataset.viewTarget);
 
-    if (target.dataset.prompt) {
-      dom.ideaInput.value = target.dataset.prompt;
-      dom.ideaInput.focus();
-    }
+    if (target.hasAttribute("data-upload-current")) openStemUpload(state);
 
     if (target.dataset.track !== undefined && target.dataset.step !== undefined) {
       toggleStep(Number(target.dataset.track), Number(target.dataset.step));
@@ -3276,17 +3393,7 @@
     if (target.dataset.toggleStemWindow) toggleStemWindow(target.dataset.toggleStemWindow);
 
     if (target.dataset.loadProject) {
-      const project = readProjects().find((item) => item.id === target.dataset.loadProject);
-      if (project) {
-        resetPlaybackSession();
-        state = normalizeProject(project);
-        writeCurrent(state);
-        renderAll();
-        if (state.kind === "stem-import") stemImportController?.resumeProject(state);
-        else stemImportController?.stop({ preserveJob: false });
-        showView(state.kind === "stem-import" && state.stemImport.status !== "ready" ? "import" : "studio");
-        showToast("Project opened");
-      }
+      openProject(target.dataset.loadProject);
     }
 
     if (target.dataset.deleteProject) {
@@ -3309,7 +3416,7 @@
         }
         if (state.id === project.id) {
           resetPlaybackSession();
-          state = remaining[0] || makeProject();
+          state = remaining[0] || makeStemDraft();
           writeCurrent(state);
           renderAll();
           if (state.kind === "stem-import") stemImportController?.resumeProject(state);
@@ -3364,13 +3471,46 @@
 
   dom.composerForm.addEventListener("submit", (event) => {
     event.preventDefault();
+    const name = cleanName(dom.newProjectName.value);
     const prompt = dom.ideaInput.value.trim();
-    if (!prompt) return;
+    const loop = dom.newProjectKind.value === "loop";
+    if (loop && !prompt) return;
+    flushSave();
+    const previous = clone(state);
     resetPlaybackSession();
     stemImportController?.stop({ preserveJob: false });
-    composeFromPrompt(prompt);
-    showView("studio");
-    showToast("Your loop is ready to play");
+    let saved;
+    if (loop) saved = composeFromPrompt(prompt, { name });
+    else {
+      state = normalizeProject(makeStemDraft(name || "Untitled project"));
+      saved = persist();
+    }
+    if (!saved) {
+      state = previous;
+      writeCurrent(state);
+      renderAll();
+      dom.createError.textContent = "Could not save this project. Check device storage and try again.";
+      dom.createError.hidden = false;
+      return;
+    }
+    dom.createDialog.close();
+    renderAll();
+    if (loop) showView("studio");
+    else openStemUpload(state);
+  });
+
+  dom.newProjectKind.addEventListener("change", () => {
+    const loop = dom.newProjectKind.value === "loop";
+    dom.newProjectIdea.hidden = !loop;
+    dom.ideaInput.disabled = !loop;
+    dom.ideaInput.required = loop;
+  });
+  document.querySelector("#create-project-button").addEventListener("click", openCreateDialog);
+  document.querySelector("#open-stem-import").addEventListener("click", () => openStemUpload());
+  document.querySelector("#create-close-button").addEventListener("click", () => dom.createDialog.close());
+  dom.createDialog.addEventListener("close", () => {
+    createDialogTrigger?.focus({ preventScroll: true });
+    createDialogTrigger = null;
   });
 
   dom.playButton.addEventListener("click", toggleProjectPlayback);
@@ -3460,14 +3600,7 @@
   });
 
   document.querySelector("#new-project-button").addEventListener("click", () => {
-    resetPlaybackSession();
-    stemImportController?.stop({ preserveJob: false });
-    state = makeProject();
-    renderAll();
-    persist();
-    showView("create");
-    dom.ideaInput.value = "";
-    dom.ideaInput.focus();
+    openCreateDialog();
   });
 
   document.querySelector("#refine-button").addEventListener("click", () => {
@@ -3499,7 +3632,11 @@
     showToast("Loop refined");
   });
 
-  document.querySelector("#account-close-button").addEventListener("click", closeAccountDialog);
+  document.querySelector("#account-close-button").addEventListener("click", () => {
+    pendingGuestStemDraft = null;
+    closeAccountDialog();
+  });
+  dom.accountDialog.addEventListener("cancel", () => { pendingGuestStemDraft = null; });
   dom.accountSwitch.addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
 
   dom.accountCardButton.addEventListener("click", () => {
@@ -3798,7 +3935,7 @@
     if (currentUser && dom.profileDialog.open) setProfileOnlineState();
     if (currentUser) {
       syncCloud();
-      if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+      if (state.kind === "stem-import" && !stemImportController?.hasPendingUpload()) stemImportController?.resumeProject(state);
     }
   });
   window.addEventListener("offline", () => {
@@ -3826,8 +3963,7 @@
 
   renderAll();
   renderAuth();
-  if (!hasSavedState) persist({ touch: false, sync: false });
-  else setSaveStatus(currentUser ? "Syncing…" : "Saved on device");
+  if (hasSavedState) setSaveStatus(currentUser ? "Syncing…" : "Saved on device");
   if (storageReadWarning) showToast(storageReadWarning);
   showView("create", { focus: false });
   if (currentUser && state.kind === "stem-import") stemImportController?.resumeProject(state);
@@ -3839,7 +3975,7 @@
       else if (restoredUser) {
         refreshCurrentUser(restoredUser);
         syncCloud();
-        if (state.kind === "stem-import") stemImportController?.resumeProject(state);
+        if (state.kind === "stem-import" && !stemImportController?.hasPendingUpload()) stemImportController?.resumeProject(state);
       }
       else if (currentUser) switchUser(null);
     });
