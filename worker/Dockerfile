@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.12
-# Multi-architecture index digest for python:3.11.13-slim-bookworm.
-ARG PYTHON_BASE=python:3.11.13-slim-bookworm@sha256:86adf8dbadc3d6e82ee5dd2c74bec2e1c2467cdad47886280501df722372d2e1
+# Official-image mirror in ECR Public; identical verified multi-architecture
+# digest, without Docker Hub's shared unauthenticated CodeBuild pull limit.
+ARG PYTHON_BASE=public.ecr.aws/docker/library/python:3.11.13-slim-bookworm@sha256:86adf8dbadc3d6e82ee5dd2c74bec2e1c2467cdad47886280501df722372d2e1
 
 FROM ${PYTHON_BASE} AS builder
 
