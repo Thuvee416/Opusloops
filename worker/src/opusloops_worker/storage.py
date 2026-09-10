@@ -1,4 +1,4 @@
-"""Immutable Supabase Storage S3 transport and stage-state snapshots."""
+"""Immutable S3 transport and provider-independent stage-state snapshots."""
 
 from __future__ import annotations
 
@@ -225,7 +225,7 @@ def _validate_state_index(payload: object, job: JobContract) -> tuple[str, tuple
 
 
 class S3ObjectStore:
-    """Minimal S3-compatible transport configured only for Supabase Storage."""
+    """Immutable transport retaining logical bucket names in approved manifests."""
 
     def __init__(
         self,
@@ -235,6 +235,7 @@ class S3ObjectStore:
         access_key_id: str,
         secret_access_key: str,
         session_token: str,
+        bucket_mapping: Mapping[str, str] | None = None,
     ) -> None:
         if not access_key_id or not secret_access_key or not session_token:
             raise ContractError("storage credentials were not injected")
@@ -258,6 +259,14 @@ class S3ObjectStore:
                 read_timeout=120,
             ),
         )
+        self._bucket_mapping = dict(bucket_mapping or {})
+
+    def _physical_bucket(self, bucket: str) -> str:
+        # Legacy fixtures may construct a store without invoking __init__.
+        mapping = getattr(self, "_bucket_mapping", {})
+        if mapping and bucket not in mapping:
+            raise ContractError("storage bucket has no approved AWS mapping")
+        return mapping.get(bucket, bucket)
 
     @staticmethod
     def _metadata_sha256(response: Mapping[str, Any]) -> str | None:
@@ -267,14 +276,21 @@ class S3ObjectStore:
         value = metadata.get("sha256")
         return str(value) if isinstance(value, str) else None
 
-    def _head(self, bucket: str, key: str) -> Mapping[str, Any] | None:
+    def _head(
+        self, bucket: str, key: str, *, before_conditional_create: bool = False
+    ) -> Mapping[str, Any] | None:
         try:
-            return self._client.head_object(Bucket=bucket, Key=key)
+            return self._client.head_object(Bucket=self._physical_bucket(bucket), Key=key)
         except Exception as exc:
             response = getattr(exc, "response", {})
             status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
             code = response.get("Error", {}).get("Code")
             if status == 404 or code in {"404", "NoSuchKey", "NotFound"}:
+                return None
+            if status == 403 and before_conditional_create and getattr(self, "_bucket_mapping", {}):
+                # Job credentials cannot list other users' keys. S3 consequently
+                # hides missing keys behind 403. Only a conditional create may
+                # proceed; its PUT and post-write HEAD must still both succeed.
                 return None
             raise StorageError("object metadata request failed") from exc
 
@@ -305,6 +321,7 @@ class S3ObjectStore:
             request: dict[str, Any] = {"Bucket": bucket, "Key": key}
             if etag:
                 request["IfMatch"] = etag
+            request["Bucket"] = self._physical_bucket(bucket)
             response = self._client.get_object(**request)
             stream = response["Body"]
             while True:
@@ -365,7 +382,7 @@ class S3ObjectStore:
         actual_sha256, byte_count = sha256_file(source)
         if actual_sha256 != sha256:
             raise IntegrityError("upload source changed before publication")
-        existing = self._head(bucket, key)
+        existing = self._head(bucket, key, before_conditional_create=True)
         if existing is not None:
             if (
                 int(existing.get("ContentLength", -1)) == byte_count
@@ -379,13 +396,14 @@ class S3ObjectStore:
         try:
             with source.open("rb") as handle:
                 self._client.put_object(
-                    Bucket=bucket,
+                    Bucket=self._physical_bucket(bucket),
                     Key=key,
                     Body=handle,
                     ContentLength=byte_count,
                     ContentType=content_type,
                     CacheControl="private, no-store",
                     Metadata=upload_metadata,
+                    **({"IfNoneMatch": "*"} if getattr(self, "_bucket_mapping", {}) else {}),
                 )
         except Exception as exc:
             existing = self._head(bucket, key)

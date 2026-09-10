@@ -6,6 +6,7 @@ import base64
 import binascii
 import json
 import math
+import os
 import re
 import uuid
 from collections.abc import Mapping
@@ -109,6 +110,7 @@ class StorageContract:
     access_key_id: str
     secret_access_key: str = dataclass_field(repr=False)
     session_token: str = dataclass_field(repr=False)
+    bucket_mapping: dict[str, str] = dataclass_field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -178,8 +180,9 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
         "inputs",
         "callback",
     }
-    if set(value) != required or value.get("version") != PAYLOAD_VERSION:
+    if set(value) != required or value.get("version") not in {PAYLOAD_VERSION, 2}:
         raise ContractError("job payload fields or version are invalid")
+    aws_native = value.get("version") == 2
     stage = value.get("stage")
     if stage not in STAGES or (expected_stage is not None and stage != expected_stage):
         raise ContractError("job stage does not match the invoked worker stage")
@@ -205,6 +208,8 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
         "secretAccessKey",
         "sessionToken",
     }
+    if aws_native:
+        storage_fields.add("bucketMap")
     if not isinstance(storage_value, Mapping) or set(storage_value) != storage_fields:
         raise ContractError("storage contract fields are invalid")
     endpoint = storage_value.get("endpoint")
@@ -212,7 +217,7 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
         raise ContractError("storage endpoint is invalid")
     endpoint_parts = urlsplit(endpoint)
     host_match = PROJECT_HOST_RE.fullmatch(endpoint_parts.hostname or "")
-    if (
+    if not aws_native and (
         endpoint_parts.scheme != "https"
         or endpoint_parts.path.rstrip("/") != "/storage/v1/s3"
         or endpoint_parts.query
@@ -223,6 +228,19 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
     region = storage_value.get("region")
     if not isinstance(region, str) or not re.fullmatch(r"[a-z]{2}-[a-z]+-\d", region):
         raise ContractError("storage region is invalid")
+    aws_account = os.environ.get("OPUSLOOPS_AWS_STORAGE_ACCOUNT", "")
+    bucket_mapping: dict[str, str] = {}
+    if aws_native:
+        if not re.fullmatch(r"\d{12}", aws_account):
+            raise ContractError("native AWS storage is not configured for this worker")
+        if endpoint != f"https://s3.{region}.amazonaws.com":
+            raise ContractError("native AWS storage endpoint is invalid")
+        bucket_mapping = {
+            f"opusloops-stem-{kind}": f"opusloops-{kind}-{aws_account}-{region}"
+            for kind in ("uploads", "sources", "artifacts")
+        }
+        if storage_value.get("bucketMap") != bucket_mapping:
+            raise ContractError("native AWS buckets do not match the configured account")
     for field, expected_bucket in BUCKETS.items():
         if storage_value.get(field) != expected_bucket:
             raise ContractError(f"{field} must be {expected_bucket}")
@@ -236,23 +254,29 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
     access_key_id = storage_value.get("accessKeyId")
     secret_access_key = storage_value.get("secretAccessKey")
     session_token = storage_value.get("sessionToken")
-    if access_key_id != host_match.group(1):
+    if not aws_native and access_key_id != host_match.group(1):
         raise ContractError("S3 accessKeyId must match the bound Supabase project")
     jwt_pattern = re.compile(r"[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")
     if (
         not isinstance(secret_access_key, str)
         or not 32 <= len(secret_access_key) <= 4096
         or any(ord(char) < 32 for char in secret_access_key)
-        or not jwt_pattern.fullmatch(secret_access_key)
+        or (not aws_native and not jwt_pattern.fullmatch(secret_access_key))
     ):
         raise ContractError("S3 secretAccessKey is invalid")
     if (
         not isinstance(session_token, str)
         or not 32 <= len(session_token) <= 16_384
         or any(ord(char) < 32 for char in session_token)
-        or not jwt_pattern.fullmatch(session_token)
+        or (not aws_native and not jwt_pattern.fullmatch(session_token))
     ):
         raise ContractError("S3 sessionToken is invalid")
+    if aws_native and (
+        not isinstance(access_key_id, str)
+        or not re.fullmatch(r"ASIA[A-Z0-9]{16}", access_key_id)
+        or not re.fullmatch(r"[A-Za-z0-9/+=]{40}", secret_access_key)
+    ):
+        raise ContractError("native AWS storage requires temporary STS credentials")
 
     callback_value = value.get("callback")
     if not isinstance(callback_value, Mapping) or set(callback_value) != {"url", "token"}:
@@ -262,7 +286,7 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
         raise ContractError("callback URL is invalid")
     callback_parts = urlsplit(callback_url)
     callback_host_match = CALLBACK_HOST_RE.fullmatch(callback_parts.hostname or "")
-    if (
+    if not aws_native and (
         callback_parts.scheme != "https"
         or callback_parts.path != "/functions/v1/stem-worker-callback"
         or callback_parts.query
@@ -271,6 +295,16 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
         or callback_host_match.group(1) != host_match.group(1)
     ):
         raise ContractError("callback URL must match the storage Supabase project")
+    if aws_native:
+        configured_callback = os.environ.get("OPUSLOOPS_AWS_CALLBACK_URL", "")
+        if (
+            not configured_callback
+            or callback_url != configured_callback
+            or callback_parts.scheme != "https"
+            or callback_parts.username
+            or callback_parts.password
+        ):
+            raise ContractError("native AWS callback must match the deployed worker configuration")
     callback_token = callback_value.get("token")
     if not isinstance(callback_token, str) or not SHA256_RE.fullmatch(callback_token):
         raise ContractError("callback token must be 64 lowercase hexadecimal characters")
@@ -390,10 +424,11 @@ def parse_job(value: Mapping[str, Any], *, expected_stage: str | None = None) ->
             artifact_bucket=BUCKETS["artifactBucket"],
             source_key=source_key,
             run_prefix=run_prefix,
-            project_ref=host_match.group(1),
+            project_ref=aws_account if aws_native else host_match.group(1),
             access_key_id=access_key_id,
             secret_access_key=secret_access_key,
             session_token=session_token,
+            bucket_mapping=bucket_mapping,
         ),
         inputs=inputs,
         callback_url=callback_url,

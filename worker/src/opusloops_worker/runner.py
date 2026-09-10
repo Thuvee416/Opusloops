@@ -681,6 +681,7 @@ def production_dependencies(job: JobContract) -> tuple[S3ObjectStore, CallbackCl
         access_key_id=job.storage.access_key_id,
         secret_access_key=job.storage.secret_access_key,
         session_token=job.storage.session_token,
+        bucket_mapping=job.storage.bucket_mapping,
     )
     callback = CallbackClient(
         job=job,
