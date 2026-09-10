@@ -43,20 +43,20 @@ python3 -m http.server 4173 --directory mobile
 
 Then open `http://localhost:4173`. Use a local server rather than opening `mobile/index.html` directly so the service worker and offline paths behave like production.
 
-The committed Supabase URL and publishable key are intentionally public client
-configuration. Access is enforced in Postgres with per-user Row Level Security;
-secret and service-role keys must never be shipped to the browser. Database
-migrations and operating notes live in [`supabase/`](supabase/).
+The client connects to the native AWS API. Cognito handles sign-in, private RDS
+PostgreSQL stores projects and approvals, and S3 stores stem files. No AWS keys or
+database credentials are shipped to the browser. Ownership uses the original
+immutable user IDs with PostgreSQL Row Level Security. Infrastructure and
+operating notes live in [`infra/aws-backend/`](infra/aws-backend/).
 
-Account creation is invitation-only during early access. Supabase's direct
-public signup endpoint is disabled; an email-bound invitation creates an
-Opusloops-tagged account through the server-side function. Password recovery and
-email verification remain unavailable until production SMTP is configured.
+Account creation remains invitation-only. Existing users keep their passwords
+but sign in again after the AWS migration. Profile-name and password changes are
+available; email-change verification and password-recovery UI are not yet exposed.
 
 ## Stem ZIP workflow
 
 Signed-in users can import a ZIP of audio stems up to 2 GiB. The browser sends it
-directly to private Supabase Storage in resumable 6 MiB chunks and reports only
+directly to private S3 storage in resumable 8 MiB parts and reports only
 confirmed transfer bytes. Isolated AWS Batch Fargate jobs inspect, analyze, propose,
 and render the audio; server events distinguish measurable progress from stages
 whose completion percentage is not knowable yet.
@@ -76,7 +76,9 @@ Source ZIPs, decoded stems, review artifacts, and rendered outputs stay in priva
 per-user buckets. Lifecycle cleanup is scheduled independently from interactive
 requests; database rows record the deletion process and retry partial failures.
 Implementation and deployment contracts live in [`worker/`](worker/),
-[`supabase/`](supabase/), and [`infra/stem-worker/`](infra/stem-worker/).
+[`infra/aws-backend/`](infra/aws-backend/), and [`infra/stem-worker/`](infra/stem-worker/).
+The historical [`supabase/migrations/`](supabase/migrations/) SQL is preserved and
+compiled into native PostgreSQL; Supabase is not required at runtime.
 
 ## Production
 

@@ -10,6 +10,7 @@ on:
       - 'worker/**'
       - 'prototypes/stem-tempo-calibration/**'
       - 'infra/stem-worker/**'
+      - 'infra/aws-backend/**'
       - 'scripts/validate-mobile.sh'
       - 'scripts/stamp-amplify-version.py'
       - 'amplify.yml'
@@ -22,6 +23,7 @@ on:
       - 'worker/**'
       - 'prototypes/stem-tempo-calibration/**'
       - 'infra/stem-worker/**'
+      - 'infra/aws-backend/**'
       - 'scripts/validate-mobile.sh'
       - 'scripts/stamp-amplify-version.py'
       - 'amplify.yml'
@@ -36,6 +38,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  aws-backend:
+    name: Validate native AWS backend
+    if: github.repository == 'Thuvee416/Opusloops'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Test AWS contracts
+        working-directory: infra/aws-backend
+        run: |
+          npm ci --ignore-scripts
+          npm test
+      - name: Test native PostgreSQL ownership and approvals
+        run: bash infra/aws-backend/database/test.sh
   validate:
     name: Validate mobile app
     if: github.repository == 'Thuvee416/Opusloops'

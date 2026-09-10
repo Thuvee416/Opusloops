@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "opusloops-pwa-";
 const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
-const CACHE_NAME = `${CACHE_PREFIX}v55`;
+const CACHE_NAME = `${CACHE_PREFIX}v56`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,8 +9,8 @@ const APP_SHELL = [
   "./pixel-dock.css?v=1",
   "./grainient-mixer.css?v=1",
   "./soft-aurora-player.css?v=1",
-  "./config.js?v=1",
-  "./cloud-client.js?v=10",
+  "./config.js?v=2",
+  "./cloud-client.js?v=11",
   "./stem-import-core.js?v=9",
   "./stem-player.js?v=5",
   "./stem-import.js?v=10",

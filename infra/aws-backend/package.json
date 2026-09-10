@@ -1,0 +1,27 @@
+{
+  "name": "opusloops-aws-backend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:database": "bash database/test.sh"
+  },
+  "dependencies": {
+    "@aws-sdk/client-batch": "3.1129.0",
+    "@aws-sdk/client-cognito-identity-provider": "3.1129.0",
+    "@aws-sdk/client-lambda": "3.1129.0",
+    "@aws-sdk/client-s3": "3.1129.0",
+    "@aws-sdk/client-secrets-manager": "3.1129.0",
+    "@aws-sdk/client-sts": "3.1129.0",
+    "@aws-sdk/rds-signer": "3.1129.0",
+    "@aws-sdk/s3-request-presigner": "3.1129.0",
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "bcryptjs": "3.0.3",
+    "esbuild": "0.28.2"
+  }
+}

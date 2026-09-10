@@ -2,6 +2,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Opusloops isolated stem DSP worker on AWS Batch Fargate
 
 Parameters:
+  LegacySupabaseEnabled:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Keep legacy Supabase callback and retention hooks only until native AWS cutover.
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC used by the Fargate compute environment.
@@ -38,6 +43,9 @@ Parameters:
     Type: Number
     Default: 30
     AllowedValues: [7, 14, 30, 60, 90, 120, 150, 180, 365]
+
+Conditions:
+  KeepLegacySupabase: !Equals [!Ref LegacySupabaseEnabled, 'true']
 
 Resources:
   WorkerRepository:
@@ -142,6 +150,7 @@ Resources:
                 Resource: '*'
 
   BootstrapFailureRole:
+    Condition: KeepLegacySupabase
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -163,6 +172,7 @@ Resources:
                 Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/opusloops-stem-worker-bootstrap-failure:*
 
   QueueWatchdogRole:
+    Condition: KeepLegacySupabase
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -193,6 +203,7 @@ Resources:
                 Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/opusloops-stem-worker-queue-watchdog:*
 
   RetentionInvokerRole:
+    Condition: KeepLegacySupabase
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -531,6 +542,7 @@ Resources:
                     awslogs-stream-prefix: render
 
   BootstrapFailureLambda:
+    Condition: KeepLegacySupabase
     Type: AWS::Lambda::Function
     DependsOn: BootstrapFailureLogGroup
     Properties:
@@ -744,6 +756,7 @@ Resources:
               return {"status": outcome}
 
   BootstrapFailureRule:
+    Condition: KeepLegacySupabase
     Type: AWS::Events::Rule
     Properties:
       Description: Report Batch jobs that fail before the worker can report its own failure.
@@ -768,6 +781,7 @@ Resources:
             MaximumRetryAttempts: 12
 
   AllowEventBridgeBootstrapFailureInvoke:
+    Condition: KeepLegacySupabase
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
@@ -776,6 +790,7 @@ Resources:
       SourceArn: !GetAtt BootstrapFailureRule.Arn
 
   QueueWatchdogLambda:
+    Condition: KeepLegacySupabase
     Type: AWS::Lambda::Function
     DependsOn: QueueWatchdogLogGroup
     Properties:
@@ -1025,6 +1040,7 @@ Resources:
               return summary
 
   QueueWatchdogSchedule:
+    Condition: KeepLegacySupabase
     Type: AWS::Events::Rule
     Properties:
       Name: opusloops-stem-worker-queue-watchdog
@@ -1039,6 +1055,7 @@ Resources:
             MaximumRetryAttempts: 1
 
   AllowEventBridgeQueueWatchdogInvoke:
+    Condition: KeepLegacySupabase
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
@@ -1047,6 +1064,7 @@ Resources:
       SourceArn: !GetAtt QueueWatchdogSchedule.Arn
 
   RetentionInvokerLambda:
+    Condition: KeepLegacySupabase
     Type: AWS::Lambda::Function
     DependsOn: RetentionInvokerLogGroup
     Properties:
@@ -1153,6 +1171,7 @@ Resources:
               return {"status": "completed"}
 
   RetentionSchedule:
+    Condition: KeepLegacySupabase
     Type: AWS::Events::Rule
     Properties:
       Description: Invoke bounded stem artifact retention every hour.
@@ -1166,6 +1185,7 @@ Resources:
             MaximumRetryAttempts: 3
 
   AllowEventBridgeRetentionInvoke:
+    Condition: KeepLegacySupabase
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
@@ -1191,10 +1211,13 @@ Outputs:
   WorkerLogGroupName:
     Value: !Ref WorkerLogGroup
   BootstrapFailureRuleArn:
+    Condition: KeepLegacySupabase
     Value: !GetAtt BootstrapFailureRule.Arn
   QueueWatchdogScheduleArn:
+    Condition: KeepLegacySupabase
     Value: !GetAtt QueueWatchdogSchedule.Arn
   RetentionScheduleArn:
+    Condition: KeepLegacySupabase
     Value: !GetAtt RetentionSchedule.Arn
   WorkerImage:
     Value: !Sub '${WorkerRepository.RepositoryUri}@${WorkerImageDigest}'

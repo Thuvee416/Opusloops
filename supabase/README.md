@@ -1,4 +1,10 @@
-# Opusloops cloud data
+# Historical Supabase backend
+
+Production has moved to native AWS. See [`infra/aws-backend/`](../infra/aws-backend/)
+for the current database, Cognito sign-in, S3 storage and operating procedures.
+This directory preserves the original SQL/contracts and rollback implementation.
+Do not deploy these Edge Functions or remove the source write fence during normal
+AWS operation. The documentation below describes the former Supabase deployment.
 
 The production project is `heryvahetgzfalmuprbw`. The browser receives only its
 publishable API key. Database passwords, management tokens, and secret or

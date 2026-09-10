@@ -1748,12 +1748,16 @@ if grep -RniE 'sb_secret_|service[_-]?role' mobile; then
   exit 1
 fi
 
-grep -Fq 'https://heryvahetgzfalmuprbw.supabase.co' mobile/index.html
-grep -Fq 'https://heryvahetgzfalmuprbw.storage.supabase.co' mobile/index.html
+grep -Fq 'https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com' mobile/index.html
+grep -Fq 'https://opusloops-artifacts-368310207026-us-east-1.s3.us-east-1.amazonaws.com' mobile/index.html
 grep -Fq "media-src 'self' blob:" mobile/index.html
-grep -Fq 'https://heryvahetgzfalmuprbw.storage.supabase.co' customHttp.yml
+grep -Fq 'https://opusloops-artifacts-368310207026-us-east-1.s3.us-east-1.amazonaws.com' customHttp.yml
 grep -Fq "media-src 'self' blob:" customHttp.yml
-grep -Fq 'sb_publishable_' mobile/config.js
+grep -Fq 'provider: "aws"' mobile/config.js
+if grep -qi 'supabase' mobile/config.js mobile/index.html customHttp.yml; then
+  echo "The production client must use only the native AWS backend." >&2
+  exit 1
+fi
 grep -Fq 'const DEFAULT_TUS_CHUNK_SIZE = 6 * 1024 * 1024' mobile/cloud-client.js
 grep -Fq '"Upload-Offset"' mobile/cloud-client.js
 grep -Fq 'onUploadProgress' mobile/cloud-client.js

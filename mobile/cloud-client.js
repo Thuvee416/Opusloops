@@ -2,10 +2,11 @@
   "use strict";
 
   const config = window.OPUSLOOPS_CONFIG || {};
-  const baseUrl = String(config.supabaseUrl || "").replace(/\/$/, "");
+  const awsBackend = config.provider === "aws";
+  const baseUrl = String((awsBackend ? config.apiUrl : config.supabaseUrl) || "").replace(/\/$/, "");
   const publishableKey = String(config.supabasePublishableKey || "");
   const stemImportUrl = `${baseUrl}/functions/v1/stem-import`;
-  const SESSION_KEY = "opusloops.auth.session.v1";
+  const SESSION_KEY = awsBackend ? "opusloops.auth.session.aws.v1" : "opusloops.auth.session.v1";
   const SESSION_EVENT = "opusloops:auth-session-change";
   const REFRESH_MARGIN_SECONDS = 60;
   const STEM_DISPATCH_TOKEN_SECONDS = 3000;
@@ -26,6 +27,8 @@
   }
 
   function configured() {
+    if (awsBackend) return /^https:\/\/[a-z0-9]+\.execute-api\.us-east-1\.amazonaws\.com$/.test(baseUrl)
+      && /^opusloops-uploads-\d{12}-us-east-1$/.test(config.uploadsBucket || "");
     return /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(baseUrl)
       && publishableKey.startsWith("sb_publishable_");
   }
@@ -383,10 +386,11 @@
 
   async function signOut() {
     const token = session?.access_token;
+    const refreshToken = session?.refresh_token;
     storeSession(null);
     if (!token) return;
     try {
-      await authFetch("/logout?scope=local", { token, body: {} });
+      await authFetch("/logout?scope=local", { token, body: awsBackend ? { refresh_token: refreshToken } : {} });
     } catch {
       // Local sign-out is authoritative even if the device is offline.
     }
@@ -438,7 +442,7 @@
     const requiresWorkerDispatch = [
       "finalize-upload", "retry-inspection", "retry-proposal", "repair-render-proposal", "retry-render", "approve-analysis", "request-proposal", "approve-tempo", "dispatch"
     ].includes(action);
-    const tokenLifetime = requiresWorkerDispatch ? STEM_DISPATCH_TOKEN_SECONDS : REFRESH_MARGIN_SECONDS;
+    const tokenLifetime = requiresWorkerDispatch && !awsBackend ? STEM_DISPATCH_TOKEN_SECONDS : REFRESH_MARGIN_SECONDS;
     const token = await accessToken(boundUserId, tokenLifetime);
     const response = await timedFetch(stemImportUrl, {
       method: "POST",
@@ -616,6 +620,7 @@
     if (!upload?.endpoint || !upload?.bucketName || !upload?.objectName || !jobId) {
       throw new CloudError("Upload instructions are incomplete", 500, "invalid_upload_contract");
     }
+    if (awsBackend) return uploadAwsArchive({ file, upload, jobId, onProgress, signal, userId });
     const endpoint = new URL(String(upload.endpoint), baseUrl).href;
     const endpointUrl = new URL(endpoint);
     const projectHost = new URL(baseUrl).hostname.split(".")[0];
@@ -723,6 +728,85 @@
 
     report(file.size);
     return { bytesUploaded: file.size, uploadUrl };
+  }
+
+  async function uploadAwsArchive({ file, upload, jobId, onProgress, signal, userId }) {
+    const chunkSize = 8 * 1024 * 1024;
+    const pieces = String(upload.objectName).split("/");
+    if (upload.protocol !== "s3-multipart" || upload.endpoint !== stemImportUrl
+        || upload.bucketName !== "opusloops-stem-uploads" || upload.chunkSize !== chunkSize
+        || pieces.length !== 4 || pieces[0] !== userId || pieces[2] !== jobId || pieces[3] !== "source.zip") {
+      throw new CloudError("Upload instructions do not match this account", 500, "invalid_upload_contract");
+    }
+    const checkActive = () => {
+      if (signal?.aborted) throw new DOMException("Upload cancelled", "AbortError");
+      assertSessionUser(userId);
+    };
+    const action = (name, fields = {}) => stemAction(name, { jobId, ...fields }, userId, { signal });
+    const acceptedParts = (status) => {
+      if (!Array.isArray(status.parts) || status.chunkSize !== chunkSize) {
+        throw new CloudError("Upload progress could not be verified", 502, "invalid_upload_offset");
+      }
+      const result = new Set();
+      for (const part of status.parts || []) {
+        const index = Number(part.partNumber);
+        const expected = Math.min(chunkSize, file.size - (index - 1) * chunkSize);
+        if (!Number.isSafeInteger(index) || index < 1 || expected <= 0 || part.bytes !== expected || result.has(index)) {
+          throw new CloudError("Upload progress could not be verified", 502, "invalid_upload_offset");
+        }
+        result.add(index);
+      }
+      return result;
+    };
+    const report = (parts) => {
+      const confirmed = [...parts].reduce((total, index) => total + Math.min(chunkSize, file.size - (index - 1) * chunkSize), 0);
+      onProgress?.(confirmed, file.size);
+    };
+    checkActive();
+    let status = await action("upload-status");
+    checkActive();
+    if (status.complete) {
+      if (status.confirmedBytes !== file.size) throw new CloudError("Completed upload size does not match this file", 502, "invalid_upload_offset");
+      onProgress?.(file.size, file.size);
+      return { bytesUploaded: file.size, resumed: true };
+    }
+    let accepted = acceptedParts(status);
+    const resumed = accepted.size > 0;
+    report(accepted);
+    for (let partNumber = 1; partNumber <= Math.ceil(file.size / chunkSize); partNumber += 1) {
+      if (accepted.has(partNumber)) continue;
+      checkActive();
+      const signed = await action("upload-part", { partNumber });
+      checkActive();
+      const url = new URL(String(signed.url || ""));
+      const expectedHost = `${config.uploadsBucket}.s3.us-east-1.amazonaws.com`;
+      if (url.protocol !== "https:" || url.hostname !== expectedHost || url.port || url.username || url.password
+          || decodeURIComponent(url.pathname) !== `/${upload.objectName}` || signed.partNumber !== partNumber) {
+        throw new CloudError("Upload URL is outside your private storage", 502, "invalid_upload_contract");
+      }
+      const start = (partNumber - 1) * chunkSize;
+      const uploaded = await xhrRequest("PUT", url.href, { body: file.slice(start, Math.min(file.size, start + chunkSize)), signal });
+      checkActive();
+      if (uploaded.status < 200 || uploaded.status >= 300) throw uploadError(uploaded);
+      status = await action("upload-status");
+      checkActive();
+      if (status.complete) {
+        if (status.confirmedBytes !== file.size) throw new CloudError("Completed upload size does not match this file", 502, "invalid_upload_offset");
+        onProgress?.(file.size, file.size);
+        return { bytesUploaded: file.size, resumed };
+      }
+      accepted = acceptedParts(status);
+      if (!accepted.has(partNumber)) throw new CloudError("Storage has not confirmed this upload part", 502, "invalid_upload_offset");
+      report(accepted);
+    }
+    checkActive();
+    const complete = await action("upload-complete");
+    checkActive();
+    if (complete.complete !== true || complete.confirmedBytes !== file.size) {
+      throw new CloudError("Storage has not confirmed the completed archive", 502, "invalid_upload_offset");
+    }
+    onProgress?.(file.size, file.size);
+    return { bytesUploaded: file.size, resumed };
   }
 
   function forgetStemArchiveUpload({ file, upload, jobId } = {}) {

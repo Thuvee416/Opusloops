@@ -73,8 +73,10 @@ function loadClient({
   fetchImpl,
   setTimeoutImpl = setTimeout,
   clearTimeoutImpl = clearTimeout,
+  aws = false,
+  XMLHttpRequestImpl,
 }) {
-  const storage = memoryStorage({ [SESSION_KEY]: JSON.stringify(initialSession) });
+  const storage = memoryStorage({ [aws ? "opusloops.auth.session.aws.v1" : SESSION_KEY]: JSON.stringify(initialSession) });
   const listeners = new Map();
   class TestCustomEvent {
     constructor(type, options = {}) {
@@ -86,6 +88,7 @@ function loadClient({
     OPUSLOOPS_CONFIG: {
       supabaseUrl: SUPABASE_URL,
       supabasePublishableKey: PUBLISHABLE_KEY,
+      ...(aws ? { provider: "aws", apiUrl: "https://fixture.execute-api.us-east-1.amazonaws.com", uploadsBucket: "opusloops-uploads-123456789012-us-east-1" } : {}),
     },
     CustomEvent: TestCustomEvent,
     addEventListener(type, listener) {
@@ -114,6 +117,7 @@ function loadClient({
     atob,
     btoa,
     fetch: fetchImpl,
+    XMLHttpRequest: XMLHttpRequestImpl,
     localStorage: storage,
     navigator: { onLine: true },
     window,
@@ -143,6 +147,48 @@ test("getSession keeps only a bounded profile name and pending email", () => {
   assert.deepEqual(plain(user.user_metadata), { display_name: "A".repeat(40) });
   assert.equal(user.new_email, longPendingEmail.slice(0, 254));
   assert.doesNotMatch(user.user_metadata.display_name, /[\u0000-\u001f\u007f]/);
+});
+
+test("AWS upload resumes only confirmed parts, never sends auth to S3, and verifies completion", async () => {
+  const chunk = 8 * 1024 * 1024, size = chunk + 123, jobId = "22222222-2222-4222-8222-222222222222";
+  const key = `${USER_ID}/33333333-3333-4333-8333-333333333333/${jobId}/source.zip`;
+  let uploaded = false;
+  const progress = [], actions = [];
+  class XHR {
+    listeners = {};
+    headers = {};
+    open(method, url) { assert.equal(method, "PUT"); assert.ok(url.includes(key)); }
+    setRequestHeader(name, value) { this.headers[name] = value; }
+    addEventListener(name, callback) { this.listeners[name] = callback; }
+    send(body) { assert.equal(body.size, 123); assert.deepEqual(this.headers, {}); uploaded = true; this.status = 200; this.listeners.load(); }
+  }
+  const { cloud } = loadClient({ aws: true, XMLHttpRequestImpl: XHR, fetchImpl: async (input, init) => {
+    const call = requestDetails(input, init); actions.push(call.body.action);
+    if (call.body.action === "upload-status") return jsonResponse({ complete: false, chunkSize: chunk, parts: [{ partNumber: 1, bytes: chunk }, ...(uploaded ? [{ partNumber: 2, bytes: 123 }] : [])] });
+    if (call.body.action === "upload-part") {
+      assert.equal(call.body.partNumber, 2);
+      return jsonResponse({ partNumber: 2, url: `https://opusloops-uploads-123456789012-us-east-1.s3.us-east-1.amazonaws.com/${key}?signature=fixture` });
+    }
+    assert.equal(call.body.action, "upload-complete");
+    return jsonResponse({ complete: true, confirmedBytes: size });
+  } });
+  assert.equal(cloud.configured(), true);
+  const result = await cloud.uploadStemArchive({ jobId,
+    file: { size, slice: (a, b) => ({ size: b - a }) },
+    upload: { protocol: "s3-multipart", endpoint: "https://fixture.execute-api.us-east-1.amazonaws.com/functions/v1/stem-import", bucketName: "opusloops-stem-uploads", objectName: key, chunkSize: chunk },
+    onProgress: bytes => progress.push(bytes),
+  });
+  assert.deepEqual(plain(result), { bytesUploaded: size, resumed: true });
+  assert.deepEqual(actions, ["upload-status", "upload-part", "upload-status", "upload-complete"]);
+  assert.deepEqual(progress, [chunk, size, size]);
+});
+
+test("AWS upload rejects a forged progress response before transferring files", async () => {
+  const jobId = "22222222-2222-4222-8222-222222222222", chunk = 8 * 1024 * 1024;
+  const { cloud } = loadClient({ aws: true, fetchImpl: async () => jsonResponse({ complete: false, chunkSize: chunk, parts: [{ partNumber: 1, bytes: 999 }] }) });
+  await assert.rejects(cloud.uploadStemArchive({ jobId, file: { size: 10, slice() {} },
+    upload: { protocol: "s3-multipart", endpoint: "https://fixture.execute-api.us-east-1.amazonaws.com/functions/v1/stem-import", bucketName: "opusloops-stem-uploads", objectName: `${USER_ID}/project/${jobId}/source.zip`, chunkSize: chunk },
+  }), { code: "invalid_upload_offset" });
 });
 
 test("updateProfile skips password reauthentication when the email is unchanged", async () => {

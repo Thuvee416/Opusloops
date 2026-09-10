@@ -1,5 +1,12 @@
 # Opusloops stem-worker infrastructure
 
+Current production uses the native AWS dispatcher, S3 job-scoped STS credentials,
+and `opusloops-aws-stem-*` definitions from [`../aws-backend/`](../aws-backend/).
+This stack still owns the shared queue, compute environment, image build and ECR
+repository. Set `LegacySupabaseEnabled=false` after cutover to remove the old
+Supabase callback/watchdog/retention hooks. The legacy authentication details
+below are retained for rollback, not for new deployments.
+
 This CloudFormation stack creates an egress-only AWS Batch Fargate worker plane
 in `us-east-1`:
 
