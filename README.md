@@ -41,7 +41,7 @@ cd Opusloops
 python3 -m http.server 4173 --directory mobile
 ```
 
-Then open `http://localhost:4173`. Use a local server rather than opening `mobile/index.html` directly so the service worker and offline paths behave like production.
+Then open `http://127.0.0.1:4173`, the local origin enabled for private S3 uploads. Use a local server rather than opening `mobile/index.html` directly so the service worker and offline paths behave like production.
 
 The client connects to the native AWS API. Cognito handles sign-in, private RDS
 PostgreSQL stores projects and approvals, and S3 stores stem files. No AWS keys or

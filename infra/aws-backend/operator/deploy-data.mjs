@@ -18,6 +18,7 @@ const key = `code/data-${hash}.zip`;
 await new S3Client(awsOptions).send(new PutObjectCommand({Bucket:outputs.MigrationBucket,Key:key,Body:bytes,ContentType:'application/zip',ChecksumSHA256:createHash('sha256').update(bytes).digest('base64')}));
 const resources = {};
 for (const [id,name,handler] of [['Migration','opusloops-aws-migration','migration.handler'],['Database','opusloops-aws-database','database.handler']]) {
+  if(id==='Migration'&&process.env.OPUSLOOPS_INCLUDE_MIGRATION_HELPER!=='true')continue;
   resources[`${id}Role`] = {
     Type:'AWS::IAM::Role', Properties:{
       AssumeRolePolicyDocument:{Version:'2012-10-17',Statement:[{Effect:'Allow',Principal:{Service:'lambda.amazonaws.com'},Action:'sts:AssumeRole'}]},

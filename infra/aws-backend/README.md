@@ -60,6 +60,12 @@ tones through all four processing stages and verifies signed, range-readable
 audio artifacts. It grants gates only for its synthetic fixture. A failed audio
 canary is retained for diagnosis, never confused with a successful cleanup.
 
+With Playwright installed, `operator/browser-canary.mjs` tests the actual mobile
+browser client, CSP/CORS, sign-in, project save, 8 MiB multipart transfer and S3
+range reads. Set `PLAYWRIGHT_MODULE` to the module path. It defaults to the live
+site; `OPUS_QA_URL=http://127.0.0.1:4173` selects local testing. It creates and
+removes only its own synthetic account and files.
+
 ## Operator deployment
 
 Authenticate with `aws login --region us-east-1`. All operators reject a different
@@ -71,6 +77,12 @@ node build.mjs api database migration
 node operator/deploy-data.mjs
 node operator/deploy-api.mjs
 ```
+
+The default data deployment excludes/removes the temporary migration helper.
+Only during an authorized migration or synthetic canary run, deploy it with
+`OPUSLOOPS_INCLUDE_MIGRATION_HELPER=true node operator/deploy-data.mjs`; run the
+default deployment again afterward. Never grant the public API invoke permission
+on that helper.
 
 To build the worker, publish the tested worker commit to `main`, then run
 `node operator/build-worker.mjs`. It pins CodeBuild to that exact commit without
