@@ -1,3 +1,4 @@
+.studio-locked body { visibility: hidden !important; pointer-events: none !important; }
 :root {
   color-scheme: dark;
   --paper: #000000;

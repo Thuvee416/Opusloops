@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="frame-check-pending">
+<html lang="en" class="frame-check-pending studio-locked">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -17,13 +17,13 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=42" />
+    <link rel="stylesheet" href="./styles.css?v=43" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
     <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
     <title>Studio · Opusloops</title>
   </head>
-  <body>
+  <body hidden>
     <a class="skip-link" href="#main-content">Skip to content</a>
 
     <div class="app-shell">
@@ -433,7 +433,7 @@
             <div>
               <p class="eyebrow">Install Opusloops</p>
               <h2>Keep it within reach.</h2>
-              <p>Add Opusloops to your home screen for a full-screen, offline studio.</p>
+              <p>Add Opusloops to your home screen for a full-screen studio. Connect to sign in before opening.</p>
             </div>
             <button class="secondary-action" id="install-button" type="button">Add to home screen</button>
           </aside>
@@ -442,7 +442,7 @@
             <summary>About Opusloops</summary>
             <p><a href="./index.html">Opusloops home ↗</a></p>
             <p>
-              Opusloops is a focused Web Audio sketchbook with optional private account sync.
+              Opusloops is a focused Web Audio studio with private account sync. Sign-in is required.
               Desktop plugin hosting, scripting, remote-control servers, and local model downloads are intentionally excluded.
             </p>
             <p class="fine-print">Independent open-source software, built for local sketches in your browser.</p>
@@ -684,11 +684,12 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./config.js?v=2" defer></script>
-    <script src="./cloud-client.js?v=11" defer></script>
+    <script src="./cloud-client.js?v=12" defer></script>
+    <script src="./studio-access.js?v=1" defer></script>
     <script src="./stem-import-core.js?v=9" defer></script>
     <script src="./stem-player.js?v=5" defer></script>
     <script src="./stem-import.js?v=10" defer></script>
-    <script src="./app.js?v=37" defer></script>
+    <script src="./app.js?v=38" defer></script>
     <script src="./pixel-dock.mjs?v=3" type="module"></script>
     <script src="./grainient-mixer.mjs?v=2" type="module"></script>
     <script src="./soft-aurora-player.mjs?v=1" type="module"></script>

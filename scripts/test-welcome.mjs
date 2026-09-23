@@ -17,9 +17,15 @@ async function pageFor(options = {}) {
 
 async function mockAuth(page, signedIn = false) {
   await page.route('**/cloud-client.js?*', route => route.fulfill({ contentType: 'text/javascript', body: `
-    let session = ${signedIn ? '{user:{id:"qa",email:"qa@example.com"}}' : 'null'};
+    let session = ${signedIn ? '{user:{id:"qa",email:"qa@example.com"}}' : 'sessionStorage.getItem("qa-signed-in") ? {user:{id:"qa",email:"qa@example.com"}} : null'};
     window.OpusloopsCloud = {
       configured: () => true, getSession: () => session, restoreSession: async () => session,
+      syncProjects: async rows => rows,
+      signUp: async (email, password, invite) => {
+        if (invite !== 'VALID') throw new Error('Invalid invitation');
+        sessionStorage.setItem('qa-signed-in', email);
+        return {session: session = {user:{id:'qa',email}}};
+      },
       signIn: async (email, password) => {
         if (password !== 'correct-password') throw new Error('Invalid email or password');
         sessionStorage.setItem('qa-signed-in', email);
@@ -74,7 +80,7 @@ test('Scanner fallback keeps the page usable without WebGL', async () => {
   await page.waitForFunction(() => document.querySelector('[data-scanner]').dataset.scannerState === 'fallback');
   assert.equal(await page.locator('[data-pixel-wave]').count(), 0);
   await page.getByRole('link', { name: 'OPEN STUDIO' }).click();
-  await page.waitForURL('**/studio.html');
+  await page.waitForURL('**/account.html?access=required');
   await context.close();
 });
 
@@ -124,6 +130,7 @@ test('Scanner animates, original PixelCard responds to hover, and reduced motion
     ['/studio.html', ['.nav-item.is-active .pixel-canvas']]
   ]) {
     const { context, page } = await pageFor();
+    if (path === '/studio.html') await mockAuth(page, true);
     await page.goto(`${base}${path}`);
     await page.waitForTimeout(650);
     for (const selector of selectors) {
@@ -159,7 +166,53 @@ test('sign-out requires a click, clears the session, and retains local project d
   await context.close();
 });
 
-test('offline navigation preserves the requested studio or account screen', async () => {
+test('registration requires an invitation and then opens the authenticated studio', async () => {
+  const { context, page } = await pageFor();
+  await mockAuth(page);
+  await page.goto(`${base}/account.html`);
+  await page.getByRole('button', { name: 'Create an account' }).click();
+  await page.getByLabel('Email', { exact: true }).fill('new@example.com');
+  await page.getByLabel('Password', { exact: true }).fill('correct-password');
+  await page.getByLabel('Early-access invitation').fill('INVALID');
+  await page.getByRole('button', { name: 'Create account', exact: false }).click();
+  await page.getByRole('alert').waitFor();
+  assert.match(await page.getByRole('alert').textContent(), /Invalid invitation/);
+  await page.getByLabel('Early-access invitation').fill('VALID');
+  await page.getByRole('button', { name: 'Create account', exact: false }).click();
+  await page.waitForURL('**/studio.html');
+  await page.getByRole('heading', { name: 'Create', exact: true }).waitFor();
+  await context.close();
+});
+
+test('studio stays hidden during verification and rejects verification failures', async () => {
+  const { context, page } = await pageFor();
+  await page.route('**/cloud-client.js?*', route => route.fulfill({contentType: 'text/javascript', body: `
+    window.OpusloopsCloud = { configured: () => true, getSession: () => ({user:{id:'qa'}}),
+      restoreSession: () => new Promise((resolve,reject) => { window.rejectVerification = reject; }) };
+  `}));
+  await page.goto(`${base}/studio.html`);
+  assert.equal(await page.locator('#create-project-button').isVisible(), false);
+  assert.equal(await page.evaluate(() => document.body.inert), true);
+  assert.equal(await page.evaluate(() => localStorage.getItem('opusloops.mobile.projects.v1')), null);
+  await page.evaluate(() => window.rejectVerification(new Error('Unavailable')));
+  await page.waitForURL('**/account.html?access=verify');
+  await context.close();
+});
+
+test('session loss immediately locks an open studio and redirects to sign-in', async () => {
+  const { context, page } = await pageFor();
+  await mockAuth(page, true);
+  await page.goto(`${base}/studio.html`);
+  await page.getByRole('heading', { name: 'Create', exact: true }).waitFor();
+  await page.evaluate(async () => {
+    await window.OpusloopsCloud.signOut();
+    window.dispatchEvent(new CustomEvent('opusloops:auth-session-change', {detail:{user:null}}));
+  });
+  await page.waitForURL('**/account.html?access=required');
+  await context.close();
+});
+
+test('offline cached studio still requires authentication', async () => {
   const { context, page } = await pageFor({ serviceWorkers: 'allow' });
   await page.goto(base);
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
@@ -167,7 +220,7 @@ test('offline navigation preserves the requested studio or account screen', asyn
   await page.waitForFunction(() => navigator.serviceWorker.controller);
   await context.setOffline(true);
   await page.goto(`${base}/studio.html`);
-  await page.getByRole('heading', { name: 'Create', exact: true }).waitFor();
+  await page.waitForURL('**/account.html?access=required');
   await page.goto(`${base}/account.html?signedout=1`);
   await page.getByRole('heading', { name: 'Signed out.' }).waitFor();
   await context.close();

@@ -41,7 +41,7 @@ cd Opusloops
 python3 -m http.server 4173 --directory mobile
 ```
 
-Then open `http://127.0.0.1:4173`, the local origin enabled for private S3 uploads. The public landing page is at `/`, the offline studio at `/studio.html`, and AWS sign-in/sign-out at `/account.html`. Installed apps launch directly into the studio. Use a local server rather than opening HTML files directly so the service worker and offline paths behave like production.
+Then open `http://127.0.0.1:4173`, the local origin enabled for private S3 uploads. The public landing page is at `/`, the authenticated studio at `/studio.html`, and AWS sign-in/sign-out and invitation-based registration at `/account.html`. Installed apps launch at the studio's authentication gate. An online session check is required before opening the studio; guest access is disabled even for cached pages. Use a local server rather than opening HTML files directly so the service worker and cached paths behave like production.
 
 The client connects to the native AWS API. Cognito handles sign-in, private RDS
 PostgreSQL stores projects and approvals, and S3 stores stem files. No AWS keys or

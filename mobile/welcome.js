@@ -9,6 +9,9 @@
   const error = document.querySelector('#account-error');
   const submit = document.querySelector('#login-submit');
   const logout = document.querySelector('#logout-submit');
+  const toggle = document.querySelector('#registration-toggle');
+  const registrationFields = document.querySelector('#registration-fields');
+  let registering = false;
   let busy = false;
   let signedOut = new URLSearchParams(location.search).has('signedout');
 
@@ -20,10 +23,28 @@
     if (!form) return;
     form.hidden = Boolean(session);
     actions.hidden = !session;
+    toggle.hidden = Boolean(session);
+    registrationFields.hidden = !registering;
+    form.invite.disabled = !registering;
+    form.invite.required = registering;
+    form.password.minLength = registering ? 8 : 1;
+    form.password.autocomplete = registering ? 'new-password' : 'current-password';
+    toggle.textContent = registering ? 'Already registered? Sign in' : 'Create an account';
+    submit.querySelector('span').textContent = registering ? 'Create account ↗' : 'Sign in ↗';
     title.textContent = session ? 'Your space.' : signedOut ? 'Signed out.' : 'Sign in.';
     description.textContent = session ? (session.user?.email || 'You’re signed in.') : signedOut ? 'See you at the next session.' : 'Pick up where you left off.';
     status.textContent = '';
+    if (!session && registering) { title.textContent = 'Create account.'; description.textContent = 'Your private music workspace.'; }
+    else if (!session && new URLSearchParams(location.search).has('access')) status.textContent = 'Sign in to open the studio. An internet connection is required to verify access.';
+    if (session && new URLSearchParams(location.search).get('access') === 'verify') status.textContent = 'Could not verify your session. Check your connection and try opening the studio again, or sign out and sign in again.';
   }
+
+  toggle?.addEventListener('click', () => {
+    if (busy) return;
+    registering = !registering;
+    error.hidden = true;
+    render();
+  });
 
   function showError(message) {
     error.textContent = message;
@@ -36,11 +57,13 @@
     busy = true;
     error.hidden = true;
     submit.disabled = true;
-    submit.querySelector('span').textContent = 'Signing in…';
+    submit.querySelector('span').textContent = registering ? 'Creating account…' : 'Signing in…';
     status.textContent = 'Connecting to your workspace…';
     try {
       if (!cloud?.configured()) throw new Error('Sign-in is unavailable. Please try again later.');
-      const session = await cloud.signIn(form.email.value.trim(), form.password.value);
+      const session = registering
+        ? (await cloud.signUp(form.email.value.trim(), form.password.value, form.invite.value.trim())).session
+        : await cloud.signIn(form.email.value.trim(), form.password.value);
       if (!session?.user) throw new Error('Sign-in was not completed. Please try again.');
       form.password.value = '';
       window.location.assign('./studio.html');
@@ -50,7 +73,7 @@
     } finally {
       busy = false;
       submit.disabled = false;
-      submit.querySelector('span').textContent = 'Sign in ↗';
+      submit.querySelector('span').textContent = registering ? 'Create account ↗' : 'Sign in ↗';
     }
   });
 

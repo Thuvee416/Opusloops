@@ -259,23 +259,15 @@ test('late creation response stays attached to its project after switching', asy
   assert.equal((await rows(page)).find(p=>p.id===first.id).kind,'stem-draft');
 });
 
-test('guest sign-in retains selected file and named project', async t => {
-  const page = await setup(t,{signedIn:false});
-  await createDraft(page,'Guest stems');
-  const draft = (await rows(page,'opusloops.mobile.projects.v1'))[0];
-  await startUpload(page);
-  await page.locator('#account-dialog[open]').waitFor();
-  await page.locator('#account-email').fill('test@example.com');
-  await page.locator('#account-password').fill('test-password');
-  await page.locator('#account-submit').click();
-  await page.waitForFunction(() => !document.querySelector('#account-dialog').open);
-  assert.match(await page.locator('#stem-file-name').innerText(),/Track pack.zip/);
-  await page.locator('#stem-upload-button').click();
-  await page.waitForFunction(() => window.__createFixture.finalized.length === 1);
-  const projects = await rows(page);
-  assert.equal(projects.length,1);
-  assert.equal(projects[0].id,draft.id);
-  assert.equal(projects[0].name,'Guest stems');
+test('guest cannot initialize the application or create local projects', async t => {
+  const context = await browser.newContext({ serviceWorkers: 'block' });
+  t.after(() => context.close());
+  await context.route('**/cloud-client.js?*', route => route.fulfill({contentType:'application/javascript',body:`(${fixture.toString()})(false)`}));
+  const page = await context.newPage();
+  await page.goto(`${baseURL}/studio.html`);
+  await page.waitForURL('**/account.html?access=required');
+  assert.equal(await page.locator('#create-project-button').count(), 0);
+  assert.equal(await page.evaluate(() => localStorage.getItem('opusloops.mobile.projects.v1')), null);
 });
 
 test('loop setup creates a single playable project with fresh mix defaults', async t => {

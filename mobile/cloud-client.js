@@ -396,9 +396,12 @@
     }
   }
 
-  async function restoreSession() {
+  async function restoreSession({ requireOnline = false } = {}) {
     if (!session) return null;
-    if (typeof navigator !== "undefined" && navigator.onLine === false) return session;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      if (requireOnline) throw new CloudError("Connect to the internet to verify your sign-in", 503, "offline");
+      return session;
+    }
     const expectedUserId = session.user.id;
     const expectedVersion = sessionVersion;
     try {
@@ -412,13 +415,17 @@
       }
       return session;
     } catch (error) {
-      if (error?.code === "session_changed") return session;
+      if (error?.code === "session_changed") {
+        if (requireOnline) throw error;
+        return session;
+      }
       if (isTerminalSessionError(error)
           && sessionVersion === expectedVersion
           && session?.user?.id === expectedUserId) {
         storeSession(null, expectedVersion);
         return null;
       }
+      if (requireOnline) throw error;
       return session;
     }
   }

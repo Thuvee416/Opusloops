@@ -55,6 +55,18 @@ function memoryStorage(initial = {}) {
   };
 }
 
+test('strict studio verification does not accept a cached session after network failure', async () => {
+  const { cloud: client } = loadClient({ aws: true, fetchImpl: async () => { throw new Error('Network unavailable'); } });
+  await assert.rejects(client.restoreSession({ requireOnline: true }), /Network unavailable/);
+  assert.ok(client.getSession(), 'A transient outage must not erase account data');
+});
+
+test('strict studio verification clears a rejected session', async () => {
+  const { cloud: client } = loadClient({ aws: true, fetchImpl: async () => jsonResponse({message:'Invalid token'}, 401) });
+  assert.equal(await client.restoreSession({ requireOnline: true }), null);
+  assert.equal(client.getSession(), null);
+});
+
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
 }

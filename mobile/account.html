@@ -27,6 +27,11 @@
           <input id="email" name="email" type="email" autocomplete="username" required maxlength="254" />
           <label for="password">Password</label>
           <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <div id="registration-fields" hidden>
+            <label for="invite">Early-access invitation</label>
+            <input id="invite" name="invite" type="text" autocomplete="off" disabled />
+            <p class="micro">Registration currently requires an invitation.</p>
+          </div>
           <button class="primary pixel-action" id="login-submit" type="submit"><canvas data-pixel-button aria-hidden="true"></canvas><span>Sign in <span aria-hidden="true">↗</span></span></button>
         </form>
         <div id="session-actions" hidden>
@@ -35,13 +40,13 @@
           <p class="micro">Saved projects stay in your account.</p>
         </div>
         <p class="error" id="account-error" role="alert" hidden></p>
-        <a class="guest-link" href="./studio.html">Continue without signing in</a>
+        <button class="secondary" id="registration-toggle" type="button" hidden>Create an account</button>
       </section>
     </main>
     <footer class="site-footer"><a href="./">Back to Opusloops</a><span>Your sound. Your space.</span></footer>
     <script src="./config.js?v=2" defer></script>
-    <script src="./cloud-client.js?v=11" defer></script>
-    <script src="./welcome.js?v=1" defer></script>
+    <script src="./cloud-client.js?v=12" defer></script>
+    <script src="./welcome.js?v=2" defer></script>
     <script src="./scanner.mjs?v=1" type="module"></script>
     <script src="./welcome-pixels.mjs?v=3" type="module"></script>
   </body>

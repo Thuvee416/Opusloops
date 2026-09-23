@@ -1,5 +1,6 @@
-(() => {
+(async () => {
   "use strict";
+  if (!await window.OpusloopsStudioAccess) return;
 
   const STORAGE_CURRENT = "opusloops.mobile.current.v1";
   const STORAGE_PROJECTS = "opusloops.mobile.projects.v1";
