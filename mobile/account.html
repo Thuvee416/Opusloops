@@ -6,17 +6,17 @@
     <meta name="theme-color" content="#000000" />
     <meta name="robots" content="noindex" />
     <link rel="icon" href="./icons/icon-192.png?v=3" />
-    <link rel="stylesheet" href="./welcome.css?v=1" />
+    <link rel="stylesheet" href="./welcome.css?v=2" />
     <title>Your account · Opusloops</title>
   </head>
   <body>
+    <div class="scanner-background" aria-hidden="true"><canvas data-scanner></canvas></div>
     <a class="skip" href="#main">Skip to content</a>
     <header class="site-nav">
       <a class="brand" href="./" aria-label="Opusloops home"><img src="./icons/icon-192.png?v=3" width="32" height="32" alt="" />Opusloops</a>
       <a class="quiet-link" href="./studio.html">Studio <span aria-hidden="true">↗</span></a>
     </header>
     <main id="main" class="account-page">
-      <div class="account-wave" aria-hidden="true"><canvas data-pixel-wave></canvas></div>
       <section class="account-content entrance" aria-labelledby="account-title">
         <p class="eyebrow">Your workspace</p>
         <h1 id="account-title">Sign in.</h1>
@@ -30,7 +30,7 @@
           <button class="primary pixel-action" id="login-submit" type="submit"><canvas data-pixel-button aria-hidden="true"></canvas><span>Sign in <span aria-hidden="true">↗</span></span></button>
         </form>
         <div id="session-actions" hidden>
-          <a class="primary" href="./studio.html">Open studio <span aria-hidden="true">↗</span></a>
+          <a class="primary pixel-action" href="./studio.html"><canvas data-pixel-button aria-hidden="true"></canvas><span>OPEN STUDIO <span aria-hidden="true">↗</span></span></a>
           <button class="secondary" id="logout-submit" type="button">Sign out on this device</button>
           <p class="micro">Saved projects stay in your account.</p>
         </div>
@@ -42,6 +42,7 @@
     <script src="./config.js?v=2" defer></script>
     <script src="./cloud-client.js?v=11" defer></script>
     <script src="./welcome.js?v=1" defer></script>
-    <script src="./welcome-pixels.mjs?v=2" type="module"></script>
+    <script src="./scanner.mjs?v=1" type="module"></script>
+    <script src="./welcome-pixels.mjs?v=3" type="module"></script>
   </body>
 </html>

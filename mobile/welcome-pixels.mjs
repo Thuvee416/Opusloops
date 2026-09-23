@@ -1,90 +1,66 @@
-// Reuse the dock's React Bits pixel shimmer; no WebGL contexts or dependencies.
+// Original React Bits PixelCard appear / random shimmer / disappear behavior.
 import { Pixel } from './pixel-dock.mjs?v=3';
-
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
-const colors = ['#ff718d', '#ffba61', '#bd6cff', '#45cbaa'];
-const entries = [...document.querySelectorAll('[data-pixel-wave], [data-pixel-button]')].map(canvas => ({
-  canvas, context: canvas.getContext('2d'), pixels: [], visible: true, width: 0, height: 0
+const colors = ['#fecdd3', '#fda4af', '#e11d48'];
+let frame = 0, last = 0;
+const entries = [...document.querySelectorAll('[data-pixel-button]')].map(canvas => ({
+  canvas, host: canvas.parentElement, context: canvas.getContext('2d'), pixels: [],
+  width: 1, height: 1, visible: true, hovered: false, focused: false, mode: 'idle'
 })).filter(entry => entry.context);
-let frame = 0;
-let last = 0;
-let elapsed = 0;
-
-function resize(entry) {
-  const { canvas, context } = entry;
-  const rect = canvas.getBoundingClientRect();
-  entry.width = Math.max(1, rect.width);
-  entry.height = Math.max(1, rect.height);
-  const dpr = Math.min(devicePixelRatio || 1, 1.5);
-  canvas.width = entry.width * dpr;
-  canvas.height = entry.height * dpr;
-  context.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const wave = canvas.hasAttribute('data-pixel-wave');
-  const gap = wave ? 7 : 6;
-  entry.pixels = [];
-  for (let x = 0; x < entry.width; x += gap) {
-    const position = x / entry.width;
-    const envelope = Math.pow(Math.sin(position * Math.PI), 1.6);
-    const amplitude = wave ? envelope : 1;
-    for (let y = 0; y < entry.height; y += gap) {
-      if (wave && Math.abs(y - entry.height / 2) > amplitude * entry.height * .44) continue;
-      const pixel = new Pixel(context, entry.width, entry.height, x, y, colors[Math.min(3, Math.floor(position * 4))], .035, 0);
-      pixel.size = pixel.maxSize;
-      pixel.isShimmer = true;
-      entry.pixels.push(pixel);
-    }
-  }
-  draw(entry, true);
-}
-
-function draw(entry, still = false) {
+function drawStatic(entry) {
   entry.context.clearRect(0, 0, entry.width, entry.height);
-  const wave = entry.canvas.hasAttribute('data-pixel-wave');
-  const time = still ? 0 : elapsed;
-  for (const pixel of entry.pixels) {
-    let edge = 1;
-    if (wave) {
-      const position = pixel.x / entry.width;
-      const envelope = Math.pow(Math.sin(position * Math.PI), 1.6);
-      const crest = .2 + .8 * Math.abs(Math.sin(position * 20 - time * 1.35));
-      const height = envelope * crest * entry.height * .44;
-      // Fade boundary pixels instead of snapping entire rows on and off.
-      edge = Math.max(0, Math.min(1, (height - Math.abs(pixel.y - entry.height / 2)) / 7));
-      if (!edge) continue;
-    }
-    entry.context.globalAlpha = edge;
-    if (still) { pixel.size = pixel.maxSize; pixel.draw(); }
-    else pixel.drawAnimated(time);
-  }
-  entry.context.globalAlpha = 1;
+  entry.pixels.forEach((pixel, i) => { pixel.size = i % 3 ? .5 : 1.4; pixel.draw(); });
 }
-
+function resize(entry) {
+  const rect = entry.host.getBoundingClientRect();
+  entry.width = Math.max(1, rect.width); entry.height = Math.max(1, rect.height);
+  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  entry.canvas.width = entry.width * dpr; entry.canvas.height = entry.height * dpr;
+  entry.context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  entry.pixels = [];
+  for (let x = 0; x < entry.width; x += 6) for (let y = 0; y < entry.height; y += 6) {
+    const delay = Math.hypot(x-entry.width/2, y-entry.height/2);
+    entry.pixels.push(new Pixel(entry.context, entry.width, entry.height, x, y, colors[Math.floor(Math.random()*colors.length)], .08, delay));
+  }
+  engage(entry);
+}
+function engage(entry) {
+  entry.mode = entry.hovered || entry.focused ? 'appear' : 'disappear';
+  if (motion.matches) drawStatic(entry);
+  sync();
+}
 function tick(now) {
   frame = 0;
-  if (document.hidden || motion.matches || !entries.some(entry => entry.visible)) return;
-  if (now - last >= 1000 / 30) {
-    elapsed += Math.min((now - last) / 1000, .05);
+  if (document.hidden || motion.matches) return;
+  if (now-last >= 1000/60) {
     last = now;
-    entries.filter(entry => entry.visible).forEach(entry => draw(entry));
+    entries.filter(entry => entry.visible && entry.mode !== 'idle').forEach(entry => {
+      entry.context.clearRect(0, 0, entry.width, entry.height);
+      entry.pixels.forEach(pixel => pixel[entry.mode]());
+      if (entry.mode === 'disappear' && entry.pixels.every(pixel => pixel.isIdle)) entry.mode = 'idle';
+    });
   }
-  frame = requestAnimationFrame(tick);
+  if (entries.some(entry => entry.visible && entry.mode !== 'idle')) frame = requestAnimationFrame(tick);
 }
 function sync() {
-  cancelAnimationFrame(frame);
-  frame = 0;
-  if (motion.matches) entries.forEach(entry => draw(entry, true));
-  else if (!document.hidden && entries.some(entry => entry.visible)) { last = performance.now(); frame = requestAnimationFrame(tick); }
+  cancelAnimationFrame(frame); frame = 0;
+  if (motion.matches) entries.forEach(drawStatic);
+  else if (!document.hidden && entries.some(entry => entry.visible && entry.mode !== 'idle')) frame = requestAnimationFrame(tick);
 }
-const sizes = new ResizeObserver(records => {
-  records.forEach(record => { const entry = entries.find(item => item.canvas === record.target); if (entry) resize(entry); });
-});
+const sizes = new ResizeObserver(records => records.forEach(record => {
+  const entry = entries.find(item => item.host === record.target); if (entry) resize(entry);
+}));
 const visibility = new IntersectionObserver(records => {
-  records.forEach(record => { const entry = entries.find(item => item.canvas === record.target); if (entry) entry.visible = record.isIntersecting; });
-  sync();
+  records.forEach(record => { const entry = entries.find(item => item.host === record.target); if (entry) entry.visible = record.isIntersecting; }); sync();
 });
-entries.forEach(entry => { resize(entry); sizes.observe(entry.canvas); visibility.observe(entry.canvas); });
+entries.forEach(entry => {
+  for (const event of ['pointerenter', 'pointerdown']) entry.host.addEventListener(event, () => { entry.hovered = true; engage(entry); }, { passive: true });
+  for (const event of ['pointerleave', 'pointercancel']) entry.host.addEventListener(event, () => { entry.hovered = false; engage(entry); }, { passive: true });
+  entry.host.addEventListener('focus', () => { entry.focused = true; engage(entry); });
+  entry.host.addEventListener('blur', () => { entry.focused = false; entry.hovered = false; engage(entry); });
+  resize(entry); sizes.observe(entry.host); visibility.observe(entry.host);
+});
 document.addEventListener('visibilitychange', sync);
-motion.addEventListener('change', sync);
+motion.addEventListener('change', () => entries.forEach(engage));
 window.addEventListener('pagehide', () => { cancelAnimationFrame(frame); frame = 0; });
 window.addEventListener('pageshow', sync);
-sync();

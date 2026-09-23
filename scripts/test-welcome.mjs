@@ -36,9 +36,9 @@ test('landing fits small/mobile/desktop screens and opens the existing studio', 
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(base);
-    await page.locator('[data-pixel-wave]').waitFor();
+    await page.locator('[data-scanner]').waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-    assert.equal(await page.getByRole('link', { name: 'Open studio' }).getAttribute('href'), './studio.html');
+    assert.equal(await page.getByRole('link', { name: 'OPEN STUDIO' }).getAttribute('href'), './studio.html');
     assert.equal(await page.getByRole('link', { name: 'Sign in' }).getAttribute('href'), './account.html');
     await page.screenshot({ path: `/tmp/opusloops-landing-${width}.png`, fullPage: true, animations: 'disabled' });
     assert.deepEqual(errors, []);
@@ -46,10 +46,11 @@ test('landing fits small/mobile/desktop screens and opens the existing studio', 
   }
 });
 
-test('pixels animate normally but freeze for reduced motion', async () => {
+test('Scanner animates normally but freezes for reduced motion', async () => {
   const { context, page } = await pageFor();
   await page.goto(base);
-  const pixels = () => page.locator('[data-pixel-wave]').evaluate(canvas => canvas.toDataURL());
+  await page.waitForFunction(() => document.querySelector('[data-scanner]').dataset.scannerState === 'ready');
+  const pixels = async () => (await page.locator('[data-scanner]').screenshot()).toString('base64');
   const initial = await pixels();
   await page.waitForTimeout(150);
   assert.notEqual(await pixels(), initial);
@@ -58,6 +59,44 @@ test('pixels animate normally but freeze for reduced motion', async () => {
   const still = await pixels();
   await page.waitForTimeout(150);
   assert.equal(await pixels(), still);
+  await context.close();
+});
+
+test('Scanner fallback keeps the page usable without WebGL', async () => {
+  const { context, page } = await pageFor();
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function(type, ...args) {
+      return type === 'webgl2' ? null : original.call(this, type, ...args);
+    };
+  });
+  await page.goto(base);
+  await page.waitForFunction(() => document.querySelector('[data-scanner]').dataset.scannerState === 'fallback');
+  assert.equal(await page.locator('[data-pixel-wave]').count(), 0);
+  await page.getByRole('link', { name: 'OPEN STUDIO' }).click();
+  await page.waitForURL('**/studio.html');
+  await context.close();
+});
+
+test('Open Studio restores PixelCard reveal, exit, and keyboard shimmer', async () => {
+  const { context, page } = await pageFor();
+  await page.goto(base);
+  const button = page.getByRole('link', { name: 'OPEN STUDIO' });
+  const painted = () => page.locator('[data-pixel-button]').evaluate(canvas => {
+    const bytes = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    return bytes.some((value, index) => index % 4 === 3 && value > 0);
+  });
+  await page.waitForTimeout(150);
+  assert.equal(await painted(), false);
+  await button.hover();
+  await page.waitForTimeout(450);
+  assert.equal(await painted(), true);
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(650);
+  assert.equal(await painted(), false);
+  await button.focus();
+  await page.waitForTimeout(450);
+  assert.equal(await painted(), true);
   await context.close();
 });
 
@@ -78,25 +117,26 @@ test('sign-in errors are visible and a successful retry enters the studio', asyn
   await context.close();
 });
 
-test('all pixel surfaces animate without hover and stop for reduced motion', async () => {
+test('Scanner animates, original PixelCard responds to hover, and reduced motion freezes both', async () => {
   for (const [path, selectors] of [
-    ['/', ['[data-pixel-wave]', '[data-pixel-button]']],
-    ['/account.html', ['[data-pixel-wave]', '[data-pixel-button]']],
+    ['/', ['[data-scanner]', '[data-pixel-button]']],
+    ['/account.html', ['[data-scanner]', '#login-submit [data-pixel-button]']],
     ['/studio.html', ['.nav-item.is-active .pixel-canvas']]
   ]) {
     const { context, page } = await pageFor();
     await page.goto(`${base}${path}`);
     await page.waitForTimeout(650);
     for (const selector of selectors) {
-      const pixels = () => page.locator(selector).evaluate(canvas => canvas.toDataURL());
+      if (selector.includes('pixel-button')) await page.locator(selector).locator('..').hover();
+      const pixels = async () => selector.includes('scanner') ? (await page.locator(selector).screenshot()).toString('base64') : page.locator(selector).evaluate(canvas => canvas.toDataURL());
       const initial = await pixels();
       await page.waitForTimeout(350);
-      assert.notEqual(await pixels(), initial, `${path} ${selector} should animate without hover`);
+      assert.notEqual(await pixels(), initial, `${path} ${selector} should animate when engaged`);
     }
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.waitForTimeout(100);
     for (const selector of selectors) {
-      const pixels = () => page.locator(selector).evaluate(canvas => canvas.toDataURL());
+      const pixels = async () => selector.includes('scanner') ? (await page.locator(selector).screenshot()).toString('base64') : page.locator(selector).evaluate(canvas => canvas.toDataURL());
       const still = await pixels();
       await page.waitForTimeout(150);
       assert.equal(await pixels(), still, `${path} ${selector} should respect reduced motion`);

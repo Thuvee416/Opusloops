@@ -8,10 +8,11 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <link rel="manifest" href="./manifest.webmanifest?v=6" />
-    <link rel="stylesheet" href="./welcome.css?v=1" />
+    <link rel="stylesheet" href="./welcome.css?v=2" />
     <title>Opusloops · Your next sound</title>
   </head>
   <body>
+    <div class="scanner-background" aria-hidden="true"><canvas data-scanner></canvas></div>
     <a class="skip" href="#main">Skip to content</a>
     <header class="site-nav">
       <a class="brand" href="./" aria-label="Opusloops home"><img src="./icons/icon-192.png?v=3" width="32" height="32" alt="" />Opusloops</a>
@@ -20,10 +21,9 @@
     <main id="main" class="landing">
       <p class="eyebrow entrance">A new age of music</p>
       <h1 class="entrance">Your stems.<br /><em>Your next sound.</em></h1>
-      <p class="subtitle entrance">Complex tools. Simple flow.</p>
-      <div class="hero-wave" aria-hidden="true"><canvas data-pixel-wave></canvas></div>
+      <p class="subtitle entrance">The AI DAW for music’s next wave.</p>
       <div class="hero-actions entrance">
-        <a class="primary pixel-action" href="./studio.html"><canvas data-pixel-button aria-hidden="true"></canvas><span>Open studio <span aria-hidden="true">↗</span></span></a>
+        <a class="primary pixel-action" href="./studio.html"><canvas data-pixel-button aria-hidden="true"></canvas><span>OPEN STUDIO <span aria-hidden="true">↗</span></span></a>
         <p class="micro">Upload. Arrange. Mix.</p>
       </div>
     </main>
@@ -31,6 +31,7 @@
     <script src="./config.js?v=2" defer></script>
     <script src="./cloud-client.js?v=11" defer></script>
     <script src="./welcome.js?v=1" defer></script>
-    <script src="./welcome-pixels.mjs?v=2" type="module"></script>
+    <script src="./scanner.mjs?v=1" type="module"></script>
+    <script src="./welcome-pixels.mjs?v=3" type="module"></script>
   </body>
 </html>
