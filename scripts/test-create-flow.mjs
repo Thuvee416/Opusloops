@@ -87,7 +87,7 @@ async function setup(t, { signedIn = true, width = 390 } = {}) {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   t.after(() => assert.deepEqual(errors, [], 'No browser runtime errors'));
-  await page.goto(baseURL);
+  await page.goto(`${baseURL}/studio.html`);
   await page.locator('#create-project-button').waitFor();
   await page.waitForFunction(() => Boolean(window.__createFixture));
   return page;

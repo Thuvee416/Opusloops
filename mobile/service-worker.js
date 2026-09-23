@@ -1,9 +1,14 @@
 const CACHE_PREFIX = "opusloops-pwa-";
 const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
-const CACHE_NAME = `${CACHE_PREFIX}v56`;
+const CACHE_NAME = `${CACHE_PREFIX}v57`;
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./studio.html",
+  "./account.html",
+  "./welcome.css?v=1",
+  "./welcome.js?v=1",
+  "./welcome-pixels.mjs?v=1",
   "./frame-guard.js?v=1",
   "./styles.css?v=42",
   "./pixel-dock.css?v=1",
@@ -14,11 +19,11 @@ const APP_SHELL = [
   "./stem-import-core.js?v=9",
   "./stem-player.js?v=5",
   "./stem-import.js?v=10",
-  "./app.js?v=36",
-  "./pixel-dock.mjs?v=1",
+  "./app.js?v=37",
+  "./pixel-dock.mjs?v=2",
   "./grainient-mixer.mjs?v=2",
   "./soft-aurora-player.mjs?v=1",
-  "./manifest.webmanifest?v=5",
+  "./manifest.webmanifest?v=6",
   "./icons/icon-192.png?v=3",
   "./icons/icon-512.png?v=3",
   "./icons/apple-touch-icon.png?v=3"
@@ -69,7 +74,10 @@ self.addEventListener("fetch", (event) => {
       } catch {
         const cached = await caches.match(event.request);
         if (cached) return cached;
-        if (event.request.mode === "navigate") return caches.match("./index.html");
+        if (event.request.mode === "navigate") {
+          const page = requestUrl.pathname.split('/').pop();
+          return caches.match(page === 'studio.html' ? './studio.html' : page === 'account.html' ? './account.html' : './index.html');
+        }
         return Response.error();
       }
     })()

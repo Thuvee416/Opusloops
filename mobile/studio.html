@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en" class="frame-check-pending">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; media-src 'self' blob: https://opusloops-uploads-368310207026-us-east-1.s3.us-east-1.amazonaws.com https://opusloops-sources-368310207026-us-east-1.s3.us-east-1.amazonaws.com https://opusloops-artifacts-368310207026-us-east-1.s3.us-east-1.amazonaws.com; connect-src 'self' https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com https://opusloops-uploads-368310207026-us-east-1.s3.us-east-1.amazonaws.com https://opusloops-sources-368310207026-us-east-1.s3.us-east-1.amazonaws.com https://opusloops-artifacts-368310207026-us-east-1.s3.us-east-1.amazonaws.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta
+      name="description"
+      content="Opusloops is a touch-first loop sketchbook with offline audio and private cloud saves."
+    />
+    <link rel="manifest" href="./manifest.webmanifest?v=6" />
+    <link rel="icon" href="./icons/icon-192.png?v=3" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
+    <script src="./frame-guard.js?v=1"></script>
+    <link rel="stylesheet" href="./styles.css?v=42" />
+    <link rel="stylesheet" href="./pixel-dock.css?v=1" />
+    <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
+    <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
+    <title>Studio · Opusloops</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <div class="app-shell">
+      <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
+      <main id="main-content">
+        <section class="view is-active" id="view-create" data-view="create" aria-labelledby="create-title" tabindex="-1">
+          <div class="create-heading">
+            <h1 id="create-title">Create</h1>
+            <button class="text-button" type="button" data-view-target="projects">Projects</button>
+          </div>
+          <div class="create-actions">
+            <button class="create-action" id="create-project-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+              <strong>New project</strong>
+              <small>Stems or loop</small>
+            </button>
+            <button class="create-action" id="open-stem-import" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 16v4h14v-4" /></svg>
+              <strong>Upload stems</strong>
+              <small>ZIP archive</small>
+            </button>
+          </div>
+          <section class="create-recent" id="create-recent" aria-labelledby="recent-title" hidden>
+            <div class="section-heading">
+              <h2 id="recent-title">Continue</h2>
+            </div>
+            <div id="create-recent-list"></div>
+          </section>
+        </section>
+
+        <section class="view import-view" id="view-import" data-view="import" aria-labelledby="import-title" tabindex="-1">
+          <div class="page-heading import-heading">
+            <button class="back-button" type="button" data-view-target="create" aria-label="Back to Create">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
+            </button>
+            <div>
+              <h1 id="import-title">Upload stems</h1>
+              <p class="import-project-name" id="import-project-name" hidden></p>
+            </div>
+          </div>
+
+          <section class="import-panel" id="stem-upload-panel" aria-labelledby="stem-upload-title">
+            <div class="import-panel-heading">
+              <span class="stage-number">01</span>
+              <div>
+                <h2 id="stem-upload-title">Stem files</h2>
+                <p>ZIP archive · private upload</p>
+              </div>
+            </div>
+            <label class="file-picker" for="stem-zip-input">
+              <input id="stem-zip-input" type="file" accept=".zip,application/zip,application/x-zip-compressed" />
+              <span class="file-picker-action">Choose ZIP</span>
+              <span id="stem-file-name">No file selected</span>
+            </label>
+            <p class="fine-print" id="stem-upload-note">Original files stay unchanged.</p>
+            <p class="form-error" id="stem-upload-error" role="alert" hidden></p>
+            <button class="primary-action" id="stem-upload-button" type="button">Upload and inspect</button>
+          </section>
+
+          <section class="import-panel process-panel" id="stem-process-panel" aria-labelledby="stem-process-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number" aria-hidden="true">↗</span>
+              <div>
+                <p class="eyebrow">Live process</p>
+                <h2 id="stem-process-title">Preparing import</h2>
+              </div>
+              <span class="process-state" id="stem-process-state">Starting</span>
+            </div>
+            <div
+              class="process-progress"
+              id="stem-process-progress"
+              role="progressbar"
+              aria-label="Stem processing progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              hidden
+            >
+              <div class="process-progress-track" aria-hidden="true"><span id="stem-process-progress-fill"></span></div>
+              <div class="process-progress-copy">
+                <span id="stem-process-progress-label">0 B of 0 B</span>
+                <span id="stem-process-progress-percent">0%</span>
+              </div>
+            </div>
+            <p class="indeterminate-copy" id="stem-indeterminate-copy" role="status" hidden>Working — this stage does not expose a measurable percentage.</p>
+            <ol class="process-events" id="stem-process-events" aria-label="Processing activity" aria-live="polite"></ol>
+            <p class="form-error" id="stem-process-error" role="alert" hidden></p>
+            <button class="primary-action" id="stem-retry-inspection" type="button" hidden>Retry inspection</button>
+            <button class="primary-action" id="stem-retry-proposal" type="button" hidden>Retry timing proposal</button>
+            <button class="primary-action" id="stem-repair-render" type="button" hidden>Repair timing map</button>
+            <button class="primary-action" id="stem-retry-render" type="button" hidden>Retry render</button>
+            <button class="text-button cancel-import" id="stem-cancel-button" type="button">Cancel import</button>
+          </section>
+
+          <section class="import-panel" id="stem-gate-a-panel" aria-labelledby="stem-gate-a-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number">02</span>
+              <div>
+                <p class="eyebrow">Your confirmation</p>
+                <h2 id="stem-gate-a-title">Review what will be analyzed</h2>
+                <p>Roles affect the diagnostic only. Every selected stem follows the same shared timing map.</p>
+              </div>
+            </div>
+            <div class="stem-review-list" id="stem-review-list"></div>
+            <label class="field-label" for="stem-reference-method">Analysis reference</label>
+            <select id="stem-reference-method">
+              <option value="selected-stem-sum">All included stems · −12 dB headroom · normalize sum to −3 dBFS</option>
+              <option value="full-mix">Use the included full-mix track</option>
+            </select>
+            <fieldset class="confirmation-list">
+              <legend>Confirm all four before analysis</legend>
+              <label><input id="confirm-stem-files" type="checkbox" /> I reviewed every file and SHA-256 fingerprint.</label>
+              <label><input id="confirm-stem-roles" type="checkbox" /> I reviewed roles, inclusion, and gain.</label>
+              <label><input id="confirm-stem-reference" type="checkbox" /> I approve this shared-reference method.</label>
+              <label><input id="confirm-stem-originals" type="checkbox" /> Keep every original stem unchanged.</label>
+            </fieldset>
+            <button class="primary-action" id="approve-stem-analysis" type="button">Approve and analyze</button>
+          </section>
+
+          <section class="import-panel" id="stem-proposal-panel" aria-labelledby="stem-proposal-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number">03</span>
+              <div>
+                <p class="eyebrow">Timing suggestion</p>
+                <h2 id="stem-proposal-title">Choose where the song should land.</h2>
+                <p>Opusloops finds the pulse and resolves clear timing inconsistencies before asking you to listen.</p>
+              </div>
+            </div>
+            <div class="timing-suggestion" id="stem-timing-suggestion" data-state="loading" aria-live="polite" aria-atomic="true">
+              <span class="timing-suggestion-label"><i aria-hidden="true"></i> AI timing pass</span>
+              <strong id="stem-timing-suggestion-title">Finding the musical pulse…</strong>
+              <p id="stem-timing-suggestion-copy">The analyzed timing grid is loading.</p>
+            </div>
+            <div class="analysis-issue" id="stem-grid-issue" role="status" aria-live="polite" aria-atomic="true" hidden>
+              <strong>Quick timing check needed</strong>
+              <p id="stem-grid-issue-copy"></p>
+            </div>
+            <div class="proposal-controls is-single">
+              <label>
+                <span>Target BPM</span>
+                <input id="stem-target-bpm" type="number" inputmode="decimal" min="20" max="400" step="0.1" value="120" />
+              </label>
+            </div>
+            <button class="primary-action" id="request-stem-proposal" type="button" aria-describedby="stem-grid-issue-copy">Prepare timing check</button>
+            <details class="grid-editor" id="stem-grid-editor">
+              <summary>Advanced timing controls</summary>
+              <p>The automatic pass is designed for normal use. Open these controls only when the timing check needs a precise correction.</p>
+              <div class="grid-settings">
+                <label>
+                  <span>Beats per bar</span>
+                  <input id="stem-meter-numerator" type="number" inputmode="numeric" min="1" max="32" step="1" value="4" aria-describedby="stem-grid-issue-copy" />
+                </label>
+                <label>
+                  <span>Beat unit</span>
+                  <select id="stem-meter-denominator">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="4" selected>4</option>
+                    <option value="8">8</option>
+                    <option value="16">16</option>
+                    <option value="32">32</option>
+                  </select>
+                </label>
+                <label>
+                  <span>First downbeat · seconds</span>
+                  <input id="stem-first-downbeat" type="number" inputmode="decimal" min="0" step="0.001" value="0" aria-describedby="stem-grid-issue-copy" />
+                </label>
+              </div>
+              <label class="advanced-mode-control">
+                <span>Timing feel</span>
+                <select id="stem-conform-mode">
+                  <option value="musical-4bar">Natural · follow the phrasing</option>
+                  <option value="rigid-beat">Tight · lock every beat</option>
+                  <option value="no-conform">Keep original timing</option>
+                </select>
+              </label>
+              <div class="grid-event-list" id="stem-grid-event-list"></div>
+              <button class="secondary-action add-grid-event" id="stem-add-grid-event" type="button">Add timing event</button>
+              <button class="quiet-action reset-grid" id="stem-reset-grid" type="button" hidden>Restore original AI detection</button>
+            </details>
+          </section>
+
+          <section class="import-panel" id="stem-gate-b-panel" aria-labelledby="stem-gate-b-title" hidden>
+            <div class="import-panel-heading">
+              <span class="stage-number">04</span>
+              <div>
+                <p class="eyebrow">Listen, inspect, approve</p>
+                <h2 id="stem-gate-b-title">Confirm the shared timing map</h2>
+                <p>Region BPM and stretch values are derived from the approved grid. To change them, revise beats before building a new proposal.</p>
+              </div>
+            </div>
+            <button class="click-audition" id="stem-click-audition" type="button" aria-pressed="false">
+              <span class="click-audition-icon" aria-hidden="true">▶</span>
+              <span><strong>Play click audition</strong><small id="stem-click-audition-copy">Compare the click against the reference</small></span>
+            </button>
+            <audio id="stem-click-audio" preload="metadata"></audio>
+            <div class="region-list" id="stem-region-list"></div>
+            <fieldset class="confirmation-list gate-b-confirmations">
+              <legend>Confirm each item before rendering</legend>
+              <label><input id="confirm-tempo-click" type="checkbox" /> I listened to the click audition.</label>
+              <label><input id="confirm-tempo-grid" type="checkbox" /> Beat grid is correct.</label>
+              <label><input id="confirm-tempo-meter" type="checkbox" /> Meter and first downbeat are correct.</label>
+              <label><input id="confirm-tempo-octave" type="checkbox" /> Tempo octave is correct.</label>
+              <label><input id="confirm-tempo-flags" type="checkbox" /> I reviewed every flagged region.</label>
+              <label><input id="confirm-tempo-target" type="checkbox" /> Target BPM and mode are correct.</label>
+              <label><input id="confirm-tempo-map" type="checkbox" /> Use this one shared map for every stem.</label>
+              <label><input id="confirm-tempo-originals" type="checkbox" /> Keep every original stem unchanged.</label>
+            </fieldset>
+            <button class="primary-action" id="approve-stem-tempo" type="button">Approve and render stems</button>
+          </section>
+
+          <section class="import-panel ready-panel" id="stem-ready-panel" aria-labelledby="stem-ready-title" hidden>
+            <span class="ready-mark" aria-hidden="true">✓</span>
+            <p class="eyebrow">Import complete</p>
+            <h2 id="stem-ready-title">Your stems are ready.</h2>
+            <p>Open Studio to arrange aligned preview segments, or Mix to balance every track.</p>
+            <button class="primary-action" id="open-ready-stems" type="button">Open Studio</button>
+          </section>
+        </section>
+
+        <section class="view" id="view-studio" data-view="studio" aria-labelledby="studio-title" tabindex="-1">
+          <div class="studio-heading">
+            <div>
+              <p class="eyebrow">Now playing</p>
+              <h1 id="studio-title" contenteditable="true" spellcheck="false">Untitled loop</h1>
+            </div>
+            <button class="icon-button" id="save-project-button" type="button" aria-label="Save project">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5V4Zm3 0v6h8V4M8 20v-7h8v7" /></svg>
+            </button>
+          </div>
+
+          <div class="transport-card">
+            <button class="play-button" id="play-button" type="button" aria-label="Play loop" aria-pressed="false">
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
+              <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" /></svg>
+            </button>
+            <div class="transport-detail">
+              <span class="transport-label">Tempo</span>
+              <div class="tempo-control" id="tempo-adjustments">
+                <button type="button" id="tempo-down" aria-label="Decrease tempo">−</button>
+                <output id="tempo-output" aria-live="polite">96 BPM</output>
+                <button type="button" id="tempo-up" aria-label="Increase tempo">+</button>
+              </div>
+            </div>
+            <div class="transport-detail key-detail" id="key-detail">
+              <span class="transport-label">Key</span>
+              <button class="key-button" id="key-button" type="button">C minor</button>
+            </div>
+          </div>
+
+          <div class="project-empty" id="studio-empty" hidden>
+            <p>No stems yet.</p>
+            <button class="secondary-action" type="button" data-upload-current>Upload stems</button>
+          </div>
+
+          <div id="generated-studio">
+            <div class="step-legend" aria-hidden="true">
+              <span>Tap steps to shape the loop</span>
+              <span>16 steps</span>
+            </div>
+            <div class="sequencer" id="sequencer" role="group" aria-label="Loop sequencer"></div>
+
+            <button class="refine-card" type="button" id="refine-button">
+            <span class="refine-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1" /></svg>
+            </span>
+            <span>
+              <strong>Refine this loop</strong>
+              <small>Make it sparser, warmer, busier, or entirely new</small>
+            </span>
+            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+            </button>
+
+            <button class="secondary-action export-action" id="export-audio-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" /></svg>
+            <span>Export four-bar WAV</span>
+            </button>
+            <div class="audio-export-ready" id="audio-export-ready" hidden>
+            <div>
+              <strong>WAV ready</strong>
+              <span id="audio-export-ready-copy"></span>
+            </div>
+            <div class="audio-export-actions">
+              <button class="secondary-action" id="share-audio-button" type="button" hidden>Share WAV</button>
+              <a class="secondary-action" id="download-audio-link">Save WAV</a>
+            </div>
+            </div>
+          </div>
+
+          <section class="stem-studio" id="stem-studio" hidden aria-labelledby="stem-arrangement-title">
+            <div class="step-legend">
+              <span id="stem-arrangement-title">Arrangement</span>
+              <span id="stem-arrangement-duration">0:00</span>
+            </div>
+            <div class="studio-window-controls" aria-label="Arrangement edit scope">
+              <div class="studio-window-actions">
+                <div class="studio-window-size" role="group" aria-label="Edit four or eight bars at once">
+                  <button type="button" data-studio-window-bars="4" aria-pressed="false">4 bars</button>
+                  <button type="button" data-studio-window-bars="8" aria-pressed="true">8 bars</button>
+                </div>
+                <button class="studio-window-loop" id="stem-window-loop" type="button" aria-pressed="false">Loop</button>
+              </div>
+              <div class="studio-window-navigation">
+                <button id="stem-window-previous" type="button" aria-label="Previous bars">‹</button>
+                <output id="stem-window-label" aria-live="polite">Bars 1–8</output>
+                <button id="stem-window-next" type="button" aria-label="Next bars">›</button>
+              </div>
+            </div>
+            <div class="stem-arrangement" id="stem-arrangement"></div>
+            <button class="secondary-action" id="review-stem-analysis" type="button">Review import details</button>
+          </section>
+        </section>
+
+        <section class="view" id="view-mix" data-view="mix" aria-labelledby="mix-title" tabindex="-1">
+          <div class="page-heading">
+            <p class="eyebrow" id="mix-eyebrow">Keep it simple</p>
+            <h1 id="mix-title">Mix by feel.</h1>
+            <p class="lede" id="mix-lede">Drag up or down on any tile. The number and motion follow your finger live.</p>
+          </div>
+          <div class="mixer-surface" data-grainient-mixer data-grainient-state="loading">
+            <canvas class="mixer-grainient-canvas" aria-hidden="true"></canvas>
+            <div class="mixer" id="mixer"></div>
+          </div>
+          <button class="secondary-action" id="reset-mix" type="button">Reset mix</button>
+        </section>
+
+        <section class="view" id="view-projects" data-view="projects" aria-labelledby="projects-title" tabindex="-1">
+          <div class="page-heading">
+            <p class="eyebrow" id="projects-eyebrow">Library, account & settings</p>
+            <h1 id="projects-title">Your workspace</h1>
+          </div>
+          <p class="lede" id="projects-lede">Manage your projects, private sync and device preferences in one place.</p>
+
+          <section class="workspace-section" aria-labelledby="library-title">
+            <div class="projects-heading">
+              <div>
+                <p class="eyebrow">Library</p>
+                <h2 id="library-title">Projects</h2>
+              </div>
+              <button class="primary-small" id="new-project-button" type="button">New</button>
+            </div>
+            <p class="workspace-status" id="library-status">Saved on this device</p>
+            <div class="projects-list" id="projects-list"></div>
+          </section>
+
+          <p class="workspace-kicker">Profile</p>
+          <aside class="account-card" id="account-card">
+            <span class="account-card-mark" id="account-card-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
+              <b id="account-card-initial" hidden>O</b>
+            </span>
+            <div>
+              <p class="eyebrow" id="account-card-eyebrow">Your account</p>
+              <h2 id="account-card-title">Make this studio yours.</h2>
+              <p id="account-card-copy">Sign in to keep a private profile and bring projects to your other devices.</p>
+            </div>
+            <button class="secondary-action" id="account-card-button" type="button">Sign in</button>
+          </aside>
+
+          <div id="sync-workspace" hidden>
+            <p class="workspace-kicker">Cloud & data</p>
+            <aside class="sync-card" id="sync-card">
+              <div>
+                <p class="eyebrow" id="sync-card-eyebrow">Private cloud</p>
+                <h2 id="sync-card-title">Your projects travel with you.</h2>
+                <p id="sync-card-copy">Device saves sync whenever you are online.</p>
+              </div>
+              <button class="secondary-action" id="sync-card-button" type="button">Sync now</button>
+            </aside>
+          </div>
+
+          <section class="settings-card" aria-labelledby="settings-title">
+            <div>
+              <p class="eyebrow">Device preferences</p>
+              <h2 id="settings-title">Studio settings</h2>
+            </div>
+            <div class="setting-row">
+              <div>
+                <strong>Default edit window</strong>
+                <span>Open stem projects in focused 4 or 8 bar sections.</span>
+              </div>
+              <div class="setting-segment" role="group" aria-label="Default Studio edit window">
+                <button type="button" data-preference-window-bars="4" aria-pressed="false">4</button>
+                <button type="button" data-preference-window-bars="8" aria-pressed="true">8</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <strong>Loop while editing</strong>
+                <span>Start each stem project with its visible bars looped.</span>
+              </div>
+              <button
+                class="setting-switch"
+                id="preference-loop"
+                type="button"
+                role="switch"
+                aria-label="Enable looping visible bars by default"
+                aria-checked="false"
+              >
+                <span aria-hidden="true"></span>
+              </button>
+            </div>
+          </section>
+
+          <p class="workspace-kicker">Device & app</p>
+          <aside class="offline-card" id="install-card">
+            <div>
+              <p class="eyebrow">Install Opusloops</p>
+              <h2>Keep it within reach.</h2>
+              <p>Add Opusloops to your home screen for a full-screen, offline studio.</p>
+            </div>
+            <button class="secondary-action" id="install-button" type="button">Add to home screen</button>
+          </aside>
+
+          <details class="about-details">
+            <summary>About Opusloops</summary>
+            <p><a href="./index.html">Opusloops home ↗</a></p>
+            <p>
+              Opusloops is a focused Web Audio sketchbook with optional private account sync.
+              Desktop plugin hosting, scripting, remote-control servers, and local model downloads are intentionally excluded.
+            </p>
+            <p class="fine-print">Independent open-source software, built for local sketches in your browser.</p>
+          </details>
+        </section>
+      </main>
+
+      <section
+        class="persistent-player"
+        id="persistent-player"
+        aria-label="Project player"
+        data-playback-state="idle"
+        data-soft-aurora-player
+        data-soft-aurora-state="loading"
+        hidden
+      >
+        <canvas class="persistent-player-aurora-canvas" aria-hidden="true"></canvas>
+        <button
+          class="persistent-play-button"
+          id="persistent-play-button"
+          type="button"
+          aria-label="Play project"
+          aria-pressed="false"
+        >
+          <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
+          <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" /></svg>
+        </button>
+        <div class="persistent-player-detail">
+          <div class="persistent-player-heading">
+            <strong id="persistent-player-title">Untitled loop</strong>
+            <span class="persistent-player-time" aria-hidden="true">
+              <span id="persistent-current-time">0:00.0</span>
+              <span class="persistent-time-divider">/</span>
+              <span id="persistent-duration">0:02.5</span>
+            </span>
+          </div>
+          <label class="sr-only" id="persistent-seek-label" for="persistent-seek">Seek within project</label>
+          <input
+            class="persistent-seek"
+            id="persistent-seek"
+            type="range"
+            min="0"
+            max="1000"
+            step="1"
+            value="0"
+            aria-valuetext="0:00.0 of 0:02.5, step 1 of 16"
+          />
+        </div>
+      </section>
+
+      <nav class="bottom-nav" aria-label="Primary" data-pixel-dock data-pixel-dock-state="fallback">
+        <button class="nav-item is-active" type="button" data-view-target="create" data-pixel-card="create" aria-current="page">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4v-8.5Z" /></svg>
+          <span>Create</span>
+        </button>
+        <button class="nav-item" type="button" data-view-target="studio" data-pixel-card="studio">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14M12 8v8m7-13v18M3 9h4m3 3h4m3-4h4" /></svg>
+          <span>Studio</span>
+        </button>
+        <button class="nav-item" type="button" data-view-target="mix" data-pixel-card="mix">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16m6-16v16m6-16v16M3 9h6m0 6h6m0-7h6" /></svg>
+          <span>Mix</span>
+        </button>
+        <button class="nav-item" type="button" data-view-target="projects" data-pixel-card="projects">
+          <canvas class="pixel-canvas" aria-hidden="true"></canvas>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h5v5H5V5Zm9 0h5v5h-5V5ZM5 14h5v5H5v-5Zm9 0h5v5h-5v-5Z" /></svg>
+          <span>Workspace</span>
+        </button>
+      </nav>
+    </div>
+
+    <dialog class="account-dialog create-dialog" id="create-dialog" aria-labelledby="new-project-title">
+      <div class="dialog-handle" aria-hidden="true"></div>
+      <div class="dialog-heading">
+        <h2 id="new-project-title">New project</h2>
+        <button class="icon-button" id="create-close-button" type="button" aria-label="Close new project">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+      <form id="composer-form">
+        <label for="new-project-name">Project name</label>
+        <input id="new-project-name" name="project-name" maxlength="48" placeholder="Untitled project" autocomplete="off" />
+        <label for="new-project-kind">Start with</label>
+        <select id="new-project-kind" name="project-kind">
+          <option value="stems">Stems</option>
+          <option value="loop">Loop sketch</option>
+        </select>
+        <div id="new-project-idea" hidden>
+          <label for="idea-input">Loop idea</label>
+          <textarea id="idea-input" name="idea" rows="2" maxlength="180" placeholder="A warm house groove" disabled></textarea>
+        </div>
+        <p class="form-error" id="create-error" role="alert" hidden></p>
+        <button class="primary-action" type="submit">Create project</button>
+      </form>
+    </dialog>
+
+    <dialog class="refine-dialog" id="refine-dialog" aria-labelledby="refine-title">
+      <form method="dialog" id="refine-form">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Shape the idea</p>
+            <h2 id="refine-title">How should it change?</h2>
+          </div>
+          <button class="icon-button" id="refine-close-button" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+        <label class="sr-only" for="refine-input">Describe the change</label>
+        <textarea id="refine-input" rows="3" placeholder="Make the drums sparser and the chords brighter"></textarea>
+        <div class="refine-options">
+          <button type="button" data-refine="sparser">Sparser</button>
+          <button type="button" data-refine="busier">Busier</button>
+          <button type="button" data-refine="warmer">Warmer</button>
+          <button type="button" data-refine="surprise">Surprise me</button>
+        </div>
+        <button class="primary-action" id="apply-refine" type="submit" value="default">Apply change</button>
+      </form>
+    </dialog>
+
+    <dialog class="account-dialog" id="account-dialog" aria-labelledby="account-title">
+      <div class="dialog-handle" aria-hidden="true"></div>
+      <div class="account-dialog-inner">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow" id="account-eyebrow">Private cloud sync</p>
+            <h2 id="account-title">Sign in to Opusloops</h2>
+          </div>
+          <button class="icon-button" id="account-close-button" type="button" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <form id="account-form">
+          <p class="account-intro" id="account-intro">Your loops remain playable offline and sync privately when you are connected.</p>
+          <label for="account-email">Email</label>
+          <input id="account-email" name="email" type="email" inputmode="email" autocomplete="email" required />
+          <label for="account-password">Password</label>
+          <input id="account-password" name="password" type="password" autocomplete="current-password" minlength="8" required />
+          <div id="account-invite-field" hidden>
+            <label for="account-invite">Early-access invitation</label>
+            <input
+              id="account-invite"
+              name="invite"
+              type="text"
+              autocomplete="one-time-code"
+              autocapitalize="none"
+              spellcheck="false"
+              minlength="22"
+              maxlength="64"
+              pattern="[A-Za-z0-9_-]{22,64}"
+            />
+          </div>
+          <p class="form-error" id="account-error" role="alert" hidden></p>
+          <button class="primary-action" id="account-submit" type="submit">Sign in</button>
+          <button class="text-button account-switch" id="account-switch-button" type="button">Create an account</button>
+          <p class="form-note" id="account-note">At least 8 characters. Cloud saves are protected by your account.</p>
+        </form>
+
+      </div>
+    </dialog>
+
+    <dialog class="account-dialog profile-dialog" id="profile-dialog" aria-labelledby="profile-title" aria-describedby="profile-intro">
+      <div class="dialog-handle" aria-hidden="true"></div>
+      <div class="account-dialog-inner">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Profile</p>
+            <h2 id="profile-title">Your Opusloops account</h2>
+          </div>
+          <button class="icon-button" id="profile-close-button" type="button" aria-label="Close profile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+
+        <div class="profile-summary">
+          <span class="signed-in-avatar" id="profile-avatar" aria-hidden="true">O</span>
+          <div>
+            <strong id="profile-summary-name">Opusloops creator</strong>
+            <span id="profile-summary-email">Your account</span>
+          </div>
+        </div>
+        <p class="profile-pending-email" id="profile-pending-email" role="status" hidden></p>
+        <p class="account-intro" id="profile-intro">Manage the identity, security and private project data tied to this account.</p>
+
+        <section class="profile-section" aria-labelledby="profile-personal-title">
+          <div class="profile-section-heading">
+            <p class="eyebrow">Personal</p>
+            <h3 id="profile-personal-title">Name & email</h3>
+          </div>
+          <form id="profile-form" novalidate>
+            <label for="profile-display-name">Display name</label>
+            <input id="profile-display-name" name="display-name" type="text" autocomplete="name" minlength="1" maxlength="40" aria-describedby="profile-error" required />
+            <label for="profile-email">Email</label>
+            <input id="profile-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" aria-describedby="profile-email-note profile-error" readonly />
+            <p class="form-note profile-form-note" id="profile-email-note">Email changes are unavailable until verified account mail is configured. Your private project sync is unaffected.</p>
+            <p class="form-error" id="profile-error" role="alert" hidden></p>
+            <p class="form-status" id="profile-status" role="status" aria-live="polite" hidden></p>
+            <button class="primary-action" id="profile-submit" type="submit">Save profile</button>
+          </form>
+        </section>
+
+        <section class="profile-section" aria-labelledby="profile-security-title">
+          <div class="profile-section-heading">
+            <p class="eyebrow">Security</p>
+            <h3 id="profile-security-title">Change password</h3>
+          </div>
+          <form id="password-form" novalidate>
+            <input id="password-username" name="username" type="email" autocomplete="username" tabindex="-1" aria-hidden="true" hidden />
+            <label for="password-current">Current password</label>
+            <input id="password-current" name="current-password" type="password" autocomplete="current-password" aria-describedby="password-error" required />
+            <label for="password-new">New password</label>
+            <input id="password-new" name="new-password" type="password" autocomplete="new-password" minlength="8" aria-describedby="password-error" required />
+            <label for="password-confirm">Confirm new password</label>
+            <input id="password-confirm" name="confirm-password" type="password" autocomplete="new-password" minlength="8" aria-describedby="password-error" required />
+            <p class="form-error" id="password-error" role="alert" hidden></p>
+            <p class="form-status" id="password-status" role="status" aria-live="polite" hidden></p>
+            <button class="primary-action" id="password-submit" type="submit">Update password</button>
+          </form>
+        </section>
+
+        <section class="profile-section profile-data-section" aria-labelledby="profile-data-title">
+          <div class="profile-section-heading">
+            <p class="eyebrow">Data & session</p>
+            <h3 id="profile-data-title">Your private library</h3>
+          </div>
+          <p id="profile-sync-status">Projects save to this device first and sync privately when you are online.</p>
+          <div class="profile-actions">
+            <button class="secondary-action" id="sync-now-button" type="button">Sync now</button>
+            <button class="secondary-action" id="export-data-button" type="button">Download device data</button>
+            <button class="text-button profile-sign-out" id="sign-out-button" type="button">Sign out</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./config.js?v=2" defer></script>
+    <script src="./cloud-client.js?v=11" defer></script>
+    <script src="./stem-import-core.js?v=9" defer></script>
+    <script src="./stem-player.js?v=5" defer></script>
+    <script src="./stem-import.js?v=10" defer></script>
+    <script src="./app.js?v=37" defer></script>
+    <script src="./pixel-dock.mjs?v=2" type="module"></script>
+    <script src="./grainient-mixer.mjs?v=2" type="module"></script>
+    <script src="./soft-aurora-player.mjs?v=1" type="module"></script>
+  </body>
+</html>

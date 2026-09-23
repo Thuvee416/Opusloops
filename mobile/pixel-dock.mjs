@@ -35,7 +35,7 @@ function effectiveSpeed(value) {
   return Math.min(parsed, 100) * 0.001;
 }
 
-class Pixel {
+export class Pixel {
   constructor(context, width, height, x, y, color, speed, delay) {
     this.context = context;
     this.width = width;

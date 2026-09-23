@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for required in index.html frame-guard.js styles.css pixel-dock.css pixel-dock.mjs grainient-mixer.css grainient-mixer.mjs soft-aurora-player.css soft-aurora-player.mjs REACT_BITS_LICENSE.md config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
+for required in index.html studio.html account.html welcome.css welcome.js welcome-pixels.mjs frame-guard.js styles.css pixel-dock.css pixel-dock.mjs grainient-mixer.css grainient-mixer.mjs soft-aurora-player.css soft-aurora-player.mjs REACT_BITS_LICENSE.md config.js cloud-client.js stem-import-core.js stem-player.js stem-import.js app.js manifest.webmanifest service-worker.js icons/icon-192.png icons/icon-512.png icons/apple-touch-icon.png; do
   if [[ ! -s "mobile/$required" ]]; then
     echo "Required mobile asset is missing or empty: mobile/$required" >&2
     exit 1
@@ -50,7 +50,7 @@ class PageParser(HTMLParser):
 
 root = Path("mobile")
 root_resolved = root.resolve()
-index_path = root / "index.html"
+index_path = root / "studio.html"
 manifest_path = root / "manifest.webmanifest"
 service_worker_path = root / "service-worker.js"
 cloud_client_path = root / "cloud-client.js"
@@ -82,6 +82,16 @@ def local_path(reference, label):
         raise SystemExit(f"{label}: asset path escapes mobile/: {reference!r}")
     return candidate
 
+
+for page_name in ("index.html", "account.html"):
+    public_parser = PageParser()
+    public_parser.feed((root / page_name).read_text(encoding="utf-8"))
+    if not public_parser.has_viewport or len(public_parser.ids) != len(set(public_parser.ids)):
+        raise SystemExit(f"{page_name}: viewport required and IDs must be unique")
+    for reference in public_parser.local_assets:
+        candidate = local_path(reference, page_name)
+        if candidate is not None and not candidate.exists():
+            raise SystemExit(f"{page_name}: missing local asset {reference}")
 
 parser = PageParser()
 index_source = index_path.read_text(encoding="utf-8")
@@ -628,9 +638,10 @@ if manifest["name"] != "Opusloops" or manifest["short_name"] != "Opusloops":
 
 for field in ("id", "start_url", "scope"):
     value = manifest.get(field)
-    if value != "./":
+    expected = "./studio.html" if field == "start_url" else "./"
+    if value != expected:
         raise SystemExit(
-            f"{manifest_path}: {field} must be './' for origin-portable hosting, got {value!r}"
+            f"{manifest_path}: {field} must be {expected!r} for origin-portable hosting, got {value!r}"
         )
 
 for icon in manifest["icons"]:
@@ -643,6 +654,9 @@ for icon in manifest["icons"]:
 PY
 
 node --check mobile/app.js
+node --check mobile/welcome.js
+node --check mobile/welcome-pixels.mjs
+node --check scripts/test-welcome.mjs
 node --check mobile/pixel-dock.mjs
 node --check mobile/grainient-mixer.mjs
 node --check mobile/soft-aurora-player.mjs
@@ -1748,13 +1762,13 @@ if grep -RniE 'sb_secret_|service[_-]?role' mobile; then
   exit 1
 fi
 
-grep -Fq 'https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com' mobile/index.html
-grep -Fq 'https://opusloops-artifacts-368310207026-us-east-1.s3.us-east-1.amazonaws.com' mobile/index.html
-grep -Fq "media-src 'self' blob:" mobile/index.html
+grep -Fq 'https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com' mobile/studio.html
+grep -Fq 'https://opusloops-artifacts-368310207026-us-east-1.s3.us-east-1.amazonaws.com' mobile/studio.html
+grep -Fq "media-src 'self' blob:" mobile/studio.html
 grep -Fq 'https://opusloops-artifacts-368310207026-us-east-1.s3.us-east-1.amazonaws.com' customHttp.yml
 grep -Fq "media-src 'self' blob:" customHttp.yml
 grep -Fq 'provider: "aws"' mobile/config.js
-if grep -qi 'supabase' mobile/config.js mobile/index.html customHttp.yml; then
+if grep -qi 'supabase' mobile/config.js mobile/studio.html customHttp.yml; then
   echo "The production client must use only the native AWS backend." >&2
   exit 1
 fi
@@ -1771,7 +1785,7 @@ for method in createStemImport uploadStemArchive forgetStemArchiveUpload finaliz
 done
 grep -Fq 'order=created_at.asc,asset_id.asc' mobile/cloud-client.js
 grep -Fq 'disabledSegments: normalized.stemImport.disabledSegments' mobile/app.js
-grep -Fq 'this stage does not expose a measurable percentage' mobile/index.html
+grep -Fq 'this stage does not expose a measurable percentage' mobile/studio.html
 grep -Fq 'dom.processPanel.dataset.kind = statusKind' mobile/stem-import.js
 grep -Fq 'dom.processPanel.dataset.status = status' mobile/stem-import.js
 grep -Fq 'item.classList.add("is-current")' mobile/stem-import.js
@@ -1783,16 +1797,16 @@ grep -Fq 'core.timingSeconds(item?.time ?? item)' mobile/stem-import.js
 grep -Fq '.process-panel[data-kind="active"] .process-state::before' mobile/styles.css
 grep -Fq '.process-event.is-current .process-event-marker' mobile/styles.css
 grep -Fq '.import-panel button.is-busy::after' mobile/styles.css
-grep -Fq 'id="account-card-button"' mobile/index.html
-grep -Fq 'id="account-card-initial"' mobile/index.html
+grep -Fq 'id="account-card-button"' mobile/studio.html
+grep -Fq 'id="account-card-initial"' mobile/studio.html
 grep -Fq 'dom.accountCardButton.addEventListener' mobile/app.js
 grep -Fq 'querySelector("svg").toggleAttribute("hidden", signedIn)' mobile/app.js
 grep -Fq 'dom.accountCardInitial.textContent = initial' mobile/app.js
-if grep -Fq 'id="signed-in-panel"' mobile/index.html; then
+if grep -Fq 'id="signed-in-panel"' mobile/studio.html; then
   echo "Account management must live in the dedicated Workspace Profile sheet." >&2
   exit 1
 fi
-if grep -Eq 'id="(save-status|account-button)"|class="status-dot"' mobile/index.html; then
+if grep -Eq 'id="(save-status|account-button)"|class="status-dot"' mobile/studio.html; then
   echo "Header save/profile controls must remain in Projects" >&2
   exit 1
 fi
@@ -1800,14 +1814,14 @@ grep -Fq 'data-remove-grid-event' mobile/stem-import.js
 grep -Fq 'meterNumerator' mobile/stem-import.js
 grep -Fq 'firstDownbeatSeconds' mobile/stem-import.js
 grep -Fq 'previewAssets' mobile/stem-import-core.js
-grep -Fq 'id="stem-retry-inspection"' mobile/index.html
+grep -Fq 'id="stem-retry-inspection"' mobile/studio.html
 grep -Fq 'await cloud.retryStemInspection(job.id, job.revision)' mobile/stem-import.js
-grep -Fq 'id="stem-retry-proposal"' mobile/index.html
+grep -Fq 'id="stem-retry-proposal"' mobile/studio.html
 grep -Fq 'const retryableProposal = core.canRetryProposal(job, events)' mobile/stem-import.js
 grep -Fq 'dom.retryProposal.hidden = !retryableProposal' mobile/stem-import.js
 grep -Fq 'await cloud.retryStemProposal(job.id, job.revision)' mobile/stem-import.js
 grep -Fq 'return stemAction("retry-proposal", { jobId, revision })' mobile/cloud-client.js
-grep -Fq 'id="stem-repair-render"' mobile/index.html
+grep -Fq 'id="stem-repair-render"' mobile/studio.html
 grep -Fq 'const repairableRender = core.canRepairRenderProposal(job, events)' mobile/stem-import.js
 grep -Fq 'dom.repairRender.hidden = !repairableRender' mobile/stem-import.js
 grep -Fq 'retryableProposal || repairableRender || retryableRender' mobile/stem-import.js
@@ -1818,7 +1832,7 @@ grep -Fq 'const existingRequest = repairRequests.get(requestKey)' mobile/stem-im
 grep -Fq 'if (existingRequest?.generation === localGeneration) return existingRequest.operation' mobile/stem-import.js
 grep -Fq 'repairRequests.get(requestKey)?.operation === operation' mobile/stem-import.js
 grep -Fq 'return stemAction("repair-render-proposal", { jobId, revision, proposalManifestSha256 })' mobile/cloud-client.js
-grep -Fq 'id="stem-retry-render"' mobile/index.html
+grep -Fq 'id="stem-retry-render"' mobile/studio.html
 grep -Fq 'const retryableRender = core.canRetryRender(job, events)' mobile/stem-import.js
 grep -Fq 'dom.retryRender.hidden = !retryableRender' mobile/stem-import.js
 grep -Fq 'await cloud.retryStemRender(' mobile/stem-import.js
@@ -1843,8 +1857,8 @@ grep -Fq 'expectedGeneration !== generation || loadToken !== clickLoadToken' mob
 grep -Fq 'if (!clickAuditionEngaged || dom.clickAudio.paused || dom.clickAudio.ended) return' mobile/stem-import.js
 grep -Fq 'nextAudition.key !== playbackScrubAuditionKey' mobile/app.js
 grep -Fq 'playbackScrubAuditionKey = ""' mobile/app.js
-grep -Fq 'aria-pressed="false"' mobile/index.html
-grep -Fq 'id="persistent-seek-label"' mobile/index.html
+grep -Fq 'aria-pressed="false"' mobile/studio.html
+grep -Fq 'id="persistent-seek-label"' mobile/studio.html
 if grep -Fq 'dom.clickAudio.currentTime < 0.25' mobile/stem-import.js; then
   echo 'Gate B listening confirmation must not be unlocked by seeking.' >&2
   exit 1

@@ -21,6 +21,14 @@ customHeaders:
     headers:
       - key: 'Cache-Control'
         value: 'max-age=0, no-cache, no-store, must-revalidate'
+  - pattern: '/studio.html'
+    headers:
+      - key: 'Cache-Control'
+        value: 'max-age=0, no-cache, no-store, must-revalidate'
+  - pattern: '/account.html'
+    headers:
+      - key: 'Cache-Control'
+        value: 'max-age=0, no-cache, no-store, must-revalidate'
   - pattern: '/service-worker.js'
     headers:
       - key: 'Cache-Control'

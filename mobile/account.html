@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="./icons/icon-192.png?v=3" />
+    <link rel="stylesheet" href="./welcome.css?v=1" />
+    <title>Your account · Opusloops</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-nav">
+      <a class="brand" href="./" aria-label="Opusloops home"><img src="./icons/icon-192.png?v=3" width="32" height="32" alt="" />Opusloops</a>
+      <a class="quiet-link" href="./studio.html">Studio <span aria-hidden="true">↗</span></a>
+    </header>
+    <main id="main" class="account-page">
+      <div class="account-wave" aria-hidden="true"><canvas data-pixel-wave></canvas></div>
+      <section class="account-content entrance" aria-labelledby="account-title">
+        <p class="eyebrow">Your workspace</p>
+        <h1 id="account-title">Sign in.</h1>
+        <p class="subtitle" id="account-description">Pick up where you left off.</p>
+        <p class="account-status" id="account-status" role="status">Checking your session…</p>
+        <form id="login-form" hidden>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username" required maxlength="254" />
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <button class="primary pixel-action" id="login-submit" type="submit"><canvas data-pixel-button aria-hidden="true"></canvas><span>Sign in <span aria-hidden="true">↗</span></span></button>
+        </form>
+        <div id="session-actions" hidden>
+          <a class="primary" href="./studio.html">Open studio <span aria-hidden="true">↗</span></a>
+          <button class="secondary" id="logout-submit" type="button">Sign out on this device</button>
+          <p class="micro">Saved projects stay in your account.</p>
+        </div>
+        <p class="error" id="account-error" role="alert" hidden></p>
+        <a class="guest-link" href="./studio.html">Continue without signing in</a>
+      </section>
+    </main>
+    <footer class="site-footer"><a href="./">Back to Opusloops</a><span>Your sound. Your space.</span></footer>
+    <script src="./config.js?v=2" defer></script>
+    <script src="./cloud-client.js?v=11" defer></script>
+    <script src="./welcome.js?v=1" defer></script>
+    <script src="./welcome-pixels.mjs?v=1" type="module"></script>
+  </body>
+</html>

@@ -3876,6 +3876,7 @@
       closeAccountDialog();
       closeProfileDialog();
       showToast("Signed out. Account projects are hidden on this device");
+      window.location.assign('./account.html?signedout=1');
     } finally {
       endAccountMutation();
     }
