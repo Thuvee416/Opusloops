@@ -78,7 +78,7 @@ function fixture(signedIn) {
 }
 
 async function setup(t, { signedIn = true, width = 390 } = {}) {
-  const context = await browser.newContext({ viewport: {width,height:844}, isMobile:true, hasTouch:true, serviceWorkers:'block' });
+  const context = await browser.newContext({ viewport: {width,height:844}, isMobile:width < 1024, hasTouch:width < 1024, serviceWorkers:'block' });
   t.after(() => context.close());
   await context.route('**/cloud-client.js?*', route => route.fulfill({contentType:'application/javascript',body:`(${fixture.toString()})(${signedIn})`}));
   await context.route('https://*.supabase.co/**', route => route.abort());
@@ -268,6 +268,58 @@ test('guest cannot initialize the application or create local projects', async t
   await page.waitForURL('**/account.html?access=required');
   assert.equal(await page.locator('#create-project-button').count(), 0);
   assert.equal(await page.evaluate(() => localStorage.getItem('opusloops.mobile.projects.v1')), null);
+});
+
+for (const width of [1024, 1440, 1920]) test(`desktop workspace fits ${width}px with functional navigation and mixer`, async t => {
+  const page = await setup(t, { width });
+  const rail = await page.locator('.bottom-nav').boundingBox();
+  assert.equal(rail.x, 0);
+  assert.equal(rail.width, 112);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.locator('#create-project-button').click();
+  await page.locator('#new-project-kind').selectOption('loop');
+  await page.locator('#new-project-name').fill('Desktop session');
+  await page.locator('#idea-input').fill('Warm house groove');
+  await page.locator('#composer-form button[type=submit]').click();
+  await page.locator('#view-studio.is-active').waitFor();
+  const grid = await page.locator('.step-grid').first().boundingBox();
+  assert.ok(grid.width > 500);
+  assert.equal(await page.locator('.steps-scroll').first().evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
+  await page.screenshot({path: `/tmp/opusloops-desktop-studio-${width}.png`, animations: 'disabled'});
+  await page.locator('#play-button').click();
+  await page.waitForFunction(() => document.querySelector('#persistent-player').dataset.playbackState === 'playing');
+  const player = await page.locator('#persistent-player').boundingBox();
+  assert.equal(Math.round(player.x), 112);
+  assert.equal(Math.round(player.width), width - 112);
+  await page.keyboard.press('Alt+3');
+  await page.locator('#view-mix.is-active').waitFor();
+  await page.locator('#view-mix').evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
+  const tiles = await page.locator('.mixer-tile').all();
+  const first = await tiles[0].boundingBox(), second = await tiles[1].boundingBox();
+  assert.equal(first.y, second.y);
+  const range = tiles[0].locator('input[type=range]');
+  const before = await range.inputValue();
+  const gesture = await tiles[0].locator('.mixer-gesture').boundingBox();
+  await page.mouse.move(gesture.x + gesture.width/2, gesture.y + gesture.height/2);
+  await page.mouse.down();
+  await page.mouse.move(gesture.x + gesture.width/2, gesture.y + gesture.height/2 + 45, {steps: 8});
+  await page.mouse.up();
+  assert.notEqual(await range.inputValue(), before);
+  await page.locator('#view-mix').focus();
+  await page.keyboard.press('Space');
+  await page.waitForFunction(() => document.querySelector('#persistent-player').dataset.playbackState !== 'playing');
+  await page.screenshot({path: `/tmp/opusloops-desktop-${width}.png`});
+  await page.keyboard.press('Alt+4');
+  await page.locator('#view-projects.is-active').waitFor();
+  await page.locator('#account-card-button').click();
+  await page.locator('#profile-dialog[open]').waitFor();
+  await page.locator('#profile-dialog').evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
+  const dialog = await page.locator('#profile-dialog').boundingBox();
+  assert.ok(dialog.y >= 0 && dialog.y + dialog.height <= 844);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Alt+1');
+  await page.locator('#view-create.is-active').waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
 });
 
 test('loop setup creates a single playable project with fresh mix defaults', async t => {

@@ -655,6 +655,7 @@ PY
 
 node --check mobile/app.js
 node --check mobile/welcome.js
+node --check mobile/desktop.js
 node --check mobile/studio-access.js
 node --check mobile/scanner.mjs
 node --check mobile/welcome-pixels.mjs

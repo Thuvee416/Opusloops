@@ -1,0 +1,50 @@
+/* Desktop workspace. Mobile remains governed by styles.css and the pixel dock. */
+.desktop-shortcuts { display: none; }
+@media (min-width: 1024px) {
+  body { padding: 0; }
+  .app-shell { width: 100%; max-width: none; min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; overflow: visible; padding-left: 112px; }
+  main, body.has-persistent-player main { padding-bottom: 100px; }
+  .view { max-width: 1600px; margin: 0 auto; padding: 44px clamp(28px, 4vw, 72px) 36px; }
+  .bottom-nav[data-pixel-dock] { top: 0; left: 0; right: auto; bottom: 0; width: 112px; max-width: none; margin: 0; transform: none; grid-template-columns: 1fr; grid-auto-rows: 88px; align-content: start; padding-top: 24px; border: 0; border-right: 1px solid var(--line); border-radius: 0; }
+  .bottom-nav .nav-item[data-pixel-card] { min-height: 88px; padding: 12px 8px; border: 0; border-bottom: 1px solid #ffffff0b; font-size: 11px; }
+  .bottom-nav .nav-item[data-pixel-card]::after { top: 50%; left: 0; width: 3px; height: 24px; transform: translateY(-50%); }
+  .bottom-nav .nav-item[data-pixel-card].is-active::after, .bottom-nav .nav-item[data-pixel-card][aria-current="page"]::after { width: 3px; height: 24px; }
+  .desktop-shortcuts { display: block; position: absolute; bottom: 22px; width: 100%; margin: 0; text-align: center; color: var(--muted); font-size: 10px; line-height: 1.8; }
+  .persistent-player { left: calc(50% + 56px); bottom: 0; width: calc(100% - 112px); max-width: none; height: 64px; grid-template-columns: 64px minmax(0, 1fr); }
+  .persistent-play-button { width: 64px; height: 64px; }
+  .persistent-player-detail { padding-inline: 18px; }
+  .toast, body.has-persistent-player .toast { bottom: 82px; left: calc(50% + 56px); }
+  .create-actions { max-width: 860px; gap: 20px; }
+  .create-action { min-height: 172px; padding: 28px; }
+  #create-recent-list, .projects-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .create-recent-project, .project-card { min-width: 0; margin: 0; }
+  .studio-heading { margin-bottom: 20px; }
+  .studio-heading h1 { max-width: 100%; }
+  .transport-card { max-width: 520px; }
+  .track-card { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: center; gap: 20px; padding: 12px 16px; }
+  .track-header { margin: 0; gap: 8px; flex-wrap: wrap; }
+  .steps-scroll { width: 100%; max-width: 100%; margin: 0; padding: 6px 0; overflow: visible; }
+  .step-grid { width: 100%; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 5px; }
+  .step { width: 100%; min-width: 0; height: 40px; border-radius: 6px; }
+  .refine-card { max-width: 680px; }
+  .export-action, #reset-mix, #review-stem-analysis { width: auto; min-width: 200px; }
+  .studio-window-controls { grid-template-columns: minmax(300px, 420px) 260px; align-items: center; justify-content: space-between; padding: 12px; }
+  .stem-arrangement { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .stem-studio .arrangement-track, .stem-studio[data-density="compact"] .arrangement-track { grid-template-rows: 36px 80px; padding: 10px; gap: 8px; }
+  .stem-studio .arrangement-track-heading strong, .stem-studio[data-density="compact"] .arrangement-track-heading strong { font-size: 14px; }
+  .stem-studio .arrangement-track-heading > span:last-child { font-size: 10px; }
+  .arrangement-window-toggle { min-height: 80px; }
+  .mixer { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .mixer-tile { min-height: 190px; grid-template-rows: 44px minmax(110px, 1fr); padding: 12px 16px; cursor: ns-resize; }
+  .mixer-tile-label strong { font-size: 14px; }
+  .mixer-amount { font-size: 42px; }
+  #view-import { max-width: 1100px; }
+  .stem-review-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  #view-projects { max-width: 1200px; }
+  .settings-card, .account-card, .sync-card, .offline-card { max-width: none; }
+  .account-dialog, .refine-dialog { top: 0; bottom: 0; margin: auto; transform: none; max-height: min(85dvh, 850px); }
+}
+@media (min-width: 1440px) {
+  .stem-arrangement { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mixer { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}

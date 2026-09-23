@@ -9,7 +9,9 @@
 
 <p align="center">Create · Arrange · Evolve</p>
 
-Opusloops is a calm, touch-first loop studio that runs as an installable mobile web app. Build patterns with Web Audio, arrange ideas, shape a compact mix, export WAV audio, and optionally sync projects through a private account.
+Opusloops is a responsive loop studio for desktop and mobile. Build patterns with Web Audio, arrange ideas, shape a compact mix, export WAV audio, and sync projects through a private account.
+
+At 1024px and wider, the studio uses a left navigation rail, full-width sequencer, multi-column mixer, and bottom player. Alt+1–4 switches sections; Space controls an available player when focus is outside editable fields and buttons. Mobile retains the bottom dock and touch controls.
 
 <p align="center">
   <strong><a href="https://opusloops.com/">Launch Opusloops</a></strong>
