@@ -39,7 +39,13 @@ h1.entrance { animation-delay: 100ms; }
 @keyframes enter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .account-page { width: 100%; flex: 1; padding: 60px 24px; }
 .account-content { width: min(100%, 340px); margin: 20px auto 0; }
-.account-content h1 { font-size: clamp(46px, 8vw, 62px); letter-spacing: -.055em; }
+.account-content h2 { font: normal clamp(36px, 7vw, 48px)/1.05 Georgia, serif; letter-spacing: -.055em; margin: 0; }
+.account-modal { color: #f2f0eb; background: #0b0b0df5; border: 1px solid #353039; border-radius: 16px; width: min(430px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 42px 28px 28px; overflow-y: auto; box-shadow: 0 24px 100px #000b; }
+.account-modal[open] { animation: enter .22s ease-out; }
+.account-modal::backdrop { background: #0009; backdrop-filter: blur(8px); }
+.account-modal .account-content { width: 100%; margin: 0; }
+.modal-close { position: absolute; top: 6px; right: 8px; width: 44px; height: 44px; border: 0; background: transparent; color: #aaa6a1; font-size: 27px; }
+body:has(.account-modal[open]) { overflow: hidden; }
 .account-content .eyebrow { margin-bottom: 18px; }
 .account-content .subtitle { margin-top: 16px; overflow-wrap: anywhere; }
 .account-status { color: #a39f99; font-size: 12px; line-height: 1.5; margin: 20px 0; }

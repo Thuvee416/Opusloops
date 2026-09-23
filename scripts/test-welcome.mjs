@@ -44,7 +44,7 @@ test('landing fits small/mobile/desktop screens and opens the existing studio', 
     await page.goto(base);
     await page.locator('[data-scanner]').waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-    assert.equal(await page.getByRole('link', { name: 'OPEN STUDIO' }).getAttribute('href'), './studio.html');
+    assert.equal(await page.locator('[data-open-studio]').getAttribute('href'), './studio.html');
     assert.equal(await page.getByRole('link', { name: 'Sign in' }).getAttribute('href'), './account.html');
     await page.screenshot({ path: `/tmp/opusloops-landing-${width}.png`, fullPage: true, animations: 'disabled' });
     assert.deepEqual(errors, []);
@@ -80,7 +80,7 @@ test('Scanner fallback keeps the page usable without WebGL', async () => {
   await page.waitForFunction(() => document.querySelector('[data-scanner]').dataset.scannerState === 'fallback');
   assert.equal(await page.locator('[data-pixel-wave]').count(), 0);
   await page.getByRole('link', { name: 'OPEN STUDIO' }).click();
-  await page.waitForURL('**/account.html?access=required');
+  await page.locator('#account-modal[open]').waitFor();
   await context.close();
 });
 
@@ -88,7 +88,7 @@ test('Open Studio restores PixelCard reveal, exit, and keyboard shimmer', async 
   const { context, page } = await pageFor();
   await page.goto(base);
   const button = page.getByRole('link', { name: 'OPEN STUDIO' });
-  const painted = () => page.locator('[data-pixel-button]').evaluate(canvas => {
+  const painted = () => page.locator('.hero-actions [data-pixel-button]').evaluate(canvas => {
     const bytes = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
     return bytes.some((value, index) => index % 4 === 3 && value > 0);
   });
@@ -125,8 +125,8 @@ test('sign-in errors are visible and a successful retry enters the studio', asyn
 
 test('Scanner animates, original PixelCard responds to hover, and reduced motion freezes both', async () => {
   for (const [path, selectors] of [
-    ['/', ['[data-scanner]', '[data-pixel-button]']],
-    ['/account.html', ['[data-scanner]', '#login-submit [data-pixel-button]']],
+    ['/', ['[data-scanner]', '.hero-actions [data-pixel-button]']],
+    ['/account.html', ['#login-submit [data-pixel-button]']],
     ['/studio.html', ['.nav-item.is-active .pixel-canvas']]
   ]) {
     const { context, page } = await pageFor();
@@ -209,6 +209,27 @@ test('session loss immediately locks an open studio and redirects to sign-in', a
     window.dispatchEvent(new CustomEvent('opusloops:auth-session-change', {detail:{user:null}}));
   });
   await page.waitForURL('**/account.html?access=required');
+  await context.close();
+});
+
+test('landing sign-in and Open Studio use a dismissible, focus-trapped modal', async () => {
+  const { context, page } = await pageFor();
+  await mockAuth(page);
+  await page.goto(base);
+  await page.getByRole('link', { name: 'Sign in' }).click();
+  await page.getByRole('dialog').waitFor();
+  assert.equal(new URL(page.url()).pathname, '/');
+  for (let i=0; i<12; i++) {
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.querySelector('#account-modal').contains(document.activeElement)), true);
+  }
+  await page.keyboard.press('Escape');
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  await page.locator('[data-open-studio]').click();
+  await page.getByRole('dialog').waitFor();
+  await page.getByRole('button', { name: 'Close account dialog' }).click();
+  assert.equal(await page.evaluate(() => document.activeElement.hasAttribute('data-open-studio')), true);
+  assert.equal(new URL(page.url()).pathname, '/');
   await context.close();
 });
 

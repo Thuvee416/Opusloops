@@ -1,5 +1,7 @@
 (() => {
   const cloud = window.OpusloopsCloud;
+  const modal = document.querySelector('#account-modal');
+  const close = document.querySelector('#account-close');
   const link = document.querySelector('#account-link');
   const form = document.querySelector('#login-form');
   const actions = document.querySelector('#session-actions');
@@ -14,6 +16,35 @@
   let registering = false;
   let busy = false;
   let signedOut = new URLSearchParams(location.search).has('signedout');
+
+  function openAccount(event) {
+    event?.preventDefault();
+    render();
+    if (!modal.open) modal.showModal();
+  }
+  link?.addEventListener('click', openAccount);
+  document.querySelectorAll('[data-open-studio]').forEach(button => button.addEventListener('click', event => {
+    if (!cloud?.getSession()?.user) openAccount(event);
+  }));
+  close?.addEventListener('click', () => { if (!busy) modal.close(); });
+  modal?.addEventListener('cancel', event => { if (busy) event.preventDefault(); });
+  modal?.addEventListener('keydown', event => {
+    if (event.key !== 'Tab') return;
+    const controls = [...modal.querySelectorAll('button, input, a[href], [tabindex]')]
+      .filter(element => !element.disabled && element.tabIndex >= 0 && element.getClientRects().length);
+    const first = controls[0], last = controls.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  });
+  modal?.addEventListener('click', event => {
+    const rect = modal.getBoundingClientRect();
+    if (!busy && event.target === modal && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) modal.close();
+  });
+  modal?.addEventListener('close', () => {
+    form.password.value = '';
+    form.invite.value = '';
+    error.hidden = true;
+  });
 
   function render() {
     const session = cloud?.getSession();
@@ -99,6 +130,7 @@
 
   window.addEventListener('opusloops:auth-session-change', render);
   window.addEventListener('pageshow', render);
+  if (document.body.hasAttribute('data-account-entry')) openAccount();
   Promise.resolve(cloud?.restoreSession()).then(() => {
     render();
   }).catch(() => { render(); if (error) showError('Could not check your session. Please try signing in.'); });
