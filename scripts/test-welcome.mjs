@@ -78,6 +78,33 @@ test('sign-in errors are visible and a successful retry enters the studio', asyn
   await context.close();
 });
 
+test('all pixel surfaces animate without hover and stop for reduced motion', async () => {
+  for (const [path, selectors] of [
+    ['/', ['[data-pixel-wave]', '[data-pixel-button]']],
+    ['/account.html', ['[data-pixel-wave]', '[data-pixel-button]']],
+    ['/studio.html', ['.nav-item.is-active .pixel-canvas']]
+  ]) {
+    const { context, page } = await pageFor();
+    await page.goto(`${base}${path}`);
+    await page.waitForTimeout(650);
+    for (const selector of selectors) {
+      const pixels = () => page.locator(selector).evaluate(canvas => canvas.toDataURL());
+      const initial = await pixels();
+      await page.waitForTimeout(350);
+      assert.notEqual(await pixels(), initial, `${path} ${selector} should animate without hover`);
+    }
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForTimeout(100);
+    for (const selector of selectors) {
+      const pixels = () => page.locator(selector).evaluate(canvas => canvas.toDataURL());
+      const still = await pixels();
+      await page.waitForTimeout(150);
+      assert.equal(await pixels(), still, `${path} ${selector} should respect reduced motion`);
+    }
+    await context.close();
+  }
+});
+
 test('sign-out requires a click, clears the session, and retains local project data', async () => {
   const { context, page } = await pageFor();
   await mockAuth(page, true);

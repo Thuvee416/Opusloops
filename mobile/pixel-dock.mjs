@@ -1,6 +1,6 @@
 // Adapted for the dependency-free Opusloops shell from React Bits' PixelCard effect.
 // See REACT_BITS_LICENSE.md for the upstream copyright and license notice.
-const FRAME_INTERVAL = 1000 / 60;
+const FRAME_INTERVAL = 1000 / 30;
 
 export const DOCK_PIXEL_PALETTES = Object.freeze({
   create: Object.freeze({
@@ -73,7 +73,19 @@ export class Pixel {
     );
   }
 
-  appear() {
+  drawAnimated(time) {
+    // Shared, time-based PixelCard shimmer for the dock, waveforms and actions.
+    // A travelling pulse makes motion readable even on small phone screens.
+    const phase = time * 2.4 - this.x * 0.045 + this.y * 0.065;
+    const pulse = (Math.sin(phase) + 1) / 2;
+    this.size = 0.65 + pulse * 1.65;
+    const alpha = this.context.globalAlpha;
+    this.context.globalAlpha = alpha * (0.35 + pulse * 0.65);
+    this.draw();
+    this.context.globalAlpha = alpha;
+  }
+
+  appear(time) {
     this.isIdle = false;
     if (this.counter <= this.delay) {
       this.counter += this.counterStep;
@@ -82,7 +94,8 @@ export class Pixel {
     if (this.size >= this.maxSize) this.isShimmer = true;
     if (this.isShimmer) this.shimmer();
     else this.size = Math.min(this.maxSize, this.size + this.sizeStep);
-    this.draw();
+    if (Number.isFinite(time)) this.drawAnimated(time);
+    else this.draw();
   }
 
   disappear() {
@@ -214,12 +227,12 @@ class PixelDockEntry {
     this.wake();
   }
 
-  animate() {
+  animate(time) {
     if (this.mode === "idle") return false;
     this.clear();
     let allIdle = true;
     this.pixels.forEach((pixel) => {
-      pixel[this.mode]();
+      pixel[this.mode](time);
       if (!pixel.isIdle) allIdle = false;
     });
     if (this.mode === "disappear" && allIdle) {
@@ -297,7 +310,7 @@ class PixelDock {
         return;
       }
       this.lastFrame = now - (elapsed % FRAME_INTERVAL);
-      const animating = this.entries.reduce((active, entry) => entry.animate() || active, false);
+      const animating = this.entries.reduce((active, entry) => entry.animate(now / 1000) || active, false);
       if (animating) this.frame = requestAnimationFrame(tick);
     };
     this.frame = requestAnimationFrame(tick);

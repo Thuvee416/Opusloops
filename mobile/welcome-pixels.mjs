@@ -1,5 +1,5 @@
 // Reuse the dock's React Bits pixel shimmer; no WebGL contexts or dependencies.
-import { Pixel } from './pixel-dock.mjs?v=2';
+import { Pixel } from './pixel-dock.mjs?v=3';
 
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 const colors = ['#ff718d', '#ffba61', '#bd6cff', '#45cbaa'];
@@ -25,7 +25,7 @@ function resize(entry) {
   for (let x = 0; x < entry.width; x += gap) {
     const position = x / entry.width;
     const envelope = Math.pow(Math.sin(position * Math.PI), 1.6);
-    const amplitude = wave ? (0.2 + Math.abs(Math.sin(position * 20)) * .8) * envelope : 1;
+    const amplitude = wave ? envelope : 1;
     for (let y = 0; y < entry.height; y += gap) {
       if (wave && Math.abs(y - entry.height / 2) > amplitude * entry.height * .44) continue;
       const pixel = new Pixel(context, entry.width, entry.height, x, y, colors[Math.min(3, Math.floor(position * 4))], .035, 0);
@@ -39,9 +39,22 @@ function resize(entry) {
 
 function draw(entry, still = false) {
   entry.context.clearRect(0, 0, entry.width, entry.height);
+  const wave = entry.canvas.hasAttribute('data-pixel-wave');
+  const time = still ? 0 : elapsed;
   for (const pixel of entry.pixels) {
-    entry.context.globalAlpha = still ? .7 : .4 + .6 * (Math.sin(pixel.x * .018 - elapsed * .7) + 1) / 2;
-    if (still) pixel.draw(); else pixel.appear();
+    let edge = 1;
+    if (wave) {
+      const position = pixel.x / entry.width;
+      const envelope = Math.pow(Math.sin(position * Math.PI), 1.6);
+      const crest = .2 + .8 * Math.abs(Math.sin(position * 20 - time * 1.35));
+      const height = envelope * crest * entry.height * .44;
+      // Fade boundary pixels instead of snapping entire rows on and off.
+      edge = Math.max(0, Math.min(1, (height - Math.abs(pixel.y - entry.height / 2)) / 7));
+      if (!edge) continue;
+    }
+    entry.context.globalAlpha = edge;
+    if (still) { pixel.size = pixel.maxSize; pixel.draw(); }
+    else pixel.drawAnimated(time);
   }
   entry.context.globalAlpha = 1;
 }
