@@ -45,7 +45,7 @@ test('landing fits small/mobile/desktop screens and opens the existing studio', 
     await page.locator('[data-scanner]').waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.equal(await page.locator('[data-open-studio]').getAttribute('href'), './studio.html');
-    assert.equal(await page.getByRole('link', { name: 'Sign in' }).getAttribute('href'), './account.html');
+    assert.equal(await page.locator('#account-link').count(), 0);
     await page.screenshot({ path: `/tmp/opusloops-landing-${width}.png`, fullPage: true, animations: 'disabled' });
     assert.deepEqual(errors, []);
     await context.close();
@@ -212,11 +212,11 @@ test('session loss immediately locks an open studio and redirects to sign-in', a
   await context.close();
 });
 
-test('landing sign-in and Open Studio use a dismissible, focus-trapped modal', async () => {
+test('Open Studio is the single entry point to a dismissible, focus-trapped sign-in modal', async () => {
   const { context, page } = await pageFor();
   await mockAuth(page);
   await page.goto(base);
-  await page.getByRole('link', { name: 'Sign in' }).click();
+  await page.locator('[data-open-studio]').click();
   await page.getByRole('dialog').waitFor();
   assert.equal(new URL(page.url()).pathname, '/');
   for (let i=0; i<12; i++) {
