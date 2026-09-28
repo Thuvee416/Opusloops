@@ -35,6 +35,8 @@ Opusloops does not require an App Store or Play Store download. Open the product
 
 ## Run locally
 
+On desktop (1024 px and wider), the workspace provides persistent New project, Import stems, Save, Account & settings, and Sign out commands. Studio uses horizontal stem lanes; Mix exposes vertical faders alongside the existing drag, mute, and solo controls. Use Alt+1–4 to switch views, Space to play/pause outside input controls, and Ctrl/Cmd+S to save. Sign out preserves the existing save/sync checks and warns before leaving unsynced work.
+
 The production PWA lives in [`mobile/`](mobile/). It has no package-manager or native-toolchain requirement.
 
 ```bash

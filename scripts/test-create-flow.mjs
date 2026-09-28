@@ -19,7 +19,7 @@ after(async () => browser?.close());
 
 function fixture(signedIn) {
   const user = { id: '11111111-1111-4111-8111-111111111111', email: 'test@example.com', user_metadata: {} };
-  let session = signedIn ? { user } : null;
+  let session = signedIn && sessionStorage.getItem('qa-signed-out') !== 'yes' ? { user } : null;
   const f = window.__createFixture = {
     rows: new Map(), jobs: new Map(), creates: [], uploads: [], finalized: [],
     rejectCreate: false, holdCreate: false, holdUpload: false, holdSync: false,
@@ -29,6 +29,11 @@ function fixture(signedIn) {
     configured: () => true,
     getSession: () => session,
     restoreSession: async () => session,
+    signOut: async () => {
+      session = null;
+      sessionStorage.setItem('qa-signed-out', 'yes');
+      window.dispatchEvent(new CustomEvent('opusloops:auth-session-change', {detail:{user:null}}));
+    },
     signIn: async () => {
       session = { user };
       window.dispatchEvent(new CustomEvent('opusloops:auth-session-change', { detail: { user } }));
@@ -305,6 +310,14 @@ for (const width of [1024, 1440, 1920]) test(`desktop workspace fits ${width}px 
   await page.mouse.move(gesture.x + gesture.width/2, gesture.y + gesture.height/2 + 45, {steps: 8});
   await page.mouse.up();
   assert.notEqual(await range.inputValue(), before);
+  const fader = await range.boundingBox();
+  assert.ok(fader.width >= 24 && fader.height >= 120);
+  await range.focus();
+  const beforeKey = Number(await range.inputValue());
+  await page.keyboard.press('ArrowUp');
+  assert.equal(Number(await range.inputValue()), beforeKey + 1);
+  await page.mouse.click(fader.x + fader.width / 2, fader.y + fader.height * .2);
+  assert.ok(Number(await range.inputValue()) > beforeKey);
   await page.locator('#view-mix').focus();
   await page.keyboard.press('Space');
   await page.waitForFunction(() => document.querySelector('#persistent-player').dataset.playbackState !== 'playing');
@@ -320,6 +333,24 @@ for (const width of [1024, 1440, 1920]) test(`desktop workspace fits ${width}px 
   await page.keyboard.press('Alt+1');
   await page.locator('#view-create.is-active').waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+});
+
+test('desktop project commands and sign out work outside the profile dialog', async t => {
+  const page = await setup(t, {width:1440});
+  await page.locator('[data-desktop-command="create-project-button"]').click();
+  await page.locator('#new-project-name').fill('Desktop commands');
+  await page.locator('#composer-form button[type=submit]').click();
+  await page.locator('#view-import.is-active').waitFor();
+  await page.locator('[data-desktop-command="save-project-button"]').click();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('opusloops.mobile.projects.v1.user.11111111-1111-4111-8111-111111111111') || '[]').some(row => row.name === 'Desktop commands'));
+  await page.locator('[data-desktop-command="account-card-button"]').click();
+  await page.locator('#profile-dialog[open]').waitFor();
+  await page.keyboard.press('Escape');
+  page.on('dialog', dialog => dialog.accept());
+  await page.locator('[data-desktop-command="sign-out-button"]').click();
+  await page.waitForURL(/account.html/);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('qa-signed-out')), 'yes');
+  assert.equal(await page.locator('.desktop-command-bar').count(), 0);
 });
 
 test('loop setup creates a single playable project with fresh mix defaults', async t => {

@@ -21,13 +21,25 @@
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
     <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
-    <link rel="stylesheet" href="./desktop.css?v=1" />
+    <link rel="stylesheet" href="./desktop.css?v=2" />
     <title>Studio · Opusloops</title>
   </head>
   <body hidden>
     <a class="skip-link" href="#main-content">Skip to content</a>
 
     <div class="app-shell">
+      <div class="desktop-command-bar" role="group" aria-label="Project and account commands">
+        <div class="desktop-command-group" aria-label="Project">
+          <button type="button" data-desktop-command="create-project-button">New project</button>
+          <button type="button" data-desktop-command="open-stem-import">Import stems</button>
+          <button type="button" data-desktop-command="save-project-button" title="Save project (Ctrl/Cmd+S)">Save</button>
+        </div>
+        <span id="desktop-project-name" class="desktop-project-name">Workspace</span>
+        <div class="desktop-command-group" aria-label="Account">
+          <button type="button" data-desktop-command="account-card-button">Account & settings</button>
+          <button type="button" data-desktop-command="sign-out-button">Sign out</button>
+        </div>
+      </div>
       <span class="sr-only" id="save-announcer" aria-live="polite" aria-atomic="true"></span>
       <main id="main-content">
         <section class="view is-active" id="view-create" data-view="create" aria-labelledby="create-title" tabindex="-1">
@@ -515,7 +527,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h5v5H5V5Zm9 0h5v5h-5V5ZM5 14h5v5H5v-5Zm9 0h5v5h-5v-5Z" /></svg>
           <span>Workspace</span>
         </button>
-        <p class="desktop-shortcuts">Alt 1–4 · Navigate<br />Space · Play / pause</p>
+        <p class="desktop-shortcuts">Alt 1–4 · Navigate<br />Space · Play / pause<br />Ctrl / ⌘ S · Save</p>
       </nav>
     </div>
 
@@ -685,7 +697,7 @@
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./desktop.js?v=1" defer></script>
+    <script src="./desktop.js?v=2" defer></script>
     <script src="./config.js?v=2" defer></script>
     <script src="./cloud-client.js?v=12" defer></script>
     <script src="./studio-access.js?v=1" defer></script>
