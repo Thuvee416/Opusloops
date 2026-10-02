@@ -1,4 +1,4 @@
-name: Mobile App Bug
+name: Web App Bug
 description: Report a reproducible problem in the Opusloops PWA
 labels: ["bug"]
 body:
@@ -30,7 +30,7 @@ body:
     id: device
     attributes:
       label: Device and OS
-      placeholder: "iPhone 15, iOS 19.0"
+      placeholder: "Device, operating system, and viewport size"
     validations:
       required: true
 

@@ -26,7 +26,9 @@ cd Opusloops
 python3 -m http.server 4173 --directory mobile
 ```
 
-See [README.md](README.md) for the complete build overview.
+This serves only the frontend. The checked-in configuration targets the hosted AWS API, which requires an authorized account. It does not create a local backend. Use fixture-backed tests for contributions rather than production accounts or private audio. See [README.md](README.md#quick-start) for setup and test commands, and [ROADMAP.md](ROADMAP.md) for proposed priorities.
+
+Run `bash scripts/validate-mobile.sh` before submitting changes. For UI changes, also run the browser tests described in the README and include screenshots at mobile and desktop widths. Backend and worker changes need their corresponding tests under `infra/aws-backend/tests/` and `worker/tests/`.
 
 ## Pull request guidelines
 
@@ -34,7 +36,7 @@ See [README.md](README.md) for the complete build overview.
 2. Explain what changed, why it changed, and how you verified it.
 3. Add regression tests for bug fixes when practical.
 4. Preserve compatibility for locally saved projects unless a migration is explicitly designed and tested.
-5. Verify a narrow mobile viewport, touch input, offline reload, and the AWS Amplify production origin when relevant.
+5. Verify a narrow mobile viewport and desktop layout, relevant mouse/keyboard/touch input, reduced motion, and offline failure handling. Do not test against production accounts or deploy infrastructure without maintainer authorization.
 6. Never put secrets, private audio, API keys, or credentials in a commit or issue.
 
 Suggested branch names are `feat/<description>`, `fix/<description>`, and `docs/<description>`.
@@ -47,7 +49,16 @@ Suggested branch names are `feat/<description>`, `fix/<description>`, and `docs/
 - Keep primary controls touch-sized and avoid hover-only or right-click interactions.
 - Treat browser-storage, service-worker, and project-format changes as data-safety work.
 
-The retained C++ desktop source is non-production. Changes to it require an issue that explicitly scopes legacy compatibility or removal work; do not add desktop features to the mobile application.
+The retained C++ desktop source is non-production. Changes to it require an issue that explicitly scopes legacy compatibility or removal work. Desktop browser improvements belong in the responsive web app under `mobile/`.
+
+## Good first contributions
+
+- Reproduce a browser-specific issue using synthetic audio.
+- Add a focused regression test for an existing control.
+- Improve a keyboard label, focus state, or reduced-motion behavior.
+- Correct setup documentation after following it from a fresh clone.
+
+Describe the expected result and test plan before starting a larger audio or infrastructure change. Keep discussions respectful and focused on observable behavior. Never attach private user projects or audio without redistribution rights.
 
 ## Contribution terms
 

@@ -25,13 +25,17 @@ Treat browser-stored project data as untrusted input because extensions, develop
 
 ### Browser storage
 
-Projects save locally first. Clearing site data, private browsing, storage-pressure eviction, browser reset, or PWA uninstall can remove an unsigned-in project. Signed-in projects are reconciled with the user's private Supabase rows when the app reconnects. Account-scoped local caches must never be displayed after another user signs in. Destructive storage actions need explicit user confirmation and durable deletion tombstones.
+Projects save locally first. Clearing site data, private browsing, storage-pressure eviction, browser reset, or PWA uninstall can remove unsynced work. Signed-in projects reconcile with private AWS-backed PostgreSQL records when the app reconnects. Account-scoped caches must never be displayed after another user signs in. Destructive storage actions need explicit confirmation and durable deletion tombstones. Cached assets do not authorize studio access; an online session check is required.
 
 ### Cloud identity and data
 
-The PWA may contain only the dedicated Supabase URL and publishable key. Secret, service-role, management, and database credentials stay outside the browser and repository. Direct public signup is disabled. Early-access accounts require an email-bound, single-use invitation and receive a fixed Opusloops application claim; the atomic project-sync function requires that claim in addition to an authenticated user ID. Every exposed project table must revoke anonymous and authenticated direct writes and retain explicit owner-only Row Level Security policies. Email verification and recovery mail require production SMTP before they can be treated as trusted identity signals.
+The current backend uses Cognito, API Gateway, Lambda, private RDS PostgreSQL, and private S3 storage. The browser may contain public API configuration, but never AWS account keys, database credentials, or operator secrets. API requests must authenticate the user and enforce ownership through the application and database boundaries. Preserve owner-scoped Row Level Security and explicit RPC access. Direct public signup is disabled; hosted registration requires an invitation. Do not treat a client-provided email or user ID as proof of identity.
 
-The official production origin is the dedicated `https://opusloops.com` domain on AWS Amplify. Account sessions and account-scoped device caches must remain isolated to approved Opusloops origins; adding a preview or alternate host requires an explicit Auth redirect and Edge Function CORS review.
+The official production origin is `https://opusloops.com` on AWS Amplify. Sessions and account-scoped caches must remain isolated to approved origins. Adding a preview or alternate host requires review of authentication, API CORS, and S3 upload permissions. Historical Supabase migration files are not the current runtime architecture.
+
+### Uploaded audio and processing
+
+Treat ZIP contents, filenames, metadata, decoded audio, and callback payloads as untrusted. Preserve archive path checks, resource bounds, job isolation, approval binding, and callback authentication. Use temporary job-scoped credentials and private objects. Do not place signed object URLs, tokens, or private audio in public issues or logs. Only use synthetic or explicitly authorized audio for tests.
 
 ### Service worker and cache
 
@@ -47,7 +51,7 @@ This policy primarily covers the Opusloops PWA in `mobile/`, its deployment work
 
 ## Contributor checklist
 
-- Do not commit secret or service-role API keys, passwords, tokens, certificates, or private user content. A reviewed Supabase publishable client key is the only exception.
+- Do not commit AWS credentials, database secrets, passwords, tokens, certificates, or private user content. Public client configuration is not permission to expose credentials.
 - Validate untrusted input and preserve bounds checks.
 - Release timers, audio nodes, event listeners, and other resources when their owning view or playback session ends.
 - Review service-worker scope, cache updates, and local-storage migrations.

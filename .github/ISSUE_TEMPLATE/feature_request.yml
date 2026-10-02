@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a focused improvement to the mobile Opusloops workflow
+description: Suggest a focused improvement to the Opusloops music workflow
 labels: ["enhancement"]
 body:
   - type: textarea
@@ -14,7 +14,7 @@ body:
     id: proposal
     attributes:
       label: What would make it easier?
-      description: Keep the touch-first, built-in Web Audio, local-first product boundary in mind.
+      description: Describe the musical outcome, current workaround, and whether this is for mobile, desktop, or both. Check ROADMAP.md for related proposals.
     validations:
       required: true
 
