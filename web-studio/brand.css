@@ -1,0 +1,19 @@
+/* Shared OPUS identity: symbol only, warm orange accents. */
+:root,.studio-shell{--accent:#ee9b52;--brand-accent:#ee9b52}
+.opus-logo{display:inline-block;object-fit:contain;vertical-align:middle;flex-shrink:0}
+.studio-shell .topbar .brand{display:flex;align-items:center;justify-content:center;flex:0 0 52px;width:52px;min-width:52px;height:24px;padding:0;background:#292b2e;border-radius:3px}
+.studio-shell .topbar .opus-logo{width:44px;height:22px}
+#opus-welcome .welcome-brand{display:flex;align-items:center;gap:12px;min-height:44px}
+#opus-welcome .welcome-brand .opus-logo{width:88px;height:44px}
+#opus-welcome .welcome-brand span{margin-left:0;color:#ebc6a9}
+#opus-welcome .welcome-eyebrow,#opus-welcome .welcome-section-label,#opus-welcome .welcome-section-label.upcoming,#opus-welcome .welcome-dream>span{color:#ffc18b}
+#opus-welcome .welcome-section-label i{background:#ee9b52}
+#opus-welcome .welcome-hero{background:#15100d}
+#opus-welcome .welcome-art{background:radial-gradient(ellipse at 75% 40%,#a65d3966,transparent 65%)}
+#opus-welcome .welcome-hero:after{background:linear-gradient(90deg,#15100db8,transparent),linear-gradient(0deg,#0b0e15,transparent 50%)}
+#opus-welcome .welcome-dream{border-color:#ee9b5238;background:linear-gradient(110deg,#3c261470,#20183430)}
+#opus-welcome .welcome-dream p{color:#f4e4d8}
+#opus-welcome .welcome-enter{background:#ee9b52;color:#23180f}
+#opus-welcome .welcome-enter:hover{background:#ffc18b}
+#opus-welcome button:focus-visible{outline-color:#ee9b52}
+@media(max-width:600px){#opus-welcome .welcome-brand{gap:8px}#opus-welcome .welcome-brand .opus-logo{width:68px;height:34px}#opus-welcome .welcome-brand span{font-size:8px;letter-spacing:1px;margin:0}}

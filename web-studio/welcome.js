@@ -9,7 +9,7 @@ welcome.innerHTML = `
     <header class="welcome-hero">
       <div class="welcome-art" aria-hidden="true"></div>
       <div class="welcome-hero-content">
-        <div class="welcome-brand">OPUS LOOPS <span>EXPERIMENTAL STUDIO</span></div>
+        <div class="welcome-brand"><img class="opus-logo" src="assets/opus-symbol.png" alt="OPUS LOOPS" width="88" height="44"> <span>EXPERIMENTAL STUDIO</span></div>
         <p class="welcome-eyebrow">A NEW FREQUENCY OF CREATION</p>
         <h1 id="welcome-title">Make what you hear<br>in your head.</h1>
         <p class="welcome-intro">An experimental AI DAW. A browser-sized doorway to a limitless studio.</p>
@@ -50,7 +50,7 @@ function openWelcome() {
   if (welcome.open) return;
   previousFocus = document.activeElement;
   welcome.showModal();
-  try { dispose = mountGradientASCII(welcome.querySelector('.welcome-art'), { dpr: 1.5, speed: 0.55 }); }
+  try { dispose = mountGradientASCII(welcome.querySelector('.welcome-art'), { colors: ['#9b4621', '#fff1df', '#ffc18b', '#ee9b52'], dpr: 1.5, speed: 0.55 }); }
   catch (error) { console.warn('Welcome animation unavailable; using static background.'); }
 }
 welcome.querySelector('.welcome-close').addEventListener('click', () => welcome.close());
