@@ -1,72 +1,28 @@
-import { mountGhostFibers } from './ghost-fibers.js';
-import { mountGradientASCII } from './gradient-ascii.js';
 
 const welcome = document.createElement('dialog');
 welcome.id = 'opus-welcome';
 welcome.setAttribute('aria-labelledby', 'welcome-title');
 welcome.innerHTML = `
-  <button class="welcome-close" aria-label="Close welcome" autofocus>×</button>
+  <div class="welcome-top"><div class="welcome-brand"><img class="opus-logo" src="assets/opus-symbol-teal.png" alt="OPUS LOOPS" width="64" height="32"><span>OPUS LOOPS</span></div><button class="welcome-close" aria-label="Close welcome" autofocus><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></div>
   <div class="welcome-scroll">
-    <header class="welcome-hero">
-      <div class="welcome-art" aria-hidden="true"></div>
-      <div class="welcome-hero-content">
-        <div class="welcome-brand"><img class="opus-logo" src="assets/opus-symbol.png" alt="OPUS LOOPS" width="88" height="44"> <span>EXPERIMENTAL STUDIO</span></div>
-        <p class="welcome-eyebrow">A NEW FREQUENCY OF CREATION</p>
-        <h1 id="welcome-title">Make what you hear<br>in your head.</h1>
-        <p class="welcome-intro">An experimental AI DAW. A browser-sized doorway to a limitless studio.</p>
-      </div>
-    </header>
-    <div class="welcome-body">
-      <p class="welcome-story">We’re studying and reverse-engineering the workflows of beloved desktop DAWs to reimagine music-making on the web. Familiar creative tools today. A studio that understands your imagination tomorrow.</p>
-      <div class="welcome-features">
-        <section aria-labelledby="welcome-built">
-          <p class="welcome-section-label"><i></i> READY TO EXPLORE</p>
-          <h2 id="welcome-built">The studio is already alive.</h2>
-          <ul>
-            <li><strong>Find your flow</strong><span>Launch clips and scenes, then shape performances in the Arrangement.</span></li>
-            <li><strong>Turn ideas into sound</strong><span>MIDI piano roll, synth, sampler, drum rack, and audio & MIDI recording.</span></li>
-            <li><strong>Shape every detail</strong><span>Audio editing and warping, automation, mixer sends, EQ, compression, delay and reverb.</span></li>
-            <li><strong>Keep what you create</strong><span>Local autosave, project files, undo & redo, WAV mixes and stems, and MIDI export.</span></li>
-          </ul>
-        </section>
-        <section aria-labelledby="welcome-next">
-          <p class="welcome-section-label upcoming">THE NEXT HORIZON · UPCOMING</p>
-          <h2 id="welcome-next">From intention to expression.</h2>
-          <ul>
-            <li><strong>A producer you can talk to</strong><span>Describe a feeling. Imagine agents composing, arranging and evolving a track with you.</span></li>
-            <li><strong>Mix at the speed of thought</strong><span>Ask for warmth, space or impact. A vision for natural-language edits across your entire session.</span></li>
-            <li><strong>A deeper creative universe</strong><span>Advanced routing, take lanes, comping, expressive instruments, racks and macros.</span></li>
-            <li><strong>A studio without an edge</strong><span>Connected collaborators, controller integration, plugin bridges and creative agents working together.</span></li>
-          </ul>
-        </section>
-      </div>
-      <aside class="welcome-dream"><span>IMAGINE SAYING</span><p>“Make it feel like driving through a city at 2 AM.<br>Give the drums a heartbeat. Let the chorus take off.”</p><small>The agentic studio is our north star. These capabilities are in development.</small></aside>
-      <footer class="welcome-footer"><p>Early. Evolving. Yours to explore.<span>Projects save in this browser. Download a project file to keep a portable copy.</span></p><button class="welcome-enter"><span class="welcome-button-art" aria-hidden="true"></span><span class="welcome-button-label">Enter Studio <span aria-hidden="true">↗</span></span></button></footer>
-    </div>
-  </div>`;
+    <header class="welcome-hero"><div class="welcome-art" aria-hidden="true"></div><div class="welcome-hero-content"><p class="welcome-eyebrow"><i></i> AN EXPERIMENTAL BROWSER STUDIO</p><h1 id="welcome-title">Less between you<br>and the music.</h1><p class="welcome-intro">Desktop-inspired workflows. A lightweight canvas.<br>A new space to follow your sound.</p><div class="welcome-wave" aria-hidden="true">${Array.from({length:32},(_,i)=>`<i style="--i:${i};--h:${12+Math.round(Math.sin(i*.7)**2*27)}px"></i>`).join('')}</div></div></header>
+    <div class="welcome-body"><div class="welcome-features"><section aria-labelledby="welcome-built"><p class="welcome-section-label">01 / AVAILABLE NOW</p><h2 id="welcome-built">Start with an idea.</h2><ul><li>Session clips & arrangement</li><li>Audio & MIDI recording</li><li>Instruments, effects & automation</li><li>Mixing, project files & stem export</li></ul></section><section aria-labelledby="welcome-next"><p class="welcome-section-label">02 / ON THE HORIZON</p><h2 id="welcome-next">Create in conversation.</h2><p>Agents that compose, arrange and mix through natural language. More expressive tools. A connected creative studio.</p><span class="welcome-status">In development</span></section></div><aside class="welcome-dream"><span>JUST IMAGINE</span><p>“Warmer bass. More space.<br>Make the chorus lift.”</p></aside></div>
+  </div>
+  <footer class="welcome-footer"><p>Your ideas stay yours.<span>Saved in this browser. Export a copy to keep.</span></p><button class="welcome-enter">Enter Studio <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></footer>`;
 document.body.append(welcome);
-let dispose;
-let disposeButton;
 let previousFocus;
 function openWelcome() {
   if (welcome.open) return;
   previousFocus = document.activeElement;
   welcome.showModal();
-  try { dispose = mountGradientASCII(welcome.querySelector('.welcome-art'), { colors: ['#9b4621', '#fff1df', '#ffc18b', '#ee9b52'], dpr: 1.5, speed: 0.55 }); }
-  catch (error) { console.warn('Welcome animation unavailable; using static background.'); }
-  try { disposeButton = mountGhostFibers(welcome.querySelector('.welcome-button-art'), { glowColor: '#ee9b52', lineColor: '#ffe7c9', secondaryColor: '#c25f25', layers: 3, threads: 48, density: 0.5, thickness: 0.6, depthOfField: 0.35, rotation: 12, brightness: 1.3, grain: 0, intro: false, pulseOnClick: false, dpr: 1.5 }); }
-  catch (error) { console.warn('Button animation unavailable; using static background.'); }
+
 }
 welcome.querySelector('.welcome-close').addEventListener('click', () => welcome.close());
 welcome.querySelector('.welcome-enter').addEventListener('click', () => welcome.close());
 // Keep DAW keyboard commands from acting on the session behind the dialog.
 welcome.addEventListener('keydown', event => event.stopPropagation());
 welcome.addEventListener('close', () => {
-  dispose?.();
-  disposeButton?.();
-  disposeButton = undefined;
   welcome.querySelectorAll('canvas').forEach(canvas => canvas.remove());
-  dispose = undefined;
   if (previousFocus instanceof HTMLElement && previousFocus !== document.body) previousFocus.focus();
   else document.getElementById('play')?.focus();
 });

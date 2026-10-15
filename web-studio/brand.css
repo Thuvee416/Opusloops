@@ -1,45 +1,5 @@
-/* Shared OPUS identity: symbol only, warm orange accents. */
-:root,.studio-shell{--accent:#ee9b52;--brand-accent:#ee9b52}
+/* Shared transparent teal identity. */
+:root,.studio-shell{--accent:#36b8a6;--brand-accent:#36b8a6}
 .opus-logo{display:inline-block;object-fit:contain;vertical-align:middle;flex-shrink:0}
-.studio-shell .topbar .brand{display:flex;align-items:center;justify-content:center;flex:0 0 52px;width:52px;min-width:52px;height:24px;padding:0;background:#292b2e;border-radius:3px}
+.studio-shell .topbar .brand{display:flex;align-items:center;justify-content:center;flex:0 0 52px;width:52px;min-width:52px;height:24px;padding:0;background:transparent;border:0;box-shadow:none}
 .studio-shell .topbar .opus-logo{width:44px;height:22px}
-#opus-welcome .welcome-brand{display:flex;align-items:center;gap:12px;min-height:44px}
-#opus-welcome .welcome-brand .opus-logo{width:88px;height:44px}
-#opus-welcome .welcome-brand span{margin-left:0;color:#ebc6a9}
-#opus-welcome .welcome-eyebrow,#opus-welcome .welcome-section-label,#opus-welcome .welcome-section-label.upcoming,#opus-welcome .welcome-dream>span{color:#ffc18b}
-#opus-welcome .welcome-section-label i{background:#ee9b52}
-#opus-welcome .welcome-hero{background:#15100d}
-#opus-welcome .welcome-art{background:radial-gradient(ellipse at 75% 40%,#a65d3966,transparent 65%)}
-#opus-welcome .welcome-hero:after{background:linear-gradient(90deg,#15100db8,transparent),linear-gradient(0deg,#0b0e15,transparent 50%)}
-#opus-welcome .welcome-dream{border-color:#ee9b5238;background:linear-gradient(110deg,#3c261470,#20183430)}
-#opus-welcome .welcome-dream p{color:#f4e4d8}
-#opus-welcome .welcome-enter{background:#ee9b52;color:#23180f}
-#opus-welcome .welcome-enter:hover{background:#ffc18b}
-#opus-welcome button:focus-visible{outline-color:#ee9b52}
-@media(max-width:600px){#opus-welcome .welcome-brand{gap:8px}#opus-welcome .welcome-brand .opus-logo{width:68px;height:34px}#opus-welcome .welcome-brand span{font-size:8px;letter-spacing:1px;margin:0}}
-/* Compact welcome: 30% smaller desktop window, with content scrolling inside. */
-#opus-welcome{width:min(700px,calc(100vw - 32px));max-height:calc((100dvh - 48px)*.7);border-radius:12px}
-#opus-welcome .welcome-scroll{max-height:calc((100dvh - 48px)*.7 - 2px)}
-#opus-welcome .welcome-hero{min-height:260px}
-#opus-welcome .welcome-hero-content{padding:22px 30px 26px}
-#opus-welcome .welcome-eyebrow{margin-top:28px;margin-bottom:12px}
-#opus-welcome h1{font-size:clamp(30px,4vw,42px);letter-spacing:-1.5px}
-#opus-welcome .welcome-intro{font-size:12px;margin-top:16px}
-#opus-welcome .welcome-body{padding:0 30px 24px}
-#opus-welcome .welcome-story{font-size:12px;margin-bottom:24px}
-#opus-welcome .welcome-features{gap:24px}
-#opus-welcome h2{font-size:17px;margin-bottom:16px}
-#opus-welcome .welcome-dream{padding:18px 20px}
-#opus-welcome .welcome-dream p{font-size:17px}
-#opus-welcome .welcome-close{right:12px;top:12px;width:32px;height:32px;font-size:24px}
-@media(max-width:600px){#opus-welcome{width:calc(100vw - 24px);max-height:75dvh}#opus-welcome .welcome-scroll{max-height:calc(75dvh - 2px)}#opus-welcome .welcome-hero-content{padding:24px}#opus-welcome .welcome-body{padding:0 24px 24px}#opus-welcome .welcome-features{grid-template-columns:1fr}}
-
-/* Isolate modal footer from the light DAW footer theme. */
-#opus-welcome .welcome-footer{background:transparent;color:#d4deee;border:0;border-top:1px solid #ffffff18;padding:18px 0 0;min-height:68px;height:auto;grid-area:auto}
-#opus-welcome .welcome-footer p{color:#d4deee}#opus-welcome .welcome-footer p span{color:#a6afbf}
-#opus-welcome .welcome-enter{position:relative;isolation:isolate;overflow:hidden;min-width:174px;min-height:50px;padding:14px 18px;background:#24180f;border:1px solid #ee9b5280;color:#fff2e6;border-radius:8px;font-size:12px;box-shadow:inset 0 0 22px #ee9b5210}
-#opus-welcome .welcome-enter:hover{background:#302014;border-color:#ffc18b}
-#opus-welcome .welcome-enter .welcome-button-art{position:absolute;inset:0;display:block;margin:0;pointer-events:none;opacity:.8}
-#opus-welcome .ghost-fibers-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-#opus-welcome .welcome-enter .welcome-button-label{position:relative;z-index:1;display:inline;margin:0;font-weight:600;text-shadow:0 1px 6px #000,0 0 10px #000}
-#opus-welcome .welcome-button-label>span{margin-left:16px}
