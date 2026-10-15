@@ -1,3 +1,4 @@
+import { mountGhostFibers } from './ghost-fibers.js';
 import { mountGradientASCII } from './gradient-ascii.js';
 
 const welcome = document.createElement('dialog');
@@ -40,11 +41,12 @@ welcome.innerHTML = `
         </section>
       </div>
       <aside class="welcome-dream"><span>IMAGINE SAYING</span><p>“Make it feel like driving through a city at 2 AM.<br>Give the drums a heartbeat. Let the chorus take off.”</p><small>The agentic studio is our north star. These capabilities are in development.</small></aside>
-      <footer class="welcome-footer"><p>Early. Evolving. Yours to explore.<span>Projects save in this browser. Download a project file to keep a portable copy.</span></p><button class="welcome-enter">Enter the studio <span aria-hidden="true">↗</span></button></footer>
+      <footer class="welcome-footer"><p>Early. Evolving. Yours to explore.<span>Projects save in this browser. Download a project file to keep a portable copy.</span></p><button class="welcome-enter"><span class="welcome-button-art" aria-hidden="true"></span><span class="welcome-button-label">Enter Studio <span aria-hidden="true">↗</span></span></button></footer>
     </div>
   </div>`;
 document.body.append(welcome);
 let dispose;
+let disposeButton;
 let previousFocus;
 function openWelcome() {
   if (welcome.open) return;
@@ -52,6 +54,8 @@ function openWelcome() {
   welcome.showModal();
   try { dispose = mountGradientASCII(welcome.querySelector('.welcome-art'), { colors: ['#9b4621', '#fff1df', '#ffc18b', '#ee9b52'], dpr: 1.5, speed: 0.55 }); }
   catch (error) { console.warn('Welcome animation unavailable; using static background.'); }
+  try { disposeButton = mountGhostFibers(welcome.querySelector('.welcome-button-art'), { glowColor: '#ee9b52', lineColor: '#ffe7c9', secondaryColor: '#c25f25', layers: 3, threads: 48, density: 0.5, thickness: 0.6, depthOfField: 0.35, rotation: 12, brightness: 1.3, grain: 0, intro: false, pulseOnClick: false, dpr: 1.5 }); }
+  catch (error) { console.warn('Button animation unavailable; using static background.'); }
 }
 welcome.querySelector('.welcome-close').addEventListener('click', () => welcome.close());
 welcome.querySelector('.welcome-enter').addEventListener('click', () => welcome.close());
@@ -59,6 +63,9 @@ welcome.querySelector('.welcome-enter').addEventListener('click', () => welcome.
 welcome.addEventListener('keydown', event => event.stopPropagation());
 welcome.addEventListener('close', () => {
   dispose?.();
+  disposeButton?.();
+  disposeButton = undefined;
+  welcome.querySelectorAll('canvas').forEach(canvas => canvas.remove());
   dispose = undefined;
   if (previousFocus instanceof HTMLElement && previousFocus !== document.body) previousFocus.focus();
   else document.getElementById('play')?.focus();

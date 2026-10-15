@@ -33,3 +33,13 @@
 #opus-welcome .welcome-dream p{font-size:17px}
 #opus-welcome .welcome-close{right:12px;top:12px;width:32px;height:32px;font-size:24px}
 @media(max-width:600px){#opus-welcome{width:calc(100vw - 24px);max-height:75dvh}#opus-welcome .welcome-scroll{max-height:calc(75dvh - 2px)}#opus-welcome .welcome-hero-content{padding:24px}#opus-welcome .welcome-body{padding:0 24px 24px}#opus-welcome .welcome-features{grid-template-columns:1fr}}
+
+/* Isolate modal footer from the light DAW footer theme. */
+#opus-welcome .welcome-footer{background:transparent;color:#d4deee;border:0;border-top:1px solid #ffffff18;padding:18px 0 0;min-height:68px;height:auto;grid-area:auto}
+#opus-welcome .welcome-footer p{color:#d4deee}#opus-welcome .welcome-footer p span{color:#a6afbf}
+#opus-welcome .welcome-enter{position:relative;isolation:isolate;overflow:hidden;min-width:174px;min-height:50px;padding:14px 18px;background:#24180f;border:1px solid #ee9b5280;color:#fff2e6;border-radius:8px;font-size:12px;box-shadow:inset 0 0 22px #ee9b5210}
+#opus-welcome .welcome-enter:hover{background:#302014;border-color:#ffc18b}
+#opus-welcome .welcome-enter .welcome-button-art{position:absolute;inset:0;display:block;margin:0;pointer-events:none;opacity:.8}
+#opus-welcome .ghost-fibers-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#opus-welcome .welcome-enter .welcome-button-label{position:relative;z-index:1;display:inline;margin:0;font-weight:600;text-shadow:0 1px 6px #000,0 0 10px #000}
+#opus-welcome .welcome-button-label>span{margin-left:16px}
