@@ -29,7 +29,7 @@ provenance = {
     .replace("+00:00", "Z"),
 }
 
-Path("mobile/version.json").write_text(
+(Path(os.environ.get("OPUS_ARTIFACT_DIR", "mobile")) / "version.json").write_text(
     json.dumps(provenance, separators=(",", ":")) + "\n",
     encoding="utf-8",
 )

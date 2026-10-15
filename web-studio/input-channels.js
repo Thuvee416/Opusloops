@@ -1,0 +1,3 @@
+export function inputChannelSelection(value='stereo:0'){const m=/^(mono|stereo):(\d+)$/.exec(value);if(!m)throw new Error('Invalid input channel selection.');const start=Number(m[2]),mono=m[1]==='mono';if(start>31||(!mono&&(start>30||start%2)))throw new Error('Invalid input channel selection.');return {start,mono,required:start+(mono?1:2)};}
+export function inputChannelsAvailable(count,selection){return count>=selection.required||(!selection.mono&&selection.start===0&&count===1);}
+export function selectedInputChannels(input,selection){const left=input[selection.start];return [left,selection.mono?left:input[selection.start+1]??(selection.start===0?left:undefined)];}

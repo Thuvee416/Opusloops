@@ -1,0 +1,22 @@
+export const AUTO_PAN_DIVISIONS=[['1/16',.25],['1/8',.5],['1/4',1],['1/2',2],['1 bar',4],['2 bars',8],['4 bars',16],['1/16 triplet',1/6],['1/8 triplet',1/3],['1/4 triplet',2/3],['1/8 dotted',.75],['1/4 dotted',1.5],['1/2 dotted',3]];
+export function autoPanTiming(params,bpm,beat=0){const beats=AUTO_PAN_DIVISIONS[params.division??2]?.[1];if(!beats||!Number.isFinite(bpm)||bpm<40||bpm>240||!Number.isFinite(beat)||beat<0)throw new Error('Invalid Auto Pan sync timing.');return {frequency:bpm/60/beats,phase:((beat/beats)%1)*360};}
+// Band-limited periodic LFOs. Phase is measured in degrees; both channels
+// share frequency while retaining an independent phase relationship.
+export function autoPanCoefficients(wave,phase=0,harmonics=64){
+  if(!Number.isInteger(wave)||wave<0||wave>3||!Number.isFinite(phase))throw new Error('Invalid Auto Pan waveform or phase.');
+  const real=new Float32Array(harmonics+1),imag=new Float32Array(harmonics+1),angle=phase*Math.PI/180;
+  for(let k=1;k<=harmonics;k++){let amplitude=0;if(wave===0)amplitude=k===1?1:0;else if(wave===1&&k%2)amplitude=8/Math.PI**2*((k%4===1)?1:-1)/k**2;else if(wave===2)amplitude=2/Math.PI/k;else if(wave===3&&k%2)amplitude=4/Math.PI/k;real[k]=amplitude*Math.sin(k*angle);imag[k]=amplitude*Math.cos(k*angle);}return {real,imag};
+}
+export function autoPanGraph(ctx,node,input,output,params,bind,automated=()=>false,getBpm=()=>120){
+  const p={mode:0,division:2,...params},split=node(ctx.createChannelSplitter(2)),merge=node(ctx.createChannelMerger(2)),gains=[],depths=[],rateBindings=[],sources=new Set();let oscillators=[],cursor=null,bpm=getBpm();
+  const frequency=()=>p.mode?autoPanTiming(p,bpm).frequency:p.rate;
+  let active=false;input.connect(output);const activate=()=>{if(active)return;active=true;input.disconnect(output);input.channelCount=2;input.channelCountMode='explicit';input.channelInterpretation='speakers';input.connect(split);merge.connect(output);};const deactivate=()=>{if(!active)return;active=false;input.disconnect(split);merge.disconnect(output);input.channelCountMode='max';input.connect(output);};
+  const wave=(source)=>{const {real,imag}=autoPanCoefficients(p.wave,p.offset+source.channel*p.phase+source.phase);source.osc.setPeriodicWave(ctx.createPeriodicWave(real,imag));};
+  const retire=(source,time)=>{source.stop=Math.min(source.stop,time);try{source.osc.stop(source.stop);}catch{}};
+  const reset=(time,phase)=>{for(const source of sources)retire(source,time);oscillators=[0,1].map(channel=>{const osc=ctx.createOscillator(),source={osc,channel,phase,stop:Infinity};sources.add(source);osc.onended=()=>{osc.disconnect();sources.delete(source);};osc.frequency.value=frequency();wave(source);osc.connect(depths[channel]);osc.start(time);if(rateBindings[channel])rateBindings[channel].param=osc.frequency;else rateBindings[channel]=bind('rate',osc.frequency,v=>p.mode?frequency():v,'linear',v=>p.mode?p.rate:v);return source;});};
+  for(let i=0;i<2;i++){const gain=node(ctx.createGain()),depth=node(ctx.createGain());gain.gain.value=1-p.amount/200;depth.gain.value=p.amount/200;split.connect(gain,i);gain.connect(merge,0,i);depth.connect(gain.gain);gains.push(gain);depths.push(depth);bind('amount',gain.gain,v=>1-v/200,'linear',v=>(1-v)*200);bind('amount',depth.gain,v=>v/200);}
+  reset(ctx.currentTime,0);if(p.amount||automated())activate();
+  const setWave=()=>{for(const source of sources)wave(source);};
+  const setFrequency=()=>{for(const {osc}of oscillators){osc.frequency.cancelScheduledValues(ctx.currentTime);osc.frequency.setTargetAtTime(frequency(),ctx.currentTime,.015);}};
+  return {activate,sync(start,length,time,spb){if(!p.mode)return;const nextBpm=60/spb,continuous=cursor&&Math.abs(cursor.end-start)<1e-7&&Math.abs(cursor.time-time)<1e-7&&bpm===nextBpm;bpm=nextBpm;if(!continuous)reset(time,autoPanTiming(p,bpm,start).phase);cursor={end:start+length,time:time+length*spb};},dispose(){for(const source of sources){retire(source,ctx.currentTime);source.osc.disconnect();}sources.clear();},controls:{amount:v=>{p.amount=v;if(v||automated())activate();else deactivate();for(const gain of gains)gain.gain.setTargetAtTime(1-v/200,ctx.currentTime,.015);for(const depth of depths)depth.gain.setTargetAtTime(v/200,ctx.currentTime,.015);},rate:v=>{p.rate=v;setFrequency();},mode:v=>{p.mode=v;bpm=getBpm();cursor=null;if(!v)reset(ctx.currentTime,0);else setFrequency();},division:v=>{p.division=v;bpm=getBpm();cursor=null;if(p.mode)setFrequency();},phase:v=>{p.phase=v;setWave();},offset:v=>{p.offset=v;setWave();},wave:v=>{p.wave=v;setWave();}}};
+}

@@ -1,0 +1,1 @@
+export function recordingStartPlan(now,bpm,bars=0){if(!Number.isFinite(now)||now<0||!Number.isFinite(bpm)||bpm<40||bpm>240||![0,1,2,4].includes(bars))throw new Error('Invalid recording count-in.');const beat=60/bpm,lead=bars?.05:0,clicks=Array.from({length:bars*4},(_,i)=>({time:now+lead+i*beat,accent:i%4===0}));return {start:now+lead+bars*4*beat,clicks};}

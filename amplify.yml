@@ -3,9 +3,9 @@ frontend:
   phases:
     build:
       commands:
-        - bash scripts/validate-mobile.sh
-        - python3 scripts/stamp-amplify-version.py
+        - python3 scripts/validate-web-studio.py
+        - OPUS_ARTIFACT_DIR=web-studio python3 scripts/stamp-amplify-version.py
   artifacts:
-    baseDirectory: mobile
+    baseDirectory: web-studio
     files:
       - '**/*'
