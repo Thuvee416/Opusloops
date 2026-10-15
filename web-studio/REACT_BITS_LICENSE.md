@@ -1,6 +1,6 @@
 # React Bits notice
 
-The GradientASCII welcome background in `gradient-ascii.js` and GhostFibers button effect in `ghost-fibers.js` is adapted from the user-supplied React Bits component: <https://github.com/DavidHDev/react-bits>.
+The SoftAurora welcome effect in `soft-aurora.js`, GradientASCII welcome background in `gradient-ascii.js` and GhostFibers button effect in `ghost-fibers.js` is adapted from the user-supplied React Bits component: <https://github.com/DavidHDev/react-bits>.
 
 ## MIT + Commons Clause License Condition v1.0
 
