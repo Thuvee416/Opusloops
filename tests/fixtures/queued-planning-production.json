@@ -1,0 +1,540 @@
+{
+  "baseline": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145332.404.opusloop",
+  "baselineSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+  "cases": [
+    {
+      "step": "complex-composition",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145351.351.opusloop",
+      "wholeProjectOracle": true,
+      "firstSceneCorrect": true,
+      "unmentionedDataPreserved": true,
+      "repairs": 0
+    },
+    {
+      "step": "complex-one-undo",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145416.607.opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "ordinary-scene-one-history-failure",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145434.609.opusloop",
+      "passed": false,
+      "firstSceneCorrect": true,
+      "error": "Fresh creation inherited prior Toggle/Gate and legato launch settings although the current request did not ask for them."
+    },
+    {
+      "step": "restore-after-unrequested-launch-settings",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145515.719.opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "rectangle-copy-before-history-fix",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145512.457.opusloop",
+      "wholeProjectOracle": true,
+      "sourceFile": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145434.609.opusloop",
+      "note": "Copy was exact and independent relative to its source; source composition had the separately recorded inherited-launch failure and was fully unwound."
+    },
+    {
+      "step": "fixed-release-baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150147.390.opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "fixed-complex-composition",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150207.220.opusloop",
+      "wholeProjectOracle": true,
+      "firstSceneCorrect": true,
+      "repairs": 0
+    },
+    {
+      "step": "fixed-complex-one-undo",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150209.639.opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "history-guard-all-repairs-rejected",
+      "release": "0.149.1",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150357.555.opusloop",
+      "passed": false,
+      "safelyRejected": true,
+      "byteIdenticalBaseline": true,
+      "reason": "First and final attempts inherited prior launch settings; intermediate retry returned invalid tool arguments. No plan was applied."
+    },
+    {
+      "step": "fresh-context-default-composition-with-prior-history",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150536.771.opusloop",
+      "wholeProjectOracle": true,
+      "defaultLaunchPreserved": true,
+      "firstSceneCorrect": true,
+      "repairs": 0
+    },
+    {
+      "step": "final-backend-numbered-rectangle-copy",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150616.651.opusloop",
+      "wholeProjectOracle": true,
+      "independentCopyIds": true,
+      "repairs": 0,
+      "selectionPreservation": false
+    },
+    {
+      "step": "actual-scene-four-engine-launch",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150746.835.opusloop",
+      "wholeProjectUnchanged": true,
+      "receipt": {
+        "command": "launch_scene",
+        "state": {
+          "sessionPerformance": true,
+          "cancelledToggle": false,
+          "mode": "session",
+          "playing": true,
+          "position": 0,
+          "clockBeat": 0,
+          "activeScene": 3,
+          "sceneActivationBeat": 0,
+          "sceneScheduledAhead": false,
+          "queuedScene": null,
+          "tracks": [
+            {
+              "trackId": "840695ce-0c8b-45be-8b62-bd36b471caea",
+              "name": "Audio 1",
+              "clipId": null,
+              "clipName": null,
+              "slot": 3,
+              "activationBeat": 0,
+              "scheduledAhead": false,
+              "overridesArrangement": true,
+              "pending": null
+            },
+            {
+              "trackId": "80cb3fd8-ea66-4035-a3a6-4c46849c2ed0",
+              "name": "QA Property A",
+              "clipId": "77e1953e-0cea-4c64-ba72-df5cc1a0d1a8",
+              "clipName": "QA Clip A",
+              "slot": 3,
+              "activationBeat": 0,
+              "scheduledAhead": false,
+              "overridesArrangement": true,
+              "pending": null
+            },
+            {
+              "trackId": "2ec421ea-89c8-4591-8e16-9b0ca5072aa7",
+              "name": "QA Property B",
+              "clipId": "690a011a-4638-4c60-a1c5-fec402c1df6a",
+              "clipName": "QA Clip B",
+              "slot": 3,
+              "activationBeat": 0,
+              "scheduledAhead": false,
+              "overridesArrangement": true,
+              "pending": null
+            }
+          ]
+        }
+      },
+      "repairs": 0
+    },
+    {
+      "step": "copy-one-undo",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150749.131.opusloop",
+      "byteIdenticalPlainComposition": true
+    },
+    {
+      "step": "composition-one-undo",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150751.226.opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "final-release-baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150909.324.opusloop",
+      "release": "0.149.2",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "final-release-cancel-running",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T150941.527.opusloop",
+      "release": "0.149.2",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "final-release-stale-selection-rejected",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T151008.018.opusloop",
+      "release": "0.149.2",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "final-release-one-undo",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T151035.355.opusloop",
+      "release": "0.149.2",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "final-release-positive-composition",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T151033.184.opusloop",
+      "release": "0.149.2",
+      "wholeProjectOracle": true,
+      "defaultLaunchPreserved": true,
+      "firstSceneCorrect": true,
+      "repairs": 0
+    },
+    {
+      "step": "final-release-reload-recovery",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T151137.783.opusloop",
+      "byteIdenticalBaseline": true,
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+      "layout": {
+        "view": "session",
+        "detailPanel": "clip",
+        "detailHeightPercent": 20,
+        "odesaExpanded": true,
+        "playing": false,
+        "tempo": 120
+      },
+      "consoleErrors": []
+    }
+  ],
+  "fixedRelease": "0.149.1",
+  "featureCommit": "03bfae024fa04f040bda0477d19e1a63214f170a",
+  "jobId": "146",
+  "beforeFreshContextJobMetadata": [
+    {
+      "createdAt": 1792350108786,
+      "finishedAt": 1792350115181,
+      "phase": "complete",
+      "startedAt": 1792350109043,
+      "requestId": "66decb17-b6e3-4abd-acfd-d95056b9f7b6",
+      "status": "succeeded"
+    },
+    {
+      "phase": "failed",
+      "startedAt": 1792350138800,
+      "errorJson": "{\"code\":\"invalid_agent_plan\",\"message\":\"The model did not return valid tool arguments. Repair the plan using the supported action schema.\",\"status\":502}",
+      "status": "failed",
+      "createdAt": 1792350138652,
+      "finishedAt": 1792350185732,
+      "requestId": "8aa94284-536d-4209-b577-7a0105a63199"
+    },
+    {
+      "phase": "failed",
+      "startedAt": 1792350187000,
+      "errorJson": "{\"code\":\"invalid_agent_plan\",\"message\":\"This Request Creates Fresh MIDI Clips With Default Launch Settings And Says No Other Edits. Omit All Launch And Legato Changes; Do Not Carry Settings From Earlier Conversation. Return A Complete Replacement Plan.\",\"status\":502}",
+      "status": "failed",
+      "createdAt": 1792350186872,
+      "finishedAt": 1792350192316,
+      "requestId": "029c7a94-3eca-4e8e-9b4c-ae7011cb9773"
+    },
+    {
+      "phase": "failed",
+      "startedAt": 1792350130806,
+      "errorJson": "{\"code\":\"invalid_agent_plan\",\"message\":\"This Request Creates Fresh MIDI Clips With Default Launch Settings And Says No Other Edits. Omit All Launch And Legato Changes; Do Not Carry Settings From Earlier Conversation. Return A Complete Replacement Plan.\",\"status\":502}",
+      "status": "failed",
+      "createdAt": 1792350130674,
+      "finishedAt": 1792350136644,
+      "requestId": "1876a563-1e8f-4808-bdc1-7029e91176a2"
+    }
+  ],
+  "finalApiRelease": "0.149.2",
+  "clientUnderTest": "0.149.1, same executable client files as 0.149.2; release.json and AGENT.md differ",
+  "knownLimitations": [
+    "Copy edits select their destination clips by the existing UI behavior, despite the explicit do-not-change-selection clause. Complete project copy and independence passed; exact selection preservation did not.",
+    "Arbitrary language fidelity, full DAW parity and physical/perceptual music verification remain incomplete."
+  ],
+  "finalRelease": "0.149.2",
+  "finalFeatureCommit": "90fccb3c6382bb1de5c0a6602d8f62dd725eb81a",
+  "finalFeatureJobId": "147",
+  "finalQueueJobs": [
+    {
+      "createdAt": 1792350550883,
+      "finishedAt": 1792350551515,
+      "phase": "cancelled",
+      "startedAt": 1792350551055,
+      "requestId": "44835a47-e20b-401e-8546-aa50b3f46338",
+      "status": "cancelled"
+    },
+    {
+      "createdAt": 1792350582738,
+      "finishedAt": 1792350587386,
+      "phase": "complete",
+      "startedAt": 1792350582852,
+      "requestId": "5e0473f1-759e-4bb6-bfac-07d0e372673c",
+      "status": "succeeded"
+    },
+    {
+      "createdAt": 1792350609896,
+      "finishedAt": 1792350614495,
+      "phase": "complete",
+      "startedAt": 1792350610014,
+      "requestId": "d17d3660-f521-425c-a1e5-d89e5261f8ba",
+      "status": "succeeded"
+    }
+  ],
+  "screenshot": "/tmp/opus-queued-production-final.png",
+  "consoleErrors": [],
+  "finalHosting": {
+    "jobId": "147",
+    "commit": "90fccb3c6382bb1de5c0a6602d8f62dd725eb81a",
+    "versions": {
+      "opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "90fccb3c6382bb1de5c0a6602d8f62dd725eb81a",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000147",
+        "builtAt": "2026-10-18T19:06:40.183124Z"
+      },
+      "www.opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "90fccb3c6382bb1de5c0a6602d8f62dd725eb81a",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000147",
+        "builtAt": "2026-10-18T19:06:40.183124Z"
+      }
+    },
+    "assets": [
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-actions.js",
+        "sha256": "9cd8c6c9c17fd60e96a54823f5cd811425f6f68b1eac57c1cc93cadd0f9b8725",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/release.json",
+        "sha256": "e0d39d3f3d6728f29ec49f113a268c1543f5831051e95e4707616377a753b588",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/midi-creation-requirements.js",
+        "sha256": "37e7f3525ed9a7f862b2a554279745b404f3d8acfe46279b0232e08cfbca225a",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/queued-planning.js",
+        "sha256": "07a00a627d149588c0934a90e366142043060d1fa02f908d073246c0768c841b",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-schema.js",
+        "sha256": "694436d08a65b36670398cb926fded629322c327e5cbcf3ecea853df94f002c0",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-session.js",
+        "sha256": "841b0f79e8012e0aa9b79b59e43698bbe5a7b8f796b28fbc09ac97d7d70ed661",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-runner.js",
+        "sha256": "93b2ff6560b58b7d40a79bb59069aa7af5806166e78e63312f4c8a41690b69ba",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-panel.js",
+        "sha256": "a227fe9aefa72fd14db8a9679f55ff4e30c024a5b3cf36da124a2691dedd96f0",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/AGENT.md",
+        "sha256": "8ed3e6ba67f6ef72e4bdbd987bc85e6a59e7af2e3be3d5a6b022ccc55cd51fde",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-panel.js",
+        "sha256": "a227fe9aefa72fd14db8a9679f55ff4e30c024a5b3cf36da124a2691dedd96f0",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-schema.js",
+        "sha256": "694436d08a65b36670398cb926fded629322c327e5cbcf3ecea853df94f002c0",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/queued-planning.js",
+        "sha256": "07a00a627d149588c0934a90e366142043060d1fa02f908d073246c0768c841b",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/midi-creation-requirements.js",
+        "sha256": "37e7f3525ed9a7f862b2a554279745b404f3d8acfe46279b0232e08cfbca225a",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/release.json",
+        "sha256": "e0d39d3f3d6728f29ec49f113a268c1543f5831051e95e4707616377a753b588",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-runner.js",
+        "sha256": "93b2ff6560b58b7d40a79bb59069aa7af5806166e78e63312f4c8a41690b69ba",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-actions.js",
+        "sha256": "9cd8c6c9c17fd60e96a54823f5cd811425f6f68b1eac57c1cc93cadd0f9b8725",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-session.js",
+        "sha256": "841b0f79e8012e0aa9b79b59e43698bbe5a7b8f796b28fbc09ac97d7d70ed661",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/AGENT.md",
+        "sha256": "8ed3e6ba67f6ef72e4bdbd987bc85e6a59e7af2e3be3d5a6b022ccc55cd51fde",
+        "matches": true
+      }
+    ]
+  },
+  "aws": {
+    "api": {
+      "state": "Active",
+      "lastUpdateStatus": "Successful",
+      "timeout": 120,
+      "codeSha256": "18Q7GwOQJzStB9+ASou33aHfUXZ+TOIY3bmCafnQ5fc=",
+      "plansTable": "opusloops-aws-application-AgentPlans-15PXYY0RPY46A",
+      "workerSelfInvoke": "opusloops-aws-api"
+    },
+    "table": {
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "id",
+          "AttributeType": "S"
+        }
+      ],
+      "TableName": "opusloops-aws-application-AgentPlans-15PXYY0RPY46A",
+      "KeySchema": [
+        {
+          "AttributeName": "id",
+          "KeyType": "HASH"
+        }
+      ],
+      "TableStatus": "ACTIVE",
+      "CreationDateTime": "2026-10-18T14:49:39.499000-04:00",
+      "ProvisionedThroughput": {
+        "NumberOfDecreasesToday": 0,
+        "ReadCapacityUnits": 0,
+        "WriteCapacityUnits": 0
+      },
+      "TableSizeBytes": 0,
+      "ItemCount": 0,
+      "TableArn": "arn:aws:dynamodb:us-east-1:368310207026:table/opusloops-aws-application-AgentPlans-15PXYY0RPY46A",
+      "TableId": "ebdabfa4-e2f6-45a0-939e-4e7380958266",
+      "BillingModeSummary": {
+        "BillingMode": "PAY_PER_REQUEST",
+        "LastUpdateToPayPerRequestDateTime": "2026-10-18T14:49:39.499000-04:00"
+      },
+      "SSEDescription": {
+        "Status": "ENABLED",
+        "SSEType": "KMS",
+        "KMSMasterKeyArn": "arn:aws:kms:us-east-1:368310207026:key/ff304fce-7f14-48ad-9bce-28301b34aac8"
+      },
+      "DeletionProtectionEnabled": false,
+      "WarmThroughput": {
+        "ReadUnitsPerSecond": 12000,
+        "WriteUnitsPerSecond": 4000,
+        "Status": "ACTIVE"
+      }
+    },
+    "timeToLive": {
+      "TimeToLiveDescription": {
+        "TimeToLiveStatus": "ENABLED",
+        "AttributeName": "expiresAt"
+      }
+    },
+    "policies": [
+      {
+        "Action": "dynamodb:UpdateItem",
+        "Resource": "arn:aws:dynamodb:us-east-1:368310207026:table/opusloops-aws-application-AgentUsage-12OPVO5EDA2P",
+        "Effect": "Allow"
+      },
+      {
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem"
+        ],
+        "Resource": "arn:aws:dynamodb:us-east-1:368310207026:table/opusloops-aws-application-AgentPlans-15PXYY0RPY46A",
+        "Effect": "Allow"
+      },
+      {
+        "Action": "lambda:InvokeFunction",
+        "Resource": "arn:aws:lambda:us-east-1:368310207026:function:opusloops-aws-database",
+        "Effect": "Allow"
+      },
+      {
+        "Action": "lambda:InvokeFunction",
+        "Resource": "arn:aws:lambda:us-east-1:368310207026:function:opusloops-aws-api",
+        "Effect": "Allow"
+      }
+    ],
+    "deployment": {
+      "deployed": "opusloops-aws-application",
+      "codeSha256": "d7c43b1b03902734ad07df804a8bb7dda1df51767e4ce218ddb98269f9d0e5f7",
+      "outputs": [
+        {
+          "OutputKey": "WorkerImage",
+          "OutputValue": "368310207026.dkr.ecr.us-east-1.amazonaws.com/opusloops/stem-worker@sha256:ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4"
+        },
+        {
+          "OutputKey": "ApiUrl",
+          "OutputValue": "https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com"
+        }
+      ]
+    },
+    "initialDeployment": {
+      "deployed": "opusloops-aws-application",
+      "codeSha256": "a8a49b278459ce8cb03ff8cdb4b4707cce80f4f49536eb757691e512ce177686",
+      "outputs": [
+        {
+          "OutputKey": "WorkerImage",
+          "OutputValue": "368310207026.dkr.ecr.us-east-1.amazonaws.com/opusloops/stem-worker@sha256:ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4"
+        },
+        {
+          "OutputKey": "ApiUrl",
+          "OutputValue": "https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com"
+        }
+      ]
+    },
+    "historyGuardDeployment": {
+      "deployed": "opusloops-aws-application",
+      "codeSha256": "3d46e098258a60c5b4d9f880be4051705f37aae8a903a843f13c9f3f49abb6b8",
+      "outputs": [
+        {
+          "OutputKey": "WorkerImage",
+          "OutputValue": "368310207026.dkr.ecr.us-east-1.amazonaws.com/opusloops/stem-worker@sha256:ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4"
+        },
+        {
+          "OutputKey": "ApiUrl",
+          "OutputValue": "https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com"
+        }
+      ]
+    },
+    "finalQaTerminalPayloadsRetained": 0
+  },
+  "logs": {
+    "initialComplex": "/tmp/opus-queued-production-composition-log.txt",
+    "observedHistoryCarryover": "/tmp/opus-queued-production-before-history-fix-log.txt",
+    "safeRepairExhaustion": "/tmp/opus-queued-production-history-guard-rejected-log.txt",
+    "launchReceipt": "/tmp/opus-queued-production-launch-log.txt",
+    "cancelAndStaleSelection": "/tmp/opus-queued-production-final-safety-log.txt",
+    "finalPositive": "/tmp/opus-queued-production-final-positive-log.txt"
+  }
+}
