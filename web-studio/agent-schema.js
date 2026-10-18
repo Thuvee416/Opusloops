@@ -1,0 +1,16 @@
+import {DEVICE_TYPES} from './devices.js';
+import {SYNTH_PARAMS} from './instruments.js';
+import {SAMPLER_PARAMS} from './sampler.js';
+const string={type:'string'},number={type:'number'},boolean={type:'boolean'},object=properties=>({type:'object',properties}),array=items=>({type:'array',items});
+const numeric=keys=>Object.fromEntries(keys.map(k=>[k,number]));
+const transport=object({loopEnabled:boolean,loopStart:number,loopEnd:number,metronome:boolean,launchQuantization:number,followActionsEnabled:boolean});
+const note=object({pitch:number,start:number,duration:number,velocity:{type:'number',minimum:0,maximum:1,description:'Normalized velocity, never MIDI 0-127'},active:boolean,releaseVelocity:number});
+const audioEdit=object({gainDb:number,reverse:boolean,fadeIn:number,fadeOut:number});
+const warp=object({mode:string,semitones:number,formantSemitones:number,formantBaseHz:number,formantCompensation:boolean,markers:array(object({source:number,target:number}))});
+const launch=object({mode:string,legato:boolean,quantization:number});
+const params=object({...numeric([...new Set([...Object.values(DEVICE_TYPES).flatMap(d=>Object.keys(d.params)),...Object.keys(SYNTH_PARAMS),...Object.keys(SAMPLER_PARAMS)])]),wave:string,reverse:boolean,start:number,end:number,filter:string});
+const changes=object({name:string,color:string,volume:number,pan:number,mute:boolean,solo:boolean,output:string,beats:number,sourceBpm:number,audioEdit,warp,launch,source:string,level:number,tune:number,decay:number,choke:number});
+// Explicit properties matter: Nova treats a schema with an empty properties map
+// as an empty object rather than generating arbitrary action arguments.
+const args=object({id:string,ref:{type:'string',description:'Assign a new unique $alias to a newly created item, not an existing selector'},name:string,bpm:number,master:number,transport,changes,trackId:{type:'string',description:'Existing track ID or alias from earlier add_track; REQUIRED when creating MIDI'},returnId:string,deviceId:string,clipId:string,sampleClipId:string,kind:string,type:string,preset:string,action:string,value:string,index:number,scene:number,remove:boolean,enabled:boolean,params,amount:number,pre:boolean,key:string,points:array(object({beat:number,value:number,curve:string})),beats:number,notes:array(note),start:number,length:number,offset:number,active:boolean,operation:string,trackIds:array(string),items:array(object({id:string,name:string,beat:number})),pitch:number,effectsJSON:{type:'string',description:'JSON-encoded array of complete MIDI effect objects'},args:object({beat:number,scene:number,view:string})});
+export const agentPlanSchema=object({summary:string,question:string,actions:array({type:'object',properties:{type:string,args},required:['type','args']})});agentPlanSchema.required=['summary','actions'];

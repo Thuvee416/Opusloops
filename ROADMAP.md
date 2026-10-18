@@ -6,12 +6,16 @@ Updated 2026-10-17. The active goal is a browser DAW covering Ableton Live's wor
 
 AWS Amplify publishes `web-studio/`. The older application in `mobile/` remains historical and does not establish functionality in the published studio. `web-studio/release.json` records the artifact revision; live `version.json` records the actual deployed commit. Hosting success and live runtime checks are separate evidence.
 
+## Agentic control as a core workflow
+
+Release 0.122 introduces a real model-backed studio agent, not a keyword command parser: media-free session inspection, source peak/RMS analysis, bounded action plans, validation/repair, stale-session and cancellation protection, one Undo per project-edit request, and runtime controls. AWS Cognito protects the Bedrock endpoint; account usage is bounded. See `web-studio/AGENT.md` for the implemented action surface, test boundaries and limitations. Full application coverage, reference-audio structure analysis, rendered mix evaluation and representative end-to-end production/music-quality benchmarks remain open. Natural-language access must grow with each core capability and never claim an unsupported operation executed.
+
 ## Core-first gates
 
 | Gate | Current scope and remaining verification |
 | --- | --- |
 | Project and playback reliability | Local project storage, embedded media, project files, transport, loop/seek, and undo exist. Release 0.118 adds validated session-start recovery. Multi-track long-playback stress tests, interruption matrices and device measurements remain incomplete. |
-| Compose and arrange a song | Session clips/scenes, Arrangement editing, capture, MIDI editing and sample import exist as subsets. Release 0.119 adds additive multi-region selection, grouped movement/duplication/deletion/activation and Select All. Release 0.120 adds an internal region clipboard. Release 0.121 adds chosen-track time insertion/deletion/duplication and scoped time copy/cut/paste. Marquee selection, region fades/crossfades and full workflow coverage remain unfinished. |
+| Compose and arrange a song | Session clips/scenes, Arrangement editing, capture, MIDI editing and sample import exist as subsets. Release 0.119 adds additive multi-region selection, grouped movement/duplication/deletion/activation and Select All. Release 0.120 adds an internal region clipboard. Release 0.121 adds chosen-track time insertion/deletion/duplication and scoped time copy/cut/paste. Release 0.122 adds marquee selection with additive selection and scrolling. Region fades/crossfades and full workflow coverage remain unfinished. |
 | Record and edit performances | Browser audio/MIDI recording, input controls and count-in exist as subsets. Physical-device timing, monitoring/latency measurements, take lanes, comping and broader expressive MIDI remain unfinished. |
 | Finish the sound and mix | Synth, sampler, drums, serial effects, sends/returns and automation exist as subsets. Track grouping, broader routing/device families and representative audible live/export comparisons remain unfinished. |
 | Deliver and recover | WAV, MIDI and stem exports and project downloads exist as subsets. Session-start checkpoints and corrupt-autosave fallback have current browser evidence. A fresh-session complete-song round trip, aligned audible exports and device/browser reliability matrix remain required. |

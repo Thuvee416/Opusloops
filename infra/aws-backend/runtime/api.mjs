@@ -1,3 +1,4 @@
+import {studioAgent,agentAllowance} from './studio-agent.mjs';
 import { randomUUID } from 'node:crypto';
 import { ApiError,db,rpc,uuid } from './common.mjs';
 import { authenticate,tokenSession,getUser,updateUser,verifyEmail,signOut,createAccount } from './auth.mjs';
@@ -6,7 +7,7 @@ import { callback } from './callback.mjs';
 import { registerEvent,deleteRetainedObject } from './storage.mjs';
 import { batchFailure,watchdog } from './lifecycle.mjs';
 
-const origins=new Set(['https://opusloops.com','https://www.opusloops.com','https://main.d1zc92wmtmvg23.amplifyapp.com','http://127.0.0.1:4173','http://127.0.0.1:4174','http://localhost:4173']);
+const origins=new Set(['https://opusloops.com','https://www.opusloops.com','https://main.d1zc92wmtmvg23.amplifyapp.com','http://127.0.0.1:4173','http://127.0.0.1:4174','http://127.0.0.1:4178','http://localhost:4173']);
 function response(status,body,origin='') {
   return {statusCode:status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',
     ...(origin?{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization,content-type,apikey,x-client-info','Access-Control-Allow-Methods':'GET,POST,PUT,OPTIONS','Vary':'Origin'}:{})},body:status===204?'':JSON.stringify(body)};
@@ -61,6 +62,7 @@ export async function handler(event) {
     const authorization=headers.authorization||'';
     if(!authorization.startsWith('Bearer '))throw new ApiError(401,'authentication_required','Sign in to continue');
     const user=await authenticate(authorization.slice(7));
+    if(path==='/functions/v1/studio-agent'&&method==='POST'){await agentAllowance(user);return response(200,await studioAgent(body),origin);}
     if(path==='/auth/v1/user'&&method==='GET')return response(200,await getUser(user),origin);
     if(path==='/auth/v1/user'&&method==='PUT')return response(200,await updateUser(user,body),origin);
     if(path==='/auth/v1/verify-email'&&method==='POST')return response(200,await verifyEmail(user,body),origin);

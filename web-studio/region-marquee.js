@@ -1,0 +1,41 @@
+import {timeSelectionEdge,scrollTimeSelection} from './time-selection.js';
+
+export function marqueeRegionIds(project,anchor,focus){
+ for(const point of [anchor,focus])if(!point||!Number.isFinite(point.beat)||point.beat<0||point.beat>16384||!Number.isInteger(point.track)||point.track<0||point.track>=project.tracks.length)throw new Error('Choose a valid Arrangement selection rectangle.');
+ const start=Math.min(anchor.beat,focus.beat),end=Math.max(anchor.beat,focus.beat),first=Math.min(anchor.track,focus.track),last=Math.max(anchor.track,focus.track),tracks=new Set(project.tracks.slice(first,last+1).map(t=>t.id));
+ return project.arrangement.filter(r=>tracks.has(r.trackId)&&(start===end?r.start<=start&&r.start+r.length>start:r.start<end&&r.start+r.length>start)).map(r=>r.id);
+}
+
+export function installRegionMarquee({timeline,button,getProject,getView,getSelection,isLocked,onPreview,onCommit,onCancel,onPan,onMode}){
+ let enabled=false,drag=null,frame=0,suppressClick=false;
+ const box=document.createElement('div');box.className='region-marquee';box.setAttribute('aria-hidden','true');
+ const lanes=()=>[...timeline.querySelectorAll('[data-lane-track]')];
+ function scrollHost(){for(let node=timeline;node;node=node.parentElement)if(/auto|scroll/.test(getComputedStyle(node).overflowY)&&node.scrollHeight>node.clientHeight+1)return node;return timeline;}
+ function bounds(){const r=timeline.getBoundingClientRect(),box={left:Math.max(0,r.left),right:Math.min(innerWidth,r.right),top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)};for(let node=timeline.parentElement;node;node=node.parentElement){const style=getComputedStyle(node),clip=node.getBoundingClientRect();if(/auto|scroll|hidden|clip/.test(style.overflowX)){box.left=Math.max(box.left,clip.left);box.right=Math.min(box.right,clip.right);}if(/auto|scroll|hidden|clip/.test(style.overflowY)){box.top=Math.max(box.top,clip.top);box.bottom=Math.min(box.bottom,clip.bottom);}}return box;}
+
+ function point(x,y){const all=lanes(),rect=all[0]?.getBoundingClientRect(),view=getView(),visible=bounds();if(!rect?.width||!all.length||visible.bottom<=visible.top||visible.right<=visible.left)return null;x=Math.max(visible.left,Math.min(visible.right,x));y=Math.max(visible.top,Math.min(visible.bottom-.001,y));let track=all.findIndex(l=>{const r=l.getBoundingClientRect();return y>=r.top&&y<r.bottom});if(track<0)track=y<all[0].getBoundingClientRect().top?0:all.length-1;return {beat:Math.max(view.start,Math.min(view.end,view.start+(x-rect.left)/rect.width*view.span)),track};}
+ function render(){if(!drag)return;const all=lanes(),lane=all[drag.anchor.track],rect=all[0]?.getBoundingClientRect(),origin=timeline.getBoundingClientRect();if(!lane||!rect?.width)return;const view=getView(),anchorY=lane.getBoundingClientRect().top+drag.anchorFraction*lane.getBoundingClientRect().height,visible=bounds(),left=Math.max(rect.left,visible.left),right=Math.min(rect.right,visible.right),x1=Math.max(left,Math.min(right,rect.left+(drag.anchor.beat-view.start)/view.span*rect.width)),x2=Math.max(left,Math.min(right,drag.x)),top=Math.max(visible.top,Math.min(visible.bottom,anchorY)),bottom=Math.max(visible.top,Math.min(visible.bottom,drag.y));
+  box.style.left=Math.min(x1,x2)-origin.left+timeline.scrollLeft+'px';box.style.top=Math.min(top,bottom)-origin.top+timeline.scrollTop+'px';box.style.width=Math.max(1,Math.abs(x2-x1))+'px';box.style.height=Math.max(1,Math.abs(bottom-top))+'px';if(!box.isConnected)timeline.append(box);
+ }
+ function update(e){if(!drag)return;drag.x=e.clientX;drag.y=e.clientY;if(Math.abs(drag.x-drag.startX)>3||Math.abs(drag.y-drag.startY)>3)drag.moved=true;const focus=point(drag.x,drag.y);if(!focus)return;drag.focus=focus;const found=marqueeRegionIds(getProject(),drag.anchor,focus),available=new Set(getProject().arrangement.map(r=>r.id));drag.ids=[...new Set([...(drag.additive?drag.before.ids:[]),...found])].filter(id=>available.has(id));onPreview(drag.ids);render();}
+ function stop(){cancelAnimationFrame(frame);frame=0;box.remove();}
+ function release(pointer){if(timeline.hasPointerCapture(pointer))timeline.releasePointerCapture(pointer);}
+ function cancel(){if(!drag)return;const old=drag;drag=null;stop();release(old.pointer);suppressClick=true;const view=getView();if(view.start!==old.view.start||view.span!==old.view.span)onPan?.(old.view);old.host.scrollTop=old.scrollTop;onCancel(old.before);}
+ function scroll(now){frame=0;if(!drag)return;if(isLocked()){cancel();return;}const g=drag,rect=lanes()[0]?.getBoundingClientRect(),viewport=bounds();if(!rect||viewport.bottom<=viewport.top||viewport.right<=viewport.left){cancel();return;}const dt=Math.min(.05,Math.max(0,(now-g.lastFrame)/1000));g.lastFrame=now;const edge=g.moved?timeSelectionEdge(g.x,g.y,rect,viewport):0;if(edge!==g.edge){g.edge=edge;g.edgeSince=now;g.remainder=0;}let changed=g.host.scrollTop!==g.lastScroll||timeline.scrollLeft!==g.lastScrollLeft;
+  if(edge&&now-g.edgeSince>=250&&onPan){const next=scrollTimeSelection(getView(),edge,dt,g.remainder);g.remainder=next.remainder;if(next.view.start!==getView().start){onPan(next.view);changed=true;}}
+  if(g.moved){const all=lanes(),first=all[0].getBoundingClientRect(),last=all.at(-1).getBoundingClientRect(),vertical=g.y>=viewport.bottom-24&&last.bottom>viewport.bottom+1?1:g.y<=viewport.top+24&&first.top<viewport.top-1?-1:0,previous=g.host.scrollTop;if(vertical)g.host.scrollTop+=vertical*240*dt;changed||=previous!==g.host.scrollTop;}
+  g.lastScroll=g.host.scrollTop;g.lastScrollLeft=timeline.scrollLeft;if(changed)update({clientX:g.x,clientY:g.y});if(drag)frame=requestAnimationFrame(scroll);
+ }
+ function setEnabled(value){cancel();enabled=!!value;button.setAttribute('aria-pressed',String(enabled));timeline.classList.toggle('clip-select-mode',enabled);onMode?.(enabled);}
+ button.addEventListener('click',()=>setEnabled(!enabled));
+ timeline.addEventListener('pointerdown',e=>{suppressClick=false;if(!enabled||e.button!==0||isLocked())return;const lane=e.target.closest('[data-lane-track]');if(!lane)return;const anchor=point(e.clientX,e.clientY);if(!anchor)return;e.preventDefault();e.stopImmediatePropagation();const r=lane.getBoundingClientRect(),before=getSelection(),host=scrollHost();drag={pointer:e.pointerId,anchor,anchorFraction:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)),startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,focus:anchor,before:{ids:[...before.ids],primary:before.primary},ids:[],additive:e.shiftKey||e.ctrlKey||e.metaKey,view:getView(),host,scrollTop:host.scrollTop,lastScroll:host.scrollTop,lastScrollLeft:timeline.scrollLeft,lastFrame:performance.now(),edge:0,edgeSince:0,remainder:0,moved:false};timeline.focus({preventScroll:true});timeline.setPointerCapture(e.pointerId);update(e);frame=requestAnimationFrame(scroll);},true);
+ timeline.addEventListener('pointermove',e=>{if(drag?.pointer!==e.pointerId)return;e.preventDefault();e.stopImmediatePropagation();if(isLocked()){cancel();return;}update(e);},true);
+ timeline.addEventListener('pointerup',e=>{if(drag?.pointer!==e.pointerId)return;e.preventDefault();e.stopImmediatePropagation();if(isLocked()){cancel();return;}update(e);const finished=drag;drag=null;stop();release(finished.pointer);suppressClick=true;onCommit(finished.ids);},true);
+ timeline.addEventListener('click',e=>{if(suppressClick&&e.detail){suppressClick=false;e.preventDefault();e.stopImmediatePropagation();}},true);
+ timeline.addEventListener('pointercancel',e=>{if(drag?.pointer===e.pointerId){e.stopImmediatePropagation();cancel();}},true);
+ timeline.addEventListener('lostpointercapture',e=>{if(drag?.pointer===e.pointerId)cancel();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drag){e.preventDefault();e.stopImmediatePropagation();cancel();}},true);
+ document.addEventListener('focusin',e=>{if(drag&&!timeline.contains(e.target))cancel();});
+ window.addEventListener('blur',cancel);window.addEventListener('resize',cancel);window.addEventListener('pagehide',cancel);document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel();});
+ return {cancel,render,disable:()=>setEnabled(false),get enabled(){return enabled;},get dragging(){return !!drag;}};
+}
