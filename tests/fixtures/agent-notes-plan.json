@@ -1,0 +1,84 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "prompt": "In the existing Phrase MIDI clip, quantize only note array indices 0 and 2 to a 0.25-beat grid at full strength. Transpose those two notes up 12 semitones and reduce their normalized velocities by 0.1. Duplicate those edited notes so the copied phrase starts at zero-based beat 5. Preserve every other note, activation, release velocity, clip length and Arrangement position. Then show the copied notes in the Arrangement Clip view. Do not create tracks, regenerate the clip, play or export.",
+  "attempt": 1,
+  "reviewed": true,
+  "failures": [],
+  "plan": {
+    "summary": "Quantized, transposed and duplicated notes in Phrase MIDI clip.",
+    "actions": [
+      {
+        "type": "notes",
+        "args": {
+          "clipId": "phrase",
+          "action": "quantize",
+          "indices": [
+            0,
+            2
+          ],
+          "grid": 0.25,
+          "strength": 1
+        }
+      },
+      {
+        "type": "notes",
+        "args": {
+          "clipId": "phrase",
+          "action": "transpose",
+          "indices": [
+            0,
+            2
+          ],
+          "amount": 12
+        }
+      },
+      {
+        "type": "notes",
+        "args": {
+          "clipId": "phrase",
+          "action": "velocity",
+          "indices": [
+            0,
+            2
+          ],
+          "amount": -0.1
+        }
+      },
+      {
+        "type": "notes",
+        "args": {
+          "clipId": "phrase",
+          "action": "duplicate",
+          "indices": [
+            0,
+            2
+          ],
+          "at": 5
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "select",
+          "args": {
+            "target": "notes",
+            "regionId": "phrase-region",
+            "indices": [
+              4,
+              5
+            ]
+          }
+        }
+      }
+    ],
+    "reviewed": true,
+    "model": {
+      "id": "tempo",
+      "name": "Tempo",
+      "version": "1.0",
+      "provider": "Amazon Bedrock",
+      "providerModelId": "amazon.nova-pro-v1:0",
+      "providerModelName": "Amazon Nova Pro"
+    }
+  }
+}

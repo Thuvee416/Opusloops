@@ -1,13 +1,24 @@
+import {midiClip,noteIndices} from './midi-note-edit.js';
 import {isGroup} from './track-hierarchy.js';
 // View state only. The same selectors validate manual and agent navigation.
-export const SELECTION_KEYS=['target','trackId','clipId','scene','ids','primaryId'];
+export const SELECTION_KEYS=['target','trackId','clipId','scene','ids','primaryId','regionId','indices','all','where'];
 export const DETAIL_PANELS=['clip','devices','recording','returns'];
 const fail=message=>{throw new Error(message);};
 export function selectionIntent(project,args){
  if(!args||typeof args!=='object'||Array.isArray(args))fail('Expected selection arguments.');
- const allowed={track:['target','trackId'],clip:['target','trackId','clipId','scene'],regions:['target','ids','primaryId']}[args.target];
- if(!allowed)fail('Select target track, clip or regions.');
+ const allowed={track:['target','trackId'],clip:['target','trackId','clipId','scene'],regions:['target','ids','primaryId'],notes:['target','clipId','regionId','trackId','scene','indices','all','where']}[args.target];
+ if(!allowed)fail('Select target track, clip, regions or notes.');
  const extra=Object.keys(args).filter(key=>!allowed.includes(key));if(extra.length)fail('Unsupported '+args.target+' selection fields: '+extra.join(', ')+'.');
+ if(args.target==='notes'){
+  let placement,clipId;
+  if(args.regionId!==undefined){
+   if(args.trackId!==undefined||args.scene!==undefined)fail('Select notes using a regionId OR a Session trackId/scene, never both.');
+   const region=project.arrangement.find(r=>r.id===args.regionId);if(!region)fail('Choose an existing Arrangement regionId for note selection.');
+   clipId=region.clipId;placement={target:'regions',ids:[region.id],primaryId:region.id};
+   if(args.clipId!==undefined&&args.clipId!==clipId)fail('The region does not reference that MIDI clipId.');
+  }else{placement=selectionIntent(project,{target:'clip',trackId:args.trackId,...(args.scene!==undefined?{scene:args.scene}:{}),...(args.clipId!==undefined?{clipId:args.clipId}:{})});clipId=placement.clipId;}
+  const clip=midiClip(project,clipId),indices=noteIndices(clip,args,{allowEmpty:true});return {target:'notes',clipId,indices,placement};
+ }
  if(args.target==='track'){
   const track=[...project.tracks,...project.returns||[]].find(t=>t.id===args.trackId);if(!track)fail('Choose an existing track or return for its devices.');
   return {target:'track',trackId:track.id};
@@ -34,6 +45,7 @@ export function detailPanelIntent(args){
  return args.panel;
 }
 export function describeNavigation(result){
+ if(result.target==='notes')return 'Selected '+result.noteSelection.indices.length+' MIDI notes in '+result.clipName+'. Clip view open.';
  if(result.target==='track')return 'Showing devices for '+result.trackName+'.';
  if(result.target==='clip')return 'Selected '+result.clipName+' on '+result.trackName+', scene '+(result.selection.scene+1)+'. Clip view open.';
  if(result.target==='regions')return 'Selected '+result.selectedRegions.length+' Arrangement '+(result.selectedRegions.length===1?'clip':'clips')+'. '+result.clipName+' is primary. Clip view open.';

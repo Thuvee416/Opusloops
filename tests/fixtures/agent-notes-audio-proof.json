@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "sampleRate": 48000,
+  "frames": 192000,
+  "sourceNotes": 6,
+  "midiNotes": 5,
+  "metrics": {
+    "expectedMaxError": 0,
+    "saveReopenMaxError": 0,
+    "rangeMaxError": 0,
+    "c5": 0.016411187823096463,
+    "g5": 0.0329205488746799,
+    "copiedC5": 0.016411187855661143,
+    "copiedG5": 0.032920548894252055,
+    "oldC4": 0.00009734998349241292,
+    "oldG4": 0.0001006157502029777,
+    "unchosenC5": 0.024616782809641514,
+    "inactiveWindowPeak": 0
+  },
+  "scope": "Native Chromium OfflineAudioContext and actual SMF bytes. Independent requested-note oracle plus frequency/silence checks. No physical audio-output or perceptual quality claim."
+}

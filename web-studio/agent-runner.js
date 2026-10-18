@@ -26,7 +26,7 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null}={
   const aliases=new Map(),editObservations=[];
   const next = applyAgentActions(project, edits,{aliases,observations:editObservations});
   for(const command of [...before,...after]){
-  for(const key of ['trackId','clipId','primaryId'])if(command.args?.[key])command.args[key]=aliases.get(command.args[key])||command.args[key];
+  for(const key of ['trackId','clipId','primaryId','regionId'])if(command.args?.[key])command.args[key]=aliases.get(command.args[key])||command.args[key];
   if(Array.isArray(command.args?.ids))command.args.ids=command.args.ids.map(id=>aliases.get(id)||id);
   if(Array.isArray(command.args?.trackIds))command.args.trackIds=command.args.trackIds.map(id=>aliases.get(id)||id);
   const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
@@ -70,7 +70,7 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
       if(intended!==fingerprint){
         if (locked('edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
         commitStarted = true;
-        commit(plan.next);
+        commit(plan.next,plan.editObservations??[]);
         editsApplied = true;
         fingerprint = signature(getProject());
         if (fingerprint !== intended) throw new Error('The applied project does not match the validated plan.');
