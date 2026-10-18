@@ -1,0 +1,126 @@
+{
+  "release": "0.142.0",
+  "commit": "5b99af9b110d6837cfc83ef963cdb8b5e6c3060d",
+  "amplifyJob": "128",
+  "source": "Normal signed-in Chrome. No injected recording events or production token extraction. Manual native recording controls and actual downloaded files; two reviewed Odesa requests, zero client repairs.",
+  "baseline": {
+    "bytes": 1725,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+  },
+  "setup": {
+    "trackId": "4b76e27b-094e-48a2-a5b8-9ba79230e96b",
+    "exactInitInstrument": true,
+    "originalPreserved": true
+  },
+  "capture": {
+    "clipId": "51c43540-54ed-4d93-be3f-8d0d262420e1",
+    "beats": 0.75,
+    "notes": [
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.5225999999046328,
+        "duration": 0.004999999999999893
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.5491333332856497,
+        "duration": 0.0002000000476836128
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.5702666668097179,
+        "duration": 0.010866666475931819
+      }
+    ],
+    "quantization": "Off",
+    "sampleAccuratePhysicalInput": false
+  },
+  "odesa": {
+    "operation": "Transpose C4 only by 12 semitones",
+    "notes": [
+      {
+        "pitch": 72,
+        "velocity": 0.75,
+        "start": 0.5225999999046328,
+        "duration": 0.004999999999999893
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.5491333332856497,
+        "duration": 0.0002000000476836128
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.5702666668097179,
+        "duration": 0.010866666475931819
+      }
+    ],
+    "allOtherDataPreserved": true
+  },
+  "midi": {
+    "file": "MIDI-take (1).mid",
+    "bytes": 80,
+    "ppqn": 960,
+    "events": [
+      {
+        "tick": 502,
+        "type": "noteOn",
+        "pitch": 72,
+        "velocity": 95
+      },
+      {
+        "tick": 506,
+        "type": "noteOff",
+        "pitch": 72,
+        "velocity": 0
+      },
+      {
+        "tick": 527,
+        "type": "noteOn",
+        "pitch": 64,
+        "velocity": 95
+      },
+      {
+        "tick": 528,
+        "type": "noteOff",
+        "pitch": 64,
+        "velocity": 0
+      },
+      {
+        "tick": 547,
+        "type": "noteOn",
+        "pitch": 67,
+        "velocity": 95
+      },
+      {
+        "tick": 558,
+        "type": "noteOff",
+        "pitch": 67,
+        "velocity": 0
+      }
+    ],
+    "exactSavedProjectMatch": true,
+    "independentTickOracle": true,
+    "minimumNoteTicks": 1
+  },
+  "recovery": {
+    "undoEditExactRecordedTake": true,
+    "undoTakeExactSetup": true,
+    "undoSetupExactOriginal": true,
+    "reloadFreshDownloadExactOriginal": true,
+    "inputsDisconnected": true,
+    "sessionView": true,
+    "clipDetail": true,
+    "detailPercent": 20
+  },
+  "limits": [
+    "Actual note durations are receipt-time browser events, not physical switch/MIDI hardware timing or compensated input/output latency.",
+    "SMF export rounds to 960 PPQN with a one-tick minimum.",
+    "Agent start/finish, overdub, direct Arrangement capture and full DAW parity remain open."
+  ]
+}
