@@ -1,0 +1,439 @@
+{
+  "date": "2026-10-18",
+  "release": "0.147.0",
+  "scope": "Actual signed-in production Odesa on opusloops.com, native editor/context menu, normal File exports and Undo/reload; no mocked production model or authentication",
+  "featureCommit": "9252bee923297d149683f812dab1ce9b2b3d9e1f",
+  "hosting": {
+    "jobId": "142",
+    "commit": "9252bee923297d149683f812dab1ce9b2b3d9e1f",
+    "versions": {
+      "opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "9252bee923297d149683f812dab1ce9b2b3d9e1f",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000142",
+        "builtAt": "2026-10-18T17:28:30.941137Z"
+      },
+      "www.opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "9252bee923297d149683f812dab1ce9b2b3d9e1f",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000142",
+        "builtAt": "2026-10-18T17:28:30.941137Z"
+      }
+    },
+    "assets": [
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/AGENT.md",
+        "bytes": 83187,
+        "sha256": "820031de5e85bc272acea228348bf45aca5c70309cb57e7845e59ef6a0009d17",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-actions.js",
+        "bytes": 37116,
+        "sha256": "fc409525a35826ac4293172f2036ca08e73290f280716d4357a6e9b21a94aeee",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-panel.js",
+        "bytes": 20000,
+        "sha256": "00b9147e754c7adcacf3192059b0daf3887d1335ec9859d6466fb93da8b2849d",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-runner.js",
+        "bytes": 11337,
+        "sha256": "e2a05cb83e726d0399df5a8b80af13ab41a6ff85935f86905dae216fa1e64c05",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-schema.js",
+        "bytes": 11194,
+        "sha256": "c98372f045eef12aa69d8c9c8a710a63e33784176511b6701a8e0e4042a741bd",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/app.js",
+        "bytes": 303687,
+        "sha256": "c3c999f25a2af641dd9be93d0994b9f7fab13660901b2fccc05b74b7032b0dec",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/clip-properties.js",
+        "bytes": 3906,
+        "sha256": "b1af1f1514bd308f3bf4f32b81cdf02346977cecd53f40be9acec8b61bd33dc6",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/clip-property-requirements.js",
+        "bytes": 3649,
+        "sha256": "90fe584faf0cd162ead9e85ebf486cf02d263f847c1aed4c05a16e54288a2ef7",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/clip-property-view.js",
+        "bytes": 3134,
+        "sha256": "c8020c0d0d819c1bfd7e315002a63fd80efeadf1039509684eb1e16449bbaed1",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/context-menu.js",
+        "bytes": 4293,
+        "sha256": "7048588d0aba7bf6fbe59d0b212cd71fb30c579718a70e0cc86b97e6b8fbfa40",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/interaction-theme.css",
+        "bytes": 9018,
+        "sha256": "ae604acbd4af3dfa03ffcd1557c15404a45bce90aefc786202b0c40bbfaee176",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/menus.js",
+        "bytes": 15529,
+        "sha256": "92cb22a3d9454f323ec63194b3b8426670282834f17d24b6b5deb20884a872a1",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/model.js",
+        "bytes": 7002,
+        "sha256": "1c731583f8a307c2c70965f54ea76534998a72fa09817d2f28c0913b62f15178",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/release.json",
+        "bytes": 93,
+        "sha256": "44e9e872f3e442a8e377629d064bf9acbe4a839f2e71c5ad52a9a5d5fed6c321",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/AGENT.md",
+        "bytes": 83187,
+        "sha256": "820031de5e85bc272acea228348bf45aca5c70309cb57e7845e59ef6a0009d17",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-actions.js",
+        "bytes": 37116,
+        "sha256": "fc409525a35826ac4293172f2036ca08e73290f280716d4357a6e9b21a94aeee",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-panel.js",
+        "bytes": 20000,
+        "sha256": "00b9147e754c7adcacf3192059b0daf3887d1335ec9859d6466fb93da8b2849d",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-runner.js",
+        "bytes": 11337,
+        "sha256": "e2a05cb83e726d0399df5a8b80af13ab41a6ff85935f86905dae216fa1e64c05",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-schema.js",
+        "bytes": 11194,
+        "sha256": "c98372f045eef12aa69d8c9c8a710a63e33784176511b6701a8e0e4042a741bd",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/app.js",
+        "bytes": 303687,
+        "sha256": "c3c999f25a2af641dd9be93d0994b9f7fab13660901b2fccc05b74b7032b0dec",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/clip-properties.js",
+        "bytes": 3906,
+        "sha256": "b1af1f1514bd308f3bf4f32b81cdf02346977cecd53f40be9acec8b61bd33dc6",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/clip-property-requirements.js",
+        "bytes": 3649,
+        "sha256": "90fe584faf0cd162ead9e85ebf486cf02d263f847c1aed4c05a16e54288a2ef7",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/clip-property-view.js",
+        "bytes": 3134,
+        "sha256": "c8020c0d0d819c1bfd7e315002a63fd80efeadf1039509684eb1e16449bbaed1",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/context-menu.js",
+        "bytes": 4293,
+        "sha256": "7048588d0aba7bf6fbe59d0b212cd71fb30c579718a70e0cc86b97e6b8fbfa40",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/interaction-theme.css",
+        "bytes": 9018,
+        "sha256": "ae604acbd4af3dfa03ffcd1557c15404a45bce90aefc786202b0c40bbfaee176",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/menus.js",
+        "bytes": 15529,
+        "sha256": "92cb22a3d9454f323ec63194b3b8426670282834f17d24b6b5deb20884a872a1",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/model.js",
+        "bytes": 7002,
+        "sha256": "1c731583f8a307c2c70965f54ea76534998a72fa09817d2f28c0913b62f15178",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/release.json",
+        "bytes": 93,
+        "sha256": "44e9e872f3e442a8e377629d064bf9acbe4a839f2e71c5ad52a9a5d5fed6c321",
+        "matches": true
+      }
+    ]
+  },
+  "backend": {
+    "state": "Active",
+    "lastUpdateStatus": "Successful",
+    "zipSha256": "f288ec4d7689258b0cf01c1c7834680c480964294eb4593ec55558a1f1813cd6",
+    "codeSha256": "8ojsTXaJJYsM8BwceDRoDEgJZClOtFk+xVVYofGBPNY=",
+    "workerUnchanged": true
+  },
+  "setup": {
+    "base": {
+      "path": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T132704.478.opusloop",
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "setup": {
+      "path": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133332.640.opusloop",
+      "mtime": 1792344812643.1462
+    },
+    "ids": [
+      {
+        "trackId": "769e60c6-2826-4edb-9979-fd73c6375032",
+        "clipId": "a7b21cd4-e206-4811-b529-360e7f4b5cf3",
+        "scene": 0
+      },
+      {
+        "trackId": "2ba64af5-99ee-416d-8f7b-391e05bc91fe",
+        "clipId": "06a7d835-0f2a-4479-9fdc-81b6d85d0cae",
+        "scene": 0
+      }
+    ],
+    "setupFullOracle": true,
+    "ready": {
+      "path": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133358.089.opusloop",
+      "mtime": 1792344838090.5417
+    },
+    "readyFullOracle": true
+  },
+  "rejectedSetup": {
+    "failure": "Short setup request placed displayed scene 1 at zero-based scene 1 (displayed scene 2); independent full-project oracle rejected it. Native launch edits were then unwound with setup.",
+    "records": [
+      {
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T132704.478.opusloop",
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+        "placements": [
+          {
+            "track": "Audio 1",
+            "scenes": []
+          }
+        ]
+      },
+      {
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133134.375.opusloop",
+        "bytes": 2894,
+        "sha256": "94fe274487b49ef4459634dbffe6d6b655b3997d732caeace5705654629351b5",
+        "placements": [
+          {
+            "track": "Audio 1",
+            "scenes": []
+          },
+          {
+            "track": "QA Property A",
+            "scenes": [
+              1
+            ]
+          },
+          {
+            "track": "QA Property B",
+            "scenes": [
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133142.500.opusloop",
+        "bytes": 3011,
+        "sha256": "076a1570225eaabf94714230a5d7fc35862e517427f04e84e2b2bf7943479502",
+        "placements": [
+          {
+            "track": "Audio 1",
+            "scenes": []
+          },
+          {
+            "track": "QA Property A",
+            "scenes": [
+              1
+            ]
+          },
+          {
+            "track": "QA Property B",
+            "scenes": [
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133243.083.opusloop",
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+        "placements": [
+          {
+            "track": "Audio 1",
+            "scenes": []
+          }
+        ]
+      }
+    ]
+  },
+  "properties": {
+    "propertiesFile": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133502.004.opusloop",
+    "oneUndoFile": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133507.820.opusloop",
+    "wholeProjectOracle": true,
+    "oneUndoByteIdentical": true
+  },
+  "tripletAndPalette": {
+    "cases": [
+      {
+        "name": "eighth_triplet",
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133545.466.opusloop",
+        "wholeProjectOracle": true
+      },
+      {
+        "name": "triplet_one_undo",
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133549.713.opusloop",
+        "wholeProjectOracle": true,
+        "byteIdenticalReady": true
+      },
+      {
+        "name": "native_context_palette",
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133619.278.opusloop",
+        "wholeProjectOracle": true
+      }
+    ]
+  },
+  "recovery": {
+    "cases": [
+      {
+        "step": "palette_one_undo",
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133700.702.opusloop",
+        "bytes": 3011,
+        "sha256": "cdb2e3b9b827ac7709dca2f87e48b15f01cc3baa3a929326035e7c9b055c27ec",
+        "byteIdenticalExpected": true
+      },
+      {
+        "step": "five_native_launch_undos",
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133712.258.opusloop",
+        "bytes": 2894,
+        "sha256": "0d6fc4bf954a7118fed6cdf114c856e6d1c9824af0cb114ed8624718936dac0b",
+        "byteIdenticalExpected": true
+      },
+      {
+        "step": "setup_one_undo_original",
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133715.812.opusloop",
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+        "byteIdenticalExpected": true
+      },
+      {
+        "step": "fresh_reload_original",
+        "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T133730.287.opusloop",
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+        "byteIdenticalExpected": true
+      }
+    ],
+    "layout": {
+      "view": "session",
+      "detailPanel": "clip",
+      "detailPercent": 20,
+      "agentExpanded": true,
+      "playing": false,
+      "bpm": 120
+    },
+    "newPageErrors": []
+  },
+  "requests": {
+    "submitted": 5,
+    "reviewedPlansObserved": 4,
+    "clientRepairsObserved": 0,
+    "guardedPropertyRequests": 2,
+    "guardedPropertyRequestsFirstAttempt": true,
+    "failures": [
+      {
+        "kind": "initial_complex_setup_timeout",
+        "outcome": "No plan returned; no setup edit applied"
+      },
+      {
+        "kind": "short_scene_setup_semantic_mismatch",
+        "requestedDisplayedScene": 1,
+        "actualZeroBasedScene": 1,
+        "outcome": "Full-project oracle rejected scene placement; six native Undo steps restored all 1725 original bytes. Repeated with explicit scene:0 and independently verified first-row placement."
+      }
+    ]
+  },
+  "actualOutcome": {
+    "namesExact": true,
+    "tealHexExact": "#62b5a5",
+    "infoTextExactIncludingFinalPeriod": "Bring The Bass In After Eight Bars.",
+    "globalQuantization": "global",
+    "eighthTripletQuantization": 0.3333333333333333,
+    "differentModesAndLegatoPreserved": true,
+    "selectionAndStoppedTransportRetained": true,
+    "eachPropertyRequestOneUndoByteIdenticalReady": true
+  },
+  "limitations": [
+    "Generic composition scene-number interpretation remains unreliable; explicit first-row index required in the successful setup",
+    "Complex generic setup request timed out; no claim of general-language reliability",
+    "Source properties propagate to every shared placement; other MIDI/audio/time parameters remain primary-clip edits",
+    "Native audio oracle is local synthetic browser proof, not physical-device or perceived-quality proof"
+  ]
+}
