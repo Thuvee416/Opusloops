@@ -1,0 +1,84 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "prompt": "On Lead, automate the existing Delay effect mix from 0 at beat 0 to 0.5 at beat 8 linearly. Automate its send to Room from 0 at beat 0 to 0.7 at beat 8 linearly. On Room automate the existing Delay effect feedback from 0.1 at beat 0 to 0.4 at beat 8 linearly. These are zero-based beats. Preserve every other setting and all clips. Do not create devices, change tempo, play or export.",
+  "attempt": 1,
+  "reviewed": true,
+  "failures": [],
+  "plan": {
+    "summary": "Automated Delay effect mix, send to Room, and Room Delay feedback.",
+    "actions": [
+      {
+        "type": "automation",
+        "args": {
+          "trackId": "lead",
+          "deviceId": "lead-delay",
+          "key": "mix",
+          "action": "replace",
+          "points": [
+            {
+              "beat": 0,
+              "value": 0,
+              "curve": "linear"
+            },
+            {
+              "beat": 8,
+              "value": 0.5,
+              "curve": "linear"
+            }
+          ]
+        }
+      },
+      {
+        "type": "automation",
+        "args": {
+          "trackId": "lead",
+          "returnId": "room",
+          "key": "amount",
+          "action": "replace",
+          "points": [
+            {
+              "beat": 0,
+              "value": 0,
+              "curve": "linear"
+            },
+            {
+              "beat": 8,
+              "value": 0.7,
+              "curve": "linear"
+            }
+          ]
+        }
+      },
+      {
+        "type": "automation",
+        "args": {
+          "trackId": "room",
+          "deviceId": "room-delay",
+          "key": "feedback",
+          "action": "replace",
+          "points": [
+            {
+              "beat": 0,
+              "value": 0.1,
+              "curve": "linear"
+            },
+            {
+              "beat": 8,
+              "value": 0.4,
+              "curve": "linear"
+            }
+          ]
+        }
+      }
+    ],
+    "reviewed": true,
+    "model": {
+      "id": "aria",
+      "name": "Aria",
+      "version": "1.0",
+      "provider": "Amazon Bedrock",
+      "providerModelId": "amazon.nova-pro-v1:0",
+      "providerModelName": "Amazon Nova Pro"
+    }
+  }
+}

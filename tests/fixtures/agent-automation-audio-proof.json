@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "sampleRate": 48000,
+  "frames": 192000,
+  "metrics": {
+    "deviceGainMaxError": 1.862645149230957e-09,
+    "sendMaxError": 1.862645149230957e-09,
+    "returnEffectMaxError": 3.725290298461914e-09,
+    "rangeMaxError": 0,
+    "saveReopenMaxError": 0,
+    "stemMaxError": 0
+  },
+  "scope": "Native Chromium OfflineAudioContext. Independent per-sample dB-gain and delay/send/dry-wet predictions; WAV, stem and range audio plus JSON reopen. No physical-output or perceptual quality claim."
+}

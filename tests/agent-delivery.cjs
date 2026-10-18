@@ -18,7 +18,7 @@ function unzip(zip){const files=new Map();let offset=0;while(zip.readUInt32LE(of
   else actions=[{type:'project',args:{bpm:131}},command('export_stems',settings),command('save_project',{})];
   await route.fulfill({json:{summary:'Delivery '+mode+' finished.',actions}});
  });
- const run=async()=>{await page.locator('#agent-prompt').fill('Delivery '+mode);await page.getByRole('button',{name:'Run agent',exact:true}).click();};
+ const run=async()=>{await page.locator('#agent-prompt').fill('Delivery '+mode);await page.getByRole('button',{name:'Ask Odesa',exact:true}).click();};
  await run();await page.getByText('Delivery wav finished.',{exact:true}).waitFor();assert.equal(downloads.length,1);const lead=await fs.readFile(await downloads[0].path());assert.deepEqual({...wave(lead),rms:undefined,peak:undefined},{bits:24,channels:2,rate:48000,frames:96000,format:1,rms:undefined,peak:undefined});assert.ok(wave(lead).rms>.01);
  const first=JSON.parse(await page.locator('.agent-log [data-delivery] pre').first().textContent()).delivery;assert.equal(first.channel,'Lead');assert.equal(first.source,'arrangement');assert.equal(first.settings.includeTail,false);assert.equal(await page.locator('#export-rate').inputValue(),'44100','Agent must not overwrite manual export settings');
  mode='stems';await run();await page.getByText('Delivery stems finished.',{exact:true}).waitFor();const files=unzip(await fs.readFile(await downloads[1].path())),manifest=JSON.parse(files.get('manifest.json'));assert.equal(manifest.channels.length,3);assert.equal(manifest.settings.source,'arrangement');assert.deepEqual(manifest.settings.range,{start:4,length:4});assert.equal(files.size,4);

@@ -32,3 +32,9 @@
 #studio-agent .agent-auth[hidden],#studio-agent .agent-signout[hidden]{display:none}
 
 .agent-download{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 8px;align-items:center}.agent-download a{display:inline-block;padding:4px 7px;border:1px solid var(--line);border-radius:2px;color:var(--text);background:var(--bg);text-decoration:none;font-weight:600}.agent-download a:hover{border-color:var(--accent)}.agent-download a[aria-disabled=true]{opacity:.5;pointer-events:none}.agent-download span{overflow-wrap:anywhere;font-size:10px}.agent-download small{grid-column:1/-1;color:var(--muted);font-size:9px}
+
+/* Odesa keeps its identity inside the existing studio chrome. */
+.odesa-model{font-size:9px;color:var(--muted);white-space:nowrap;border-left:1px solid var(--line);padding-left:7px}
+.odesa-model-details{flex-shrink:0;font-size:10px;color:var(--muted)}.odesa-model-details summary{cursor:pointer}.odesa-model-details p{margin:6px 0;line-height:1.5}
+@media(max-width:1150px) and (min-width:621px){.odesa-model-details{grid-column:1;grid-row:2}.agent-account{grid-row:3}.agent-prompt{grid-row:1/4}.odesa-model-details[open]{max-height:65px;overflow:auto}}
+@media(max-width:620px){.odesa-model-details[open]{max-height:70px;overflow:auto}.agent-content:has(.odesa-model-details[open]) .agent-log{flex:none}}

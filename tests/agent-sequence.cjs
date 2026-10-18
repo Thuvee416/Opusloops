@@ -23,7 +23,7 @@ const fs=require('node:fs/promises');
   else actions=[{type:'project',args:{bpm:127}},{type:'command',args:{name:'export_wav'}}];
   await route.fulfill({json:{summary:'Sequence '+mode+' finished.',actions}});
  });
- const run=async text=>{await page.locator('#agent-prompt').fill(text);await page.getByRole('button',{name:'Run agent',exact:true}).click();};
+ const run=async text=>{await page.locator('#agent-prompt').fill(text);await page.getByRole('button',{name:'Ask Odesa',exact:true}).click();};
  await run('Compose a bass phrase, arrange it, play and pause, export WAV and save.');
  await page.getByText('Sequence compose finished.',{exact:true}).waitFor();assert.equal(downloads.length,2);
  const wav=await fs.readFile(await downloads[0].path());assert.equal(wav.toString('ascii',0,4),'RIFF');

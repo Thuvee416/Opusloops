@@ -1,3 +1,4 @@
+import {editAutomationTarget} from './automation-edit.js';
 import {editTrackGroup} from './track-groups.js';
 import {createDownloads} from './downloads.js';
 import {isGroup,parentOf,trackAncestors,trackFamily,groupLeaves,trackDepth,visibleTracks,groupOverview,expandTrackIds} from './track-hierarchy.js';
@@ -43,7 +44,7 @@ import {newDrumRack,DRUM_SOURCES,DRUM_PARAMS,padSample,validateDrums,drumPattern
 import {newSampler,SAMPLER_FILTERS,SAMPLER_PARAMS,validateSampler,samplerParameters,trimSample} from './sampler.js';
 import {newSynth,SYNTH_PARAMS,SYNTH_PRESETS} from './instruments.js';
 import {newReturn} from './routing.js';
-import {AUTOMATION,envelopeValue,editEnvelope,sendKey} from './automation.js';
+import {AUTOMATION,envelopeValue,sendKey} from './automation.js';
 import {inspectMidi,importMidiProject} from './midi-file.js';
 import {editNotes,dragNote,editNoteGroup,copyNotes,notesInRange} from './notes.js';
 import {sceneNames,editTrack,editScene,editSlotStop} from './management.js';
@@ -650,7 +651,7 @@ function renderAutomation(){
   const bounds=[...envelope.points.filter(p=>p.beat>v.start&&p.beat<v.end).map(p=>p.beat),v.end];for(const b of bounds){const left=envelope.points.filter(p=>p.beat<=previous).at(-1),value=envelopeValue(display,b,fallback);path+=left?.curve==='linear'?` L${x(b)} ${y(value)}`:` H${x(b)} V${y(value)}`;previous=b;}
   $('auto-graph').innerHTML=`<path d="M0 80H1000 M0 10H1000 M0 150H1000" stroke="#353e46" fill="none"/><path d="${path}" stroke="${track.color}" stroke-width="2" fill="none" opacity="${envelope.enabled?1:.35}"/>`+envelope.points.map((p,i)=>p.beat>=v.start&&p.beat<=v.end?`<circle data-auto-point="${i}" cx="${x(p.beat)}" cy="${y(p.value)}" r="6" fill="${track.color}" stroke="${i===automationPoint?'#fff':'#171c20'}" stroke-width="2"/>`:'').join('');updateAutomationControls();
 }
-function changeAutomation(action,options={}){stopToEdit();const {owner,paramKey,specs}=automationTarget();owner.automation=editEnvelope(owner,paramKey,action,options,specs);if(action==='delete'||action==='clear')automationPoint=-1;else if(action==='set')automationPoint=owner.automation[paramKey].points.findIndex(p=>p.beat===options.beat);if(engine.context)engine.updateMix();renderAutomation();changed();}
+function changeAutomation(action,options={}){stopToEdit();const {track,key,owner,paramKey}=automationTarget();editAutomationTarget(track,key,action,options,project.returns);if(action==='delete'||action==='clear')automationPoint=-1;else if(action==='set')automationPoint=owner.automation[paramKey].points.findIndex(p=>p.beat===options.beat);if(engine.context)engine.updateMix();renderAutomation();changed();}
 for(const id of ['auto-track','auto-key'])$(id).onchange=()=>{automationPoint=-1;renderAutomation();};$('auto-point').onchange=()=>{automationPoint=Number($('auto-point').value);renderAutomation();};
 $('auto-enabled').onclick=run(()=>changeAutomation('enable',{enabled:!automationTarget().envelope.enabled}));
 function automationFields(){return {beat:Number($('auto-beat').value)-1,value:Number($('auto-value').value),curve:$('auto-curve').value};}

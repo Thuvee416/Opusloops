@@ -28,3 +28,7 @@ test('draft and review receive current explicit shared delivery requirements rat
 test('contradictory explicit shared delivery settings fail before any provider invocation',async()=>{
  let calls=0;await assert.rejects(()=>studioAgent({prompt:'Export WAV and ZIP at 44.1 kHz and 48 kHz for every export.',context:body.context},{send:async()=>{calls++;return response({summary:'Wrong',actions:[]});}}),e=>e.code==='invalid_delivery_request'&&e.status===400);assert.equal(calls,0);
 });
+test('Odesa returns the actual model identity without advertising planned model families',async()=>{
+ const previous=process.env.STUDIO_AGENT_MODEL_ID;process.env.STUDIO_AGENT_MODEL_ID='amazon.nova-pro-v1:0';
+ try{const p=await studioAgent(body,{send:async()=>response({summary:'Need a track',question:'Which track?',actions:[]})});assert.equal(p.model.name,'Tempo');assert.equal(p.model.version,'1.0');assert.equal(p.model.providerModelName,'Amazon Nova Pro');assert.equal(p.model.provider,'Amazon Bedrock');assert.ok(!JSON.stringify(p).includes('Forte'));process.env.STUDIO_AGENT_MODEL_ID='different-configured-model';const other=await studioAgent(body,{send:async()=>response({summary:'Read session',actions:[]})});assert.equal(other.model.name,'Configured Model');assert.equal(other.model.providerModelId,'different-configured-model');assert.equal(other.model.version,null);}finally{process.env.STUDIO_AGENT_MODEL_ID=previous;}
+});
