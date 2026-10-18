@@ -1,0 +1,220 @@
+{
+  "date": "2026-10-18",
+  "release": "0.141.0",
+  "sourceCommit": "75cf6c33cebf8da513e960317f0e4f313455d9ef",
+  "method": "Existing signed-in OPUS session, normal inline Odesa and recording/File/Edit controls, browser keyboard events A/D/G and fresh actual downloads. No production auth extraction or request interception.",
+  "model": "Odesa Tempo 1.0 / Amazon Nova Pro via Bedrock",
+  "hosting": {
+    "app": "d1zc92wmtmvg23",
+    "job": "125",
+    "status": "SUCCEED",
+    "apexAndWwwExactAssets": 12
+  },
+  "api": {
+    "codeSha256": "aa454c3e6b593c82795025b413b6f8fd3038c1246854938402f5b7a8cf432931",
+    "state": "Active",
+    "lastUpdate": "Successful",
+    "workerImageUnchanged": true
+  },
+  "requests": [
+    {
+      "kind": "setup",
+      "reviewed": true,
+      "projectEdits": 1,
+      "clientRepairs": 0,
+      "result": "Added exact Init synth Capture Proof track, volume .4/pan0/no effects; original project data unchanged; Recording view shown."
+    },
+    {
+      "kind": "enable future MIDI record quantization",
+      "reviewed": true,
+      "projectEdits": 0,
+      "clientRepairs": 0,
+      "result": "Eighth-triplet starts and ends at 100%; actual settings receipt; complete saved project byte-identical to setup. No recording/transport was started."
+    },
+    {
+      "kind": "disable future MIDI record quantization",
+      "reviewed": true,
+      "projectEdits": 0,
+      "clientRepairs": 0,
+      "result": "Off while retaining saved triplet/Both preferences; actual receipt; existing recorded take/project byte-identical afterwards."
+    }
+  ],
+  "actualPreferenceReceipts": [
+    {
+      "recordQuantization": {
+        "detailPanel": "recording",
+        "persisted": true,
+        "recordQuantization": true,
+        "scope": "new_midi_session_takes",
+        "settings": {
+          "enabled": true,
+          "grid": 0.5,
+          "gridMode": "triplet",
+          "target": "both"
+        }
+      }
+    },
+    {
+      "recordQuantization": {
+        "detailPanel": "recording",
+        "persisted": true,
+        "recordQuantization": true,
+        "scope": "new_midi_session_takes",
+        "settings": {
+          "enabled": false,
+          "grid": 0.5,
+          "gridMode": "triplet",
+          "target": "both"
+        }
+      }
+    }
+  ],
+  "keyboardCapture": {
+    "destination": "Capture Proof, first empty Session slot",
+    "settingsLockedDuringTake": true,
+    "frozenSettings": {
+      "enabled": true,
+      "grid": 0.5,
+      "gridMode": "triplet",
+      "target": "both"
+    },
+    "performedRecorderNotes": [
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.5973333333333334,
+        "duration": 0.0625
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.672,
+        "duration": 0.0625
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.896,
+        "duration": 0.0625
+      }
+    ],
+    "quantizedNotes": [
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.6666666666666666,
+        "duration": 0.33333333333333337
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.6666666666666666,
+        "duration": 0.33333333333333337
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 1,
+        "duration": 0.33333333333333326
+      }
+    ],
+    "performedClipBeats": 1.25,
+    "quantizedClipBeats": 1.5,
+    "independentEndpointComparison": true,
+    "otherProjectDataUnchanged": true,
+    "scope": "Recorded source timings include the existing .0625-beat minimum note duration. This is browser keyboard capture, not physical MIDI/latency measurement."
+  },
+  "midi": {
+    "normalManualExport": true,
+    "bytes": 82,
+    "exactExporterMatch": true,
+    "smfFormat": 0,
+    "ppqn": 960,
+    "noteOnEvents": [
+      [
+        640,
+        60,
+        95
+      ],
+      [
+        640,
+        64,
+        95
+      ],
+      [
+        960,
+        67,
+        95
+      ]
+    ],
+    "noteOffEvents": [
+      [
+        960,
+        60,
+        0
+      ],
+      [
+        960,
+        64,
+        0
+      ],
+      [
+        1280,
+        67,
+        0
+      ]
+    ]
+  },
+  "recovery": {
+    "firstUndo": "Exact unquantized recorded source data; no spurious preference/export entry",
+    "secondUndo": "Exact setup project; take removed",
+    "thirdUndo": "Exact original project; temporary track removed",
+    "normalReloadFreshSave": "Exact original project bytes",
+    "originalSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "recordingPreferencesRestored": "Off, default straight-sixteenth grid, Starts; Off/Starts verified after normal reload",
+    "workspace": "Session / Clip, 20 percent detail, stopped; inputs disconnected"
+  },
+  "artifacts": {
+    "Untitled-session (68).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Untitled-session (69).opusloop": {
+      "bytes": 2071,
+      "sha256": "3609fff2990527b008363e1a32265b2f8318c2601941061c40b3acf64dcb954a"
+    },
+    "Untitled-session (70).opusloop": {
+      "bytes": 2071,
+      "sha256": "3609fff2990527b008363e1a32265b2f8318c2601941061c40b3acf64dcb954a"
+    },
+    "Untitled-session (71).opusloop": {
+      "bytes": 2504,
+      "sha256": "1a8c42af451ffb7173dadcec414a9b55a4ef9a12705d76249b9e47ca1e5fbde1"
+    },
+    "Untitled-session (72).opusloop": {
+      "bytes": 2504,
+      "sha256": "1a8c42af451ffb7173dadcec414a9b55a4ef9a12705d76249b9e47ca1e5fbde1"
+    },
+    "Untitled-session (73).opusloop": {
+      "bytes": 2457,
+      "sha256": "4b3d486519cf8b5b4d061ed574c1a028f7f616ccca58d18c16588c8de071b258"
+    },
+    "Untitled-session (74).opusloop": {
+      "bytes": 2071,
+      "sha256": "3609fff2990527b008363e1a32265b2f8318c2601941061c40b3acf64dcb954a"
+    },
+    "Untitled-session (75).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Untitled-session (76).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "MIDI-take.mid": {
+      "bytes": 82,
+      "sha256": "d57400301f95026116a7ad73fc53ec5c2bb8e1b0a58f8a2bedb6477754dc9062"
+    }
+  },
+  "scope": "New MIDI Session takes only. Native controlled-timestamp WAV/SMF checks are separate local evidence. Agent start/finish, overdub/direct Arrangement recording, sub-.0625-beat input durations, device timestamps, physical MIDI/mic latency and full DAW parity remain incomplete. Goal remains active."
+}
