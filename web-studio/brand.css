@@ -1,8 +1,9 @@
 /* Shared geometric identity; studio interaction accents remain teal. */
 :root,.studio-shell{--accent:#36b8a6;--brand-accent:#36b8a6}
 .opus-logo{display:inline-block;object-fit:contain;vertical-align:middle;flex-shrink:0}
-.studio-shell .topbar .brand{display:flex;align-items:center;justify-content:center;flex:0 0 52px;width:52px;min-width:52px;height:24px;padding:0;background:transparent;border:0;box-shadow:none}
-.studio-shell .topbar .opus-logo{width:32px;height:24px}
+.studio-shell .topbar .brand{display:flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-width:44px;height:24px;padding:3px 10px;background:transparent;border:0;box-shadow:none}
+.studio-shell .topbar .opus-logo{width:24px;height:18px}
+.studio-shell>footer .opus-logo{width:19px;height:14px}
 
 /* Black marks on the light studio chrome. */
 .studio-shell .topbar .opus-logo,.studio-shell>footer .opus-logo{filter:brightness(0)}

@@ -483,3 +483,8 @@ Authenticated 0.142.0 verification: Amplify job128 published the intended commit
 
 
 0.142.1 context correction: before audio initialization, the recording sample rate is unknown. Odesa minimumNoteSeconds is now null until an actual AudioContext sample rate exists, instead of assuming 48 kHz. The recording algorithm already used the actual context rate and is unchanged. A focused unknown/44.1/48/96 kHz context test brings the core suite to 232. This corrects metadata and does not expand the recording or physical-device claims above.
+
+
+### 0.142.2 — Intro And Application Logo Spacing
+
+Removed the mini studio poster from the welcome modal and replaced its two-column intro with a single text column on desktop and mobile. The main application mark now uses a proportional 24 × 18 px box, reduced from 32 × 24 px, inside a 44 × 24 px home link. Normal Chrome measurements confirm equal 10 px left/right and 3 px top/bottom padding; the footer mark is reduced to 19 × 14 px. Desktop and 390 × 844 intro/studio previews were visually inspected, Enter Studio works and no preview page errors were observed. Existing welcome imagery, Odesa descriptions and recording behavior are retained. Artifact/module validation passes. This is a visual refinement; the broad DAW goal remains active.
