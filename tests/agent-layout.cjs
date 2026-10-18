@@ -15,6 +15,7 @@ const assert=require('node:assert/strict');
   assert.equal(theme.modal,theme.agent);assert.equal(theme.fonts[0],theme.fonts[1]);assert.equal(theme.radius,'3px');
   await page.screenshot({path:`/tmp/opus-welcome-${width}.png`});
   await page.getByRole('button',{name:'Enter Studio',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelectorAll('#opus-welcome canvas').length===0);
   assert.equal(await page.locator('dialog.studio-agent').count(),0);
   assert.equal(await page.getByRole('complementary',{name:'Studio agent',exact:true}).isVisible(),true);
   const bounds=await page.evaluate(()=>{

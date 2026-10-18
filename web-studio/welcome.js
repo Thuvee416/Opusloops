@@ -28,6 +28,8 @@ welcome.addEventListener('close', () => {
   disposeAurora?.();
   disposeAurora = undefined;
   welcome.querySelectorAll('canvas').forEach(canvas => canvas.remove());
+  // A queued close event must not steal focus from a control the user has already chosen.
+  if (document.activeElement !== document.body && !welcome.contains(document.activeElement)) return;
   if (previousFocus instanceof HTMLElement && previousFocus !== document.body) previousFocus.focus();
   else document.getElementById('play')?.focus();
 });
