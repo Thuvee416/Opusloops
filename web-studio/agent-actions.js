@@ -1,3 +1,4 @@
+import {trackRoutingChanges} from './track-routing.js';
 import {SELECTION_KEYS,selectionIntent,detailPanelIntent} from './studio-selection.js';
 import {editRegionCrossfade} from './region-crossfade.js';
 import {editRegionFades,sliceRegion,fitRegionFades} from './region-fades.js';
@@ -18,9 +19,9 @@ export const agentActions={
  region_crossfade:'{leftId,rightId (ordered audio Arrangement REGION IDs on same track),action?:create|remove,start?,length?,boundary?} create/resize a complementary linear crossfade over zero-based start/length; for adjacent clips the overlap must cover their join. Extends outgoing audio to start+length and starts incoming audio at start, preserving source phase and outer boundaries. Requires unused source material inside loop boundaries, no other overlapping fades. Remove joins at boundary (default overlap midpoint), clears the paired fades, and preserves outer edges. Invalid requests reject atomically',
  region_fades:'{ids:[existing Arrangement REGION IDs],fadeIn? (beats),fadeOut? (beats)} set audio/generated-loop region edge fades. Durations are independent, 0..each region length; 0 clears an edge. Linear fades cannot overlap each other or cross source-loop boundaries; values outside those bounds reject atomically. Excludes MIDI. Does not change source clips, source offsets, mixer automation or Session playback; one atomic Undo. Split/time-cropped fades retain original gain segments; setting a duration resets that edge to a full 0-to-1 or 1-to-0 fade',
  project:'{name?,bpm?,master?,transport?:{loopEnabled,loopStart,loopEnd,metronome}}',
- track:'{id,changes:{name?,volume?(linear 0..1),pan?(-1..1),mute?,solo?,output?}}',
- add_track:'{name,ref? (unique $alias for subsequent actions),preset? (Init|Warm bass|Soft pad|Bright pluck)}',
- manage_track:'{id,action:rename|color|move|duplicate|delete,value?}',
+ track:'{id,changes:{name?,volume?(linear 0..1),pan?(-1..1),mute?,solo?,output?:master|sendsOnly|track:ID (regular destination input after source effects/fader/pan; accepts track:$alias)}} regular buses support Solo; returns support name/volume/pan/mute, but not Solo or redirected main outputs',
+ add_track:'{name,ref? (unique $alias for subsequent actions),preset? (Init|Warm bass|Soft pad|Bright pluck),volume? (linear 0..1; use 1 for a unity bus),pan? (-1..1),output?:master|sendsOnly|track:ID} omit preset for an empty audio bus; initial mix values are direct args, not changes',
+ manage_track:'{id,action:rename|color|move|duplicate|delete,value?} for structural edits; action:changes with {id,action:changes,changes:{name?,volume?,pan?,mute?,solo?,output?}} uses the same validated patch as type track',
  scene:'{index,action:rename|insert|duplicate|delete|move,value?}',
  device:'{trackId,type?,deviceId?,remove?,enabled?,params?} add/update/remove an effect on a track or return',
  instrument:'{trackId,preset?,kind?:poly|drums|sampler,sampleClipId?,params?} presets for poly; sampler copies audio from an existing clip',
@@ -63,12 +64,12 @@ export function applyAgentActions(source,actions,{aliases=new Map(),observations
  for(const key of ['id','trackId','returnId','deviceId','clipId','sampleClipId'])if(x[key])x[key]=resolve(x[key]);if(x.trackIds)x.trackIds=x.trackIds.map(resolve);
  const track=id=>[...p.tracks,...p.returns||[]].find(t=>t.id===id)||fail('Unknown track: '+id);
  if(a.type==='project'){const {transport,...rest}=x;assign(p,rest,['name','bpm','master']);if(transport)assign(p.transport,transport,['loopEnabled','loopStart','loopEnd','metronome','launchQuantization','followActionsEnabled']);}
- if(a.type==='track')assign(track(x.id),x.changes,['name','volume','pan','mute','solo','output']);
- if(a.type==='add_track'){const t=makeTrack(x.name,p.tracks.length);t.slots=Array(p.scenes).fill(null);if(x.preset)t.instrument=newSynth(x.preset);p.tracks.push(t);remember(x.ref,t.id);}
+ if(a.type==='track'||a.type==='manage_track'&&x.action==='changes'){const allowed=a.type==='track'?['id','changes']:['id','action','changes'];if(Object.keys(x).some(key=>!allowed.includes(key)))fail('Track changes accept id and changes only (plus action:changes for manage_track). Put volume, pan and output inside changes.');if(typeof x.changes?.output==='string'&&x.changes.output.startsWith('track:'))x.changes.output='track:'+resolve(x.changes.output.slice(6));assign(track(x.id),x.changes,['name','volume','pan','mute','solo','output']);}
+ if(a.type==='add_track'){const extra=Object.keys(x).filter(key=>!['name','ref','preset','volume','pan','output'].includes(key));if(extra.length)fail('Unsupported add_track arguments: '+extra.join(', ')+'. Use direct volume, pan and output args, or a later track changes action.');const t=makeTrack(x.name,p.tracks.length);t.slots=Array(p.scenes).fill(null);if(x.preset!==undefined)t.instrument=newSynth(x.preset);for(const key of ['volume','pan','output'])if(x[key]!==undefined)t[key]=key==='output'&&typeof x[key]==='string'&&x[key].startsWith('track:')?'track:'+resolve(x[key].slice(6)):x[key];p.tracks.push(t);remember(x.ref,t.id);}
  if(a.type==='add_return'){p.returns??=[];const t=newReturn(x.name);p.returns.push(t);remember(x.ref,t.id);}
  if(a.type==='midi_effects')track(x.trackId).midiEffects=typeof x.effectsJSON==='string'?JSON.parse(x.effectsJSON):x.effects;
  if(a.type==='drum_pad'){const pad=track(x.trackId).instrument?.pads?.find(v=>v.pitch===x.pitch)||fail('Unknown drum pad');assign(pad,x.changes,['name','source','level','pan','tune','decay','choke','mute','solo']);}
- if(a.type==='manage_track')p=editTrack(p,x.id,x.action,x.action==='move'?Number(x.value):x.value).project;
+ if(a.type==='manage_track'&&x.action!=='changes')p=editTrack(p,x.id,x.action,x.action==='move'?Number(x.value):x.value).project;
  if(a.type==='scene')p=editScene(p,x.index,x.action,x.action==='move'?Number(x.value):x.value).project;
  if(a.type==='device'){const t=track(x.trackId);t.devices??=[];let d;if(x.deviceId){d=t.devices.find(d=>d.id===x.deviceId)||fail('Unknown device');}else{d=newDevice(x.type);t.devices.push(d);}if(x.remove){t.devices=t.devices.filter(v=>v!==d);}else{if(x.enabled!==undefined)d.enabled=x.enabled;if(x.params)assign(d.params,x.params,Object.keys(DEVICE_TYPES[d.type].params));}}
  if(a.type==='instrument'){const t=track(x.trackId);if(x.kind==='drums')t.instrument=newDrumRack();else if(x.kind==='sampler'){t.instrument=newSampler();const c=p.clips[x.sampleClipId];if(c?.kind!=='audio')fail('Sampler needs an audio clip');t.instrument.data=c.data;t.instrument.name=c.name;}else if(x.kind==='poly'||x.preset)t.instrument=newSynth(x.preset||'Init');if(!t.instrument)fail('Choose an instrument first');if(x.params)assign(t.instrument,x.params,Object.keys(t.instrument).filter(k=>!['type','data','pads'].includes(k)));}
@@ -83,7 +84,7 @@ export function applyAgentActions(source,actions,{aliases=new Map(),observations
  if(a.type==='time'){if(!['insert','delete','duplicate'].includes(x.operation))fail('Invalid time operation');p=x.operation==='duplicate'?duplicateArrangementTime(p,x.start,x.length,x.trackIds??null):editArrangementTime(p,x.operation,x.start,x.length,x.trackIds??null);}
  if(a.type==='locators')p.locators=x.items.map(v=>({...v,id:v.id||uid()}));
  }
- validateProject(p);if(p.arrangement.some(r=>r.start+r.length>16384))fail('Arrangement exceeds the timeline limit');return p;
+ validateProject(p);observations.push(...trackRoutingChanges(source,p));if(p.arrangement.some(r=>r.start+r.length>16384))fail('Arrangement exceeds the timeline limit');return p;
 }
 function withoutMedia(v){if(Array.isArray(v))return v.map(withoutMedia);if(v&&typeof v==='object')return Object.fromEntries(Object.entries(v).filter(([k])=>k!=='data').map(([k,x])=>[k,withoutMedia(x)]));return v;}
 export function agentContext(p){

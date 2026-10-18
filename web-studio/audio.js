@@ -1,10 +1,10 @@
+import {setTrackOutput} from './track-routing.js';
 import {captureScene} from './capture-scene.js';
 import {stretchAudio,stretchPlan} from './warp.js';
 import {followDelay,followTarget} from './follow-actions.js';
 import {BufferScheduler} from './buffer-scheduler.js';
 import {isNoteActive} from './note-state.js';
 import {exportChannel} from './export-channel.js';
-import {effectTail} from './devices.js';
 import {exportRangePlan} from './export-range.js';
 import {exportOptions,encodeWave} from './wav-export.js';
 import {processMidiClip} from './midi-effects.js';
@@ -46,6 +46,7 @@ export class Engine {
   automationActive(track,key){return !!track&&this.targetActive(track,automationTargetFor(track,key,this.project.returns));}
   updateMix(){if(!this.context)return;this.mixGraph.update({automated:(t,k)=>this.playing&&this.automationActive(t,k)});const now=this.context.currentTime;for(const t of this.channels()){const m=this.mixer(t.id);if(!m)continue;for(const target of automationTargets(t,this.project.returns))if(!this.playing||!this.targetActive(t,target)){if(target.sendId)continue;else if(target.device)m.chain.update(target.device.id,target.paramKey,target.fallback);else{const param=target.key==='volume'?m.gain.gain:m.pan.pan;param.cancelScheduledValues(now);param.setTargetAtTime(target.fallback,now,.01);}}}this.master.gain.setTargetAtTime(this.masterVolume,now,.01);}
   overrideAutomation(trackId,key){if(this.automationTake){const t=this.channels().find(t=>t.id===trackId),a=t&&automationTargetFor(t,key,this.project.returns);try{if(a&&this.automationTake.write(trackId,key,a.fallback,this.rawBeat())){this.automationOverrides.add(trackId+':'+key);this.updateMix();return;}}catch(error){this.automationError='Automation recording stopped: '+error.message;this.finishAutomationRecording(false);throw error;}}const track=this.channels().find(t=>t.id===trackId),target=track&&automationTargetFor(track,key,this.project.returns);if(this.mode==='arrangement'&&hasEnvelope(target?.envelope))this.automationOverrides.add(trackId+':'+key);this.updateMix();}
+  setTrackOutput(trackId,output){setTrackOutput(this.project,trackId,output);}
   setSendLevel(trackId,returnId,value){const t=this.project.tracks.find(t=>t.id===trackId);if(!t||!this.project.returns?.some(r=>r.id===returnId)||!Number.isFinite(value)||value<0||value>1)throw new Error('Invalid send.');t.sends??={};t.sends[returnId]??={amount:0,pre:false};t.sends[returnId].amount=value;this.overrideAutomation(trackId,sendKey(returnId));}
   setSendPre(trackId,returnId,pre){const t=this.project.tracks.find(t=>t.id===trackId);if(!t||!this.project.returns?.some(r=>r.id===returnId)||typeof pre!=='boolean')throw new Error('Invalid send.');t.sends??={};t.sends[returnId]??={amount:0,pre:false};t.sends[returnId].pre=pre;this.restoreAutomation(false);}
   setDeviceParameter(trackId,deviceId,key,value){const t=this.channels().find(t=>t.id===trackId),d=t?.devices.find(d=>d.id===deviceId);if(!d)return;d.params[key]=value;this.overrideAutomation(trackId,deviceKey(deviceId,key));this.mixer(trackId)?.chain.update(deviceId,key,value);if(d.type==='autopan'&&['mode','division'].includes(key))this.restoreAutomation(false);}
@@ -241,7 +242,7 @@ export class Engine {
       step=pendingQuantum(beat,step,this.pending);const sceneEvent=this.pendingScene??this.sceneFollow;if(sceneEvent?.beat>beat+1e-7)step=Math.min(step,sceneEvent.beat-beat);for(const [id,f]of this.follows)if(!this.pending.has(id)&&f.beat>beat+1e-7)step=Math.min(step,f.beat-beat);
       const automationTime=Math.max(time,this.context.currentTime),skipped=(automationTime-time)/spb;if(skipped<step)for(const track of this.channels())this.scheduleAutomation(track,pos+skipped,step-skipped,automationTime);
       for(const track of this.project.tracks){
-        const target=this.mixers.get(track.id).chain.input;
+        const mixer=this.mixers.get(track.id),target=mixer.input||mixer.chain.input;
         if(time<this.context.currentTime-.02)continue;
         if(this.mode==='session'||this.overrides.has(track.id)){
           const a=this.active.get(track.id);if(a?.clipId)this.schedule(this.context,target,this.project.clips[a.clipId],time,beat-a.start,step,track.id,`session:${a.start}`,Infinity,a.bufferIdentity);
@@ -254,7 +255,7 @@ export class Engine {
     if(launchChanged)this.changed();
     if(this.mode==='arrangement'&&!this.project.transport.loopEnabled&&!this.recording&&!this.automationTake&&this.overrides.size===0&&this.project.arrangement.length&&this.beat()>Math.max(...this.project.arrangement.map(s=>s.start+s.length))+this.tailSeconds()/spb)this.pause();
   }
-  tailSeconds(sampleRate=this.context?.sampleRate??44100){return Math.min(30,routingTail(this.project,sampleRate)+(this.instrumentTail??0));}
+  tailSeconds(sampleRate=this.context?.sampleRate??44100,channel='master'){return Math.min(30,routingTail(this.project,sampleRate,channel)+(this.instrumentTail??0));}
   schedule(ctx,target,clip,time,offset,beats,trackId,instance=clip.id,limit=Infinity,bufferIdentity=clip.id,fade){
     const track=this.project.tracks.find(t=>t.id===trackId);
     if(clip.kind==='midi'&&track?.instrument){let scheduler=this.voiceSchedulers.get(ctx);if(!scheduler){scheduler=new VoiceScheduler(ctx,this.project.bpm,(id,pitch)=>this.sampleBuffer(id,pitch),node=>{if(ctx!==this.context)return;this.nodes.add(node);const cleanup=node.onended;node.onended=()=>{this.nodes.delete(node);cleanup?.();};});this.voiceSchedulers.set(ctx,scheduler);}scheduler.schedule(target,track,clip,time,offset,beats,instance,limit);return;}
@@ -275,9 +276,9 @@ export class Engine {
   }
   async render(options={}){const settings=exportOptions(options),output=exportChannel(this.project,settings.channel),sessionSource=settings.source==='session'||settings.source!=='arrangement'&&!this.project.arrangement.length;if(settings.source==='arrangement'&&!this.project.arrangement.length)throw new Error('Add Arrangement clips before exporting the Arrangement.');if(settings.range!==undefined&&(sessionSource||!this.project.arrangement.length))throw new Error('Record an Arrangement before exporting a range.');await this.prepare();const events=!sessionSource?this.project.arrangement:[...this.active].filter(([,a])=>a.clipId).map(([id,a])=>({trackId:id,clipId:a.clipId,start:0,length:16,offset:0}));
     if(!events.length)throw new Error('Launch a scene or record an arrangement before exporting.');
-    const plan=exportRangePlan(events,this.project.bpm,settings.sampleRate,output.type==='track'?Math.max(this.tailSeconds(settings.sampleRate),Math.min(30,effectTail([output.channel],settings.sampleRate)+(this.instrumentTail??0))):this.tailSeconds(settings.sampleRate),settings.range,settings.includeTail===undefined?true:settings.includeTail);const ctx=new OfflineAudioContext(2,plan.frames,settings.sampleRate),master=ctx.createGain(),compressor=ctx.createDynamicsCompressor();master.gain.value=this.masterVolume;master.connect(compressor);compressor.connect(ctx.destination);
+    const plan=exportRangePlan(events,this.project.bpm,settings.sampleRate,Math.max(this.tailSeconds(settings.sampleRate),this.tailSeconds(settings.sampleRate,settings.channel||'master')),settings.range,settings.includeTail===undefined?true:settings.includeTail);const ctx=new OfflineAudioContext(2,plan.frames,settings.sampleRate),master=ctx.createGain(),compressor=ctx.createDynamicsCompressor();master.gain.value=this.masterVolume;master.connect(compressor);compressor.connect(ctx.destination);
     const graph=createMixGraph(ctx,this.project,master);for(const m of [...graph.tracks.values(),...graph.returns.values()])m.chain.sync(0,ctx.length/ctx.sampleRate*this.project.bpm/60,0,60/this.project.bpm);if(output.type!=='master'){compressor.disconnect();const channel=output.type==='track'?graph.tracks.get(output.id):graph.returns.get(output.id);channel.pan.connect(ctx.destination);}if(!sessionSource)for(const t of this.channels()){const m=graph.tracks.get(t.id)||graph.returns.get(t.id);for(const target of automationTargets(t,this.project.returns))if(target.enabled&&!this.automationOverrides.has(t.id+':'+target.key))scheduleTarget(m,target,0,ctx.length/ctx.sampleRate*this.project.bpm/60,0,60/this.project.bpm,ctx.sampleRate);}
-    const regionMap=new Map(this.project.arrangement.map(r=>[r.id,r]));for(const t of this.project.tracks){const {chain}=graph.tracks.get(t.id);for(const s of plan.events.filter(e=>isRegionActive(e)&&e.trackId===t.id).sort((a,b)=>a.start-b.start))this.schedule(ctx,chain.input,this.project.clips[s.clipId],s.start*60/this.project.bpm,s.offset,s.length,t.id,s.id||s.clipId,(s.start+s.length)*60/this.project.bpm,undefined,!sessionSource?{region:regionMap.get(s.id)||s,beat:0}:undefined);}
+    const regionMap=new Map(this.project.arrangement.map(r=>[r.id,r]));for(const t of this.project.tracks){const {input}=graph.tracks.get(t.id);for(const s of plan.events.filter(e=>isRegionActive(e)&&e.trackId===t.id).sort((a,b)=>a.start-b.start))this.schedule(ctx,input,this.project.clips[s.clipId],s.start*60/this.project.bpm,s.offset,s.length,t.id,s.id||s.clipId,(s.start+s.length)*60/this.project.bpm,undefined,!sessionSource?{region:regionMap.get(s.id)||s,beat:0}:undefined);}
     const rendered=await ctx.startRendering();graph.dispose();if(!plan.startFrame)return encodeWave(rendered,settings);const crop=ctx.createBuffer(2,plan.outputFrames,settings.sampleRate);for(let c=0;c<2;c++)crop.copyToChannel(rendered.getChannelData(c).subarray(plan.startFrame,plan.startFrame+plan.outputFrames),c);return encodeWave(crop,settings);
   }
 }

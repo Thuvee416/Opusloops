@@ -42,14 +42,14 @@ export class AudioCapture {
 export class LiveNotes {
   constructor(engine,onError=()=>{}){this.engine=engine;this.onError=onError;this.voices=new Map();this.sounding=new Set();this.pending=new Map();this.arps=new Map();this.arpKeys=new Map();}
   on(key,pitch,velocity,trackId){
-    this.off(key);const e=this.engine,ctx=e.context,target=e.mixers?.get(trackId)?.chain.input;if(!ctx||!target)return;
+    this.off(key);const e=this.engine,ctx=e.context,mixer=e.mixers?.get(trackId),target=mixer?.input||mixer?.chain.input;if(!ctx||!target)return;
     const track=e.project.tracks.find(t=>t.id===trackId),effects=structuredClone(track?.midiEffects),firstTiming=effects?.find(d=>d.enabled&&d.type==='length'),bpm=e.project.bpm??120,time=ctx.currentTime;
     const arpIndex=effects?.findIndex(d=>d.enabled&&d.type==='arpeggiator')??-1;if(arpIndex>=0){let arp=this.arps.get(trackId);if(!arp||arp.closed){arp=new LiveArpeggiator(this,trackId,effects,arpIndex);this.arps.set(trackId,arp);}this.arpKeys.set(key,trackId);arp.on(key,pitch,velocity);return;}
     if(firstTiming?.trigger==='off'){if(this.pending.size>=128)this.pending.delete(this.pending.keys().next().value);this.pending.set(key,{pitch,velocity,trackId,effects,bpm,time});return;}
     this.spawn(key,processMidiNotes({pitch,velocity,start:0},effects,bpm),trackId,time,bpm);
   }
   spawn(key,notes,trackId,time,bpm){
-    const e=this.engine,ctx=e.context,target=e.mixers?.get(trackId)?.chain.input;if(!ctx||!target)return;const instrument=e.project.tracks.find(t=>t.id===trackId)?.instrument,group=new Set();
+    const e=this.engine,ctx=e.context,mixer=e.mixers?.get(trackId),target=mixer?.input||mixer?.chain.input;if(!ctx||!target)return;const instrument=e.project.tracks.find(t=>t.id===trackId)?.instrument,group=new Set();
     for(const note of notes){
       const at=Math.max(ctx.currentTime,time+(note.start??0)*60/bpm);
       if(this.sounding.size>=128){const oldest=this.sounding.values().next().value;oldest.release(ctx.currentTime,true);this.sounding.delete(oldest);for(const [held,g]of this.voices){g.delete(oldest);if(!g.size)this.voices.delete(held);}}

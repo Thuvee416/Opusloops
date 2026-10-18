@@ -12,8 +12,8 @@ export function editTrack(project,id,action,value){
     if(p.tracks.length>=16)throw new Error('A project supports up to 16 tracks.');const copy=structuredClone(track),clips=new Map();copy.id=uid();copy.name=(track.name.slice(0,35)+' copy');copy.devices=(copy.devices||[]).map(d=>({...d,id:uid()}));
     const clone=id=>{if(!id)return null;if(!clips.has(id))clips.set(id,copyClip(p,id));return clips.get(id);};copy.slots=copy.slots.map(clone);
     const regions=p.arrangement.filter(s=>s.trackId===track.id).map(s=>({...s,id:uid(),trackId:copy.id,clipId:clone(s.clipId)}));p.arrangement.push(...regions);p.tracks.splice(index+1,0,copy);selected=copy.id;
-  }else if(action==='delete'){if(p.tracks.length===1)throw new Error('Keep at least one track in the project.');p.tracks.splice(index,1);p.arrangement=p.arrangement.filter(s=>s.trackId!==id);cleanClips(p);selected=p.tracks[Math.min(index,p.tracks.length-1)].id;}
-  else throw new Error('Unknown track operation.');validateProject(p);return {project:p,trackId:selected};
+  }else if(action==='delete'){if(p.tracks.length===1)throw new Error('Keep at least one track in the project.');p.tracks.splice(index,1);for(const source of p.tracks)if(source.output==='track:'+id)source.output=track.output===undefined?'master':track.output;p.arrangement=p.arrangement.filter(s=>s.trackId!==id);cleanClips(p);selected=p.tracks[Math.min(index,p.tracks.length-1)].id;}
+  else throw new Error('Unsupported track operation: '+String(action).slice(0,60)+'. Use rename, color, move, duplicate or delete. Create tracks with add_track; set volume, pan or output with a track changes action.');validateProject(p);return {project:p,trackId:selected};
 }
 export function editScene(project,index,action,value){
   if(!Number.isInteger(index)||index<0||index>=project.scenes)throw new Error('Choose a scene.');const p=structuredClone(project);p.sceneNames=sceneNames(p);let selected=index;

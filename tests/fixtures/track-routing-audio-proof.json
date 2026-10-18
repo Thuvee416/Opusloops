@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "sampleRate": 44100,
+  "frames": 88200,
+  "metrics": {
+    "graph": 5.820766091346741e-11,
+    "decodingRate": 48000,
+    "a": 0,
+    "b": 2.9103830456733704e-11,
+    "bus": 8.731149137020111e-11,
+    "main": 5.820766091346741e-11,
+    "other": 1.4551915228366852e-11,
+    "master": 1.1641532182693481e-10,
+    "solo-source": 1.4551915228366852e-11,
+    "solo-bus": 4.3655745685100555e-11,
+    "solo-main": 5.820766091346741e-11,
+    "multi-solo": 1.4551915228366852e-11,
+    "muteBus": 2.9103830456733704e-11,
+    "sendsOnly": 5.820766091346741e-11,
+    "liveRerouteBefore": 5.820766091346741e-11,
+    "liveRerouteAfter": 1.1641532182693481e-10,
+    "rerouteAt": 0.5021315192743764,
+    "returnPost": 1.4551915228366852e-11,
+    "returnPre": 1.4551915228366852e-11,
+    "rootStemSum": 8.731149137020111e-11,
+    "stemFiles": 7,
+    "range": 0,
+    "tailFrames": 172089,
+    "tailEnergy": 0.00045499937464322387,
+    "isolatedBusTailEnergy": 0.0005819324580861238
+  },
+  "scope": "Synthetic native Chromium Web Audio, independent tone/gain expectations; no physical-output or listening assessment."
+}
