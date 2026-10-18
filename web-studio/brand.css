@@ -11,3 +11,9 @@
 .studio-shell .region-marquee{position:absolute;z-index:8;pointer-events:none;border:1px solid #117e70;background:#36b8a62b;box-sizing:border-box}
 .studio-shell .clip-select-mode [data-lane-track],.studio-shell .clip-select-mode .region{touch-action:none;cursor:crosshair}
 .studio-shell #clip-select-mode[aria-pressed="true"]{background:#74c8b7;border-color:#228b7a;color:#112f29}
+
+/* Shared title capitalization for current and dynamically created interface labels. */
+.studio-shell :is(h1,h2,h3,h4,h5,h6,button,a,label,legend,summary,th,dt,strong,select,option,[role="button"],[role="tab"],[role="menuitem"],.section-label,.browser-title,.library-tab,.mixer-heading,.detail-context,.welcome-status,.agent-state){text-transform:capitalize}
+/* Editable content and technical output keep their original spelling and case. */
+.studio-shell :is(input,textarea,code,pre){text-transform:none}
+.studio-shell .project-title input,.studio-shell .track-header input{text-transform:capitalize}

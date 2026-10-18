@@ -119,3 +119,8 @@ The welcome modal and Studio agent now share the application's neutral surfaces,
 The Studio agent is a persistent workspace dock beside the timeline on wide screens and below it on smaller screens. It no longer uses a modal dialog or blocks the rest of the studio. Collapse preserves conversation, prompt and running work; explicit Cancel stops a request. Conversation updates scroll only their own feed. Account sign-in remains inline.
 
 Evidence: `tests/agent-layout.cjs` checks desktop, tablet and small-phone bounds, shared theme, keyboard safety, background view switching, account access and a task completing while collapsed. Existing agent edit/Undo, stale-plan, cancellation, sequenced playback/export and Session performance suites remain covered with mocked/captured model responses; authenticated production model inference remains unverified.
+
+
+## 0.125.1 — Global Interface Title Capitalization
+
+A shared typography rule capitalizes every word in interface headings, buttons, menu items, tabs, labels, summaries, dropdown options and project/track headings, including controls created after startup. Stored names, option values, typed prompts and technical output retain their original contents.
