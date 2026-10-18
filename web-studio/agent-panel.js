@@ -33,6 +33,7 @@ export function installAgent({getProject,commit,locked,analyze,execute,getSessio
   let result;try{result=await auth.plan({prompt,context,feedback},{signal,bound});}catch(error){if(error.code!=='invalid_agent_plan'||attempt===2)throw error;feedback={error:'Return one complete submit_plan result matching the tool schema: summary string, actions array, each action has a supported type and non-null args object; optional question must be a string.'};continue;}
   signal.throwIfAborted();
   auth.assertLease(bound);if(JSON.stringify(getProject())!==fingerprint||locked('request'))throw new Error('The session changed while planning. Nothing applied; run the request again.');
+  if(result.reviewed)log('Plan reviewed. Checking supported actions…');
   if(result.question){log(result.question);dialogue.push({role:'assistant',text:result.question});break;}
   let plan;
   try {

@@ -160,7 +160,7 @@
           "color": "#c5ae83",
           "devices": [
             {
-              "id": "8cbfc8e8-5644-4ad2-85d7-b755c1a3afd5",
+              "id": "50f9eb05-8e65-4cde-b1e5-5171eea6fe02",
               "type": "reverb",
               "enabled": true,
               "params": {
@@ -586,18 +586,11 @@
                 "clipId": "riff"
               }
             }
-          },
-          {
-            "type": "command",
-            "args": {
-              "name": "show_panel",
-              "args": {
-                "panel": "clip"
-              }
-            }
           }
-        ]
-      }
+        ],
+        "reviewed": true
+      },
+      "fixture": "selection-project"
     },
     {
       "kind": "regions",
@@ -629,15 +622,17 @@
               }
             }
           }
-        ]
-      }
+        ],
+        "reviewed": true
+      },
+      "fixture": "selection-project"
     },
     {
       "kind": "return",
       "prompt": "Show the Room return track devices, then open the Returns detail panel. Do not edit the project, connect inputs or start playback.",
       "attempt": 1,
       "plan": {
-        "summary": "Show the Room return track devices, then open the Returns detail panel.",
+        "summary": "Show the Room return track devices and open the Returns detail panel.",
         "actions": [
           {
             "type": "command",
@@ -658,8 +653,10 @@
               }
             }
           }
-        ]
-      }
+        ],
+        "reviewed": true
+      },
+      "fixture": "selection-project"
     },
     {
       "kind": "compose",
@@ -673,15 +670,15 @@
             "args": {
               "name": "New lead",
               "preset": "Bright pluck",
-              "ref": "$new_lead"
+              "ref": "$newLead"
             }
           },
           {
             "type": "midi",
             "args": {
-              "trackId": "$new_lead",
-              "ref": "$pluck_clip",
-              "name": "Pluck riff",
+              "ref": "$clip",
+              "name": "New lead riff",
+              "trackId": "$newLead",
               "scene": 0,
               "beats": 4,
               "notes": [
@@ -709,12 +706,12 @@
           {
             "type": "region",
             "args": {
-              "trackId": "$new_lead",
-              "clipId": "$pluck_clip",
+              "ref": "$region",
+              "trackId": "$newLead",
+              "clipId": "$clip",
               "start": 64,
               "length": 4,
-              "offset": 0,
-              "ref": "$new_region"
+              "offset": 0
             }
           },
           {
@@ -724,9 +721,9 @@
               "args": {
                 "target": "regions",
                 "ids": [
-                  "$new_region"
+                  "$region"
                 ],
-                "primaryId": "$new_region"
+                "primaryId": "$region"
               }
             }
           },
@@ -739,35 +736,37 @@
               }
             }
           }
-        ]
-      }
+        ],
+        "reviewed": true
+      },
+      "fixture": "selection-project"
     },
     {
       "kind": "named_group",
       "prompt": "Create a Warm bass track named Navigation Proof and a return named Navigation Room. On Navigation Proof, create Navigation A in displayed scene 1 and Navigation B in displayed scene 2. Each MIDI clip must be four beats with pitches 36, 39, 41, 43 at zero-based starts 0, 1, 2, 3, each lasting one beat at velocity 0.8. Place Navigation A in the Arrangement at zero-based beat 0 for four beats, and Navigation B at zero-based beat 128 for four beats. Select both of these Arrangement regions with Navigation B primary, reveal both, and open Clip detail. Preserve every existing track and all other existing material. Do not start playback.",
-      "attempt": 1,
+      "attempt": 2,
       "plan": {
-        "summary": "Created Warm bass track and return, added MIDI clips and Arrangement regions, selected regions with Navigation B primary, and opened Clip detail.",
+        "summary": "Created Warm bass track and return, added MIDI clips and Arrangement regions, selected regions",
         "actions": [
           {
             "type": "add_track",
             "args": {
               "name": "Navigation Proof",
               "preset": "Warm bass",
-              "ref": "$navProof"
+              "ref": "$bass"
             }
           },
           {
             "type": "add_return",
             "args": {
               "name": "Navigation Room",
-              "ref": "$navRoom"
+              "ref": "$room"
             }
           },
           {
             "type": "midi",
             "args": {
-              "trackId": "$navProof",
+              "trackId": "$bass",
               "ref": "$navA",
               "name": "Navigation A",
               "scene": 0,
@@ -803,7 +802,7 @@
           {
             "type": "midi",
             "args": {
-              "trackId": "$navProof",
+              "trackId": "$bass",
               "ref": "$navB",
               "name": "Navigation B",
               "scene": 1,
@@ -839,23 +838,21 @@
           {
             "type": "region",
             "args": {
-              "trackId": "$navProof",
+              "trackId": "$bass",
               "clipId": "$navA",
-              "ref": "$navARegion",
               "start": 0,
               "length": 4,
-              "offset": 0
+              "ref": "$regA"
             }
           },
           {
             "type": "region",
             "args": {
-              "trackId": "$navProof",
+              "trackId": "$bass",
               "clipId": "$navB",
-              "ref": "$navBRegion",
               "start": 128,
               "length": 4,
-              "offset": 0
+              "ref": "$regB"
             }
           },
           {
@@ -865,10 +862,10 @@
               "args": {
                 "target": "regions",
                 "ids": [
-                  "$navARegion",
-                  "$navBRegion"
+                  "$regA",
+                  "$regB"
                 ],
-                "primaryId": "$navBRegion"
+                "primaryId": "$regB"
               }
             }
           },
@@ -881,8 +878,10 @@
               }
             }
           }
-        ]
-      }
+        ],
+        "reviewed": true
+      },
+      "fixture": "empty-project"
     }
   ]
 }
