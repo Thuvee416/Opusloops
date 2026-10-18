@@ -1,0 +1,68 @@
+{
+  "status": "passed",
+  "scope": "Controlled receipt timestamps, native real-time scheduler preview for instrument and legacy tracks, native OfflineAudioContext WAV/SMF oracles. No physical device/latency or listening-quality claim.",
+  "cases": [
+    {
+      "kind": "instrument",
+      "laterLoopPreview": true,
+      "secondLaterLoopPreview": true,
+      "cancelRestoresSource": true,
+      "projectUnchanged": true,
+      "transportContinues": true
+    },
+    {
+      "kind": "legacy_buffer",
+      "laterLoopPreview": true,
+      "secondLaterLoopPreview": true,
+      "cancelRestoresSource": true,
+      "projectUnchanged": true,
+      "transportContinues": true
+    },
+    {
+      "kind": "arrangement_queued",
+      "laterLoopPreview": true,
+      "secondLaterLoopPreview": true,
+      "cancelRestoresSource": true,
+      "projectUnchanged": true,
+      "transportContinues": true
+    },
+    {
+      "kind": "raw",
+      "frames": 96000,
+      "sampleRate": 48000,
+      "maxSampleError": 1.1175870895385742e-08,
+      "midiEvents": [
+        {
+          "tick": 192,
+          "type": "noteOn",
+          "velocity": 76
+        },
+        {
+          "tick": 384,
+          "type": "noteOff",
+          "velocity": 38
+        }
+      ],
+      "originalNotesPreserved": true
+    },
+    {
+      "kind": "triplet_both",
+      "frames": 96000,
+      "sampleRate": 48000,
+      "maxSampleError": 1.862645149230957e-09,
+      "midiEvents": [
+        {
+          "tick": 320,
+          "type": "noteOn",
+          "velocity": 76
+        },
+        {
+          "tick": 640,
+          "type": "noteOff",
+          "velocity": 38
+        }
+      ],
+      "originalNotesPreserved": true
+    }
+  ]
+}

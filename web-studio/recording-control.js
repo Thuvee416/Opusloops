@@ -1,3 +1,4 @@
+import {overdubDestination,applyMidiOverdub} from './midi-overdub.js';
 import {validateProject} from './model.js';
 import {isGroup} from './track-hierarchy.js';
 import {sceneNames} from './management.js';
@@ -20,17 +21,18 @@ export function appendRecordedClip(project,clip,trackId){
 }
 export function recordInputIntent(project,args){
  if(!args||typeof args!=='object'||Array.isArray(args)||!['start','finish','cancel'].includes(args.action))throw new Error('record_input requires action start, finish or cancel.');
- const keys=args.action==='start'?['action','source','trackId','countInBars']:['action','trackId'];
+ const keys=args.action==='start'?['action','source','trackId','countInBars','mode',...(args.mode==='overdub'?['scene','clipId']:[])]:['action','trackId'];
  if(Object.keys(args).some(k=>!keys.includes(k)))throw new Error('record_input '+args.action+' accepts '+keys.join(', ')+'.');
  if(args.action==='start'){
   if(!['midi','audio'].includes(args.source)||![0,1,2,4].includes(args.countInBars))throw new Error('Start a take with explicit source midi/audio, trackId and countInBars 0, 1, 2 or 4.');
-  recordingDestination(project,args.trackId);
+  if(args.mode!==undefined&&!['new','overdub'].includes(args.mode))throw new Error('Choose recording mode new or overdub.');
+  if(args.mode==='overdub'){if(args.source!=='midi')throw new Error('Overdub adds MIDI notes to an existing MIDI Session clip; audio overdub is unavailable.');overdubDestination(project,args.trackId,args.scene,args.clipId);}else recordingDestination(project,args.trackId);
  }else if(args.trackId!==undefined&&!project.tracks.some(t=>t.id===args.trackId&&!isGroup(t))){
   throw new Error('Choose the track of the active input take.');
  }
  return structuredClone(args);
 }
-export function recordingBinding(state){return {active:!!state?.active,captureId:state?.captureId??null,...(state?.active?{source:state.source,trackId:state.trackId}:{})};}
+export function recordingBinding(state){return {active:!!state?.active,captureId:state?.captureId??null,...(state?.active?{source:state.source,trackId:state.trackId,...(state.mode==='overdub'?{mode:'overdub',clipId:state.clipId,scene:state.scene}:{})}:{})};}
 export function assertRecordingBinding(expected,actual){
  if(expected&&signature(expected)!==signature(recordingBinding(actual)))throw new Error('The input take changed while planning or executing. Nothing further was applied; run the request again for the current take.');
 }
@@ -38,6 +40,7 @@ export function prepareRecordInput(project,args,state){
  const intent=recordInputIntent(project,args);
  if(!state||typeof state.active!=='boolean')throw new Error('Refresh the studio recording state before controlling a take.');
  if(intent.action==='start'){
+  if(intent.mode==='overdub'&&state.overdubReady===false)throw new Error('Let queued launches settle before overdubbing.');
   if(state.active)throw new Error('Finish or cancel the current take before starting another.');
   if(intent.source==='audio'&&!state.audioConnected)throw new Error('Enable the audio input in Recording first. Odesa does not open microphone permissions or choose devices.');
   if(intent.countInBars&&state.playing)throw new Error('Stop playback before starting a take with a count-in.');
@@ -51,27 +54,33 @@ export function checkRecordingReceipt(before,after,prepared,result,state){
  const intent=prepared.intent;
  if(!result?.inputRecording||result.action!==intent.action)throw new Error('The recording operation did not return its actual result.');
  if(intent.action==='start'){
-  if(signature(before)!==signature(after)||!state?.active||!result.captureId||state.captureId!==result.captureId||state.source!==intent.source||state.trackId!==intent.trackId||state.countInBars!==intent.countInBars||result.source!==intent.source||result.trackId!==intent.trackId||result.countInBars!==intent.countInBars||!['count_in','recording'].includes(result.status))throw new Error('The requested input take did not start as validated.');
+  if(signature(before)!==signature(after)||!state?.active||!result.captureId||state.captureId!==result.captureId||state.source!==intent.source||state.trackId!==intent.trackId||state.countInBars!==intent.countInBars||result.source!==intent.source||result.trackId!==intent.trackId||result.countInBars!==intent.countInBars||!['count_in','queued','recording'].includes(result.status))throw new Error('The requested input take did not start as validated.');
+  if(intent.mode==='overdub'&&(state.mode!=='overdub'||state.clipId!==before.tracks.find(t=>t.id===intent.trackId).slots[intent.scene]||result.mode!=='overdub'||result.scene!==intent.scene||result.clipId!==state.clipId))throw new Error('The overdub did not start on the validated Session clip.');
   return {changed:false};
  }
  if(state?.active||state?.captureId||result.captureId!==prepared.binding.captureId||result.source!==prepared.binding.source||result.trackId!==prepared.binding.trackId)throw new Error('The input take did not finish as validated.');
  if(intent.action==='cancel'||result.status!=='saved'){
-  if(!(intent.action==='cancel'?result.status==='cancelled':['empty','cancelled_count_in'].includes(result.status))||signature(before)!==signature(after))throw new Error('Cancelling or finishing an empty take must preserve the project exactly.');
+  if(!(intent.action==='cancel'?result.status==='cancelled':['empty','cancelled_count_in','cancelled_pending'].includes(result.status))||signature(before)!==signature(after))throw new Error('Cancelling or finishing an empty take must preserve the project exactly.');
   return {changed:false};
  }
  const clip=after.clips[result.clipId];
  if(clip?.kind!==prepared.binding.source)throw new Error('The recorded clip source does not match the take.');
- const expected=appendRecordedClip(before,clip,prepared.binding.trackId);
+ const overdub=prepared.binding.mode==='overdub';
+ if(overdub&&(result.mode!=='overdub'||result.clipId!==prepared.binding.clipId||result.scene!==prepared.binding.scene))throw new Error('The overdub result does not match its bound source.');
+ const expected=overdub?applyMidiOverdub(before,clip,prepared.binding.trackId,prepared.binding.scene):appendRecordedClip(before,clip,prepared.binding.trackId);
+ if(overdub&&result.addedNotes!==expected.addedNotes)throw new Error('The overdub note count does not match its receipt.');
  if(result.scene!==expected.scene||signature(expected.project)!==signature(after))throw new Error('The take changed unrelated project data. Remaining actions stopped.');
  if(clip.kind==='midi'&&result.noteCount!==clip.notes.length)throw new Error('The saved take note count does not match its receipt.');
  return {changed:true};
 }
 export function describeInputRecording(result){
+ if(result.status==='saved'&&result.mode==='overdub')return `Added ${result.addedNotes} MIDI Notes To The Existing Loop.${result.quantized?' Undo Restores Performed Timing; Undo Again Removes This Overdub.':' Undo Removes This Overdub.'}${result.boundarySplits?' Notes Crossing Loop Boundaries Were Split.':''}${result.tailLimited?' Note Capacity Limited The Captured Tail.':''} Playback Continues.`;
  if(result.status==='saved')return `Saved ${result.source==='midi'?'MIDI':'Audio'} Take To Scene ${result.scene+1}.${result.quantized?' Undo Restores Performed Timing; Undo Again Removes The Take.':' Undo Removes The Take.'}`;
  if(result.status==='empty')return 'No MIDI Notes Were Captured. No Clip Or Undo Step Was Created.';
+ if(result.status==='cancelled_pending')return 'Pending Overdub Cancelled. No Take Was Saved.';
  if(result.status==='cancelled_count_in')return 'Count-In Cancelled. No Take Was Saved.';
  if(result.status==='cancelled')return 'Take Cancelled. No Clip Or Undo Step Was Created.';
- return `${result.source==='midi'?'MIDI':'Audio'} Take ${result.status==='count_in'?'Counting In':'Recording'}. Finish Take Saves It; Cancel Take Discards It.`;
+ return `${result.mode==='overdub'?'MIDI Overdub':result.source==='midi'?'MIDI':'Audio'} Take ${result.status==='count_in'?'Counting In':result.status==='queued'?'Waiting For The Loop':'Recording'}. Finish Take Saves It; Cancel Take Discards It.`;
 }
 
 // Unambiguous real-time stop requests need no model round trip. Compound or

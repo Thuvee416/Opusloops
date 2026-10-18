@@ -1,0 +1,278 @@
+{
+  "scope": "Normal local Chrome UI, controlled planning, real keyboard input and saved files; no production/hardware claim.",
+  "baseline": {
+    "bytes": 803,
+    "sha256": "5fa2f05c2b33f25edad18a527d284d95699958d0f544106dc0590215c5cddf20"
+  },
+  "source": {
+    "id": "loop",
+    "kind": "midi",
+    "name": "Existing Loop",
+    "sourceBpm": 120,
+    "beats": 2,
+    "notes": [
+      {
+        "pitch": 48,
+        "start": 0,
+        "duration": 0.15,
+        "velocity": 0.4,
+        "releaseVelocity": 0.2
+      },
+      {
+        "pitch": 55,
+        "start": 1,
+        "duration": 0.1,
+        "velocity": 0.5
+      }
+    ]
+  },
+  "offOverdub": {
+    "id": "loop",
+    "kind": "midi",
+    "name": "Existing Loop",
+    "sourceBpm": 120,
+    "beats": 2,
+    "notes": [
+      {
+        "pitch": 48,
+        "start": 0,
+        "duration": 0.15,
+        "velocity": 0.4,
+        "releaseVelocity": 0.2
+      },
+      {
+        "pitch": 55,
+        "start": 1,
+        "duration": 0.1,
+        "velocity": 0.5
+      },
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.31680000019073473,
+        "duration": 0.01346666638056443
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.3409333332379658,
+        "duration": 0.010466666857401608
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.37293333323796585,
+        "duration": 0.010266666809717884
+      }
+    ]
+  },
+  "quantizedOverdub": {
+    "id": "loop",
+    "kind": "midi",
+    "name": "Existing Loop",
+    "sourceBpm": 120,
+    "beats": 2,
+    "notes": [
+      {
+        "pitch": 48,
+        "start": 0,
+        "duration": 0.15,
+        "velocity": 0.4,
+        "releaseVelocity": 0.2
+      },
+      {
+        "pitch": 55,
+        "start": 1,
+        "duration": 0.1,
+        "velocity": 0.5
+      },
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.33333333333333304,
+        "duration": 0.3333333333333333
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.33333333333333304,
+        "duration": 0.3333333333333333
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.3333333333333335,
+        "duration": 0.3333333333333333
+      }
+    ]
+  },
+  "performedTimingUndo": {
+    "id": "loop",
+    "kind": "midi",
+    "name": "Existing Loop",
+    "sourceBpm": 120,
+    "beats": 2,
+    "notes": [
+      {
+        "pitch": 48,
+        "start": 0,
+        "duration": 0.15,
+        "velocity": 0.4,
+        "releaseVelocity": 0.2
+      },
+      {
+        "pitch": 55,
+        "start": 1,
+        "duration": 0.1,
+        "velocity": 0.5
+      },
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.287399999856949,
+        "duration": 0.011066666762034105
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.31960000014305123,
+        "duration": 0.00019999980926510563
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.3409333332379658,
+        "duration": 0.00040000009536744763
+      }
+    ]
+  },
+  "oneUndoExactBaseline": true,
+  "twoUndoExactBaseline": true,
+  "cancelExactBaseline": true,
+  "finishAndCancelPreservePlayback": true,
+  "originalNotesAndEveryOtherProjectFieldPreserved": true,
+  "independentTripletEndpointOracle": true,
+  "newPageErrors": [],
+  "receipts": [
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "16947e67-16b0-4e24-a94e-93fa133deada",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "mode": "overdub",
+        "scene": 0,
+        "clipId": "loop",
+        "action": "start",
+        "status": "count_in"
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "16947e67-16b0-4e24-a94e-93fa133deada",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "mode": "overdub",
+        "scene": 0,
+        "clipId": "loop",
+        "action": "finish",
+        "status": "saved",
+        "noteCount": 5,
+        "addedNotes": 3,
+        "quantized": false,
+        "boundarySplits": 0,
+        "tailLimited": 0
+      }
+    },
+    {
+      "recordQuantization": {
+        "recordQuantization": true,
+        "settings": {
+          "enabled": true,
+          "grid": 0.5,
+          "gridMode": "triplet",
+          "target": "both"
+        },
+        "persisted": true,
+        "scope": "new_midi_session_takes",
+        "detailPanel": "recording"
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "3bd6be2c-da8c-44c1-98f6-8ecf0caa1203",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "mode": "overdub",
+        "scene": 0,
+        "clipId": "loop",
+        "action": "start",
+        "status": "count_in"
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "3bd6be2c-da8c-44c1-98f6-8ecf0caa1203",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "mode": "overdub",
+        "scene": 0,
+        "clipId": "loop",
+        "action": "finish",
+        "status": "saved",
+        "noteCount": 5,
+        "addedNotes": 3,
+        "quantized": true,
+        "boundarySplits": 0,
+        "tailLimited": 0
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "fc0a5aaa-3b9a-41e1-be3a-0f39a1c3a84c",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "mode": "overdub",
+        "scene": 0,
+        "clipId": "loop",
+        "action": "start",
+        "status": "recording"
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "fc0a5aaa-3b9a-41e1-be3a-0f39a1c3a84c",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "mode": "overdub",
+        "scene": 0,
+        "clipId": "loop",
+        "action": "cancel",
+        "status": "cancelled"
+      }
+    }
+  ],
+  "finishCountInExactBaseline": true,
+  "mobile390Iframe": {
+    "livePreviewAddedNote": true,
+    "finishAndCancelVisible": true,
+    "stickyControlsWhileScrolled": true,
+    "naturalLanguageCancelExactBaseline": true,
+    "downloadBytes": 803,
+    "physicalPhoneTest": false
+  },
+  "developmentFindings": [
+    "An extended mobile layout inspection reached the documented 256-beat auto-finish limit before the Cancel tap. The resulting 893-byte project correctly contained the auto-saved note. A fresh immediate natural-language discard was then checked against all 803 baseline bytes; no cancelled-take recovery is inferred from the earlier auto-saved result."
+  ]
+}

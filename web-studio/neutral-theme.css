@@ -66,3 +66,13 @@ body.studio-shell{grid-template-rows:49px 32px minmax(0,1fr) 22px}
 .note-quantize-options{margin:10px 0;border:1px solid var(--line);padding:8px;background:var(--surface,transparent)}.note-quantize-options summary{cursor:pointer;font-size:11px;font-weight:600}.note-quantize-options .note-tools{margin-top:8px}.note-quantize-options .micro{margin:5px 0 0;max-width:80ch}
 
 .record-quantization-options{margin:12px 0;padding:10px;border:1px solid var(--line);min-width:0}.record-quantization-options legend{padding:0 5px;font-size:11px;font-weight:600}.record-quantization-options .input-controls{display:flex;flex-wrap:wrap;gap:10px}.record-quantization-options label{min-width:0}.record-quantization-options select{max-width:100%}
+
+/* Keep capture controls visible while reviewing a growing overdub. */
+.studio-shell .input-record-actions{position:sticky;top:0;z-index:3;padding:8px 0;margin:4px 0;background:var(--panel,#a9abad);border-bottom:1px solid #818487}
+.studio-shell #input-overdub-preview{margin:8px 0;padding:8px;border:1px solid #85888a;background:#9fa2a4}
+.studio-shell #input-overdub-preview strong{display:block;margin-bottom:6px;font-size:11px}
+
+.studio-shell #input-overdub-preview .micro{margin:4px 0 0}
+@media(max-width:720px){.studio-shell #input-overdub-preview{padding:4px;margin:4px 0}.studio-shell #input-overdub-preview svg{height:44px!important}.studio-shell .input-record-actions{gap:6px;padding:5px 0}}
+
+.studio-shell #input-overdub-preview .micro{color:#34373b}

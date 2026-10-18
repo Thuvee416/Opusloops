@@ -198,6 +198,7 @@ export class Engine {
     if(this.project.transport.followActionsEnabled!==false&&f?.enabled)this.sceneFollow={index,beat:beat+f.beats};
   }
   processSceneFollow(beat){
+    if(this.inputOverdub)return false;
     if(this.pendingScene){if(this.pendingScene.beat>beat+1e-7)return false;this.pendingScene.appliedBeat=beat;this.activeScene=this.pendingScene.index;this.sceneActivationBeat=beat;this.pendingScene=null;this.armSceneFollow(this.activeScene,beat);return true;}
     const event=this.sceneFollow;if(!event||event.beat>beat+1e-7||this.project.transport.followActionsEnabled===false)return false;
     this.sceneFollow=null;const f=this.project.sceneFollows?.[event.index];if(!f?.enabled)return false;
@@ -224,7 +225,7 @@ export class Engine {
   processFollows(beat){
     if(this.project.transport.followActionsEnabled===false)return;
     for(const [id,f]of this.follows){
-      if(this.pending.has(id)||f.beat>beat+1e-7)continue;
+      if(this.inputOverdub?.trackId===id||this.pending.has(id)||f.beat>beat+1e-7)continue;
       const a=this.active.get(id),track=this.project.tracks.find(t=>t.id===id);
       if(a!==f.owner||!track||(this.mode!=='session'&&!this.overrides.has(id))){this.follows.delete(id);continue;}
       if(!f.event){
@@ -249,7 +250,7 @@ export class Engine {
         const mixer=this.mixers.get(track.id),target=mixer.input||mixer.chain.input;
         if(time<this.context.currentTime-.02)continue;
         if(this.mode==='session'||this.overrides.has(track.id)){
-          const a=this.active.get(track.id);if(a?.clipId)this.schedule(this.context,target,this.project.clips[a.clipId],time,beat-a.start,step,track.id,`session:${a.start}`,Infinity,a.bufferIdentity);
+          const a=this.active.get(track.id);if(a?.clipId)this.schedule(this.context,target,this.inputOverdub?.trackId===track.id&&this.inputOverdub.clipId===a.clipId?this.inputOverdub.clip:this.project.clips[a.clipId],time,beat-a.start,step,track.id,`session:${a.start}`,Infinity,a.bufferIdentity);
         }else for(const slice of arrangementSlices(this.project,track.id,pos,step)){
           const region=this.project.arrangement.find(r=>r.id===slice.regionId),limit=time+(region.start+region.length-pos)*spb;
           this.schedule(this.context,target,this.project.clips[slice.clipId],time+slice.delay*spb,slice.offset,slice.length,track.id,region.id,limit,undefined,{region,beat:pos+slice.delay-region.start});
@@ -257,13 +258,13 @@ export class Engine {
       }this.nextBeat+=step;
     }
     if(launchChanged)this.changed();
-    if(this.mode==='arrangement'&&!this.project.transport.loopEnabled&&!this.recording&&!this.automationTake&&this.overrides.size===0&&this.project.arrangement.length&&this.beat()>Math.max(...this.project.arrangement.map(s=>s.start+s.length))+this.tailSeconds()/spb)this.pause();
+    if(this.mode==='arrangement'&&!this.project.transport.loopEnabled&&!this.recording&&!this.automationTake&&!this.inputOverdub&&this.overrides.size===0&&this.project.arrangement.length&&this.beat()>Math.max(...this.project.arrangement.map(s=>s.start+s.length))+this.tailSeconds()/spb)this.pause();
   }
   tailSeconds(sampleRate=this.context?.sampleRate??44100,channel='master'){return Math.min(30,routingTail(this.project,sampleRate,channel)+(this.instrumentTail??0));}
   schedule(ctx,target,clip,time,offset,beats,trackId,instance=clip.id,limit=Infinity,bufferIdentity=clip.id,fade){
     const track=this.project.tracks.find(t=>t.id===trackId);
     if(clip.kind==='midi'&&track?.instrument){let scheduler=this.voiceSchedulers.get(ctx);if(!scheduler){scheduler=new VoiceScheduler(ctx,this.project.bpm,(id,pitch)=>this.sampleBuffer(id,pitch),node=>{if(ctx!==this.context)return;this.nodes.add(node);const cleanup=node.onended;node.onended=()=>{this.nodes.delete(node);cleanup?.();};});this.voiceSchedulers.set(ctx,scheduler);}scheduler.schedule(target,track,clip,time,offset,beats,instance,limit);return;}
-    const buffer=(clip.kind==='midi'&&track?.midiEffects?.length?this.midiBuffers.get(JSON.stringify([trackId,clip.id])):this.buffers.get(clip.id))?.buffer;if(!buffer)return;const spb=60/this.project.bpm;
+    const buffer=(clip.kind==='midi'&&track?.midiEffects?.length?this.midiBuffers.get(JSON.stringify([trackId,clip.id]))??this.buffers.get(clip.id):this.buffers.get(clip.id))?.buffer;if(!buffer)return;const spb=60/this.project.bpm;
     // Stretch mode has already prepared tempo/pitch independently; Repitch uses source rate.
     const rate=clip.kind==='audio'&&clip.warp?.mode!=='stretch'?this.project.bpm/clip.sourceBpm:1;
     let remaining=beats,phase=mod(offset,clip.beats),when=time;
@@ -272,6 +273,7 @@ export class Engine {
       remaining-=chunk;phase=0;when+=dur;
     }
   }
+  overdubEffectiveClip(clip,track){return track.midiEffects?.length?processMidiClip(clip,track.midiEffects,this.project.bpm):clip;}
   async consolidate(regionId){
     if(this.playing)throw new Error('Stop playback before consolidating.');const passage=consolidationSource(this.project,regionId),regions=structuredClone(passage.regions);await this.init(false);
     const buffers=[];for(const region of regions){const buffer=await this.prepareClip(this.project.clips[region.clipId]);if(!buffer)throw new Error('The source audio is unavailable.');buffers.push(buffer);}

@@ -43,7 +43,7 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null,qu
   for (const command of [...before, ...after]) {
     applyAgentActions(next, [{type:'command', args:command}]);
     if(command.name==='record_quantization'&&recordingPrefs){const after=patchRecordQuantization(recordingPrefs,command.args);prepared.set(command,{recordQuantizationBefore:recordingPrefs,recordQuantizationAfter:after});recordingPrefs=after;}
-    if(recordingRuntimeState){if(['stop','pause'].includes(command.name))recordingRuntimeState.playing=false;else if(['play','launch_scene','launch_clip','launch_group'].includes(command.name))recordingRuntimeState.playing=true;}
+    if(recordingRuntimeState){if(['stop','pause'].includes(command.name)){recordingRuntimeState.playing=false;recordingRuntimeState.overdubReady=true;}else if(['play','launch_scene','launch_clip','launch_group'].includes(command.name))recordingRuntimeState.playing=true;}
     if(command.name==='record_input')prepared.set(command,prepareRecordInput(next,command.args,recordingRuntimeState));
     if(command.name==='export_midi')prepared.set(command,prepareMidiDelivery(next,command.args));
   }
