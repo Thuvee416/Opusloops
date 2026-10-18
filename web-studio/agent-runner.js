@@ -1,3 +1,4 @@
+import {prepareMidiDelivery} from './midi-delivery.js';
 import {applyAgentActions} from './agent-actions.js';
 
 const decode = action => typeof action.args === 'string' ? JSON.parse(action.args) : structuredClone(action.args);
@@ -24,11 +25,16 @@ export function prepareAgentPlan(project, actions) {
   const aliases=new Map(),editObservations=[];
   const next = applyAgentActions(project, edits,{aliases,observations:editObservations});
   for(const command of [...before,...after]){
-  if(command.args?.trackId)command.args.trackId=aliases.get(command.args.trackId)||command.args.trackId;
+  for(const key of ['trackId','clipId'])if(command.args?.[key])command.args[key]=aliases.get(command.args[key])||command.args[key];
+  if(Array.isArray(command.args?.trackIds))command.args.trackIds=command.args.trackIds.map(id=>aliases.get(id)||id);
   const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
  }
-  for (const command of [...before, ...after]) applyAgentActions(next, [{type:'command', args:command}]);
-  return {next, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  const prepared=new Map();
+  for (const command of [...before, ...after]) {
+    applyAgentActions(next, [{type:'command', args:command}]);
+    if(command.name==='export_midi')prepared.set(command,prepareMidiDelivery(next,command.args));
+  }
+  return {next, prepared, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject, expected, locked, commit, execute, signal, onStep = () => {}}) {
@@ -41,7 +47,7 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
   };
   const run = async command => {
     check();
-    let result;try{result=await execute(command,signal);}catch(error){error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
+    let result;try{result=await execute(command,signal,plan.prepared?.get(command));}catch(error){error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
     observations.push({name:command.name, result:result ?? null});
     completedCommands.push(command.name);
     // Runtime operations cannot silently replace/edit the project.
