@@ -1,0 +1,420 @@
+{
+  "release": "0.144.2",
+  "sourceCommit": "5e3f3347da02667a8273937a03600a9bd3990c5e",
+  "baseline": {
+    "path": "/Users/thuveem4/Downloads/Untitled-session (93).opusloop",
+    "bytes": 1725,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "mtime": 1792336191.7745178
+  },
+  "preflightRecovery": {
+    "backupFile": "Untitled-session (92).opusloop",
+    "backupBytes": 2190,
+    "extraDevices": 3,
+    "recovery": "Three normal Edit Undo operations; fresh file (93) matches the original (91) byte for byte"
+  },
+  "api": {
+    "zipSha256": "9c26e9a7de2c2e3e19f1e58e541296c456653abfb747d19042b8f080841d13d7",
+    "state": "Active",
+    "lastUpdateStatus": "Successful",
+    "workerUnchanged": "sha256:ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4"
+  },
+  "checks": [
+    "API Active/Successful; stem-worker image unchanged.",
+    "Amplify job 134 SUCCEED; 17 assets match source on both hosts.",
+    "Authenticated Odesa setup, MIDI overdub start, count-in cancellation start and four transport requests reviewed; zero client repairs.",
+    "Three real keyboard notes saved additively; original two notes and every unrelated project field unchanged.",
+    "MIDI export independently matches all five rounded on/off ticks and velocities at 960 PPQN.",
+    "Count-in Cancel and runtime-only transport checks leave all 2803 capture bytes unchanged.",
+    "One Undo restores setup; second Undo plus reload restores all 1725 original bytes."
+  ],
+  "hosting": {
+    "job": "134",
+    "status": "SUCCEED",
+    "hosts": [
+      {
+        "host": "opusloops.com",
+        "version": {
+          "provider": "aws-amplify",
+          "commit": "5e3f3347da02667a8273937a03600a9bd3990c5e",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000134",
+          "builtAt": "2026-10-18T15:14:21.416896Z"
+        }
+      },
+      {
+        "host": "www.opusloops.com",
+        "version": {
+          "provider": "aws-amplify",
+          "commit": "5e3f3347da02667a8273937a03600a9bd3990c5e",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000134",
+          "builtAt": "2026-10-18T15:14:21.416896Z"
+        }
+      }
+    ],
+    "exactAssetChecks": [
+      {
+        "host": "opusloops.com",
+        "asset": "index.html",
+        "sha256": "327e4c561b5bea76a354f635dfceff199d9508d268c4dc24b2ee82d2472f1755"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "startup.js",
+        "sha256": "995bee251056d14230106e58b8e145efb6c887aa2d2ef009577861fcd51991aa"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "app.js",
+        "sha256": "cb6b54a547fcadd101137b11b7d0f66690be5acd0a7bfccf6cfd43cbb604a5df"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "audio.js",
+        "sha256": "3e340a8066d6de788237a300efc5f9182b06ba5d79beccff1a44f81b9f41d7a2"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "workspace.js",
+        "sha256": "e4068d7ae80cee906288dc2057e83ce6891d360b3c0654ad00af6ec4dc1d698a"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "menus.js",
+        "sha256": "d86e6c4eb2a07501d08c729e2f4c654246b99490f373da4f0765a923fb214651"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "menu-view.js",
+        "sha256": "85096ed5409e61ae3b83059cc8eb312e309ce7dccc182f79b34b605951598da2"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "studio-shortcuts.js",
+        "sha256": "c94c4b1eeaf9a3cfe505a742b12e3a7c023405789f6f374ef0b08d6e03be28b7"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "session-keyboard.js",
+        "sha256": "1cd105418f138e693aac3842326662671fd1269575e06914475bee4cca521360"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "transport-controls.js",
+        "sha256": "906bcaa6b033fb63b423205e014eed7acb236b34b6ca9f2e3b72dab9ed6c08b4"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "midi-overdub.js",
+        "sha256": "4b9c3cab6cde7c14f1dbcadb7000f96b2b6b3e63a5105181bc46b3b4fde6820c"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "overdub-playback.js",
+        "sha256": "62a3c84aab4ff65aa07aab9c218dbf43b1a9bbbde287547832e1d861a76a3602"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "interaction-theme.css",
+        "sha256": "2b947d97cbc957ba460a718195a053988246756b0d12961fb28ffcbc6b337d97"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "agent-actions.js",
+        "sha256": "d0310be8b0cf1cd8a58840d79a9bb97e64165268e41d98d9cd5cdd5c121ed132"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "agent-schema.js",
+        "sha256": "beeb1247c442c3ff44d91cfd9e07c49244eaf441de04ac7ee1695621b2f26fac"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "release.json",
+        "sha256": "7468c7318352b8f4fe5cd5a2383eee0d3174498fb06c2f944cbe04136cee6ec5"
+      },
+      {
+        "host": "opusloops.com",
+        "asset": "AGENT.md",
+        "sha256": "df3518aa42bf3b2e7aacd62c9b6fb082094ab777569cd7147c84def182cd2103"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "index.html",
+        "sha256": "327e4c561b5bea76a354f635dfceff199d9508d268c4dc24b2ee82d2472f1755"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "startup.js",
+        "sha256": "995bee251056d14230106e58b8e145efb6c887aa2d2ef009577861fcd51991aa"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "app.js",
+        "sha256": "cb6b54a547fcadd101137b11b7d0f66690be5acd0a7bfccf6cfd43cbb604a5df"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "audio.js",
+        "sha256": "3e340a8066d6de788237a300efc5f9182b06ba5d79beccff1a44f81b9f41d7a2"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "workspace.js",
+        "sha256": "e4068d7ae80cee906288dc2057e83ce6891d360b3c0654ad00af6ec4dc1d698a"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "menus.js",
+        "sha256": "d86e6c4eb2a07501d08c729e2f4c654246b99490f373da4f0765a923fb214651"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "menu-view.js",
+        "sha256": "85096ed5409e61ae3b83059cc8eb312e309ce7dccc182f79b34b605951598da2"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "studio-shortcuts.js",
+        "sha256": "c94c4b1eeaf9a3cfe505a742b12e3a7c023405789f6f374ef0b08d6e03be28b7"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "session-keyboard.js",
+        "sha256": "1cd105418f138e693aac3842326662671fd1269575e06914475bee4cca521360"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "transport-controls.js",
+        "sha256": "906bcaa6b033fb63b423205e014eed7acb236b34b6ca9f2e3b72dab9ed6c08b4"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "midi-overdub.js",
+        "sha256": "4b9c3cab6cde7c14f1dbcadb7000f96b2b6b3e63a5105181bc46b3b4fde6820c"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "overdub-playback.js",
+        "sha256": "62a3c84aab4ff65aa07aab9c218dbf43b1a9bbbde287547832e1d861a76a3602"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "interaction-theme.css",
+        "sha256": "2b947d97cbc957ba460a718195a053988246756b0d12961fb28ffcbc6b337d97"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "agent-actions.js",
+        "sha256": "d0310be8b0cf1cd8a58840d79a9bb97e64165268e41d98d9cd5cdd5c121ed132"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "agent-schema.js",
+        "sha256": "beeb1247c442c3ff44d91cfd9e07c49244eaf441de04ac7ee1695621b2f26fac"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "release.json",
+        "sha256": "7468c7318352b8f4fe5cd5a2383eee0d3174498fb06c2f944cbe04136cee6ec5"
+      },
+      {
+        "host": "www.opusloops.com",
+        "asset": "AGENT.md",
+        "sha256": "df3518aa42bf3b2e7aacd62c9b6fb082094ab777569cd7147c84def182cd2103"
+      }
+    ]
+  },
+  "setup": {
+    "path": "/Users/thuveem4/Downloads/Untitled-session (94).opusloop",
+    "bytes": 2542,
+    "sha256": "ff5e83a55b4bad79ca033138a5bea412538d84b54e6cccb5df469b6df92a80af",
+    "trackId": "bd6d4dc0-91a3-4041-aafd-10e42106a066",
+    "clipId": "c167d3ff-b7e2-400b-9a8a-2b0b836f0344",
+    "originalTrackUnchanged": true,
+    "originalNotes": [
+      {
+        "pitch": 48,
+        "start": 0,
+        "duration": 0.15,
+        "velocity": 0.4
+      },
+      {
+        "pitch": 55,
+        "start": 1,
+        "duration": 0.1,
+        "velocity": 0.5
+      }
+    ]
+  },
+  "capture": {
+    "path": "/Users/thuveem4/Downloads/Untitled-session (95).opusloop",
+    "bytes": 2803,
+    "sha256": "35ef7904967de68859297e2c40bc4a07a08f77caa2e6c518b659fa62e2612da5",
+    "notes": [
+      {
+        "pitch": 48,
+        "start": 0,
+        "duration": 0.15,
+        "velocity": 0.4
+      },
+      {
+        "pitch": 55,
+        "start": 1,
+        "duration": 0.1,
+        "velocity": 0.5
+      },
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.5518666667143464,
+        "duration": 0.19439999985695522
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.7756666666666661,
+        "duration": 0.23726666680970965
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 1.0429333332379684,
+        "duration": 0.17266666666665742
+      }
+    ],
+    "allOtherProjectFieldsUnchanged": true,
+    "playingAfterFinish": true
+  },
+  "cancel": {
+    "path": "/Users/thuveem4/Downloads/Untitled-session (96).opusloop",
+    "bytes": 2803,
+    "identicalToCapture": true,
+    "uiBeatsRemainingBeforeCancel": 9,
+    "playingAfterCancel": true
+  },
+  "midiExport": {
+    "path": "/Users/thuveem4/Downloads/Overdub-QA-Loop.mid",
+    "bytes": 105,
+    "sha256": "e3a57d20c845b1d22a93ba94587627167daabfb77156bf9d3cc20fbf1886dea7",
+    "ppqn": 960,
+    "events": [
+      {
+        "tick": 0,
+        "kind": "on",
+        "pitch": 48,
+        "velocity": 51
+      },
+      {
+        "tick": 144,
+        "kind": "off",
+        "pitch": 48,
+        "velocity": 0
+      },
+      {
+        "tick": 530,
+        "kind": "on",
+        "pitch": 60,
+        "velocity": 95
+      },
+      {
+        "tick": 716,
+        "kind": "off",
+        "pitch": 60,
+        "velocity": 0
+      },
+      {
+        "tick": 745,
+        "kind": "on",
+        "pitch": 64,
+        "velocity": 95
+      },
+      {
+        "tick": 960,
+        "kind": "on",
+        "pitch": 55,
+        "velocity": 64
+      },
+      {
+        "tick": 972,
+        "kind": "off",
+        "pitch": 64,
+        "velocity": 0
+      },
+      {
+        "tick": 1001,
+        "kind": "on",
+        "pitch": 67,
+        "velocity": 95
+      },
+      {
+        "tick": 1056,
+        "kind": "off",
+        "pitch": 55,
+        "velocity": 0
+      },
+      {
+        "tick": 1167,
+        "kind": "off",
+        "pitch": 67,
+        "velocity": 0
+      }
+    ],
+    "independentTimingAndVelocityMatch": true,
+    "endTickErrorAgainstRoundedEndpoints": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "endToleranceTicks": 0
+  },
+  "transport": {
+    "afterFile": "/Users/thuveem4/Downloads/Untitled-session (97).opusloop",
+    "allProjectBytesUnchanged": true,
+    "retainedStopDisplay": "018 : 1 : 2",
+    "continuedDisplay": "020 : 2 : 4",
+    "explicitResetDisplay": "001 : 1 : 1",
+    "resetMarkerLabel": "Insert Marker: Beat 1",
+    "signedInReviewedPlans": 7,
+    "clientRepairs": 0,
+    "localRecordingIntents": 2
+  },
+  "undoOverdub": {
+    "path": "/Users/thuveem4/Downloads/Untitled-session (98).opusloop",
+    "bytes": 2542,
+    "exactSetupRestored": true
+  },
+  "undoSetup": {
+    "path": "/Users/thuveem4/Downloads/Untitled-session (99).opusloop",
+    "bytes": 1725,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "exactOriginalRestored": true
+  },
+  "reloadRecovery": {
+    "path": "/Users/thuveem4/Downloads/Untitled-session (100).opusloop",
+    "bytes": 1725,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "exactOriginalRestored": true,
+    "workspace": "Session / Clip / 20 percent detail",
+    "inputs": "Disconnected; New Take; count-in 0; No Quantization / Note Starts",
+    "newBrowserErrors": []
+  },
+  "screenshots": [
+    "/tmp/opus-overdub-production-capture.png",
+    "/tmp/opus-transport-production.png",
+    "/tmp/opusloops-1442-live.png"
+  ],
+  "limits": [
+    "Seven bounded signed-in reviewed plans and two local recording intents do not establish general natural-language reliability.",
+    "Native audio/WAV oracles are local, separate from production MIDI export.",
+    "No physical device latency, broad browser parity or subjective mix-quality claim.",
+    "Native Live full-feature, full-gesture and pixel-identical parity remains unfinished."
+  ]
+}
