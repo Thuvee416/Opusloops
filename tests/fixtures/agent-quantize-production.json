@@ -1,0 +1,208 @@
+{
+  "date": "2026-10-18",
+  "release": "0.140.0",
+  "sourceCommit": "ec1f31391ddd423db76f1dc33d9abda952113593",
+  "method": "Existing signed-in OPUS account through normal inline Odesa and File/Edit controls; fresh downloaded bytes. No auth extraction or request interception.",
+  "model": "Odesa Tempo 1.0 / Amazon Nova Pro on Bedrock",
+  "hosting": {
+    "app": "d1zc92wmtmvg23",
+    "job": "123",
+    "status": "SUCCEED",
+    "apexAndWwwExactAssets": 13
+  },
+  "api": {
+    "codeSha256": "f8d2cc4786376088cee64366ea985b4c60f4eb8da2c3d3926de1bd5a33ed0528",
+    "state": "Active",
+    "lastUpdate": "Successful",
+    "workerImageUnchanged": true
+  },
+  "requests": [
+    {
+      "kind": "composition",
+      "reviewed": true,
+      "actions": 3,
+      "clientRepairs": 0,
+      "result": "Exact Init synth, volume/pan, four explicit note pitches/onsets/durations/velocities/activation/release velocities, eight-beat clip, Session scene 0 and Arrangement start/length/offset; original data unchanged. Requested Arrangement Clip navigation observed."
+    },
+    {
+      "kind": "triplet-both-half",
+      "reviewed": true,
+      "actions": 1,
+      "clientRepairs": 0,
+      "result": "Only C4/G4 indices [0,2] adjusted on both endpoints, eighth-triplets at 50%; exact full saved project and exact final Arrangement note selection."
+    },
+    {
+      "kind": "ends-only",
+      "reviewed": true,
+      "actions": 1,
+      "clientRepairs": 0,
+      "result": "Only C4/G4 ends quantized to straight sixteenths, 100%; starts and all other data unchanged; exact saved project and final note selection."
+    },
+    {
+      "kind": "mixed-grid",
+      "reviewed": true,
+      "actions": 1,
+      "clientRepairs": 0,
+      "result": "Only C4/G4 endpoints quantized to nearest combined eighth/eighth-triplet lines, 100%; exact saved project and final note selection."
+    }
+  ],
+  "actualClientReceipts": [
+    {
+      "explicitNoteQuantizationVerified": {
+        "clipId": "1ebb474b-7439-4d48-a9b9-557d3afe4a72",
+        "pitches": [
+          60,
+          67
+        ],
+        "selectedIndices": [
+          0,
+          2
+        ],
+        "selection": "arrangement",
+        "settings": {
+          "grid": 0.5,
+          "gridMode": "triplet",
+          "strength": 0.5,
+          "target": "both"
+        },
+        "type": "explicit_note_quantization"
+      }
+    },
+    {
+      "explicitNoteQuantizationVerified": {
+        "clipId": "1ebb474b-7439-4d48-a9b9-557d3afe4a72",
+        "pitches": [
+          60,
+          67
+        ],
+        "selectedIndices": [
+          0,
+          2
+        ],
+        "selection": "arrangement",
+        "settings": {
+          "grid": 0.25,
+          "gridMode": "straight",
+          "strength": 1,
+          "target": "ends"
+        },
+        "type": "explicit_note_quantization"
+      }
+    },
+    {
+      "explicitNoteQuantizationVerified": {
+        "clipId": "1ebb474b-7439-4d48-a9b9-557d3afe4a72",
+        "pitches": [
+          60,
+          67
+        ],
+        "selectedIndices": [
+          0,
+          2
+        ],
+        "selection": "arrangement",
+        "settings": {
+          "grid": 0.5,
+          "gridMode": "both",
+          "strength": 1,
+          "target": "both"
+        },
+        "type": "explicit_note_quantization"
+      }
+    }
+  ],
+  "manualSettingsAfterAllAgentRequests": {
+    "grid": "current",
+    "mode": "straight",
+    "target": "starts",
+    "amount": 100
+  },
+  "midi": {
+    "normalManualExport": true,
+    "bytes": 81,
+    "exactExporterMatch": true,
+    "format": 0,
+    "ppqn": 960,
+    "noteOnEvents": [
+      [
+        48,
+        60,
+        51
+      ],
+      [
+        1968,
+        67,
+        89
+      ],
+      [
+        2976,
+        72,
+        57
+      ]
+    ],
+    "noteOffTicks": [
+      574,
+      2494,
+      3360
+    ],
+    "releaseVelocities": [
+      13,
+      38,
+      51
+    ]
+  },
+  "recovery": {
+    "oneUndoForEachQuantization": "Exact composition restored, including unchanged unchosen notes",
+    "undoComposition": "Exact original project bytes restored",
+    "normalReloadAndFreshSave": "Exact original bytes restored",
+    "originalSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "workspace": "Session / Clip, 20 percent detail, stopped"
+  },
+  "artifacts": {
+    "Untitled-session (58).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Untitled-session (59).opusloop": {
+      "bytes": 2755,
+      "sha256": "e66ccccf044671292e30120437b555b52fb794c44e4f7bc4827ecb120eefcce3"
+    },
+    "Untitled-session (60).opusloop": {
+      "bytes": 2785,
+      "sha256": "c454b7283e3ee1ef9c41ef04da7172d79145959989e09f9a4ea6cd983fa03d18"
+    },
+    "Untitled-session (61).opusloop": {
+      "bytes": 2755,
+      "sha256": "e66ccccf044671292e30120437b555b52fb794c44e4f7bc4827ecb120eefcce3"
+    },
+    "Untitled-session (62).opusloop": {
+      "bytes": 2768,
+      "sha256": "18435c0727c31e01aeceb4dd16b45ecc17e064a3b808e3b6043a158eddcd67fe"
+    },
+    "Untitled-session (63).opusloop": {
+      "bytes": 2755,
+      "sha256": "e66ccccf044671292e30120437b555b52fb794c44e4f7bc4827ecb120eefcce3"
+    },
+    "Untitled-session (64).opusloop": {
+      "bytes": 2749,
+      "sha256": "863d43e143605dd4faf4bd130139376e33eb52d66e3041c7b5b8eb4471023838"
+    },
+    "Untitled-session (65).opusloop": {
+      "bytes": 2755,
+      "sha256": "e66ccccf044671292e30120437b555b52fb794c44e4f7bc4827ecb120eefcce3"
+    },
+    "Untitled-session (66).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Untitled-session (67).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Phrase (1).mid": {
+      "bytes": 81,
+      "sha256": "1ac1e376b1a72b0f1c7eefcab53f823d5d51d6f9766f022741234364a4486d92"
+    }
+  },
+  "scope": "All three public signed-in requests passed on first attempts. Earlier operator development failures remain in separate fixtures. Native WAV/oracle/range/reopen checks are separate local proof; no production WAV, physical-device, perceptual-quality or arbitrary-language parity claim. Broad goal remains active."
+}
