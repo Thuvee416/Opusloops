@@ -1,0 +1,181 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "fixture": "tests/fixtures/track-groups-project.mjs",
+  "cases": [
+    {
+      "kind": "group",
+      "prompt": "Group Source A and Source B into a real Group Track named Drums. Preserve all original clips, Arrangement, source levels, devices and sends. Add one Utility with gain -3 dB on Drums. Show Drums devices and fold Drums. Do not start playback or export.",
+      "grouped": false,
+      "attempt": 1,
+      "reviewed": true,
+      "plan": {
+        "summary": "Created Drums group, added Utility, folded group",
+        "actions": [
+          {
+            "type": "track_group",
+            "args": {
+              "action": "create",
+              "ids": [
+                "a",
+                "b"
+              ],
+              "name": "Drums",
+              "ref": "$drums"
+            }
+          },
+          {
+            "type": "device",
+            "args": {
+              "trackId": "$drums",
+              "type": "utility",
+              "enabled": true,
+              "params": {
+                "gain": -3
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "track",
+                "trackId": "$drums"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "fold_group",
+              "args": {
+                "trackId": "$drums",
+                "folded": true
+              }
+            }
+          }
+        ],
+        "reviewed": true
+      }
+    },
+    {
+      "kind": "nest",
+      "prompt": "Nest the existing Drums Group Track and Other track inside a new Group Track named All Music. Preserve all clips, devices, levels and sends; keep Source A and B inside Drums and route default outputs through the new parent group. Show All Music devices and fold it. Do not start playback or export.",
+      "grouped": true,
+      "attempt": 1,
+      "reviewed": true,
+      "plan": {
+        "summary": "Nested Drums and Other inside All Music, folded and selected",
+        "actions": [
+          {
+            "type": "track_group",
+            "args": {
+              "action": "create",
+              "ids": [
+                "drums",
+                "other"
+              ],
+              "name": "All Music",
+              "ref": "$allMusic"
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "track",
+                "trackId": "$allMusic"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "fold_group",
+              "args": {
+                "trackId": "$allMusic",
+                "folded": true
+              }
+            }
+          }
+        ],
+        "reviewed": true
+      }
+    },
+    {
+      "kind": "ungroup",
+      "prompt": "Ungroup Drums. Remove only that Group Track and its processing, preserve Source A and B and every other track/clip/Arrangement/source level/device/send. Their default outputs should feed Master again. Show Source A devices and do not play or export.",
+      "grouped": true,
+      "attempt": 1,
+      "reviewed": true,
+      "plan": {
+        "summary": "Ungroup Drums, preserve Source A and B, and show Source A devices",
+        "actions": [
+          {
+            "type": "track_group",
+            "args": {
+              "ids": [
+                "drums"
+              ],
+              "action": "ungroup"
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "track",
+                "trackId": "a"
+              }
+            }
+          }
+        ],
+        "reviewed": true
+      }
+    },
+    {
+      "kind": "reparent",
+      "prompt": "Move Source A out of Drums to the top level. Preserve every clip, Arrangement, source level, device and send, and keep Source B inside Drums. Route Source A to Master again. Show Source A devices; do not play or export.",
+      "grouped": true,
+      "attempt": 1,
+      "reviewed": true,
+      "plan": {
+        "summary": "Moved Source A out of Drums to the top level and routed it to Master. Showed Source A devices.",
+        "actions": [
+          {
+            "type": "track_group",
+            "args": {
+              "ids": [
+                "a"
+              ],
+              "action": "reparent",
+              "topLevel": true
+            }
+          },
+          {
+            "type": "track",
+            "args": {
+              "id": "a",
+              "changes": {
+                "output": "master"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "track",
+                "trackId": "a"
+              }
+            }
+          }
+        ],
+        "reviewed": true
+      }
+    }
+  ]
+}

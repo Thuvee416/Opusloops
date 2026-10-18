@@ -1,3 +1,4 @@
+import {expandTrackIds} from './track-hierarchy.js';
 import {sliceRegion} from './region-fades.js';
 import {uid,validateProject} from './model.js';
 import {envelopeValue} from './automation.js';
@@ -22,14 +23,14 @@ export function shiftEnvelope(envelope,action,start,length){
 export function validateTimeRange(start,length){
   if(!Number.isFinite(start)||!Number.isFinite(length)||start<0||length<.25||start+length>16384||start*4%1||length*4%1)throw new Error('Use quarter-beat positions and a time range of at least 0.25 beats within beats 1–16385.');
 }
-export function timeTrackScope(project,trackIds=null){
+export function timeTrackScope(project,trackIds=null,{expandGroups=true}={}){
  if(trackIds===null)return null;
  if(!Array.isArray(trackIds)||!trackIds.length||new Set(trackIds).size!==trackIds.length||trackIds.some(id=>!project.tracks.some(t=>t.id===id)))throw new Error('Choose at least one existing track for the time edit.');
- return new Set(trackIds);
+ return new Set(expandGroups?expandTrackIds(project,trackIds):trackIds);
 }
-export function editArrangementTime(project,action,start,length,trackIds=null){
+export function editArrangementTime(project,action,start,length,trackIds=null,scopeOptions={}){
   if(!['insert','delete'].includes(action))throw new Error('Choose Insert or Delete time.');validateTimeRange(start,length);
-  const scope=timeTrackScope(project,trackIds),next=structuredClone(project),end=start+length,move=beat=>mapTime(beat,action,start,length);
+  const scope=timeTrackScope(project,trackIds,scopeOptions),next=structuredClone(project),end=start+length,move=beat=>mapTime(beat,action,start,length);
   next.arrangement=project.arrangement.flatMap(r=>{if(scope&&!scope.has(r.trackId))return [{...r}];const stop=r.start+r.length;if(stop<=start)return [{...r}];if(action==='insert'){
     if(r.start>=start)return [{...r,start:r.start+length}];
     return [sliceRegion(r,0,start-r.start),sliceRegion(r,start-r.start,stop-start,{id:uid(),start:end})];

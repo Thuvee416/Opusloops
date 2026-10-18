@@ -1,3 +1,4 @@
+import {isGroup} from './track-hierarchy.js';
 // View state only. The same selectors validate manual and agent navigation.
 export const SELECTION_KEYS=['target','trackId','clipId','scene','ids','primaryId'];
 export const DETAIL_PANELS=['clip','devices','recording','returns'];
@@ -12,7 +13,7 @@ export function selectionIntent(project,args){
   return {target:'track',trackId:track.id};
  }
  if(args.target==='clip'){
-  const track=project.tracks.find(t=>t.id===args.trackId);if(!track)fail('Choose the regular track that owns the Session clip.');
+  const track=project.tracks.find(t=>t.id===args.trackId);if(!track)fail('Choose the regular track that owns the Session clip.');if(isGroup(track))fail('Group-slot multi-clip selection is not implemented. Select a contained clip or group devices, or use launch_group for contained playback.');
   let scene=args.scene;
   if(scene===undefined){
    if(typeof args.clipId!=='string')fail('Choose a Session clipId or zero-based scene.');

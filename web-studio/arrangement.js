@@ -1,3 +1,4 @@
+import {isGroup} from './track-hierarchy.js';
 import {sliceRegion,fitRegionFades} from './region-fades.js';
 import {uid,canPlace,validateProject,mod,REGION_MIN_BEATS} from './model.js';
 export function editRegion(original,action,delta,trackId=original.trackId){
@@ -62,7 +63,7 @@ export function planRegionGroup(project,ids,delta=0,trackOffset=0,copy=false){
  const {selected,regions}=selectedGroup(project,ids);
  if(!Number.isFinite(delta)||!Number.isInteger(trackOffset))throw new Error('Choose a valid group destination.');
  delta=Math.max(-Math.min(...regions.map(r=>r.start)),Math.round(delta*4)/4);
- const next=regions.map(r=>{const index=project.tracks.findIndex(t=>t.id===r.trackId)+trackOffset;if(index<0||index>=project.tracks.length)throw new Error('Keep every selected clip within the available tracks.');const n={...r,start:r.start+delta,trackId:project.tracks[index].id};if(n.start+n.length>16384)throw new Error('The group exceeds the timeline limit.');return n;});
+ const tracks=project.tracks.filter(t=>!isGroup(t));const next=regions.map(r=>{const index=tracks.findIndex(t=>t.id===r.trackId)+trackOffset;if(index<0||index>=tracks.length)throw new Error('Keep every selected clip within the available tracks.');const n={...r,start:r.start+delta,trackId:tracks[index].id};if(n.start+n.length>16384)throw new Error('The group exceeds the timeline limit.');return n;});
  const others=copy?project.arrangement:project.arrangement.filter(r=>!selected.has(r.id));
  for(const r of next)if(!canPlace({...project,arrangement:[...others,...next.filter(n=>n!==r)]},r,copy?'copy:'+r.id:r.id))throw new Error('Selected clips would overlap another clip without a complementary crossfade.');
  return next;

@@ -1,0 +1,138 @@
+{
+  "summary": "Preserved existing tracks, added two new tracks with MIDI clips, grouped them, added a Utility device, and prepared for export.",
+  "actions": [
+    {
+      "type": "add_track",
+      "args": {
+        "name": "Group Proof A",
+        "preset": "Init",
+        "volume": 0.4,
+        "ref": "$proofA"
+      }
+    },
+    {
+      "type": "add_track",
+      "args": {
+        "name": "Group Proof B",
+        "preset": "Init",
+        "volume": 0.3,
+        "ref": "$proofB"
+      }
+    },
+    {
+      "type": "midi",
+      "args": {
+        "trackId": "$proofA",
+        "ref": "$toneA",
+        "name": "Tone A",
+        "notes": [
+          {
+            "pitch": 60,
+            "start": 0,
+            "duration": 4,
+            "velocity": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "type": "midi",
+      "args": {
+        "trackId": "$proofB",
+        "ref": "$toneB",
+        "name": "Tone B",
+        "notes": [
+          {
+            "pitch": 67,
+            "start": 0,
+            "duration": 4,
+            "velocity": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "type": "region",
+      "args": {
+        "trackId": "$proofA",
+        "clipId": "$toneA",
+        "start": 0,
+        "length": 4,
+        "ref": "$regionA"
+      }
+    },
+    {
+      "type": "region",
+      "args": {
+        "trackId": "$proofB",
+        "clipId": "$toneB",
+        "start": 0,
+        "length": 4,
+        "ref": "$regionB"
+      }
+    },
+    {
+      "type": "track_group",
+      "args": {
+        "action": "create",
+        "ids": [
+          "$proofA",
+          "$proofB"
+        ],
+        "name": "Rhythm",
+        "ref": "$rhythm"
+      }
+    },
+    {
+      "type": "device",
+      "args": {
+        "trackId": "$rhythm",
+        "type": "utility",
+        "name": "Utility",
+        "params": {
+          "gain": -6
+        }
+      }
+    },
+    {
+      "type": "command",
+      "args": {
+        "name": "select",
+        "args": {
+          "target": "track",
+          "trackId": "$rhythm"
+        }
+      }
+    },
+    {
+      "type": "command",
+      "args": {
+        "name": "fold_group",
+        "args": {
+          "trackId": "$rhythm",
+          "folded": true
+        }
+      }
+    },
+    {
+      "type": "command",
+      "args": {
+        "name": "export_wav",
+        "args": {
+          "channel": "track:$rhythm",
+          "source": "arrangement",
+          "range": {
+            "start": 0,
+            "length": 4
+          },
+          "sampleRate": 44100,
+          "bitDepth": 32,
+          "normalize": false,
+          "dither": "none",
+          "includeTail": false
+        }
+      }
+    }
+  ],
+  "reviewed": true
+}

@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "sampleRate": 44100,
+  "frames": 88200,
+  "metrics": {
+    "unityMaster": 2.3283064365386963e-10,
+    "innerBus": 5.820766091346741e-11,
+    "nestedBus": 5.820766091346741e-11,
+    "savedReopen": 0,
+    "independentDuplicate": 0,
+    "soloInner": 2.9103830456733704e-11,
+    "soloSource": 2.9103830456733704e-11,
+    "muteInner": 7.275957614183426e-12,
+    "ungroupRemovedProcessing": 1.1641532182693481e-10,
+    "stemOuter": 0,
+    "stemFiles": 8,
+    "nativeClockGroupLaunchStop": true,
+    "recordedLeafRegions": 3
+  },
+  "scope": "Normal Chromium native Web Audio/clock, source-sum expectations, full WAV/stem/save/duplicate checks and silent-output Session launch/stop/recording. No physical-input or listening-quality assessment."
+}

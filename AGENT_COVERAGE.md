@@ -31,3 +31,14 @@ Evidence levels: **model** means an actual Bedrock plan was validated locally; *
 | Account/settings/accessibility/integrations | Account-bound sign-in/refresh/sign-out client; private/shared source preservation; cancellation and identity checks through planning, analysis and execution; accessible inline panel | Twelve session units; server refresh/identity contract; browser renewal, 401 retry, sign-out/account-switch/analysis races, password clearing and cancellation. Existing agent/layout checks pass | Authenticated production read/tempo and composition/track-WAV/Undo verified on 0.131/0.131.1; remaining broader roles/MFA/revocation/offline/device cases, settings/device/a11y and integrations remain open |
 
 Every feature added after this audit must add or update its agent command/state surface, coverage row, representative workflow evidence and limitations. Project success requires both manual and natural-language operation. Full application-wide coverage remains open.
+
+
+## Release 0.135 — Real Nested Groups
+
+| Area | Agent control | Evidence | Remaining work |
+| --- | --- | --- | --- |
+| Group hierarchy and processing | track_group create/default, reparent/topLevel, id-or-ids ungroup, descendant track color; initial mix settings and aliases | Sixteen group units; reviewed operator plans; controlled UI grouping/folding/search and manager reparent; native nested DSP, Solo/Mute, stem metadata | Authenticated deployment checks below; cross-parent direct grouping, linked selected mixers, native context menus and larger limits |
+| Group Session performance | launch_group, stop_group, fold_group; observed view/performance receipts | Native clock launch/stop, Keep Playing, outside preservation, three recorded leaf regions | Representative timing/device tests and native multi-clip editing |
+| Arrangement-only MIDI and device planning | MIDI may omit scene with later referenced region; beats/notes required; known device display names map to canonical DSP | Captured full two-tone group composition, missing-beats rejection and strict selector units | Broader language/repertoire and musical-quality evaluation |
+
+Group membership does not override deliberate custom audio routes. Group WAV/stems contain incoming audio and overlap member-source exports. View-only fold/select/export do not add history. Full application-wide agent coverage remains unfinished.

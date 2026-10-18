@@ -1,3 +1,4 @@
+import {expandTrackIds} from './track-hierarchy.js';
 import {validateProject} from './model.js';
 import {exportMidiClip} from './midi-file.js';
 import {exportMidiArrangement} from './midi-arrangement.js';
@@ -23,6 +24,7 @@ export function midiDeliveryOptions(project,options={}){
   if(value.clipId!==undefined||value.trackId!==undefined)fail('Use trackIds for Arrangement MIDI, or source clip with clipId.');
   if(!project.arrangement.length)fail('Record an Arrangement before exporting MIDI.');
   if(value.trackIds!==undefined&&(!Array.isArray(value.trackIds)||!value.trackIds.length||new Set(value.trackIds).size!==value.trackIds.length||value.trackIds.some(id=>typeof id!=='string'||!project.tracks.some(t=>t.id===id))))fail('Choose distinct existing regular track IDs for MIDI export.');
+  if(value.trackIds!==undefined)value.trackIds=expandTrackIds(project,value.trackIds,{leavesOnly:true});
   if(value.range!==undefined){const r=value.range;if(!r||typeof r!=='object'||Array.isArray(r)||Object.keys(r).some(k=>!['start','length'].includes(k))||!Number.isFinite(r.start)||r.start<0||!Number.isFinite(r.length)||r.length<.0625||r.start+r.length>16384)fail('Choose a valid MIDI export range.');}
  }
  return value;

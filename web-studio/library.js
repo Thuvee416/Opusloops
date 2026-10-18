@@ -2,7 +2,7 @@
 export function installLibrary(host,openPanel){
  const $=id=>document.getElementById(id);
  const instruments=[['legacy','Original tone','Basic sine instrument'],['poly','Poly synth','Subtractive synthesizer'],['sampler','Sampler','Play an imported sample'],['drums','Drum rack','16 playable drum pads']];
- let presets=[];
+ let presets=[],sessionClips=[],sessionLocked=false;
  const midi=[['pitch','Pitch'],['velocity','Velocity'],['scale','Scale'],['chord','Chord'],['length','Note Length'],['arp','Arpeggiator']];
  host.innerHTML='<label class="library-search-label" for="library-search">Search library</label><div class="library-search-row"><input id="library-search" type="search" placeholder="Search sounds & devices" autocomplete="off"><button id="library-clear" aria-label="Clear library search"><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-close"/></svg></button></div><select id="library-category" aria-label="Library category"><option value="all">All items</option><option value="instrument">Instruments</option><option value="audio">Audio effects</option><option value="midi">MIDI effects</option><option value="clip">Session clips</option><option value="preset">Sound presets</option></select><p id="library-destination" class="micro"></p><div id="library-results" class="library-results" aria-label="Library results"></div><p id="library-count" class="micro" role="status" aria-live="polite"></p>';
  const search=$('library-search'),category=$('library-category'),results=$('library-results');
@@ -16,10 +16,7 @@ export function installLibrary(host,openPanel){
   for(const option of $('device-type').options)items.push({id:'audio:'+option.value,type:'audio',name:option.textContent,description:'Audio effect',disabled:$('add-device').disabled,action:()=>{if($('add-device').disabled)return false;$('device-type').value=option.value;$('add-device').click();return true;}});
   for(const [value,name]of midi){const control=$('add-midi-'+value);items.push({id:'midi:'+value,type:'midi',name,description:'MIDI effect',disabled:!control||control.disabled,action:()=>{const button=$('add-midi-'+value);if(!button||button.disabled)return false;button.click();return true;}});}
   for(const preset of presets)items.push({id:'preset:'+preset.id,type:'preset',name:preset.name,description:`Sound preset · ${preset.instrument} · ${preset.effects} audio / ${preset.midiEffects} MIDI effects`,disabled:!instrument||instrument.disabled,action:()=>{if(!$('instrument-type')||$('instrument-type').disabled)return false;document.dispatchEvent(new CustomEvent('opus-load-sound',{detail:preset.id}));return true;}});
-  const names=new Map([...document.querySelectorAll('[data-track-name]')].map(el=>[el.dataset.trackName,el.value]));
-  for(const button of document.querySelectorAll('#session-grid [data-select]')){const slot=button.closest('.slot'),track=slot.dataset.track,scene=slot.dataset.scene,clip=button.dataset.select,name=button.querySelector('span').textContent;
-   items.push({id:JSON.stringify([track,scene,clip]),type:'clip',name,description:`${names.get(track)} · scene ${Number(scene)+1}`,disabled:false,action:()=>{const current=[...document.querySelectorAll('#session-grid [data-select]')].find(el=>el.dataset.select===clip&&el.closest('.slot').dataset.track===track&&el.closest('.slot').dataset.scene===scene);if(!current)return false;$('session-tab').click();current.click();return true;}});
-  }
+  for(const entry of sessionClips){const {trackId,trackName,scene,clipId,name}=entry;items.push({id:JSON.stringify([trackId,String(scene),clipId]),type:'clip',name,description:`${trackName} · scene ${scene+1}`,disabled:sessionLocked,action:()=>{document.dispatchEvent(new CustomEvent('opus-select-session-clip',{detail:{trackId,scene,clipId}}));return true;}});}
   return {items,target};
  }
  let signature='';
@@ -39,7 +36,7 @@ export function installLibrary(host,openPanel){
  }
  search.addEventListener('input',render);category.addEventListener('change',render);$('library-clear').onclick=()=>{search.value='';render();search.focus();};
  search.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();search.value='';render();}if(e.key==='ArrowDown'){e.preventDefault();results.querySelector('button:not(:disabled)')?.focus();}});
- let queued=false;const observer=new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;render();});});
+ let queued=false;const scheduleRender=()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;render();});};const observer=new MutationObserver(scheduleRender);document.addEventListener('opus-session-library',e=>{sessionClips=Array.isArray(e.detail?.clips)?e.detail.clips:[];sessionLocked=!!e.detail?.locked;scheduleRender();});
  for(const id of ['session-grid','device-track','instrument','midi-effects','add-device'])observer.observe($(id),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
  // Track names can change through inputs before a grid rebuild.
  $('session-grid').addEventListener('change',render);document.addEventListener('opus-sound-presets',e=>{presets=e.detail;render();});render();

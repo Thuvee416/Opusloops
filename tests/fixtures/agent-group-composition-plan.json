@@ -1,0 +1,1229 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "kind": "compose",
+      "prompt": "Preserve every existing track, clip, region and setting. At 120 BPM add two regular tracks named Group Proof A and Group Proof B with Init sine synths and fader volumes 0.4 and 0.3. Create four-beat MIDI clips named Tone A and Tone B, each with one note at beat 0 lasting 4 beats at velocity 0.5: pitch 60 for A and 67 for B. Place both in Arrangement at beat 0 for four beats. Group these two proof tracks into a real Group Track named Rhythm with unity fader volume 1. Add one Utility on Rhythm at -6 dB. Show Session and Rhythm devices, fold Rhythm, and export only Rhythm as a 44.1 kHz 32-bit float WAV over Arrangement range start 0 length 4, no tail, no normalization and dither none. Keep playback stopped.",
+      "attempt": 1,
+      "reviewed": true,
+      "context": {
+        "project": {
+          "format": "opus-loops",
+          "version": 1,
+          "name": "Untitled session",
+          "master": 0.8,
+          "bpm": 120,
+          "transport": {
+            "loopEnabled": false,
+            "loopStart": 0,
+            "loopEnd": 16,
+            "metronome": false
+          },
+          "scenes": 4,
+          "tracks": [
+            {
+              "id": "existing",
+              "name": "Audio 1",
+              "color": "#d9a359",
+              "volume": 0.7,
+              "pan": 0,
+              "mute": false,
+              "solo": false,
+              "devices": [],
+              "slots": [
+                null,
+                null,
+                null,
+                null
+              ]
+            }
+          ],
+          "clips": {},
+          "arrangement": [],
+          "returns": [],
+          "sceneNames": [
+            "Intro",
+            "Lift",
+            "Breakdown",
+            "Return"
+          ]
+        },
+        "capabilities": {
+          "track_group": "{action?:create(default)|reparent|ungroup|color,ids? (track IDs or earlier aliases),name?,ref? (create only),id? (one group for ungroup/color; alternatively ids for multiple groups),parentId? (destination group ID; JSON null is also root),topLevel?:true (reparent to root; omit parentId),beforeId? (sibling insertion track for reparent)} create groups sibling tracks and preserves custom Audio To destinations. New groups have unity fader and no clips/instrument. Group folders may nest. reparent moves complete subtrees; ungroup removes only the container and its processing, reconnecting its feeders downstream. manage_track duplicate/delete/move acts on the entire group subtree. color applies the group color to member tracks. Fold is runtime fold_group, not a project edit",
+          "command": "{name:select|show_panel|play|pause|stop|seek|launch_scene|launch_clip|stop_track|stop_clips|launch_group|stop_group|fold_group|view|save_project|export_wav|export_stems|export_midi,args?:{beat?,scene? (zero-based),trackId?,view?:session|arrangement,source?:auto|session|arrangement,sampleRate?:44100|48000|88200|96000,bitDepth?:16|24|32 (32=float),normalize?:boolean,dither?:none|triangular (none for float),includeTail?:boolean,range?:{start,length} (zero-based Arrangement beats),channel?:master|track:ID|return:ID (WAV only)}} runtime operation; fold_group uses {trackId,folded:boolean} with no project/history change; launch_group uses {trackId,scene} to launch contained clips, stop_group uses {trackId} to stop them; select uses its own args {target:track,trackId} to show track/return devices (preserving clip content selection), {target:clip,trackId,scene? (zero-based),clipId?} for a Session clip, or {target:regions,ids:[REGION IDs],primaryId?} for Arrangement selection. Clip selection needs either scene or clipId; repeated slots need explicit scene. Region selection reveals the selected range and its primary clip editor. show_panel uses {panel:clip|devices|recording|returns}. These are view changes, not project edits or playback. Region creation supports ref aliases for later selection; ids/primaryId resolve those aliases. launch_clip presses a trigger/toggle Session slot; launch_scene and clip stops wait for quantized activation. Gate/repeat clip holds remain manual. Session export snapshots active clips from their beginnings for four bars, excluding Arrangement automation; auto prefers Arrangement. Defaults: 44.1 kHz/24-bit, no normalization/dither, tails included. Range forces Arrangement and cannot combine with Session source. export_stems downloads an aligned ZIP of all tracks and returns before the master bus; each file obeys mute/solo, crossfade and independent normalization/dither. Channel selection is WAV-only. export_midi uses its own args: source clip or arrangement (default arrangement), clipId for a full clip loop, optional owning trackId for clip effects, trackIds for chosen Arrangement tracks, range for Arrangement only, applyEffects boolean (default false). MIDI ignores mixer mute/solo and excludes audio, instruments, audio effects and automation. A processed shared clip requires an explicit owning trackId. Do not pass audio encoding/rate/tail settings to MIDI. Combine up to eight after project edits, or stop/pause before edits",
+          "region_crossfade": "{leftId,rightId (ordered audio Arrangement REGION IDs on same track),action?:create|remove,start?,length?,boundary?} create/resize a complementary linear crossfade over zero-based start/length; for adjacent clips the overlap must cover their join. Extends outgoing audio to start+length and starts incoming audio at start, preserving source phase and outer boundaries. Requires unused source material inside loop boundaries, no other overlapping fades. Remove joins at boundary (default overlap midpoint), clears the paired fades, and preserves outer edges. Invalid requests reject atomically",
+          "region_fades": "{ids:[existing Arrangement REGION IDs],fadeIn? (beats),fadeOut? (beats)} set audio/generated-loop region edge fades. Durations are independent, 0..each region length; 0 clears an edge. Linear fades cannot overlap each other or cross source-loop boundaries; values outside those bounds reject atomically. Excludes MIDI. Does not change source clips, source offsets, mixer automation or Session playback; one atomic Undo. Split/time-cropped fades retain original gain segments; setting a duration resets that edge to a full 0-to-1 or 1-to-0 fade",
+          "project": "{name?,bpm?,master?,transport?:{loopEnabled,loopStart,loopEnd,metronome}}",
+          "track": "{id,changes:{name?,volume?(linear 0..1),pan?(-1..1),mute?,solo?,output?:master|sendsOnly|track:ID (regular destination input after source effects/fader/pan; accepts track:$alias)}} regular buses support Solo; returns support name/volume/pan/mute, but not Solo or redirected main outputs",
+          "add_track": "{name,ref? (unique $alias for subsequent actions),preset? (Init|Warm bass|Soft pad|Bright pluck),volume? (linear 0..1; use 1 for a unity bus),pan? (-1..1),output?:master|sendsOnly|track:ID} omit preset for an empty audio bus; initial mix values are direct args, not changes",
+          "manage_track": "{id,action:rename|color|move|duplicate|delete,value?} for structural edits; action:changes with {id,action:changes,changes:{name?,volume?,pan?,mute?,solo?,output?}} uses the same validated patch as type track",
+          "scene": "{index,action:rename|insert|duplicate|delete|move,value?}",
+          "device": "{trackId,type? (canonical audio device key),name? (known display name for a new device),deviceId?,remove?,enabled?,params?} create with type OR a known displayed name such as Utility; existing devices use deviceId. Both selectors must agree when provided. Custom device renaming is not implemented. Add/update/remove audio processing on a track, group or return",
+          "instrument": "{trackId,preset?,kind?:poly|drums|sampler,sampleClipId?,params?} presets for poly; sampler copies audio from an existing clip",
+          "add_return": "{name,ref?} create a return with wet reverb",
+          "midi_effects": "{trackId,effectsJSON:JSON-encoded array of complete MIDI effect objects from session}",
+          "drum_pad": "{trackId,pitch,changes:{name?,source?,level?,pan?,tune?,decay?,choke?,mute?,solo?}}",
+          "send": "{trackId,returnId,amount,pre?}",
+          "automation": "{trackId,key:volume|pan,points:[{beat,value}],enabled:true}",
+          "midi": "{ref?,clipId?,trackId?,scene? (zero-based Session slot; omit for a new Arrangement-only clip that a later region places using its ref),name? (display name: include any exact user-provided clip name),beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip",
+          "clip": "{id,changes:{name?,beats?,sourceBpm?,audioEdit?,warp?,launch?}}",
+          "region_group": "{ids:[existing Arrangement region IDs],action:move|duplicate|delete|active|trim,delta? (beats),trackOffset? (move/duplicate only),edge?:start|end (trim only)} trim moves all chosen starts or ends by one shared quarter-beat-snapped delta; positive moves right, negative left. Shorten starts by 1 beat: edge=start,delta=+1. Shorten ends by 1 beat: edge=end,delta=-1. Negative start delta extends earlier; positive end delta extends later. Starts preserve original ends and source timing. Clamp together at timeline/minimum length boundaries, reject overlaps atomically. Does not alter source clips or track automation",
+          "region": "{id?,ref? (unique alias for a NEW region),trackId?,clipId?,start?,length?,offset?,active?,remove?} add/update/delete Arrangement clip",
+          "time": "{operation:insert|delete|duplicate,start,length,trackIds?} beats are zero-based; omit trackIds for whole song",
+          "locators": "{items:[{id?,name,beat}]} replace song section markers"
+        },
+        "effects": {
+          "utility": {
+            "name": "Utility",
+            "params": {
+              "bassMono": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "bassFrequency": [
+                50,
+                500,
+                1,
+                120,
+                "Hz"
+              ],
+              "bassAudition": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "stereoMode": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "midSide": [
+                -1,
+                1,
+                0.01,
+                0,
+                ""
+              ],
+              "channel": [
+                0,
+                2,
+                1,
+                0,
+                ""
+              ],
+              "gain": [
+                -60,
+                35,
+                0.1,
+                0,
+                "dB"
+              ],
+              "width": [
+                0,
+                200,
+                1,
+                100,
+                "%"
+              ],
+              "swap": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "invertL": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "invertR": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "balance": [
+                -1,
+                1,
+                0.01,
+                0,
+                ""
+              ],
+              "mono": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "mute": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "dc": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ]
+            }
+          },
+          "autopan": {
+            "name": "Auto Pan",
+            "params": {
+              "mode": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "division": [
+                0,
+                12,
+                1,
+                2,
+                ""
+              ],
+              "amount": [
+                0,
+                100,
+                1,
+                50,
+                "%"
+              ],
+              "rate": [
+                0.01,
+                20,
+                0.01,
+                1,
+                "Hz"
+              ],
+              "phase": [
+                0,
+                360,
+                1,
+                180,
+                "°"
+              ],
+              "offset": [
+                0,
+                360,
+                1,
+                0,
+                "°"
+              ],
+              "wave": [
+                0,
+                3,
+                1,
+                0,
+                ""
+              ]
+            }
+          },
+          "chorus": {
+            "name": "Chorus",
+            "params": {
+              "delay": [
+                10,
+                40,
+                0.1,
+                20,
+                "ms"
+              ],
+              "depth": [
+                0,
+                5,
+                0.1,
+                2,
+                "ms"
+              ],
+              "rate": [
+                0.05,
+                10,
+                0.01,
+                1.5,
+                "Hz"
+              ],
+              "feedback": [
+                -0.85,
+                0.85,
+                0.01,
+                0,
+                ""
+              ],
+              "phase": [
+                0,
+                360,
+                1,
+                180,
+                "°"
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.5,
+                ""
+              ]
+            }
+          },
+          "filter": {
+            "name": "Filter",
+            "params": {
+              "frequency": [
+                20,
+                20000,
+                1,
+                18000,
+                "Hz"
+              ],
+              "q": [
+                0.1,
+                15,
+                0.1,
+                0.7,
+                "Q"
+              ]
+            }
+          },
+          "eq": {
+            "name": "Three-band EQ",
+            "params": {
+              "low": [
+                -24,
+                24,
+                0.5,
+                0,
+                "dB"
+              ],
+              "mid": [
+                -24,
+                24,
+                0.5,
+                0,
+                "dB"
+              ],
+              "high": [
+                -24,
+                24,
+                0.5,
+                0,
+                "dB"
+              ]
+            }
+          },
+          "delay": {
+            "name": "Delay",
+            "params": {
+              "time": [
+                0.02,
+                1,
+                0.01,
+                0.25,
+                "s"
+              ],
+              "feedback": [
+                0,
+                0.85,
+                0.01,
+                0.3,
+                ""
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.25,
+                ""
+              ]
+            }
+          },
+          "reverb": {
+            "name": "Reverb",
+            "params": {
+              "decay": [
+                0.2,
+                4,
+                0.1,
+                1.8,
+                "s"
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.2,
+                ""
+              ]
+            }
+          },
+          "drive": {
+            "name": "Saturation",
+            "params": {
+              "drive": [
+                1,
+                20,
+                0.5,
+                3,
+                "×"
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.3,
+                ""
+              ]
+            }
+          },
+          "compressor": {
+            "name": "Compressor",
+            "params": {
+              "threshold": [
+                -60,
+                0,
+                1,
+                -24,
+                "dB"
+              ],
+              "ratio": [
+                1,
+                20,
+                0.5,
+                4,
+                ":1"
+              ],
+              "attack": [
+                0.001,
+                0.2,
+                0.001,
+                0.01,
+                "s"
+              ],
+              "release": [
+                0.02,
+                1,
+                0.01,
+                0.25,
+                "s"
+              ]
+            }
+          }
+        },
+        "studio": {
+          "view": "session",
+          "playing": false,
+          "position": 0,
+          "foldedGroups": []
+        }
+      },
+      "plan": {
+        "summary": "Added two tracks, MIDI clips, a Group Track, and a Utility device; exported Rhythm as WAV.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "Group Proof A",
+              "preset": "Init",
+              "volume": 0.4,
+              "ref": "$proofA"
+            }
+          },
+          {
+            "type": "add_track",
+            "args": {
+              "name": "Group Proof B",
+              "preset": "Init",
+              "volume": 0.3,
+              "ref": "$proofB"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$proofA",
+              "ref": "$toneA",
+              "name": "Tone A",
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 60,
+                  "start": 0,
+                  "duration": 4,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "trackId": "$proofA",
+              "clipId": "$toneA",
+              "start": 0,
+              "length": 4
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$proofB",
+              "ref": "$toneB",
+              "name": "Tone B",
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 67,
+                  "start": 0,
+                  "duration": 4,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "trackId": "$proofB",
+              "clipId": "$toneB",
+              "start": 0,
+              "length": 4
+            }
+          },
+          {
+            "type": "track_group",
+            "args": {
+              "action": "create",
+              "ids": [
+                "$proofA",
+                "$proofB"
+              ],
+              "name": "Rhythm",
+              "ref": "$rhythm"
+            }
+          },
+          {
+            "type": "device",
+            "args": {
+              "trackId": "$rhythm",
+              "type": "utility",
+              "name": "Utility",
+              "params": {
+                "gain": -6
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "track",
+                "trackId": "$rhythm"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "fold_group",
+              "args": {
+                "trackId": "$rhythm",
+                "folded": true
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "export_wav",
+              "args": {
+                "channel": "track:$rhythm",
+                "source": "arrangement",
+                "range": {
+                  "start": 0,
+                  "length": 4
+                },
+                "sampleRate": 44100,
+                "bitDepth": 32,
+                "normalize": false,
+                "dither": "none",
+                "includeTail": false
+              }
+            }
+          }
+        ],
+        "reviewed": true
+      }
+    },
+    {
+      "kind": "nest",
+      "prompt": "Nest the existing Rhythm Group Track inside a new real Group Track named Band with unity fader volume 1. Preserve all original clips, source levels, devices, notes and regions. Keep the proof tracks inside Rhythm and route Rhythm through Band to Master. Show Band devices, fold Band, and export only Band as a 44.1 kHz 32-bit float WAV of Arrangement range start 0 length 4, no tail, no normalization and dither none. Keep playback stopped.",
+      "attempt": 2,
+      "reviewed": true,
+      "context": {
+        "project": {
+          "format": "opus-loops",
+          "version": 1,
+          "name": "Untitled session",
+          "master": 0.8,
+          "bpm": 120,
+          "transport": {
+            "loopEnabled": false,
+            "loopStart": 0,
+            "loopEnd": 16,
+            "metronome": false
+          },
+          "scenes": 4,
+          "tracks": [
+            {
+              "id": "existing",
+              "name": "Audio 1",
+              "color": "#d9a359",
+              "volume": 0.7,
+              "pan": 0,
+              "mute": false,
+              "solo": false,
+              "devices": [],
+              "slots": [
+                null,
+                null,
+                null,
+                null
+              ]
+            },
+            {
+              "id": "9c7539df-3c4b-4c14-b2c5-64c4918d76ab",
+              "name": "Rhythm",
+              "color": "#91b5a3",
+              "volume": 1,
+              "pan": 0,
+              "mute": false,
+              "solo": false,
+              "devices": [
+                {
+                  "id": "89d823e6-6683-4dcc-8116-1c55b7fdac99",
+                  "type": "utility",
+                  "enabled": true,
+                  "params": {
+                    "bassMono": 0,
+                    "bassFrequency": 120,
+                    "bassAudition": 0,
+                    "stereoMode": 0,
+                    "midSide": 0,
+                    "channel": 0,
+                    "gain": -6,
+                    "width": 100,
+                    "swap": 0,
+                    "invertL": 0,
+                    "invertR": 0,
+                    "balance": 0,
+                    "mono": 0,
+                    "mute": 0,
+                    "dc": 0
+                  }
+                }
+              ],
+              "slots": [
+                null,
+                null,
+                null,
+                null
+              ],
+              "group": true,
+              "output": "master"
+            },
+            {
+              "id": "65ae72ca-0771-40e8-a959-86d9a6286738",
+              "name": "Group Proof A",
+              "color": "#8faed6",
+              "volume": 0.4,
+              "pan": 0,
+              "mute": false,
+              "solo": false,
+              "devices": [],
+              "slots": [
+                null,
+                null,
+                null,
+                null
+              ],
+              "instrument": {
+                "type": "poly",
+                "wave": "sine",
+                "attack": 0.008,
+                "decay": 0.18,
+                "sustain": 0.65,
+                "release": 0.25,
+                "cutoff": 8000,
+                "resonance": 0.7,
+                "detune": 0,
+                "transpose": 0,
+                "level": 0.23
+              },
+              "parentId": "9c7539df-3c4b-4c14-b2c5-64c4918d76ab",
+              "output": "track:9c7539df-3c4b-4c14-b2c5-64c4918d76ab"
+            },
+            {
+              "id": "fb3a60f2-ae80-4324-80ce-fc6b4b286bde",
+              "name": "Group Proof B",
+              "color": "#b4a1d5",
+              "volume": 0.3,
+              "pan": 0,
+              "mute": false,
+              "solo": false,
+              "devices": [],
+              "slots": [
+                null,
+                null,
+                null,
+                null
+              ],
+              "instrument": {
+                "type": "poly",
+                "wave": "sine",
+                "attack": 0.008,
+                "decay": 0.18,
+                "sustain": 0.65,
+                "release": 0.25,
+                "cutoff": 8000,
+                "resonance": 0.7,
+                "detune": 0,
+                "transpose": 0,
+                "level": 0.23
+              },
+              "parentId": "9c7539df-3c4b-4c14-b2c5-64c4918d76ab",
+              "output": "track:9c7539df-3c4b-4c14-b2c5-64c4918d76ab"
+            }
+          ],
+          "clips": {
+            "875e0cbf-9cda-4a44-92aa-9175e5ea988d": {
+              "id": "875e0cbf-9cda-4a44-92aa-9175e5ea988d",
+              "kind": "midi",
+              "name": "Tone A",
+              "sourceBpm": 120,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 60,
+                  "start": 0,
+                  "duration": 4,
+                  "velocity": 0.5
+                }
+              ]
+            },
+            "172b87e1-3016-4a50-bfdf-8f19dfc0c892": {
+              "id": "172b87e1-3016-4a50-bfdf-8f19dfc0c892",
+              "kind": "midi",
+              "name": "Tone B",
+              "sourceBpm": 120,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 67,
+                  "start": 0,
+                  "duration": 4,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          },
+          "arrangement": [
+            {
+              "id": "f15c17da-b48b-4d16-8100-e1c9fa918c02",
+              "trackId": "65ae72ca-0771-40e8-a959-86d9a6286738",
+              "clipId": "875e0cbf-9cda-4a44-92aa-9175e5ea988d",
+              "start": 0,
+              "length": 4,
+              "offset": 0
+            },
+            {
+              "id": "900a6533-cc78-4d9e-bc24-ee4b14e55c92",
+              "trackId": "fb3a60f2-ae80-4324-80ce-fc6b4b286bde",
+              "clipId": "172b87e1-3016-4a50-bfdf-8f19dfc0c892",
+              "start": 0,
+              "length": 4,
+              "offset": 0
+            }
+          ],
+          "returns": [],
+          "sceneNames": [
+            "Intro",
+            "Lift",
+            "Breakdown",
+            "Return"
+          ]
+        },
+        "capabilities": {
+          "track_group": "{action?:create(default)|reparent|ungroup|color,ids? (track IDs or earlier aliases),name?,ref? (create only),id? (one group for ungroup/color; alternatively ids for multiple groups),parentId? (destination group ID; JSON null is also root),topLevel?:true (reparent to root; omit parentId),beforeId? (sibling insertion track for reparent)} create groups sibling tracks and preserves custom Audio To destinations. New groups have unity fader and no clips/instrument. Group folders may nest. reparent moves complete subtrees; ungroup removes only the container and its processing, reconnecting its feeders downstream. manage_track duplicate/delete/move acts on the entire group subtree. color applies the group color to member tracks. Fold is runtime fold_group, not a project edit",
+          "command": "{name:select|show_panel|play|pause|stop|seek|launch_scene|launch_clip|stop_track|stop_clips|launch_group|stop_group|fold_group|view|save_project|export_wav|export_stems|export_midi,args?:{beat?,scene? (zero-based),trackId?,view?:session|arrangement,source?:auto|session|arrangement,sampleRate?:44100|48000|88200|96000,bitDepth?:16|24|32 (32=float),normalize?:boolean,dither?:none|triangular (none for float),includeTail?:boolean,range?:{start,length} (zero-based Arrangement beats),channel?:master|track:ID|return:ID (WAV only)}} runtime operation; fold_group uses {trackId,folded:boolean} with no project/history change; launch_group uses {trackId,scene} to launch contained clips, stop_group uses {trackId} to stop them; select uses its own args {target:track,trackId} to show track/return devices (preserving clip content selection), {target:clip,trackId,scene? (zero-based),clipId?} for a Session clip, or {target:regions,ids:[REGION IDs],primaryId?} for Arrangement selection. Clip selection needs either scene or clipId; repeated slots need explicit scene. Region selection reveals the selected range and its primary clip editor. show_panel uses {panel:clip|devices|recording|returns}. These are view changes, not project edits or playback. Region creation supports ref aliases for later selection; ids/primaryId resolve those aliases. launch_clip presses a trigger/toggle Session slot; launch_scene and clip stops wait for quantized activation. Gate/repeat clip holds remain manual. Session export snapshots active clips from their beginnings for four bars, excluding Arrangement automation; auto prefers Arrangement. Defaults: 44.1 kHz/24-bit, no normalization/dither, tails included. Range forces Arrangement and cannot combine with Session source. export_stems downloads an aligned ZIP of all tracks and returns before the master bus; each file obeys mute/solo, crossfade and independent normalization/dither. Channel selection is WAV-only. export_midi uses its own args: source clip or arrangement (default arrangement), clipId for a full clip loop, optional owning trackId for clip effects, trackIds for chosen Arrangement tracks, range for Arrangement only, applyEffects boolean (default false). MIDI ignores mixer mute/solo and excludes audio, instruments, audio effects and automation. A processed shared clip requires an explicit owning trackId. Do not pass audio encoding/rate/tail settings to MIDI. Combine up to eight after project edits, or stop/pause before edits",
+          "region_crossfade": "{leftId,rightId (ordered audio Arrangement REGION IDs on same track),action?:create|remove,start?,length?,boundary?} create/resize a complementary linear crossfade over zero-based start/length; for adjacent clips the overlap must cover their join. Extends outgoing audio to start+length and starts incoming audio at start, preserving source phase and outer boundaries. Requires unused source material inside loop boundaries, no other overlapping fades. Remove joins at boundary (default overlap midpoint), clears the paired fades, and preserves outer edges. Invalid requests reject atomically",
+          "region_fades": "{ids:[existing Arrangement REGION IDs],fadeIn? (beats),fadeOut? (beats)} set audio/generated-loop region edge fades. Durations are independent, 0..each region length; 0 clears an edge. Linear fades cannot overlap each other or cross source-loop boundaries; values outside those bounds reject atomically. Excludes MIDI. Does not change source clips, source offsets, mixer automation or Session playback; one atomic Undo. Split/time-cropped fades retain original gain segments; setting a duration resets that edge to a full 0-to-1 or 1-to-0 fade",
+          "project": "{name?,bpm?,master?,transport?:{loopEnabled,loopStart,loopEnd,metronome}}",
+          "track": "{id,changes:{name?,volume?(linear 0..1),pan?(-1..1),mute?,solo?,output?:master|sendsOnly|track:ID (regular destination input after source effects/fader/pan; accepts track:$alias)}} regular buses support Solo; returns support name/volume/pan/mute, but not Solo or redirected main outputs",
+          "add_track": "{name,ref? (unique $alias for subsequent actions),preset? (Init|Warm bass|Soft pad|Bright pluck),volume? (linear 0..1; use 1 for a unity bus),pan? (-1..1),output?:master|sendsOnly|track:ID} omit preset for an empty audio bus; initial mix values are direct args, not changes",
+          "manage_track": "{id,action:rename|color|move|duplicate|delete,value?} for structural edits; action:changes with {id,action:changes,changes:{name?,volume?,pan?,mute?,solo?,output?}} uses the same validated patch as type track",
+          "scene": "{index,action:rename|insert|duplicate|delete|move,value?}",
+          "device": "{trackId,type? (canonical audio device key),name? (known display name for a new device),deviceId?,remove?,enabled?,params?} create with type OR a known displayed name such as Utility; existing devices use deviceId. Both selectors must agree when provided. Custom device renaming is not implemented. Add/update/remove audio processing on a track, group or return",
+          "instrument": "{trackId,preset?,kind?:poly|drums|sampler,sampleClipId?,params?} presets for poly; sampler copies audio from an existing clip",
+          "add_return": "{name,ref?} create a return with wet reverb",
+          "midi_effects": "{trackId,effectsJSON:JSON-encoded array of complete MIDI effect objects from session}",
+          "drum_pad": "{trackId,pitch,changes:{name?,source?,level?,pan?,tune?,decay?,choke?,mute?,solo?}}",
+          "send": "{trackId,returnId,amount,pre?}",
+          "automation": "{trackId,key:volume|pan,points:[{beat,value}],enabled:true}",
+          "midi": "{ref?,clipId?,trackId?,scene? (zero-based Session slot; omit for a new Arrangement-only clip that a later region places using its ref),name? (display name: include any exact user-provided clip name),beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip",
+          "clip": "{id,changes:{name?,beats?,sourceBpm?,audioEdit?,warp?,launch?}}",
+          "region_group": "{ids:[existing Arrangement region IDs],action:move|duplicate|delete|active|trim,delta? (beats),trackOffset? (move/duplicate only),edge?:start|end (trim only)} trim moves all chosen starts or ends by one shared quarter-beat-snapped delta; positive moves right, negative left. Shorten starts by 1 beat: edge=start,delta=+1. Shorten ends by 1 beat: edge=end,delta=-1. Negative start delta extends earlier; positive end delta extends later. Starts preserve original ends and source timing. Clamp together at timeline/minimum length boundaries, reject overlaps atomically. Does not alter source clips or track automation",
+          "region": "{id?,ref? (unique alias for a NEW region),trackId?,clipId?,start?,length?,offset?,active?,remove?} add/update/delete Arrangement clip",
+          "time": "{operation:insert|delete|duplicate,start,length,trackIds?} beats are zero-based; omit trackIds for whole song",
+          "locators": "{items:[{id?,name,beat}]} replace song section markers"
+        },
+        "effects": {
+          "utility": {
+            "name": "Utility",
+            "params": {
+              "bassMono": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "bassFrequency": [
+                50,
+                500,
+                1,
+                120,
+                "Hz"
+              ],
+              "bassAudition": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "stereoMode": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "midSide": [
+                -1,
+                1,
+                0.01,
+                0,
+                ""
+              ],
+              "channel": [
+                0,
+                2,
+                1,
+                0,
+                ""
+              ],
+              "gain": [
+                -60,
+                35,
+                0.1,
+                0,
+                "dB"
+              ],
+              "width": [
+                0,
+                200,
+                1,
+                100,
+                "%"
+              ],
+              "swap": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "invertL": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "invertR": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "balance": [
+                -1,
+                1,
+                0.01,
+                0,
+                ""
+              ],
+              "mono": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "mute": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "dc": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ]
+            }
+          },
+          "autopan": {
+            "name": "Auto Pan",
+            "params": {
+              "mode": [
+                0,
+                1,
+                1,
+                0,
+                ""
+              ],
+              "division": [
+                0,
+                12,
+                1,
+                2,
+                ""
+              ],
+              "amount": [
+                0,
+                100,
+                1,
+                50,
+                "%"
+              ],
+              "rate": [
+                0.01,
+                20,
+                0.01,
+                1,
+                "Hz"
+              ],
+              "phase": [
+                0,
+                360,
+                1,
+                180,
+                "°"
+              ],
+              "offset": [
+                0,
+                360,
+                1,
+                0,
+                "°"
+              ],
+              "wave": [
+                0,
+                3,
+                1,
+                0,
+                ""
+              ]
+            }
+          },
+          "chorus": {
+            "name": "Chorus",
+            "params": {
+              "delay": [
+                10,
+                40,
+                0.1,
+                20,
+                "ms"
+              ],
+              "depth": [
+                0,
+                5,
+                0.1,
+                2,
+                "ms"
+              ],
+              "rate": [
+                0.05,
+                10,
+                0.01,
+                1.5,
+                "Hz"
+              ],
+              "feedback": [
+                -0.85,
+                0.85,
+                0.01,
+                0,
+                ""
+              ],
+              "phase": [
+                0,
+                360,
+                1,
+                180,
+                "°"
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.5,
+                ""
+              ]
+            }
+          },
+          "filter": {
+            "name": "Filter",
+            "params": {
+              "frequency": [
+                20,
+                20000,
+                1,
+                18000,
+                "Hz"
+              ],
+              "q": [
+                0.1,
+                15,
+                0.1,
+                0.7,
+                "Q"
+              ]
+            }
+          },
+          "eq": {
+            "name": "Three-band EQ",
+            "params": {
+              "low": [
+                -24,
+                24,
+                0.5,
+                0,
+                "dB"
+              ],
+              "mid": [
+                -24,
+                24,
+                0.5,
+                0,
+                "dB"
+              ],
+              "high": [
+                -24,
+                24,
+                0.5,
+                0,
+                "dB"
+              ]
+            }
+          },
+          "delay": {
+            "name": "Delay",
+            "params": {
+              "time": [
+                0.02,
+                1,
+                0.01,
+                0.25,
+                "s"
+              ],
+              "feedback": [
+                0,
+                0.85,
+                0.01,
+                0.3,
+                ""
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.25,
+                ""
+              ]
+            }
+          },
+          "reverb": {
+            "name": "Reverb",
+            "params": {
+              "decay": [
+                0.2,
+                4,
+                0.1,
+                1.8,
+                "s"
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.2,
+                ""
+              ]
+            }
+          },
+          "drive": {
+            "name": "Saturation",
+            "params": {
+              "drive": [
+                1,
+                20,
+                0.5,
+                3,
+                "×"
+              ],
+              "mix": [
+                0,
+                1,
+                0.01,
+                0.3,
+                ""
+              ]
+            }
+          },
+          "compressor": {
+            "name": "Compressor",
+            "params": {
+              "threshold": [
+                -60,
+                0,
+                1,
+                -24,
+                "dB"
+              ],
+              "ratio": [
+                1,
+                20,
+                0.5,
+                4,
+                ":1"
+              ],
+              "attack": [
+                0.001,
+                0.2,
+                0.001,
+                0.01,
+                "s"
+              ],
+              "release": [
+                0.02,
+                1,
+                0.01,
+                0.25,
+                "s"
+              ]
+            }
+          }
+        },
+        "studio": {
+          "view": "session",
+          "playing": false,
+          "position": 0,
+          "foldedGroups": [
+            "9c7539df-3c4b-4c14-b2c5-64c4918d76ab"
+          ]
+        }
+      },
+      "plan": {
+        "summary": "Nest Rhythm Group Track inside a new Band Group Track, route Rhythm through Band to Master, fold Band, and export Band as a WAV.",
+        "actions": [
+          {
+            "type": "track_group",
+            "args": {
+              "action": "create",
+              "ids": [
+                "9c7539df-3c4b-4c14-b2c5-64c4918d76ab"
+              ],
+              "name": "Band",
+              "ref": "$band"
+            }
+          },
+          {
+            "type": "track",
+            "args": {
+              "id": "9c7539df-3c4b-4c14-b2c5-64c4918d76ab",
+              "changes": {
+                "output": "track:$band"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "track",
+                "trackId": "$band"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "fold_group",
+              "args": {
+                "trackId": "$band",
+                "folded": true
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "export_wav",
+              "args": {
+                "channel": "track:$band",
+                "source": "arrangement",
+                "range": {
+                  "start": 0,
+                  "length": 4
+                },
+                "sampleRate": 44100,
+                "bitDepth": 32,
+                "normalize": false,
+                "dither": "none",
+                "includeTail": false
+              }
+            }
+          }
+        ],
+        "reviewed": true
+      }
+    }
+  ]
+}

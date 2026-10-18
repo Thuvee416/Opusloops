@@ -31,7 +31,7 @@ export function installTimeSelection({timeline,startInput,lengthInput,modeButton
   if(drag)frame=requestAnimationFrame(scroll);
  }
  timeline.addEventListener('pointerdown',event=>{
-  suppressClick=false;if(event.target.closest('[data-region-fade],[data-crossfade-left]'))return;if(event.button!==0||isLocked())return;if((event.ctrlKey||event.metaKey)&&event.target.closest('[data-region]'))return;const lane=event.target.closest('.timeline-lane');if(!lane||lane.closest('.locator-row'))return;const mode=modeButton.getAttribute('aria-pressed')==='true';if(event.pointerType==='touch'&&!mode)return;
+  suppressClick=false;if(event.target.closest('[data-region-fade],[data-crossfade-left],[data-group-region]'))return;if(event.button!==0||isLocked())return;if((event.ctrlKey||event.metaKey)&&event.target.closest('[data-region]'))return;const lane=event.target.closest('.timeline-lane');if(!lane||lane.closest('.locator-row'))return;const mode=modeButton.getAttribute('aria-pressed')==='true';if(event.pointerType==='touch'&&!mode)return;
   if(!mode&&!event.shiftKey&&(event.target.closest('[data-region]')||lane.closest('.timeline-ruler')))return;
   event.preventDefault();event.stopImmediatePropagation();timeline.focus({preventScroll:true});onStart?.({trackId:lane.dataset.laneTrack});const rect=lane.getBoundingClientRect(),view=getView();drag={pointer:event.pointerId,trackId:lane.dataset.laneTrack,view,lastFrame:performance.now(),edge:0,edgeSince:0,remainder:0,anchor:viewportBeat((event.clientX-rect.left)/rect.width,view),start:startInput.value,length:lengthInput.value,active,ends};timeline.setPointerCapture(event.pointerId);update(event);frame=requestAnimationFrame(scroll);
  },true);

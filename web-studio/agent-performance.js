@@ -40,6 +40,8 @@ export async function performSessionCommand(engine, command, {signal}={}){
   signal?.throwIfAborted();const a=command.args||{};let receipt;
   try{
   if(command.name==='launch_scene')receipt=await engine.scene(a.scene,{signal});
+  else if(command.name==='launch_group')receipt=await engine.scene(a.scene,{signal,groupId:a.trackId});
+  else if(command.name==='stop_group')receipt=await engine.stopGroup(a.trackId);
   else if(command.name==='launch_clip')receipt=await engine.launch(a.trackId,engine.project.tracks.find(t=>t.id===a.trackId).slots[a.scene],a.scene,{signal});
   else if(command.name==='stop_track')receipt=await engine.launch(a.trackId,null,undefined,{signal});
   else if(command.name==='stop_clips'){

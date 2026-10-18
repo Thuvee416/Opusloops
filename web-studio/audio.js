@@ -1,3 +1,4 @@
+import {isGroup,groupLeaves} from './track-hierarchy.js';
 import {setTrackOutput} from './track-routing.js';
 import {captureScene} from './capture-scene.js';
 import {stretchAudio,stretchPlan} from './warp.js';
@@ -124,7 +125,7 @@ export class Engine {
     const pos=timelineBeat(beat,this.project.transport,this.mode),region=segmentAt(this.project,trackId,pos),clip=this.project.clips[region?.clipId];return clip?mod(region.offset+pos-region.start,clip.beats):0;
   }
   activateClip(trackId,clipId,beat,legato=false,slot){const clip=this.project.clips[clipId],offset=clip&&legato?mod(this.sourcePhase(trackId,beat),clip.beats):0;const a={clipId,start:beat-offset,activationBeat:beat,slot:slot??this.project.tracks.find(t=>t.id===trackId)?.slots.indexOf(clipId)};this.active.set(trackId,a);this.armFollow(trackId,a,beat,offset);this.overrides.add(trackId);if(this.recording&&clipId)this.openRecord(trackId,clipId,beat,offset);}
-  async launch(trackId,clipId,slot,{signal}={}){const generation=this.playGeneration;this.gateHolds.delete(trackId);await this.prepare();signal?.throwIfAborted();if(generation!==this.playGeneration)return {events:[],interrupted:true};return this.launchPrepared(trackId,clipId,slot);}
+  async launch(trackId,clipId,slot,{signal}={}){if(isGroup(this.project.tracks.find(t=>t.id===trackId))){if(!clipId)return this.stopGroup(trackId);throw new Error('Group tracks launch their contained clips with a group scene, not an owned clip.');}const generation=this.playGeneration;this.gateHolds.delete(trackId);await this.prepare();signal?.throwIfAborted();if(generation!==this.playGeneration)return {events:[],interrupted:true};return this.launchPrepared(trackId,clipId,slot);}
   async launchPrepared(trackId,clipId,slot){
     const clip=this.project.clips[clipId];
     if(!this.playing){const beat=this.position;this.activateClip(trackId,clipId,beat,clip?.launch?.legato,slot);if(clipId)await this.play(this.mode);else this.changed();return {events:[{trackId,event:{clipId,beat,appliedBeat:beat}}]};}
@@ -138,18 +139,17 @@ export class Engine {
     h.ready=(async()=>{await this.prepare();if(this.gateHolds.get(trackId)!==h)return;h.started=true;const clip=this.project.clips[clipId];if(!this.playing){this.activateClip(trackId,clipId,this.position,clip?.launch?.legato,slot);if(h.repeat&&h.interval>0)this.pending.set(trackId,{clipId,beat:nextLaunchBeat(this.position+1e-6,h.interval),legato:clip?.launch?.legato??false,...(slot===undefined?{}:{slot}),gate:h,gateSource:clipId});await this.play(this.mode);}else{this.pending.set(trackId,{clipId,beat:this.launchBoundary(clipId),legato:clip?.launch?.legato??false,...(slot===undefined?{}:{slot}),gate:h,gateSource:clipId});this.changed();}})().catch(error=>{if(this.gateHolds.get(trackId)!==h)return;this.gateHolds.delete(trackId);throw error;});return h;
   }
   releaseGate(h){if(this.gateHolds.get(h.trackId)!==h)return;this.gateHolds.delete(h.trackId);if(this.pending.get(h.trackId)?.gate===h)this.pending.delete(h.trackId);const active=(this.mode==='session'||this.overrides.has(h.trackId))&&this.active.get(h.trackId)?.clipId===h.clipId;if(h.started&&active&&!h.repeat){if(this.playing)this.pending.set(h.trackId,{clipId:null,beat:this.launchBoundary(h.clipId),gateSource:h.clipId});else this.active.set(h.trackId,{clipId:null,start:this.position});}this.changed();}
-  async scene(index,{signal}={}){
+  async scene(index,{signal,groupId}={}){
     const generation=this.playGeneration;
     if(!Number.isInteger(index)||index<0||index>=this.project.scenes)throw new Error('Choose a scene.');
-    const targets=this.project.tracks.filter(t=>t.slots[index]||slotStops(t,index));for(const t of targets)this.gateHolds.delete(t.id);await this.prepare();signal?.throwIfAborted();if(generation!==this.playGeneration)return {events:[],interrupted:true};
+    const members=groupId?groupLeaves(this.project,groupId):this.project.tracks.filter(t=>!isGroup(t));if(groupId&&!members.some(t=>t.slots[index]))throw new Error('This group has no clips in the requested scene.');const targets=members.filter(t=>t.slots[index]||slotStops(t,index));if(groupId)this.cancelSceneFollow();for(const t of targets)this.gateHolds.delete(t.id);await this.prepare();signal?.throwIfAborted();if(generation!==this.playGeneration)return {events:[],interrupted:true};
     const receipt={events:[]};
     if(!this.playing){
-      const beat=this.position;this.activeScene=index;this.sceneActivationBeat=beat;this.armSceneFollow(index,beat);
-      receipt.scene={index,beat,appliedBeat:beat};
+      const beat=this.position;if(!groupId){this.activeScene=index;this.sceneActivationBeat=beat;this.armSceneFollow(index,beat);receipt.scene={index,beat,appliedBeat:beat};}
       for(const t of targets){const clipId=t.slots[index];this.activateClip(t.id,clipId,beat,this.project.clips[clipId]?.launch?.legato,index);receipt.events.push({trackId:t.id,event:{clipId,beat,appliedBeat:beat}});}
       await this.play(this.mode);
     }else{
-      const earliest=Math.max(this.rawBeat()+.02,this.nextBeat);receipt.scene=this.pendingScene={index,beat:this.launchBoundary(null,earliest)};
+      const earliest=Math.max(this.rawBeat()+.02,this.nextBeat);if(!groupId)receipt.scene=this.pendingScene={index,beat:this.launchBoundary(null,earliest)};
       for(const t of targets){const clipId=t.slots[index],event={clipId,beat:this.launchBoundary(clipId,earliest),legato:this.project.clips[clipId]?.launch?.legato??false,slot:index};this.pending.set(t.id,event);receipt.events.push({trackId:t.id,event});}
     }this.changed();return receipt;
   }
@@ -177,6 +177,10 @@ export class Engine {
     }
     this.activeScene=index;this.sceneFollow=null;this.sceneFollowSignature=JSON.stringify(this.project.sceneFollows?.[index]);
     return {...result,project:this.project};
+  }
+  async stopGroup(id){
+    const targets=groupLeaves(this.project,id),receipt={events:[]};for(const t of targets)this.gateHolds.delete(t.id);if(!this.playing){for(const t of targets){this.active.delete(t.id);this.pending.delete(t.id);this.follows.delete(t.id);}this.changed();return receipt;}
+    const beat=this.launchBoundary(null);for(const t of targets){const event={clipId:null,beat};this.pending.set(t.id,event);receipt.events.push({trackId:t.id,event});}this.changed();return receipt;
   }
   async stopAll(){
     this.cancelSceneFollow();this.gateHolds.clear();const receipt={events:[]};

@@ -37,3 +37,34 @@
 /* Preserve vector proportions and stroke weight when mobile controls shrink. */
 .studio-icon{aspect-ratio:1;flex-shrink:0}
 #opus-icon-definitions :is(path,rect,circle){vector-effect:non-scaling-stroke}
+
+/* Keep the workspace column bounded; scroll musical lanes inside their pane. */
+body.studio-shell{grid-template-columns:minmax(0,1fr)}
+@media(max-width:760px){
+ .studio-shell .transport,.studio-shell .topbar,.studio-shell .workspace{min-width:0}
+ .studio-shell .viewbar{height:auto;flex-wrap:wrap}
+ .studio-shell .view-actions{min-width:0;flex-wrap:wrap;justify-content:flex-end}
+ .studio-shell .topbar .project-title{min-width:0;flex:1}
+ .studio-shell .topbar .project-title input{max-width:100%;width:100%}
+}
+
+/* Group folders use the studio's vector controls and neutral track colors. */
+.studio-shell .track-header{padding-left:calc(var(--depth,0)*4px)}
+.studio-shell .track-header.track-selected,.studio-shell .timeline-label.track-selected{box-shadow:inset 0 -2px var(--accent)}
+.studio-shell .track-header .track-select,.studio-shell .timeline-label .track-select,.studio-shell .group-fold{display:inline-grid;place-items:center;flex:0 0 14px;width:14px;min-width:14px;height:20px;padding:0;border:0;background:transparent;color:inherit;font:8px system-ui;cursor:grab}
+.studio-shell .group-fold{cursor:pointer}.studio-shell .group-fold .studio-icon{width:11px;height:11px}
+.studio-shell .group-header{font-weight:700;border-top:2px solid var(--track)}
+.studio-shell .track-header input{min-width:0}.studio-shell .timeline-label{display:flex;align-items:center;gap:2px;padding-left:calc(3px + var(--depth,0)*6px)}
+.studio-shell .timeline-label>button[data-timeline-devices]{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.studio-shell .group-row .timeline-lane{background-color:#9ba4a33b}
+.studio-shell .group-overview-region{position:absolute;height:7px;min-width:2px;padding:0;border:1px solid #58635f;background:var(--track);opacity:.7;cursor:pointer}
+.studio-shell .group-overview-region.inactive{opacity:.25}
+.studio-shell .group-slot{height:100%;display:flex;align-items:stretch;border:1px solid #6e7774;background:#7b898624;font-size:8px}
+.studio-shell .group-slot>button{padding:0 2px;border:0;border-radius:0;background:transparent;color:inherit;min-width:16px}
+.studio-shell .group-slot .studio-icon{width:9px;height:9px}.studio-shell .group-slot .group-slot-label{flex:1;font-size:8px}
+.studio-shell .group-slot.playing{border-color:#1c8e71;background:#62a68d50}.studio-shell .group-slot.queued{box-shadow:inset 0 -2px #e7b868}
+.studio-shell .group-channel{border-top:2px solid var(--track)}
+.studio-shell .set-manager #group-members{min-height:110px}
+@media(max-width:720px){.studio-shell .group-fold{min-width:16px;width:16px}.studio-shell .group-slot>button{min-width:20px}}
+
+.studio-shell .toggles .group-descendant-solo:not(.on){background:linear-gradient(90deg,#64b6a5 50%,#c8cdcf 50%)}

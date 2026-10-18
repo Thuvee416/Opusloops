@@ -1,3 +1,4 @@
+import {validateHierarchy,isGroup} from './track-hierarchy.js';
 import {validateRegionFades,sliceRegion,regionsCanOverlap} from './region-fades.js';
 import {validateWarp} from './warp.js';
 import {validateFollow} from './follow-actions.js';
@@ -43,7 +44,7 @@ export function validateProject(p) {
   if(p.transport!==undefined)validateTransport(p.transport);validateLocators(p.locators);
   const ids=new Set();
   for(const t of p.tracks){if(typeof t.id!=='string'||ids.has(t.id)||typeof t.name!=='string'||!/^#[0-9a-f]{6}$/i.test(t.color)||!num(t.volume,0,1)||!num(t.pan,-1,1)||typeof t.mute!=='boolean'||typeof t.solo!=='boolean'||!Array.isArray(t.slots)||t.slots.length!==p.scenes)fail();if(t.noStopSlots!==undefined&&(!Array.isArray(t.noStopSlots)||new Set(t.noStopSlots).size!==t.noStopSlots.length||t.noStopSlots.some(i=>!Number.isInteger(i)||i<0||i>=p.scenes)))fail();ids.add(t.id);validateInstrument(t.instrument);validateMidiEffects(t.midiEffects);validateAutomation(t.automation);if(t.devices!==undefined)validateDevices(t.devices);}
-  validateRouting(p);
+  validateHierarchy(p);validateRouting(p);
   if(Object.keys(p.clips).length>512)fail();
   for(const [id,c] of Object.entries(p.clips)){if(c.id!==id||typeof c.name!=='string'||c.name.length>200||!num(c.beats,.25,256)||!num(c.sourceBpm,40,240)||!['audio','midi','drums'].includes(c.kind))fail();
     validateClipLaunch(c.launch);validateFollow(c.follow);if(c.kind==='audio'){validateAudioEdit(c.audioEdit,c.beats);validateWarp(c.warp);}else if(c.audioEdit!==undefined||c.warp!==undefined)fail();
