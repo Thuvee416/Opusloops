@@ -410,3 +410,5 @@ The agent now edits existing manual automation targets across effects, sends, re
 
 
 0.137.1 corrects a saved-project audit failure in the first production setup: add_return omitted the requested initial level and used 0.7. Explicit initial volume, pan and mute now have a validated creation contract with strict extra-field rejection. The failed setup was undone to the exact original before testing the correction. This is retained as a model/setup failure, not counted as completed intent.
+
+0.137.2 records a rejected 0.137.1 natural-language automation request: three drafts used an unresolved track reference; the saved project was unchanged. Exact-ID repair feedback and across-request alias instructions now cover automation, matching the earlier group-ID repair rule. The original was restored normally before retesting.

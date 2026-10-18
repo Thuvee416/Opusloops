@@ -29,7 +29,7 @@ export function applyAutomationIntent(project,intent){
  const fields={replace:['points','enabled'],set:['beat','value','curve','index'],delete:['index'],clear:[],enable:['enabled'],remove:[]}[action];
  if(!fields||Object.keys(options).some(k=>!fields.includes(k)))throw new Error('Unsupported automation action or arguments. Use replace(points,enabled?), set(beat,value,curve?,index?), delete(index), clear, enable(enabled) or remove.');
  const track=automationChannels(project).find(t=>t.id===trackId);
- if(!track)throw new Error('Choose an existing automation track or return ID.');
+ if(!track){const available=automationChannels(project).map(t=>({trackId:t.id,name:t.name}));throw Object.assign(new Error('Unknown automation trackId '+JSON.stringify(trackId)+'. Use the exact current project.tracks or project.returns id, never its display name, track:ID channel selector or a $alias from a PREVIOUS request. Available: '+JSON.stringify(available)),{code:'automation_target',userMessage:'The plan used a track reference that is not in this session. Nothing was changed.',validationDetails:{requested:{trackId},available}});}
  if(typeof key!=='string'||!key||deviceId!==undefined&&returnId!==undefined)throw new Error('Choose one automation target: key volume/pan, deviceId plus parameter key, or returnId plus key amount.');
  if(deviceId!==undefined&&typeof deviceId!=='string'||returnId!==undefined&&typeof returnId!=='string')throw new Error('Automation deviceId and returnId must be actual IDs.');
  if(action==='enable'&&typeof options.enabled!=='boolean')throw new Error('Automation enable requires enabled true or false.');
