@@ -1,0 +1,22 @@
+// Operator-IAM model planning only; application execution is checked separately.
+import assert from 'node:assert/strict';import {writeFile} from 'node:fs/promises';
+import {BedrockRuntimeClient} from '@aws-sdk/client-bedrock-runtime';
+import {assertAccount,awsOptions} from './aws.mjs';import {studioAgent} from '../runtime/studio-agent.mjs';
+import {agentContext} from '../../../web-studio/agent-actions.js';import {prepareAgentPlan} from '../../../web-studio/agent-runner.js';
+import {selectionIntent} from '../../../web-studio/studio-selection.js';
+import {selectionProject} from '../../../tests/fixtures/agent-selection-project.mjs';
+await assertAccount();process.env.STUDIO_AGENT_MODEL_ID='amazon.nova-pro-v1:0';
+const project=selectionProject(),context={...agentContext(project),studio:{view:'arrangement',selection:{trackId:'pad',clipId:'chord'},selectedRegions:['pad-a'],selectedRegion:'pad-a',deviceTrackId:'pad',detailPanel:'devices',detailExpanded:false,playing:false,position:0}},client=new BedrockRuntimeClient(awsOptions),cases=[];
+function selected(compiled,target,panel='clip'){
+ const selects=compiled.after.filter(c=>c.name==='select');assert.equal(selects.length,1);assert.equal(selects[0].args.target,target);
+ if(!compiled.after.every(c=>c.name==='select'||c.name==='show_panel'&&c.args.panel===panel))throw new Error('The user requested '+panel+' detail. select already opens it; do not follow it with show_panel for another panel or any playback command.');
+ return selects[0];
+}
+const specs=[
+ ['clip','Select the Four-note bass Session clip on Bass in displayed scene 2 and open its Clip detail. Do not launch it, start playback, change notes, or edit the project.',compiled=>{assert.equal(compiled.editCount,0);assert.deepEqual(selectionIntent(project,selected(compiled,'clip').args),{target:'clip',trackId:'bass',clipId:'riff',scene:1});} ],
+ ['regions','Select both Bass Arrangement clips, at zero-based beats 0 and 128, with the later clip primary. Show their Clip detail and reveal the clips. Do not select the Pad clip, start playback or edit music.',compiled=>{assert.equal(compiled.editCount,0);const selection=selected(compiled,'regions');assert.deepEqual(new Set(selection.args.ids),new Set(['bass-a','bass-b']));assert.equal(selection.args.primaryId,'bass-b');}],
+ ['return','Show the Room return track devices, then open the Returns detail panel. Do not edit the project, connect inputs or start playback.',compiled=>{assert.equal(compiled.editCount,0);assert.deepEqual(compiled.after,[{name:'select',args:{target:'track',trackId:'room'}},{name:'show_panel',args:{panel:'returns'}}]);}],
+ ['compose','Create a new Bright pluck track named New lead. Create a four-beat MIDI clip on that track in scene 1 (displayed) with pitches 72, 76, 79 at beats 0, 1, 2, each one beat at velocity 0.6. Place it in the Arrangement at zero-based beat 64 for four beats, then select that new Arrangement region and show its Clip detail. Preserve all existing material and do not start playback.',compiled=>{assert.equal(compiled.next.tracks.length,3);const track=compiled.next.tracks[2];assert.equal(track.name,'New lead');const region=compiled.next.arrangement.find(r=>r.trackId===track.id);assert.equal(region.start,64);assert.equal(region.length,4);const clip=compiled.next.clips[region.clipId];if(track.slots[0]!==clip.id)throw new Error('The user requested displayed scene 1 for the new MIDI clip; midi.args.scene must be 0, not 1.');assert.deepEqual(clip.notes,[72,76,79].map((pitch,start)=>({pitch,start,duration:1,velocity:.6})));assert.deepEqual(selected(compiled,'regions').args.ids,[region.id]);assert.deepEqual(compiled.next.tracks.slice(0,2),project.tracks);}]
+];
+for(const [kind,prompt,verify] of specs){let feedback=null;for(let attempt=1;attempt<=3;attempt++){let plan;try{plan=await studioAgent({prompt,context,feedback},{send:c=>client.send(c)});verify(prepareAgentPlan(project,plan.actions));cases.push({kind,prompt,attempt,plan});console.log(JSON.stringify({kind,attempt,validated:true}));break;}catch(error){await writeFile(new URL('../.operator/selection-'+kind+'-'+attempt+'.json',import.meta.url),JSON.stringify(plan,null,2));console.log(JSON.stringify({kind,attempt,error:error.message}));feedback={error:error.message,previousPlan:plan};if(attempt===3)throw error;}}}
+if(process.env.OPUS_AGENT_CAPTURE)await writeFile(process.env.OPUS_AGENT_CAPTURE,JSON.stringify({model:process.env.STUDIO_AGENT_MODEL_ID,fixture:'tests/fixtures/agent-selection-project.mjs',sourceContext:context,cases},null,2)+'\n');
