@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-18",
+  "environment": "Normal Chrome, localhost controlled project/API; actual reviewed operator plans replayed; not authenticated production inference",
+  "nativeEdits": {
+    "normalization": "Application initializes returns and sceneNames before editing; all other fixture fields compared exactly",
+    "cases": [
+      {
+        "step": 0,
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (16).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": 1,
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (17).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": 2,
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (18).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": 3,
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (19).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": 4,
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (20).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      }
+    ]
+  },
+  "capturedPlanAndContextPalette": {
+    "cases": [
+      {
+        "step": "captured_reviewed_plan",
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (21).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": "one_undo",
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (22).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": "native_context_palette",
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (23).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      }
+    ]
+  },
+  "mobileAndEmptyPrimary": {
+    "cases": [
+      {
+        "step": "mobile_palette",
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (24).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": "mobile_undo",
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (25).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": "empty_primary_batch_rename",
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (26).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      },
+      {
+        "step": "empty_primary_undo",
+        "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (27).opusloop",
+        "wholeProjectEqualsIndependentExpectation": true
+      }
+    ]
+  },
+  "audio": {
+    "status": "passed",
+    "sampleRate": 48000,
+    "encoding": "IEEE Float32 Stereo",
+    "scope": "Native browser offline PCM preservation; not physical-device or listening-quality proof",
+    "cases": [
+      {
+        "source": "arrangement",
+        "frames": 96000,
+        "peak": 0.046824075281620026,
+        "maxSampleDifference": 0
+      },
+      {
+        "source": "session",
+        "frames": 384000,
+        "peak": 0.12181063741445541,
+        "maxSampleDifference": 0
+      }
+    ]
+  },
+  "additionalObserved": {
+    "mixedValuesPreserved": true,
+    "sharedArrangementRegionColor": "#ae91cf",
+    "contextMenuPaletteAndBatchRenameEnabled": true,
+    "commandRFocusesClipName": true,
+    "mobile390pxPaletteVisibleAndOperable": true,
+    "newPageErrors": []
+  },
+  "limitations": [
+    "390px is a same-browser iframe, not physical touchscreen/device proof",
+    "Only shared source identity and launch patch controls; MIDI/audio/time editors remain primary-clip editors",
+    "Saved fixtures initialize missing returns/sceneNames before editing; verification compares their actual normalized baseline",
+    "No perceptual-quality or native Ableton parity claim"
+  ]
+}

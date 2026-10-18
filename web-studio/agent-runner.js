@@ -1,3 +1,4 @@
+import {checkClipPropertyRequirements} from './clip-property-requirements.js';
 import {checkSessionSelectionRequirements,checkSessionSelectionReceipt} from './session-selection-requirements.js';
 import {checkSessionClipboardRequirements,checkSessionClipboardReceipt} from './session-clipboard-requirements.js';
 import {copySessionClips,sessionActivationOnly,sessionClipboardSummary} from './session-batch.js';
@@ -13,7 +14,7 @@ const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null}={}) {
+export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   const edits = [], before = [], after = [];
   const hasEdits = actions.some(a => a?.type !== 'command');
@@ -56,9 +57,10 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null,qu
   const quantizeCheck=checkQuantizeRequirements(project,{next,after},quantizeRequirements);
   let internalClipboard=false,clipboardUsed=false;for(const action of edits){const args=decode(action);if(action.type==='session_clips'&&args.action==='paste'&&!internalClipboard)clipboardUsed=true;if(action.type==='session_clips'&&args.action==='cut')internalClipboard=true;}
   const liveSessionActive=edits.length>0&&edits.every(a=>a.type==='session_clips'&&decode(a).action==='active')&&sessionActivationOnly(project,next);
+  const clipPropertyIntent=checkClipPropertyRequirements(project,{next,before,after,editCount:edits.length},clipPropertyRequirements);
   const clipboardIntent=checkSessionClipboardRequirements(project,{next,prepared,before,after,edits,editCount:edits.length},sessionClipboardRequirements,sessionClipboard);
   const selectionIntent=checkSessionSelectionRequirements(project,{next,before,after,editCount:edits.length},sessionSelectionRequirements);
-  return {next, prepared,selectionIntent,clipboardIntent,liveSessionActive,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  return {next, prepared,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject,getRecording,getClipboard, expected, locked, commit, execute, signal, onStep = () => {}}) {

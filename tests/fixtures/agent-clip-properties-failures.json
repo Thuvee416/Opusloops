@@ -1,0 +1,9 @@
+{
+  "id": "selected-properties",
+  "failures": [
+    {
+      "attempt": 1,
+      "error": "Planning and review took too long. No plan was returned; try a smaller request."
+    }
+  ]
+}

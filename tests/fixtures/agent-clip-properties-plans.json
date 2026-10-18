@@ -1,0 +1,89 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "selected-properties",
+      "prompt": "Rename both selected Session clip sources exactly \"Night Drive\", color both teal #62b5a5, and set their info text exactly \"Bring The Bass In After Eight Bars.\" Set only their launch quantization to Global. Preserve their different launch modes and legato settings. Do not change any other data, selection, panels, or transport.",
+      "patch": {
+        "name": "Night Drive",
+        "color": "#62b5a5",
+        "infoText": "Bring The Bass In After Eight Bars."
+      },
+      "quantization": "global",
+      "attempt": 2,
+      "failures": [
+        {
+          "attempt": 1,
+          "error": "Planning and review took too long. No plan was returned; try a smaller request."
+        }
+      ],
+      "result": {
+        "summary": "Rename both selected Session clip sources exactly 'Night Drive', color both teal #62b5a5, and set their info text exactly 'Bring The Bass In After Eight Bars.' Set only their launch quantization to Global. Preserve their different launch modes and legato settings. Do not change any other data, selection, panels, or transport.",
+        "actions": [
+          {
+            "type": "clip_properties",
+            "args": {
+              "ids": [
+                "x",
+                "z"
+              ],
+              "changes": {
+                "name": "Night Drive",
+                "infoText": "Bring The Bass In After Eight Bars.",
+                "color": "#62b5a5",
+                "launch": {
+                  "quantization": "global"
+                }
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "triplet-launch",
+      "prompt": "For both selected Session clip sources, change only launch quantization to eighth-note triplets (one third of a beat). Preserve their different launch modes, legato, names, notes, color, info, all other project data, selection and transport. No other action.",
+      "patch": {},
+      "quantization": 0.3333333333333333,
+      "attempt": 1,
+      "failures": [],
+      "result": {
+        "summary": "Change launch quantization to eighth-note triplets for selected Session clip sources.",
+        "actions": [
+          {
+            "type": "clip_properties",
+            "args": {
+              "ids": [
+                "x",
+                "z"
+              ],
+              "changes": {
+                "launch": {
+                  "quantization": 0.3333333333333333
+                }
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

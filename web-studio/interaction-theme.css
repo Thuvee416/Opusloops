@@ -58,3 +58,17 @@
 .studio-shell .slot.selected .clip-select[aria-pressed=true]{background:transparent;color:inherit}
 /* Empty Session space selects; only the explicit plus button imports. */
 .session-grid{position:relative}.session-empty-space{flex:1;align-self:stretch;min-width:20px;cursor:default;touch-action:pan-x pan-y}.studio-shell .empty-slot-controls>.empty-slot{flex:0 0 17px;width:17px;min-width:17px}.session-marquee{position:absolute;z-index:8;pointer-events:none;border:1px solid #315e56;background:#7fb5a926;box-sizing:border-box}.session-context-menu{width:230px!important;max-height:calc(100dvh - 8px)!important}.session-grid.session-selecting{user-select:none;cursor:crosshair}.session-grid.session-selecting .session-empty-space{cursor:crosshair}
+
+/* Compact clip source properties; source color remains independent of track color. */
+.studio-shell .clip-source-properties{margin:0;padding:8px;min-width:0;border:1px solid #7c8481;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#b3b9b6;color:#303734}
+.studio-shell .clip-source-properties legend{font-size:10px;font-weight:600;padding:0 4px;color:#303734}
+.studio-shell .clip-source-properties label{color:#39433f}.studio-shell .clip-source-properties .micro{color:#4a5550;margin:0;line-height:1.4}
+.clip-color-field>span{display:block;font-size:9px;margin-bottom:5px}.clip-color-palette{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.studio-shell .clip-color-palette [data-clip-color]:not(.clip-track-color),.session-context-menu .context-color-swatch{background:var(--swatch)!important;border:1px solid #46534b!important;border-radius:0!important;box-shadow:none;min-width:17px;width:17px;height:17px;padding:0!important}
+.studio-shell .clip-color-palette [aria-pressed=true]{outline:2px solid #263f36;outline-offset:1px}.clip-color-palette .clip-track-color{font-size:9px;padding:1px 4px}
+.clip-source-properties .clip-custom-color{display:flex;flex-direction:row;align-items:center;gap:4px;font-size:9px;margin:0}.clip-source-properties input[type=color]{width:23px;height:20px;min-height:20px;padding:1px}
+.clip-info summary{font-size:10px;cursor:pointer}.studio-shell .clip-info textarea{font-size:11px;font-family:inherit;color:#303734;background:#d9dedb;border:1px solid #7c8481;width:100%;max-width:100%;min-height:65px;resize:vertical;margin:6px 0;padding:5px;box-sizing:border-box}
+.context-color-palette{display:flex;gap:5px;flex-wrap:wrap;padding:8px}.session-context-menu .context-color-swatch{min-height:17px!important;color:#263f36!important}.session-context-menu .context-color-swatch:focus{outline:2px solid #c1d5cb;outline-offset:1px}
+@media(max-width:480px){.studio-shell .clip-source-properties{gap:7px;padding:6px}.clip-color-palette{gap:5px}}
+
+.studio-shell .group-slot{background:color-mix(in srgb,var(--group-clip,#7b8986) 22%,transparent)}

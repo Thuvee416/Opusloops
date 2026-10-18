@@ -48,6 +48,7 @@ export function validateProject(p) {
   validateHierarchy(p);validateRouting(p);
   if(Object.keys(p.clips).length>512)fail();
   for(const [id,c] of Object.entries(p.clips)){if(c.id!==id||typeof c.name!=='string'||c.name.length>200||!num(c.beats,.25,256)||!num(c.sourceBpm,40,240)||!['audio','midi','drums'].includes(c.kind))fail();
+    if(c.color!==undefined&&(typeof c.color!=='string'||!/^#[0-9a-f]{6}$/i.test(c.color)))fail();if(c.infoText!==undefined&&(typeof c.infoText!=='string'||c.infoText.length>4000))fail();
     validateClipLaunch(c.launch);validateFollow(c.follow);if(c.kind==='audio'){validateAudioEdit(c.audioEdit,c.beats);validateWarp(c.warp);}else if(c.audioEdit!==undefined||c.warp!==undefined)fail();
     if(c.midiChannel!==undefined&&(!Number.isInteger(c.midiChannel)||c.midiChannel<0||c.midiChannel>15))fail();
     if(c.kind==='audio' && (typeof c.data!=='string'||c.data.length>90000000))fail();

@@ -1,0 +1,153 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "selected-properties",
+      "prompt": "Rename both selected Session clip sources exactly \"Night Drive\", color both teal #62b5a5, and set their info text exactly \"Bring The Bass In After Eight Bars.\" Set only their launch quantization to Global. Preserve their different launch modes and legato settings. Do not change any other data, selection, panels, or transport.",
+      "patch": {
+        "name": "Night Drive",
+        "color": "#62b5a5",
+        "infoText": "Bring The Bass In After Eight Bars."
+      },
+      "quantization": "global",
+      "attempt": 2,
+      "failures": [
+        {
+          "attempt": 1,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'x',\n        id: 'reference',\n...\n        id: 'x',\n+       infoText: 'Bring The Bass In After Eight Bars',\n-       infoText: 'Bring The Bass In After Eight Bars.',\n        kind: 'midi',\n        launch: {\n          legato: true,\n          mode: 'toggle',\n          quantization: 'global'\n...\n        id: 'z',\n+       infoText: 'Bring The Bass In After Eight Bars',\n-       infoText: 'Bring The Bass In After Eight Bars.',\n        kind: 'midi',\n        launch: {\n          legato: false,\n          mode: 'gate',\n          quantization: 'global'\n",
+          "result": {
+            "summary": "Renamed both selected Session clip sources to Night Drive, set their color to teal #62b5a5, and updated their info text to Bring The Bass In After Eight Bars. Set their launch quantization to Global while preserving their different launch modes and legato settings.",
+            "actions": [
+              {
+                "type": "clip_properties",
+                "args": {
+                  "ids": [
+                    "x",
+                    "z"
+                  ],
+                  "changes": {
+                    "name": "Night Drive",
+                    "color": "#62b5a5",
+                    "infoText": "Bring The Bass In After Eight Bars",
+                    "launch": {
+                      "quantization": "global"
+                    }
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "result": {
+        "summary": "Renamed both selected Session clip sources to Night Drive, set their color to teal #62b5a5, and updated their info text to Bring The Bass In After Eight Bars. Set their launch quantization to Global while preserving their different launch modes and legato settings.",
+        "actions": [
+          {
+            "type": "clip_properties",
+            "args": {
+              "ids": [
+                "x",
+                "z"
+              ],
+              "changes": {
+                "name": "Night Drive",
+                "color": "#62b5a5",
+                "infoText": "Bring The Bass In After Eight Bars.",
+                "launch": {
+                  "quantization": "global"
+                }
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "triplet-launch",
+      "prompt": "For both selected Session clip sources, change only launch quantization to eighth-note triplets (one third of a beat). Preserve their different launch modes, legato, names, notes, color, info, all other project data, selection and transport. No other action.",
+      "patch": {},
+      "quantization": 0.3333333333333333,
+      "attempt": 2,
+      "failures": [
+        {
+          "attempt": 1,
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'x',\n        id: 'reference',\n...\n          mode: 'toggle',\n+         quantization: 0.16666666666666666\n-         quantization: 0.3333333333333333\n        },\n        name: 'Shared Loop',\n        notes: [\n          {\n            duration: 3.5,\n...\n          mode: 'gate',\n+         quantization: 0.16666666666666666\n-         quantization: 0.3333333333333333\n        },\n        name: 'Bass Loop',\n        notes: [\n          {\n            duration: 3.5,\n",
+          "result": {
+            "summary": "Changed launch quantization to eighth-note triplets for selected Session clip sources.",
+            "actions": [
+              {
+                "type": "clip_properties",
+                "args": {
+                  "ids": [
+                    "x",
+                    "z"
+                  ],
+                  "changes": {
+                    "launch": {
+                      "quantization": 0.16666666666666666
+                    }
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "result": {
+        "summary": "Changed launch quantization to eighth-note triplets for selected Session clip sources.",
+        "actions": [
+          {
+            "type": "clip_properties",
+            "args": {
+              "ids": [
+                "x",
+                "z"
+              ],
+              "changes": {
+                "launch": {
+                  "quantization": 0.3333333333333333
+                }
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}
