@@ -1,3 +1,4 @@
+import {queuedPlanning} from './queued-planning.js';
 export const STUDIO_API='https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com';
 const PRIVATE='opus.agent.session',SHARED='opusloops.auth.session.aws.v1',IGNORE='opus.agent.ignoreShared';
 const authError=(message,code='session_missing',status=401)=>Object.assign(new Error(message),{code,status});
@@ -61,14 +62,15 @@ export function createAgentSession({privateStorage=globalThis.sessionStorage,sha
    finally{if(refreshing===operation)refreshing=null;}
   })();refreshing=operation;return operation.promise;
  }
- async function plan(body,{signal,bound=lease()}={}){
+ async function authorized(path,body,{signal,bound=lease(),timeout=planTimeout}={}){
   canceled(signal);let record=assertLease(bound),s=record.session;
   if(Number.isFinite(s.expires_at)&&s.expires_at<=now()/1000+60){await waitFor(refresh(bound),signal);record=assertLease(bound);s=record.session;}
   let result;
-  try{result=await raw('/functions/v1/studio-agent',body,{token:s.access_token,signal,timeout:planTimeout});}
-  catch(error){canceled(signal);assertLease(bound);if(error.status!==401)throw error;await waitFor(refresh(bound),signal);const renewed=assertLease(bound).session;try{result=await raw('/functions/v1/studio-agent',body,{token:renewed.access_token,signal,timeout:planTimeout});}catch(retryError){canceled(signal);assertLease(bound);if(retryError.status===401){invalidate(bound);throw authError('Your sign-in has ended. Sign in again.','session_expired');}throw retryError;}}
+  try{result=await raw(path,body,{token:s.access_token,signal,timeout});}
+  catch(error){canceled(signal);assertLease(bound);if(error.status!==401)throw error;await waitFor(refresh(bound),signal);const renewed=assertLease(bound).session;try{result=await raw(path,body,{token:renewed.access_token,signal,timeout});}catch(retryError){canceled(signal);assertLease(bound);if(retryError.status===401){invalidate(bound);throw authError('Your sign-in has ended. Sign in again.','session_expired');}throw retryError;}}
   canceled(signal);assertLease(bound);return result;
  }
+ async function plan(body,{signal,bound=lease(),onProgress}={}){if(body.context?.planningTransport?.version!==1)return authorized('/functions/v1/studio-agent',body,{signal,bound});return queuedPlanning(body,{signal,now,request:(path,payload,options)=>authorized(path,payload,{...options,bound}),onProgress:state=>{assertLease(bound);onProgress?.(state);}});}
  async function signIn(email,password){
   sync();const expected=version;const result=normalized(await raw('/auth/v1/token?grant_type=password',{email,password}));sync();if(version!==expected)throw changed();
   try{privateStorage.removeItem(IGNORE);}catch{}write({source:'private',session:result},{accountChanged:true});return {user:publicUser(result.user)};

@@ -1,0 +1,102 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "budgetMs": 100000,
+  "cases": [
+    {
+      "id": "complex",
+      "prompt": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits.",
+      "launches": true,
+      "phases": [
+        {
+          "phase": "drafting",
+          "elapsedMs": 2
+        }
+      ],
+      "elapsedMs": 48680,
+      "passed": false,
+      "error": "The model did not return valid tool arguments. Repair the plan using the supported action schema."
+    },
+    {
+      "id": "plain-scene-one",
+      "prompt": "Add two Init synth tracks named QA Property A and QA Property B. Each needs a four-beat MIDI clip in scene 1, named QA Clip A and QA Clip B respectively. Each clip has one note: start 0, duration 1 beat, velocity 0.5; pitch 60 on A, 48 on B. No other edits or commands.",
+      "result": {
+        "summary": "Add two Init synth tracks named QA Property A and QA Property B. Each needs a four-beat MIDI clip in scene 1, named QA Clip A and QA Clip B respectively. Each clip has one note: start 0, duration 1 beat, velocity 0.5; pitch 60 on A, 48 on B. No other edits or commands.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property A",
+              "ref": "$trackA",
+              "preset": "Init"
+            }
+          },
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property B",
+              "ref": "$trackB",
+              "preset": "Init"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "ref": "$clipA",
+              "trackId": "$trackA",
+              "sceneNumber": 1,
+              "name": "QA Clip A",
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 60,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "ref": "$clipB",
+              "trackId": "$trackB",
+              "sceneNumber": 1,
+              "name": "QA Clip B",
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 48,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "phases": [
+        {
+          "phase": "drafting",
+          "elapsedMs": 3
+        },
+        {
+          "phase": "reviewing",
+          "elapsedMs": 3141
+        }
+      ],
+      "elapsedMs": 6919,
+      "passed": true
+    }
+  ]
+}

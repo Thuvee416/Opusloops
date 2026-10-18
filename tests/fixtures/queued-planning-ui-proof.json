@@ -1,0 +1,216 @@
+{
+  "cases": [
+    {
+      "step": "baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T143647.611.opusloop",
+      "wholeProjectOracle": true,
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "queued_six_edit_composition",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T143709.558.opusloop",
+      "wholeProjectOracle": true
+    },
+    {
+      "step": "one_undo",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T143711.253.opusloop",
+      "wholeProjectOracle": true,
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "cancel_before_admission",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T143751.523.opusloop",
+      "wholeProjectOracle": true,
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "stale_selection_rejected",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T143848.316.opusloop",
+      "wholeProjectOracle": true,
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "cancel_running",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T143857.496.opusloop",
+      "wholeProjectOracle": true,
+      "byteIdenticalBaseline": true
+    }
+  ],
+  "repair": {
+    "baseline": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T144843.117.opusloop",
+    "composition": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T144857.534.opusloop",
+    "undo": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T144904.902.opusloop",
+    "wholeProjectOracle": true,
+    "oneUndoByteIdentical": true,
+    "baselineSha256": "ac0c8017b54fe7445bd5d9f05d2cc2464eff7d16be8fe10f8a5725493e18ff91",
+    "queuedAttempts": [
+      {
+        "id": "33424058-b3a5-465c-8c6b-c5ab40ba62b0",
+        "status": "failed",
+        "phase": "failed",
+        "hasPayload": false,
+        "hasResult": false,
+        "startedAt": 1792349323841,
+        "finishedAt": 1792349323842
+      },
+      {
+        "id": "43a14ce0-3845-4d4a-9c09-b08e7e546153",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792349325521,
+        "finishedAt": 1792349328729
+      }
+    ],
+    "quota": 2,
+    "modelCalls": 2,
+    "consoleErrors": [],
+    "providerFixture": "agent-queued-planning-plans.json complex (actual reviewed result)",
+    "log": "/tmp/opus-queue-repair-local-log.txt"
+  },
+  "lifecycleStats": {
+    "quota": 3,
+    "dispatches": 3,
+    "modelCalls": 3,
+    "requests": [
+      {
+        "path": "/functions/v1/studio-agent",
+        "id": "3d1d8355-b7ea-4e9f-9340-01ecb51e2e79",
+        "prompt": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits."
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "3d1d8355-b7ea-4e9f-9340-01ecb51e2e79",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "3d1d8355-b7ea-4e9f-9340-01ecb51e2e79",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "3d1d8355-b7ea-4e9f-9340-01ecb51e2e79",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent",
+        "id": "5a7b1e91-6e9b-4a97-8ba2-7414fdca6b33",
+        "prompt": "Delayed Before Admission"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "5a7b1e91-6e9b-4a97-8ba2-7414fdca6b33",
+        "action": "cancel"
+      },
+      {
+        "path": "/functions/v1/studio-agent",
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "prompt": "Delayed Composition"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent",
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "prompt": "Delayed Composition"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "action": "cancel"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "3d1d8355-b7ea-4e9f-9340-01ecb51e2e79",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792348608086,
+        "finishedAt": 1792348611292
+      },
+      {
+        "id": "5a7b1e91-6e9b-4a97-8ba2-7414fdca6b33",
+        "status": "cancelled",
+        "phase": "cancelled",
+        "hasPayload": false,
+        "hasResult": false,
+        "finishedAt": 1792348631857
+      },
+      {
+        "id": "a6edf74b-0100-41b1-a7e2-32522f61f27d",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792348671847,
+        "finishedAt": 1792348679652
+      },
+      {
+        "id": "070a523f-63cb-46c4-bc0f-9eb78f51a9e0",
+        "status": "cancelled",
+        "phase": "cancelled",
+        "hasPayload": false,
+        "hasResult": false,
+        "startedAt": 1792348728811,
+        "finishedAt": 1792348736667
+      }
+    ]
+  }
+}

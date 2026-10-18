@@ -1,3 +1,4 @@
+import {planningJobs,isPlannerEvent} from './planning-jobs.mjs';
 import {studioAgent,agentAllowance} from './studio-agent.mjs';
 import { randomUUID } from 'node:crypto';
 import { ApiError,db,rpc,uuid } from './common.mjs';
@@ -30,6 +31,7 @@ async function retention() {
   return {deleted,failed};
 }
 export async function handler(event) {
+  if(isPlannerEvent(event))return planningJobs.run(event);
   // These events are delivered directly by IAM-authorized AWS services, never
   // deserialized from an HTTP body into the top-level Lambda envelope.
   if(event.source==='aws.s3'&&event['detail-type']==='Object Created')return registerEvent(event);
@@ -62,7 +64,8 @@ export async function handler(event) {
     const authorization=headers.authorization||'';
     if(!authorization.startsWith('Bearer '))throw new ApiError(401,'authentication_required','Sign in to continue');
     const user=await authenticate(authorization.slice(7));
-    if(path==='/functions/v1/studio-agent'&&method==='POST'){await agentAllowance(user);return response(200,await studioAgent(body),origin);}
+    if(path==='/functions/v1/studio-agent'&&method==='POST'){if(body.context?.planningTransport?.version===1)return response(202,{planningJob:await planningJobs.submit(user,body)},origin);await agentAllowance(user);return response(200,await studioAgent(body),origin);}
+    if(path==='/functions/v1/studio-agent-jobs'&&method==='POST'){if(!['status','cancel'].includes(body.action))throw new ApiError(400,'invalid_request','Choose A Planning Status Or Cancel Action.');return response(200,{planningJob:await planningJobs[body.action](user,body.jobId)},origin);}
     if(path==='/auth/v1/user'&&method==='GET')return response(200,await getUser(user),origin);
     if(path==='/auth/v1/user'&&method==='PUT')return response(200,await updateUser(user,body),origin);
     if(path==='/auth/v1/verify-email'&&method==='POST')return response(200,await verifyEmail(user,body),origin);

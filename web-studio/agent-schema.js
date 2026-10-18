@@ -29,3 +29,8 @@ export const displayedScenePlanSchema=structuredClone(agentPlanSchema);
  for(const item of Object.values(schema))if(Array.isArray(item))item.forEach(displayed);else if(item&&typeof item==='object')displayed(item);
 })(displayedScenePlanSchema);
 displayedScenePlanSchema.properties.actions.items.properties.args.properties.index.description='Automation Point Index Only. Scene Management Selects With sceneNumber, Not index. Scene move value Is A Relative -1/+1.';
+
+// Inline creation settings are negotiated by the queued-client protocol. Older
+// open clients cannot silently ignore a new constructor field they don't know.
+export const queuedScenePlanSchema=structuredClone(displayedScenePlanSchema);
+queuedScenePlanSchema.properties.actions.items.properties.args.properties.launch={...launch,description:'For midi creation: initial clip launch settings. Preserve exact requested mode, quantization in beats/global and legato. Use this directly on the new MIDI action, without a follow-up metadata action.'};
