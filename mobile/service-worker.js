@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "opusloops-pwa-";
 const RETIRED_CACHE_PREFIXES = ["opusloops-mobile-"];
-const CACHE_NAME = `${CACHE_PREFIX}v67`;
+const CACHE_NAME = `${CACHE_PREFIX}v68`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -27,10 +27,10 @@ const APP_SHELL = [
   "./pixel-dock.mjs?v=3",
   "./grainient-mixer.mjs?v=2",
   "./soft-aurora-player.mjs?v=1",
-  "./manifest.webmanifest?v=6",
-  "./icons/icon-192.png?v=3",
-  "./icons/icon-512.png?v=3",
-  "./icons/apple-touch-icon.png?v=3"
+  "./manifest.webmanifest?v=7",
+  "./icons/icon-192.png?v=4",
+  "./icons/icon-512.png?v=4",
+  "./icons/apple-touch-icon.png?v=4"
 ];
 
 self.addEventListener("install", (event) => {

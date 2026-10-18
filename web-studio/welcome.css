@@ -5,7 +5,7 @@
 #opus-welcome *{box-sizing:border-box}#opus-welcome button{font:inherit;cursor:pointer}
 #opus-welcome .welcome-top{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;flex-shrink:0;border-bottom:1px solid var(--line);background:var(--bg)}
 #opus-welcome .welcome-brand{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:600;letter-spacing:1px;color:var(--text)}
-#opus-welcome .welcome-brand img{width:40px;height:20px;filter:brightness(0)}
+#opus-welcome .welcome-brand img{width:27px;height:20px}
 #opus-welcome .welcome-edition{font-size:9px;font-weight:400;letter-spacing:.3px;color:var(--muted);border-left:1px solid var(--line);padding-left:10px}
 #opus-welcome .welcome-close{display:grid;place-items:center;width:24px;height:24px;padding:0;border:1px solid transparent;border-radius:3px;background:transparent;color:var(--text)}
 #opus-welcome .welcome-close:hover{background:#d8dadd;border-color:var(--line)}

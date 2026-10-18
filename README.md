@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/opus-loops-logo.png" alt="Opusloops" width="200">
+  <img src="web-studio/assets/opus-logo.jpg" alt="Opusloops" width="200">
 </p>
 
 <h1 align="center">Your AI DAW. Built for what comes next.</h1>
