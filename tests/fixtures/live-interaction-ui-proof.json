@@ -1,0 +1,31 @@
+{
+  "candidate": "0.144.1",
+  "environment": "Local Chrome desktop plus 390x844 same-origin iframe; first-party recording QA fixture; not production",
+  "checks": [
+    "Desktop cascading Edit / Record Quantization keeps parent visible",
+    "Left closes one submenu and restores owner focus; Right reopens; Escape closes levels and restores original control",
+    "Navigate focus preference leaves Tab available for sequential focus; disabling it restores view switching",
+    "Tab and Alt+1 switch views during playback without stopping playback",
+    "Space pauses playback from a focused transport control",
+    "F10 performs Back To Arrangement and opens no menu",
+    "Repeated Play clicks keep playback running",
+    "F9 starts Arrangement recording with solid red indicator and no pulse animation",
+    "One-click clip selection preserves collapsed editor; double-click opens Clip View",
+    "Queued second clip remains opaque with no whole-clip animation; original is playing; later the second clip becomes playing",
+    "390px submenu replaces parent, exposes Back and stays inside viewport",
+    "No browser error or warning logs observed"
+  ],
+  "screenshots": [
+    "/tmp/opus-live-interactions-final.png",
+    "/tmp/opus-live-interactions-queue.png",
+    "/tmp/opus-live-menu-mobile.png"
+  ],
+  "limits": [
+    "Controlled local project, not signed-in public release",
+    "No claim of pixel-identical whole-app parity or all native gestures",
+    "Native input recording still has documented locks and per-take Undo differences",
+    "Stop still returns to start; native first-stop/second-stop marker semantics remain pending",
+    "Engine look-ahead may clear previous owner highlight shortly before a queued transition; future clip itself is not shown as already audible",
+    "Physical mobile and Firefox rendering not verified"
+  ]
+}

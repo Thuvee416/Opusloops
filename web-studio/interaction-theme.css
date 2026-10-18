@@ -1,0 +1,47 @@
+/* Compact, immediate DAW controls; musical state has its own color vocabulary. */
+.studio-shell{--state-play:#68d65c;--state-record:#ef5249;--state-solo:#78a8ed;--state-hover:#dce0e0;--state-focus:#197c70}
+.studio-shell button{transition:none;transform:none;box-shadow:none;border-radius:2px;line-height:1.2}
+.studio-shell button:not(:disabled):active{background:#9fa5a6;border-color:#626b6b}
+.studio-shell :is(button,input,select):focus-visible{outline:1px solid var(--state-focus);outline-offset:-1px}
+.studio-shell .transport .playback{gap:2px;align-items:center}
+.studio-shell .transport-button{display:inline-grid;place-items:center;width:22px;height:22px;padding:0;border:0;background:transparent;color:#303537;border-radius:1px}
+.studio-shell .transport-button:hover{background:#a8aeaf}
+.studio-shell .transport-button .studio-icon{width:15px;height:15px;stroke-width:1.3}
+.studio-shell #pause{display:none}
+.studio-shell #play[aria-pressed=true]{background:transparent;color:var(--state-play);border:0}
+.studio-shell #record{color:#303537}
+.studio-shell #record.recording{background:transparent;color:var(--state-record);animation:none}
+.studio-shell #back{color:#525a5b;border-color:transparent;background:transparent}
+.studio-shell #back.overridden{background:#e79b55;border-color:#9b6332;color:#2a241e}
+.studio-shell #metronome[aria-pressed=true],.studio-shell #loop-toggle[aria-pressed=true]{background:#e3ad62;border-color:#9a794a}
+.studio-shell .tabs button{border:0;border-radius:2px;color:#4c5354}
+.studio-shell .tabs .active{background:#c7cece;border-color:transparent;color:#202728;box-shadow:inset 0 -2px var(--accent)}
+.studio-shell .channel .toggles button[data-solo][aria-pressed=true]{background:var(--state-solo);border-color:#4f6b99;color:#15233a}
+.studio-shell .channel .toggles button[data-mute][aria-pressed=true]{background:#919798;color:#444c4d}
+.studio-shell .clip{position:relative;isolation:isolate}
+.studio-shell .clip.playing{box-shadow:none}
+.studio-shell .clip.playing::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:100%;background:#35483b;transform:scaleX(var(--clip-phase,0));transform-origin:left;pointer-events:none}
+.studio-shell .clip.queued{animation:none;opacity:1}
+.studio-shell .clip .launch{min-width:17px;width:17px;padding:0;border:0;border-right:1px solid #343b3a33;border-radius:0;color:#353d3d}
+.studio-shell .clip .launch .studio-icon{width:10px;height:10px}
+.studio-shell .clip.playing .launch{color:var(--state-play);background:#434d47}
+.studio-shell .clip.queued .launch,.studio-shell .scene.queued .scene-play{color:#2e803a}
+.studio-shell .clip.queued[data-pulse=true] .launch,.studio-shell .scene.queued[data-pulse=true] .scene-play{color:var(--state-play);background:#434d47}
+.studio-shell .scene[aria-pressed=true]{background:#a7b3ac;color:#17291e}
+.studio-shell .scene[aria-pressed=true] .scene-play{color:#16662c}
+.studio-shell .app-menubar>button:hover,.studio-shell .app-menubar>button[aria-expanded=true]{background:#ced5d4;color:#172323}
+.studio-shell .app-menu-popup{width:330px;padding:3px;max-height:calc(100dvh - 70px);overflow-y:auto;border:1px solid #81898a;border-radius:1px;box-shadow:2px 3px 7px #0003;background:#d9dddd}
+.studio-shell .app-menu-popup>button{min-height:23px;padding:4px 8px;font-size:11px;gap:18px}
+.studio-shell .app-menu-popup>button:hover,.studio-shell .app-menu-popup>button:focus{background:#8dbdb4;color:#152a25;outline:0}
+.studio-shell .app-menu-popup>button[aria-disabled=true],.studio-shell .app-menu-popup>button[aria-disabled=true]:hover{background:transparent;color:#858d8d;cursor:default}
+.studio-shell .app-menu-popup small{color:inherit;opacity:.75;font:10px Arial,sans-serif;text-transform:none}
+.studio-shell .app-menu-popup hr{margin:3px 5px;border-color:#b4bcbc}
+.studio-shell .app-menu-popup[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){.studio-shell .clip.playing::after{display:none}}
+@media(max-width:720px){.studio-shell .transport-button{min-width:27px;height:27px}.studio-shell .app-menu-popup>button{min-height:31px}.studio-shell .app-menu-popup{max-height:calc(100dvh - 80px)}}
+/* Flat parameter tracks and small rectangular handles replace browser-specific thumbs. */
+.studio-shell input[type=range]:not([data-volume]):not(#master){appearance:none;height:14px;background:transparent;border:0;padding:0;cursor:ew-resize}
+.studio-shell input[type=range]:not([data-volume]):not(#master)::-webkit-slider-runnable-track{height:2px;background:#7b8484;border:0;border-radius:0}
+.studio-shell input[type=range]:not([data-volume]):not(#master)::-webkit-slider-thumb{appearance:none;width:6px;height:10px;margin-top:-4px;background:#3c4545;border:1px solid #242b2b;border-radius:0;box-shadow:none}
+.studio-shell input[type=range]:not([data-volume]):not(#master)::-moz-range-track{height:2px;background:#7b8484;border:0;border-radius:0}
+.studio-shell input[type=range]:not([data-volume]):not(#master)::-moz-range-thumb{width:5px;height:9px;background:#3c4545;border:1px solid #242b2b;border-radius:0;box-shadow:none}
