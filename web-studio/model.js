@@ -10,6 +10,7 @@ import {validateRouting} from './routing.js';
 import {validateAutomation} from './automation.js';
 import {defaultTransport,validateTransport} from './transport.js';
 import {validateDevices} from './devices.js';
+export const REGION_MIN_BEATS = .0625;
 export const uid = () => globalThis.crypto.randomUUID();
 export const palette = ['#d9a359','#8faed6','#b4a1d5','#91b5a3','#cf8f99','#aebd77','#8cbcc7','#c89a7e'];
 export const quantize = (beat, grid=4) => Math.max(0,Math.ceil((beat-1e-7)/grid)*grid);
@@ -52,7 +53,7 @@ export function validateProject(p) {
   }
   for(const t of p.tracks)for(const c of t.slots)if(c!==null&&!Object.hasOwn(p.clips,c))fail();
   const segments=new Set();
-  for(const s of p.arrangement){if((s.active!==undefined&&typeof s.active!=='boolean')||typeof s.id!=='string'||segments.has(s.id)||!ids.has(s.trackId)||!Object.hasOwn(p.clips,s.clipId)||!num(s.start,0,16384)||!num(s.length,.0625,16384)||!num(s.offset,0,1e7)||!canPlace(p,s))fail();segments.add(s.id);}
+  for(const s of p.arrangement){if((s.active!==undefined&&typeof s.active!=='boolean')||typeof s.id!=='string'||segments.has(s.id)||!ids.has(s.trackId)||!Object.hasOwn(p.clips,s.clipId)||!num(s.start,0,16384)||!num(s.length,REGION_MIN_BEATS,16384)||!num(s.offset,0,1e7)||!canPlace(p,s))fail();segments.add(s.id);}
   return p;
 }
 export function wav(buffer){

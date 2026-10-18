@@ -23,3 +23,5 @@
 .studio-icon{display:inline-block;width:1em;height:1em;vertical-align:-.125em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;flex-shrink:0}
 .studio-shell .transport-button .studio-icon{width:12px;height:12px}
 .studio-shell .agent-collapse .studio-icon{width:12px;height:12px;vertical-align:middle}
+
+.group-trim{min-width:0;margin:7px 0;padding:7px;border:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:6px}.group-trim legend{font-size:10px;font-weight:600}.group-trim p{margin:0}.group-trim select,.group-trim input{width:100%;min-width:0}

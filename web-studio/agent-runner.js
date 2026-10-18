@@ -21,14 +21,14 @@ export function prepareAgentPlan(project, actions) {
     }
   }
   if (before.length + after.length > 8) throw new Error('Use at most eight runtime commands per request.');
-  const aliases=new Map();
-  const next = applyAgentActions(project, edits,{aliases});
+  const aliases=new Map(),editObservations=[];
+  const next = applyAgentActions(project, edits,{aliases,observations:editObservations});
   for(const command of [...before,...after]){
   if(command.args?.trackId)command.args.trackId=aliases.get(command.args.trackId)||command.args.trackId;
   const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
  }
   for (const command of [...before, ...after]) applyAgentActions(next, [{type:'command', args:command}]);
-  return {next, editCount:edits.length, before, after};
+  return {next, editCount:edits.length, before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject, expected, locked, commit, execute, signal, onStep = () => {}}) {
@@ -60,10 +60,10 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
       editsApplied = true;
       fingerprint = signature(getProject());
       if (fingerprint !== intended) throw new Error('The applied project does not match the validated plan.');
-      onStep({type:'edits', count:plan.editCount});
+      onStep({type:'edits', count:plan.editCount,observations:plan.editObservations??[]});
     }
     for (const command of plan.after) await run(command);
-    return {editsApplied, completedCommands, observations};
+    return {editsApplied, completedCommands, observations,editObservations:plan.editObservations??[]};
   } catch (error) {
     // Preserve what actually happened: downloads/transport cannot be undone by
     // restoring a project, and a failed export must not hide committed edits.

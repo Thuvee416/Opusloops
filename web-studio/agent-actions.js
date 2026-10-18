@@ -1,3 +1,4 @@
+import {editRegionGroup} from './arrangement.js';
 import {DELIVERY_KEYS,deliveryOptions} from './delivery-options.js';
 import {newReturn} from './routing.js';
 import {newDrumRack} from './drums.js';
@@ -24,13 +25,14 @@ export const agentActions={
  automation:'{trackId,key:volume|pan,points:[{beat,value}],enabled:true}',
  midi:'{ref?,clipId?,trackId?,scene?,name?,beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip',
  clip:'{id,changes:{name?,beats?,sourceBpm?,audioEdit?,warp?,launch?}}',
+ region_group:'{ids:[existing Arrangement region IDs],action:move|duplicate|delete|active|trim,delta? (beats),trackOffset? (move/duplicate only),edge?:start|end (trim only)} trim moves all chosen starts or ends by one shared quarter-beat-snapped delta; positive moves right, negative left. Shorten starts by 1 beat: edge=start,delta=+1. Shorten ends by 1 beat: edge=end,delta=-1. Negative start delta extends earlier; positive end delta extends later. Starts preserve original ends and source timing. Clamp together at timeline/minimum length boundaries, reject overlaps atomically. Does not alter source clips or track automation',
  region:'{id?,trackId?,clipId?,start?,length?,offset?,active?,remove?} add/update/delete Arrangement clip',
  time:'{operation:insert|delete|duplicate,start,length,trackIds?} beats are zero-based; omit trackIds for whole song',
  locators:'{items:[{id?,name,beat}]} replace song section markers'
 };
 const fail=m=>{throw new Error(m);};
 function assign(target,changes,allowed){if(!changes||typeof changes!=='object'||Array.isArray(changes))fail('Expected changes object');for(const [k,v] of Object.entries(changes)){if(!allowed.includes(k))fail('Unsupported parameter: '+k);target[k]=structuredClone(v);}}
-export function applyAgentActions(source,actions,{aliases=new Map()}={}){
+export function applyAgentActions(source,actions,{aliases=new Map(),observations=[]}={}){
  if(!Array.isArray(actions)||actions.length>80)fail('Use at most 80 actions per request.');let p=structuredClone(source);const resolve=id=>aliases.get(id)||id,remember=(ref,id)=>{if(ref!==undefined){if(typeof ref!=='string'||!/^\$[a-zA-Z][a-zA-Z0-9_-]{0,30}$/.test(ref)||aliases.has(ref))fail('Use a unique $alias');aliases.set(ref,id);}};
  for(const a of actions){if(!a||!Object.hasOwn(agentActions,a.type))fail('Unsupported action: '+a?.type);const x=typeof a.args==='string'?JSON.parse(a.args):structuredClone(a.args);if(!x||typeof x!=='object'||Array.isArray(x))fail('Invalid action arguments');
  if(a.type==='command'){
@@ -63,6 +65,7 @@ export function applyAgentActions(source,actions,{aliases=new Map()}={}){
  if(a.type==='automation'){if(!['volume','pan'].includes(x.key))fail('Unsupported automation target');const t=track(x.trackId);t.automation??={};t.automation[x.key]={enabled:x.enabled??true,points:x.points.map(v=>({...v,curve:v.curve??'linear'}))};}
  if(a.type==='midi'){let c;if(x.clipId){c=p.clips[x.clipId];if(c?.kind!=='midi')fail('Choose a MIDI clip');}else{const t=track(x.trackId);if(!Number.isInteger(x.scene)||x.scene<0||x.scene>=p.scenes)fail('Choose a valid scene');if(t.slots[x.scene])fail('Destination slot is occupied');c={id:uid(),kind:'midi',name:x.name||'Agent MIDI',sourceBpm:p.bpm,beats:x.beats,notes:[]};p.clips[c.id]=c;t.slots[x.scene]=c.id;remember(x.ref,c.id);}c.notes=x.notes;c.beats=x.beats;if(x.name)c.name=x.name;}
  if(a.type==='clip'){const c=p.clips[x.id]||fail('Unknown clip');assign(c,x.changes,['name','beats','sourceBpm','audioEdit','warp','launch']);}
+ if(a.type==='region_group'){const allowed=['ids','action',...(x.action==='trim'?['edge','delta']:['move','duplicate'].includes(x.action)?['delta','trackOffset']:[])];if(Object.keys(x).some(k=>!allowed.includes(k)))fail('Unsupported Arrangement group argument');const result=editRegionGroup(p,x.ids,x.action,{delta:x.delta,edge:x.edge,trackOffset:x.trackOffset});if(result.trim)observations.push({type:'region_trim',count:x.ids.length,...result.trim});p.arrangement=result.arrangement;p.clips=result.clips;}
  if(a.type==='region'){const old=p.arrangement.find(v=>v.id===x.id);if(x.remove){if(!old)fail('Unknown region');p.arrangement=p.arrangement.filter(v=>v!==old);}else if(old){const {id,...changes}=x;assign(old,changes,['trackId','clipId','start','length','offset','active']);}else{if(x.id)fail('Unknown region');p.arrangement.push({id:uid(),trackId:x.trackId,clipId:x.clipId,start:x.start,length:x.length,offset:x.offset??0,...(x.active===undefined?{}:{active:x.active})});}}
  if(a.type==='time'){if(!['insert','delete','duplicate'].includes(x.operation))fail('Invalid time operation');p=x.operation==='duplicate'?duplicateArrangementTime(p,x.start,x.length,x.trackIds??null):editArrangementTime(p,x.operation,x.start,x.length,x.trackIds??null);}
  if(a.type==='locators')p.locators=x.items.map(v=>({...v,id:v.id||uid()}));

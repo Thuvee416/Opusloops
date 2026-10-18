@@ -1,10 +1,10 @@
-import {uid,canPlace,validateProject} from './model.js';
+import {uid,canPlace,validateProject,mod,REGION_MIN_BEATS} from './model.js';
 export function editRegion(original,action,delta,trackId=original.trackId){
   const next={...original};delta=Math.round(delta*4)/4;
   if(action==='move'){next.start=Math.max(0,original.start+delta);next.trackId=trackId;}
-  if(action==='end')next.length=Math.max(.25,Math.round((original.length+delta)*4)/4);
+  if(action==='end')next.length=Math.max(REGION_MIN_BEATS,original.length+delta);
   if(action==='start'){
-    const shift=Math.max(-original.start,Math.min(delta,original.length-.25));
+    const shift=Math.max(-original.start,Math.min(delta,original.length-REGION_MIN_BEATS));
     next.start=original.start+shift;next.length=original.length-shift;next.offset=original.offset+shift;
     // Source offset can wrap backwards; the caller normalizes by clip length.
   }
@@ -35,9 +35,30 @@ export function navigateRegion(project,sourceId,direction){
  return source;
 }
 
-export function planRegionGroup(project,ids,delta=0,trackOffset=0,copy=false){
+
+function selectedGroup(project,ids){
+ if(!Array.isArray(ids)||!ids.length||ids.some(id=>typeof id!=='string')||new Set(ids).size!==ids.length)throw new Error('Select distinct existing Arrangement clips.');
  const selected=new Set(ids),regions=project.arrangement.filter(r=>selected.has(r.id));
- if(!regions.length||regions.length!==selected.size)throw new Error('Select existing Arrangement clips.');
+ if(regions.length!==selected.size)throw new Error('Select existing Arrangement clips.');
+ return {selected,regions};
+}
+export function planRegionTrim(project,ids,edge,delta){
+ const {selected,regions}=selectedGroup(project,ids);
+ if(!['start','end'].includes(edge)||!Number.isFinite(delta))throw new Error('Choose a start/end edge and a finite trim amount.');
+ const minimum=REGION_MIN_BEATS;
+ const lower=edge==='start'?-Math.min(...regions.map(r=>r.start)):Math.max(...regions.map(r=>minimum-r.length));
+ const upper=edge==='start'?Math.min(...regions.map(r=>r.length-minimum)):16384-Math.max(...regions.map(r=>r.start+r.length));
+ const shift=Math.max(lower,Math.min(upper,Math.round(delta*4)/4));
+ const next=regions.map(r=>edge==='start'?{...r,start:r.start+shift,length:r.length-shift,offset:shift===0?r.offset:mod(r.offset+shift,project.clips[r.clipId].beats)}:{...r,length:r.length+shift});
+ if(next.some(r=>r.start<0||r.length<minimum||r.start+r.length>16384))throw new Error('Keep every trimmed clip within the timeline.');
+ // Resizing can make selected clips collide with one another as well as neighbors.
+ const all=[...project.arrangement.filter(r=>!selected.has(r.id)),...next].sort((a,b)=>a.trackId===b.trackId?a.start-b.start:a.trackId<b.trackId?-1:1);
+ for(let i=1;i<all.length;i++)if(all[i-1].trackId===all[i].trackId&&all[i-1].start+all[i-1].length>all[i].start+1e-7)throw new Error('Selected clip edges would overlap another clip.');
+ return next;
+}
+
+export function planRegionGroup(project,ids,delta=0,trackOffset=0,copy=false){
+ const {selected,regions}=selectedGroup(project,ids);
  if(!Number.isFinite(delta)||!Number.isInteger(trackOffset))throw new Error('Choose a valid group destination.');
  delta=Math.max(-Math.min(...regions.map(r=>r.start)),Math.round(delta*4)/4);
  const next=regions.map(r=>{const index=project.tracks.findIndex(t=>t.id===r.trackId)+trackOffset;if(index<0||index>=project.tracks.length)throw new Error('Keep every selected clip within the available tracks.');const n={...r,start:r.start+delta,trackId:project.tracks[index].id};if(n.start+n.length>16384)throw new Error('The group exceeds the timeline limit.');return n;});
@@ -45,11 +66,11 @@ export function planRegionGroup(project,ids,delta=0,trackOffset=0,copy=false){
  for(const r of next)if(others.some(o=>o.trackId===r.trackId&&o.start<r.start+r.length-1e-7&&o.start+o.length>r.start+1e-7))throw new Error('Selected clips would overlap another clip.');
  return next;
 }
-export function editRegionGroup(project,ids,action,{delta,trackOffset=0}={}){
- const selected=new Set(ids),regions=project.arrangement.filter(r=>selected.has(r.id));
- if(!regions.length||regions.length!==selected.size)throw new Error('Select existing Arrangement clips.');
- let next,clips={...project.clips},selectedIds=[...selected];
- if(action==='delete') {next=project.arrangement.filter(r=>!selected.has(r.id));selectedIds=[];}
+export function editRegionGroup(project,ids,action,{delta,trackOffset=0,edge}={}){
+ const {selected,regions}=selectedGroup(project,ids);
+ let next,trim,clips={...project.clips},selectedIds=[...selected];
+ if(action==='trim'){const plan=planRegionTrim(project,ids,edge,delta),updates=new Map(plan.map(r=>[r.id,r]));next=project.arrangement.map(r=>updates.get(r.id)||r);const original=regions[0],changed=updates.get(original.id),appliedDelta=edge==='start'?changed.start-original.start:changed.length-original.length;trim={edge,requestedDelta:delta,appliedDelta,clamped:Math.abs(appliedDelta-Math.round(delta*4)/4)>1e-7};}
+ else if(action==='delete') {next=project.arrangement.filter(r=>!selected.has(r.id));selectedIds=[];}
  else if(action==='active'){const active=regions.some(r=>r.active===false);next=project.arrangement.map(r=>selected.has(r.id)?{...r,active}:r);}
  else if(action==='move'||action==='duplicate'){
   const span=Math.max(...regions.map(r=>r.start+r.length))-Math.min(...regions.map(r=>r.start));
@@ -60,5 +81,5 @@ export function editRegionGroup(project,ids,action,{delta,trackOffset=0}={}){
   }else{const updates=new Map(plan.map(r=>[r.id,r]));next=project.arrangement.map(r=>updates.get(r.id)||r);}
  }else throw new Error('Choose a supported group edit.');
  validateProject({...project,clips,arrangement:next});
- return {arrangement:next,clips,selectedIds};
+ return {arrangement:next,clips,selectedIds,...(trim?{trim}:{})};
 }
