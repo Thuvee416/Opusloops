@@ -1,3 +1,4 @@
+import {sliceRegion,fitRegionFades} from './region-fades.js';
 import {uid,canPlace,validateProject,mod,REGION_MIN_BEATS} from './model.js';
 export function editRegion(original,action,delta,trackId=original.trackId){
   const next={...original};delta=Math.round(delta*4)/4;
@@ -9,7 +10,7 @@ export function editRegion(original,action,delta,trackId=original.trackId){
     // Source offset can wrap backwards; the caller normalizes by clip length.
   }
   if(next.start+next.length>16384)throw new Error('The region exceeds the timeline limit.');
-  return next;
+  return action==='move'?next:sliceRegion(original,next.start-original.start,next.length,{offset:next.offset});
 }
 
 export function copyRegion(project,sourceId,start,trackId){
@@ -17,7 +18,7 @@ export function copyRegion(project,sourceId,start,trackId){
  if(!source)throw new Error('Select an existing region to duplicate.');
  if(!Number.isFinite(start)||start<0||start*4%1!==0||start+source.length>16384)throw new Error('Choose a valid destination within the timeline.');
  if(!project.tracks.some(t=>t.id===trackId))throw new Error('Choose an existing destination track.');
- const region={...source,id:uid(),start,trackId};
+ const region={...structuredClone(source),id:uid(),start,trackId};
  if(!canPlace(project,region))throw new Error('The duplicated region would overlap another clip.');
  const clip=structuredClone(project.clips[source.clipId]);clip.id=uid();clip.name=clip.name.slice(0,195)+' copy';region.clipId=clip.id;
  validateProject({...project,clips:{...project.clips,[clip.id]:clip},arrangement:[...project.arrangement,region]});
@@ -49,7 +50,7 @@ export function planRegionTrim(project,ids,edge,delta){
  const lower=edge==='start'?-Math.min(...regions.map(r=>r.start)):Math.max(...regions.map(r=>minimum-r.length));
  const upper=edge==='start'?Math.min(...regions.map(r=>r.length-minimum)):16384-Math.max(...regions.map(r=>r.start+r.length));
  const shift=Math.max(lower,Math.min(upper,Math.round(delta*4)/4));
- const next=regions.map(r=>edge==='start'?{...r,start:r.start+shift,length:r.length-shift,offset:shift===0?r.offset:mod(r.offset+shift,project.clips[r.clipId].beats)}:{...r,length:r.length+shift});
+ const next=regions.map(r=>fitRegionFades(edge==='start'?sliceRegion(r,shift,r.length-shift,{offset:shift===0?r.offset:mod(r.offset+shift,project.clips[r.clipId].beats)}):sliceRegion(r,0,r.length+shift),project.clips[r.clipId]));
  if(next.some(r=>r.start<0||r.length<minimum||r.start+r.length>16384))throw new Error('Keep every trimmed clip within the timeline.');
  // Resizing can make selected clips collide with one another as well as neighbors.
  const all=[...project.arrangement.filter(r=>!selected.has(r.id)),...next].sort((a,b)=>a.trackId===b.trackId?a.start-b.start:a.trackId<b.trackId?-1:1);
@@ -76,7 +77,7 @@ export function editRegionGroup(project,ids,action,{delta,trackOffset=0,edge}={}
   const span=Math.max(...regions.map(r=>r.start+r.length))-Math.min(...regions.map(r=>r.start));
   const plan=planRegionGroup(project,ids,delta??(action==='duplicate'?Math.ceil(span*4)/4:0),trackOffset,action==='duplicate');
   if(action==='duplicate'){
-   for(const r of plan){const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();clip.name=clip.name.slice(0,195)+' copy';clips[clip.id]=clip;r.id=uid();r.clipId=clip.id;}
+   for(const r of plan){if(r.fades)r.fades=structuredClone(r.fades);const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();clip.name=clip.name.slice(0,195)+' copy';clips[clip.id]=clip;r.id=uid();r.clipId=clip.id;}
    next=[...project.arrangement,...plan];selectedIds=plan.map(r=>r.id);
   }else{const updates=new Map(plan.map(r=>[r.id,r]));next=project.arrangement.map(r=>updates.get(r.id)||r);}
  }else throw new Error('Choose a supported group edit.');

@@ -25,3 +25,9 @@
 .studio-shell .agent-collapse .studio-icon{width:12px;height:12px;vertical-align:middle}
 
 .group-trim{min-width:0;margin:7px 0;padding:7px;border:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:6px}.group-trim legend{font-size:10px;font-weight:600}.group-trim p{margin:0}.group-trim select,.group-trim input{width:100%;min-width:0}
+
+/* Arrangement edge fades use the same monochrome vector language as controls. */
+.studio-shell .region-fade-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden;opacity:.6}
+.studio-shell .region-fade-overlay path{fill:none;stroke:currentColor;stroke-width:1;vector-effect:non-scaling-stroke}
+.studio-shell .region-fade-handle{position:absolute;top:1px;z-index:3;width:9px;height:9px;transform:translateX(-50%);border:1px solid currentColor;background:#d5dadb;cursor:ew-resize;touch-action:none;opacity:0}
+.studio-shell .region:hover .region-fade-handle,.studio-shell .region:focus-visible .region-fade-handle,.studio-shell .region.selected .region-fade-handle{opacity:1}

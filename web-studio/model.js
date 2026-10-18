@@ -1,3 +1,4 @@
+import {validateRegionFades,sliceRegion} from './region-fades.js';
 import {validateWarp} from './warp.js';
 import {validateFollow} from './follow-actions.js';
 import {validReleaseVelocity,validNoteActivation} from './note-state.js';
@@ -29,7 +30,7 @@ export function arrangementSlices(project,trackId,start,length){
 export function splitSegment(segment,at) {
   if(at<=segment.start || at>=segment.start+segment.length) throw new Error('Split point must be inside the clip.');
   const length=at-segment.start;
-  return [{...segment,length},{...segment,id:uid(),start:at,length:segment.length-length,offset:segment.offset+length}];
+  return [sliceRegion(segment,0,length),sliceRegion(segment,length,segment.length-length,{id:uid()})];
 }
 export function canPlace(project,segment,ignoreId=segment.id) {return !project.arrangement.some(s=>s.id!==ignoreId && s.trackId===segment.trackId && s.start<segment.start+segment.length-1e-7 && s.start+s.length>segment.start+1e-7);}
 export function validateProject(p) {
@@ -53,7 +54,7 @@ export function validateProject(p) {
   }
   for(const t of p.tracks)for(const c of t.slots)if(c!==null&&!Object.hasOwn(p.clips,c))fail();
   const segments=new Set();
-  for(const s of p.arrangement){if((s.active!==undefined&&typeof s.active!=='boolean')||typeof s.id!=='string'||segments.has(s.id)||!ids.has(s.trackId)||!Object.hasOwn(p.clips,s.clipId)||!num(s.start,0,16384)||!num(s.length,REGION_MIN_BEATS,16384)||!num(s.offset,0,1e7)||!canPlace(p,s))fail();segments.add(s.id);}
+  for(const s of p.arrangement){if((s.active!==undefined&&typeof s.active!=='boolean')||typeof s.id!=='string'||segments.has(s.id)||!ids.has(s.trackId)||!Object.hasOwn(p.clips,s.clipId)||!num(s.start,0,16384)||!num(s.length,REGION_MIN_BEATS,16384)||!num(s.offset,0,1e7)||!canPlace(p,s))fail();validateRegionFades(s,p.clips[s.clipId]);segments.add(s.id);}
   return p;
 }
 export function wav(buffer){

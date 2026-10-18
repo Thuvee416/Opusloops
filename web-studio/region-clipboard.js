@@ -6,7 +6,7 @@ export function copyRegionSelection(project,ids){
  if(!regions.length||regions.length!==selected.size)throw new Error('Select Arrangement clips to copy.');
  const start=Math.min(...regions.map(r=>r.start)),base=Math.min(...regions.map(r=>project.tracks.findIndex(t=>t.id===r.trackId)));
  const clips=Object.fromEntries([...new Set(regions.map(r=>r.clipId))].map(id=>[id,structuredClone(project.clips[id])]));
- return {format:'opus-region-clipboard',version:1,length:Math.max(...regions.map(r=>r.start+r.length))-start,regions:regions.map(r=>({...r,start:r.start-start,trackOffset:project.tracks.findIndex(t=>t.id===r.trackId)-base})),clips};
+ return {format:'opus-region-clipboard',version:1,length:Math.max(...regions.map(r=>r.start+r.length))-start,regions:regions.map(r=>({...structuredClone(r),start:r.start-start,trackOffset:project.tracks.findIndex(t=>t.id===r.trackId)-base})),clips};
 }
 
 export function pasteRegionSelection(project,clipboard,start,trackId){
@@ -19,7 +19,7 @@ export function pasteRegionSelection(project,clipboard,start,trackId){
   if(!Number.isFinite(r.start)||r.start<0||r.start+r.length>clipboard.length+1e-7||!Object.hasOwn(clipboard.clips,r.clipId))throw new Error('The copied Arrangement clips are invalid.');
   const clip=structuredClone(clipboard.clips[r.clipId]);clip.id=uid();clips[clip.id]=clip;
   const {trackOffset,...source}=r;
-  const region={...source,id:uid(),trackId:project.tracks[base+trackOffset].id,clipId:clip.id,start:start+r.start};
+  const region={...structuredClone(source),id:uid(),trackId:project.tracks[base+trackOffset].id,clipId:clip.id,start:start+r.start};
   if(region.start+region.length>16384)throw new Error('The copied clips exceed the timeline limit.');
   if(project.arrangement.some(o=>o.trackId===region.trackId&&o.start<region.start+region.length-1e-7&&o.start+o.length>region.start+1e-7))throw new Error('Pasted clips would overlap existing clips. Choose an empty destination.');
   return region;

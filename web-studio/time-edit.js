@@ -1,3 +1,4 @@
+import {sliceRegion} from './region-fades.js';
 import {uid,validateProject} from './model.js';
 import {envelopeValue} from './automation.js';
 import {automationChannels,automationTargets} from './automation-targets.js';
@@ -31,10 +32,10 @@ export function editArrangementTime(project,action,start,length,trackIds=null){
   const scope=timeTrackScope(project,trackIds),next=structuredClone(project),end=start+length,move=beat=>mapTime(beat,action,start,length);
   next.arrangement=project.arrangement.flatMap(r=>{if(scope&&!scope.has(r.trackId))return [{...r}];const stop=r.start+r.length;if(stop<=start)return [{...r}];if(action==='insert'){
     if(r.start>=start)return [{...r,start:r.start+length}];
-    return [{...r,length:start-r.start},{...r,id:uid(),start:end,length:stop-start,offset:r.offset+start-r.start}];
+    return [sliceRegion(r,0,start-r.start),sliceRegion(r,start-r.start,stop-start,{id:uid(),start:end})];
   }
   if(r.start>=end)return [{...r,start:r.start-length}];
-  const parts=[];if(r.start<start)parts.push({...r,length:start-r.start});if(stop>end)parts.push({...r,id:parts.length?uid():r.id,start,offset:r.offset+end-r.start,length:stop-end});return parts;
+  const parts=[];if(r.start<start)parts.push(sliceRegion(r,0,start-r.start));if(stop>end)parts.push(sliceRegion(r,end-r.start,stop-end,{id:parts.length?uid():r.id,start}));return parts;
   });
   if(!scope&&next.locators)next.locators=next.locators.filter(l=>action==='insert'||l.beat<start||l.beat>=end).map(l=>({...l,beat:move(l.beat)}));
   for(const channel of automationChannels(next).filter(c=>!scope||scope.has(c.id)))for(const target of automationTargets(channel,next.returns)){if(!target.envelope)continue;target.owner.automation={...target.owner.automation,[target.paramKey]:shiftEnvelope(target.envelope,action,start,length)};}
@@ -48,7 +49,7 @@ export function duplicateArrangementTime(project,start,length,trackIds=null){
   // shifts later material before we populate the new span.
   if(!Number.isFinite(start)||start<0||start*4%1)throw new Error('Choose a valid quarter-beat start.');
   const scope=timeTrackScope(project,trackIds),end=start+length,next=editArrangementTime(project,'insert',end,length,trackIds);
-  for(const r of project.arrangement){if(scope&&!scope.has(r.trackId))continue;const from=Math.max(start,r.start),to=Math.min(end,r.start+r.length);if(to<=from)continue;if(Object.keys(next.clips).length>=512)throw new Error('Duplicating this passage would exceed the 512-clip limit.');const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();next.clips[clip.id]=clip;next.arrangement.push({...r,id:uid(),clipId:clip.id,start:from+length,length:to-from,offset:r.offset+from-r.start});}
+  for(const r of project.arrangement){if(scope&&!scope.has(r.trackId))continue;const from=Math.max(start,r.start),to=Math.min(end,r.start+r.length);if(to<=from)continue;if(Object.keys(next.clips).length>=512)throw new Error('Duplicating this passage would exceed the 512-clip limit.');const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();next.clips[clip.id]=clip;next.arrangement.push(sliceRegion(r,from-r.start,to-from,{id:uid(),clipId:clip.id,start:from+length}));}
   if(!scope&&project.locators){next.locators.push(...project.locators.filter(l=>l.beat>=start&&l.beat<end).map(l=>({...l,id:uid(),beat:l.beat+length})));next.locators.sort((a,b)=>a.beat-b.beat);}
   const originals=new Map(automationChannels(project).map(c=>[c.id,c]));
   for(const channel of automationChannels(next).filter(c=>!scope||scope.has(c.id))){const sourceTargets=new Map(automationTargets(originals.get(channel.id),project.returns).map(t=>[t.key,t]));for(const target of automationTargets(channel,next.returns)){
