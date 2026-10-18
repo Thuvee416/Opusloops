@@ -28,3 +28,5 @@
  .agent-content{display:flex;gap:6px;padding:7px}.agent-log{min-height:45px;flex:1}.agent-prompt textarea{min-height:48px;height:48px}.agent-hint{display:none}.agent-account{padding-top:4px}.agent-account[open]{overflow:visible;max-height:none}.agent-content:has(.agent-account[open]) .agent-log{flex:none}
  .agent-heading{min-height:26px}.studio-shell .view-actions #agent-open{font-size:9px;padding:2px 5px}
 }
+
+#studio-agent .agent-auth[hidden],#studio-agent .agent-signout[hidden]{display:none}

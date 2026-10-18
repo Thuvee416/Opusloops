@@ -5,7 +5,7 @@ import { validateParts,CHUNK_BYTES } from '../runtime/storage.mjs';
 import { verifyCallback } from '../runtime/callback.mjs';
 import { stageOperation } from '../runtime/stems.mjs';
 import { storagePolicy } from '../runtime/dispatch.mjs';
-import { accessClaims,authenticate,client as cognito } from '../runtime/auth.mjs';
+import { accessClaims,authenticate,tokenSession,client as cognito } from '../runtime/auth.mjs';
 import { lambda } from '../runtime/common.mjs';
 
 const user='11111111-1111-4111-8111-111111111111',job='22222222-2222-4222-8222-222222222222',attempt='33333333-3333-4333-8333-333333333333',nonce='44444444-4444-4444-8444-444444444444';
@@ -62,4 +62,16 @@ test('sign-in validates with Cognito before resolving the immutable owner ID',as
     calls.length=0;cognito.send=async()=>{throw new Error('invalid signature');};
     await assert.rejects(authenticate(token));assert.deepEqual(calls,[]);
   } finally {cognito.send=originalCognito;lambda.send=originalLambda;}
+});
+
+test('refresh grants retain their refresh token and verify the renewed access token before binding its owner',async()=>{
+ process.env.AWS_REGION='us-east-1';process.env.USER_POOL_ID='test_pool';process.env.USER_POOL_CLIENT_ID='test_client';
+ const claims={iss:'https://cognito-idp.us-east-1.amazonaws.com/test_pool',client_id:'test_client',token_use:'access',sub:attempt,exp:Math.floor(Date.now()/1000)+3600},token=`header.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.signature`,calls=[];
+ const originalCognito=cognito.send,originalLambda=lambda.send;
+ try{
+  cognito.send=async command=>{calls.push(command.constructor.name);if(command.constructor.name==='InitiateAuthCommand'){assert.deepEqual(command.input,{ClientId:'test_client',AuthFlow:'REFRESH_TOKEN_AUTH',AuthParameters:{REFRESH_TOKEN:'FAKE_REFRESH'}});return {AuthenticationResult:{AccessToken:token,ExpiresIn:3600}};}assert.equal(command.input.AccessToken,token);return {Username:user,UserAttributes:[{Name:'sub',Value:attempt},{Name:'email',Value:'qa@example.com'}]};};
+  lambda.send=async command=>{const payload=JSON.parse(Buffer.from(command.input.Payload));assert.equal(payload.operation,'identity');assert.equal(payload.subject,attempt);calls.push('identity');return {Payload:Buffer.from(JSON.stringify({ok:true,value:{id:user,email:'qa@example.com'}}))};};
+  const result=await tokenSession({refresh_token:'FAKE_REFRESH'},'refresh_token');assert.equal(result.user.id,user);assert.equal(result.refresh_token,'FAKE_REFRESH');assert.equal(result.access_token,token);assert.ok(result.expires_at>Date.now()/1000+3500);assert.deepEqual(calls,['InitiateAuthCommand','GetUserCommand','identity']);
+  calls.length=0;cognito.send=async()=>{throw Object.assign(new Error('Rejected'),{name:'NotAuthorizedException'});};await assert.rejects(tokenSession({refresh_token:'REJECTED'},'refresh_token'));assert.equal(calls.length,0);
+ }finally{cognito.send=originalCognito;lambda.send=originalLambda;}
 });
