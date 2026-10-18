@@ -415,3 +415,10 @@ The agent now edits existing manual automation targets across effects, sends, re
 
 
 Corrected 0.137.2 production verification: two authenticated, reviewed requests completed six setup and three automation actions with zero client repairs. Saved-project comparison proves exact requested effect/send/return envelopes and no unrelated changes; separate normal Undo steps restore the exact composition and original project bytes. Odesa Tempo/provider UI and desktop/390px local layout checks passed. The earlier return-level and unresolved-reference failures remain recorded. See tests/fixtures/agent-automation-production.json and AGENT.md for evidence and explicit limits. The full DAW/agent objective remains active.
+
+
+## 0.138 — Branded Studio Introduction
+
+The visit-by-visit welcome dialog now uses the two user-supplied OPUS LOOPS graphics as a landscape hero and studio-art portrait. A neutral studio frame, artwork-derived model accents, small vector close control and fixed Enter Studio footer keep it consistent with the application. Model descriptions, example commands and the comparison table use accessible native disclosures instead of presenting the full marketing copy at once. Tempo shows the current shared model version; Forte is In Development and Prelude is Planned. The copy positions Odesa as working with the artist inside an editable DAW and does not claim upcoming models are available.
+
+The dialog body scrolls independently of its header/footer; desktop, 390x844, 320x640 and 844x390 iframe layouts were visually inspected in normal Chrome. Both images loaded without stretching; model disclosures/table, scrolling, X/Escape/Enter, repeat visits and focus return were checked. Desktop footer/header surfaces match, horizontal body overflow was absent and no page errors were observed. CSS respects reduced-motion preferences; a physical device/browser matrix remains open. This is an introduction/design release, not evidence of new model capabilities or full DAW parity.
