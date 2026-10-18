@@ -148,3 +148,8 @@ Shared manual/Odesa batch rename, color, Info Text and partial launch edits now 
 
 
 Authenticated 0.147.0 evidence: two reviewed, first-attempt selected-source property requests with zero client repairs, exact full-project comparisons, correct Global/eighth-triplet values, preserved differing launch fields and byte-identical one-Undo recovery. Native palette/Undo and original reload recovery passed. A separate generic setup timed out, and another used the wrong scene index; both are retained failures, followed by independently verified explicit scene:0 setup. Original 1,725 bytes and Session/Clip/20% layout were restored. Hosting job142, 28 asset checks and Active/Successful API evidence are in `tests/fixtures/clip-properties-production.json`. This closes the bounded production property workflow, not broad semantic or DAW parity.
+
+
+### 0.148 Displayed Scene Addressing
+
+A versioned provider schema/state view uses displayed sceneNumber across composition, selections, clipboard destinations, scene management, launches and overdub, with one shared immutable engine conversion. Legacy clients/plans retain compatibility; mixed/new-profile internal fields reject. A bounded explicit creation destination is checked independently against the original request. The compact new planning profile keeps actual capabilities and review; complex requests still hit the synchronous deadline in the recorded sample. 329 core + 40 backend checks, four reviewed provider canaries, full native saved-project/Undo tests and a scheduler/PCM frequency oracle are recorded in ROADMAP.md. Signed-in production evidence follows publication. Arbitrary multi-scene semantics, asynchronous planning, broad music quality and full DAW coverage remain open.

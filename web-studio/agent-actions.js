@@ -1,3 +1,4 @@
+import {SCENE_ADDRESSING_VERSION,normalizeAgentActions} from './agent-addressing.js';
 import {editClipProperties} from './clip-properties.js';
 import {setSlotActive} from './slot-metadata.js';
 import {editSessionClips,copySessionClips} from './session-batch.js';
@@ -56,7 +57,7 @@ const fail=m=>{throw new Error(m);};
 function assign(target,changes,allowed){if(!changes||typeof changes!=='object'||Array.isArray(changes))fail('Expected changes object');for(const [k,v] of Object.entries(changes)){if(!allowed.includes(k))fail('Unsupported parameter: '+k);target[k]=structuredClone(v);}}
 export function applyAgentActions(source,actions,{aliases=new Map(),observations=[],sessionClipboard=null}={}){
  if(!Array.isArray(actions)||actions.length>80)fail('Use at most 80 actions per request.');let p=structuredClone(source);let workingClipboard=sessionClipboard;const unplacedMidi=new Set();const resolve=id=>aliases.get(id)||id,remember=(ref,id)=>{if(ref!==undefined){if(typeof ref!=='string'||!/^\$[a-zA-Z][a-zA-Z0-9_-]{0,30}$/.test(ref)||aliases.has(ref))fail('Use a unique $alias');aliases.set(ref,id);}};
- for(const a of actions){if(!a||!Object.hasOwn(agentActions,a.type))fail('Unsupported action: '+a?.type);const x=typeof a.args==='string'?JSON.parse(a.args):structuredClone(a.args);if(!x||typeof x!=='object'||Array.isArray(x))fail('Invalid action arguments');
+ for(const a of normalizeAgentActions(actions)){if(!a||!Object.hasOwn(agentActions,a.type))fail('Unsupported action: '+a?.type);const x=typeof a.args==='string'?JSON.parse(a.args):structuredClone(a.args);if(!x||typeof x!=='object'||Array.isArray(x))fail('Invalid action arguments');
  if(a.type==='command'){
   if(actions.length!==1||!['session_clipboard','record_input','record_quantization','select','show_panel','play','pause','stop','seek','launch_scene','launch_clip','stop_track','stop_clips','launch_group','stop_group','fold_group','view','save_project','export_wav','export_stems','export_midi'].includes(x.name))fail('Use one supported runtime command in {type:command,args:{name:select,args:{target:notes,regionId:EXISTING_REGION_ID,indices:[0,2]}}} form. name selects the runtime command; its options are inside nested args. Quantize target starts/ends/both belongs to the notes edit, not a runtime command.');
   if(x.name==='seek'&&(!Number.isFinite(x.args?.beat)||x.args.beat<0||x.args.beat>16384))fail('Invalid seek beat');
@@ -117,7 +118,7 @@ function withoutMedia(v){if(Array.isArray(v))return v.map(withoutMedia);if(v&&ty
 export function agentContext(p){
  // Never upload encoded media. Bounds keep accidental giant MIDI sessions out of prompts.
  const clips=Object.values(p.clips).map(({data,...c})=>({...c,...(c.kind==='midi'?{noteCount:c.notes?.length??0,notes:(c.notes||[]).slice(0,256).map((note,index)=>({...note,index,pitchName:midiPitchName(note.pitch)})),...(c.notes?.length>256?{notesTruncated:true}:{})}:{}),...(data?{audioBytes:Math.floor(data.length*.75)}:{})}));
- return {automationTargets:automationChannelsForContext(p),project:{...withoutMedia(p),clips:Object.fromEntries(clips.map(c=>[c.id,withoutMedia(c)]))},capabilities:agentActions,effects:Object.fromEntries(Object.entries(DEVICE_TYPES).map(([k,v])=>[k,{name:v.name,params:v.params}]))};
+ return {sceneAddressing:{version:SCENE_ADDRESSING_VERSION},automationTargets:automationChannelsForContext(p),project:{...withoutMedia(p),clips:Object.fromEntries(clips.map(c=>[c.id,withoutMedia(c)]))},capabilities:agentActions,effects:Object.fromEntries(Object.entries(DEVICE_TYPES).map(([k,v])=>[k,{name:v.name,params:v.params}]))};
 }
 
 function automationChannelsForContext(p){return [...p.tracks,...(p.returns||[])].map(t=>({trackId:t.id,trackName:t.name,targets:automationTargetContext(t,p.returns)}));}

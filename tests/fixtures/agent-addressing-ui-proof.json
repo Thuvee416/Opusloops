@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-18",
+  "scope": "Normal Chrome localhost, controlled auth/API replay of real reviewed provider plans; native shared runtime, downloads and audio oracles. Not authenticated public-app inference.",
+  "ui": {
+    "composition": [
+      {
+        "path": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T135744.023.opusloop",
+        "mtime": 1792346264025.744,
+        "step": "baseline",
+        "wholeProjectOracle": true
+      },
+      {
+        "path": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T135749.364.opusloop",
+        "mtime": 1792346269366.555,
+        "step": "six_edit_first_scene_composition",
+        "wholeProjectOracle": true
+      },
+      {
+        "path": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T135750.830.opusloop",
+        "mtime": 1792346270831.344,
+        "step": "one_undo",
+        "wholeProjectOracle": true
+      }
+    ],
+    "batch": [
+      {
+        "path": "/Users/thuveem4/Downloads/Session-Clipboard-QA (28).opusloop",
+        "mtime": 1792346292470.3328,
+        "step": "baseline",
+        "wholeProjectOracle": true
+      },
+      {
+        "path": "/Users/thuveem4/Downloads/Session-Clipboard-QA (29).opusloop",
+        "mtime": 1792346294204.865,
+        "step": "displayed_rectangle",
+        "wholeProjectOracle": true
+      },
+      {
+        "path": "/Users/thuveem4/Downloads/Session-Clipboard-QA (30).opusloop",
+        "mtime": 1792346316106.9524,
+        "step": "copy_to_displayed_scene4",
+        "wholeProjectOracle": true
+      },
+      {
+        "path": "/Users/thuveem4/Downloads/Session-Clipboard-QA (31).opusloop",
+        "mtime": 1792346317697.68,
+        "step": "copy_one_undo",
+        "wholeProjectOracle": true
+      },
+      {
+        "path": "/Users/thuveem4/Downloads/Session-Clipboard-QA (32).opusloop",
+        "mtime": 1792346342028.957,
+        "step": "launch_scene2",
+        "wholeProjectOracle": true
+      }
+    ],
+    "compositionOneUndoByteIdentical": true,
+    "nonCopyBatchExportsByteIdentical": true
+  },
+  "audio": {
+    "status": "passed",
+    "scope": "Native browser real-time scheduling, actual launch receipt and offline PCM frequency; no physical-device or listening-quality claim",
+    "activeSceneNumber": 2,
+    "engineSceneIndex": 1,
+    "activeClipId": "y",
+    "scheduledSecondRow": true,
+    "projectUnchanged": true,
+    "sampleRate": 48000,
+    "frames": 384000,
+    "measuredHz": 329.6275503067096,
+    "independentExpectedHz": 329.6275569128699,
+    "completedCommands": [
+      "launch_scene"
+    ]
+  },
+  "observed": {
+    "compositionPlacedBothNewClipsInDisplayedScene1": true,
+    "rectangleSelectedSixLeafSlotsThroughDisplayedScene3": true,
+    "devicesPanelRetained": true,
+    "copyCreatedIndependentSourcesInDisplayedScene4": true,
+    "launchReceiptDisplayedScene2WithLeadVariation": true,
+    "launchProjectUnchanged": true
+  },
+  "limits": [
+    "Source/history checks do not prove all natural-language interpretations or musical quality",
+    "MIDI note indices, beats and relative scene moves retain their original units",
+    "Real-time browser scheduler and offline frequency checks are not physical-device measurements"
+  ]
+}

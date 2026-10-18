@@ -1,0 +1,539 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "legacy-complex-baseline",
+      "prompt": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits.",
+      "legacy": true,
+      "passed": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 26009,
+          "calls": [
+            {
+              "systemChars": 26019,
+              "payloadChars": 20569,
+              "schemaChars": 15250,
+              "review": false
+            }
+          ],
+          "passed": false,
+          "error": "Planning and review took too long. No plan was returned; try a smaller request."
+        }
+      ]
+    },
+    {
+      "id": "displayed-complex-composition",
+      "prompt": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits.",
+      "legacy": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 26006,
+          "calls": [
+            {
+              "systemChars": 4985,
+              "payloadChars": 21553,
+              "schemaChars": 31339,
+              "review": false
+            }
+          ],
+          "passed": false,
+          "error": "Planning and review took too long. No plan was returned; try a smaller request."
+        },
+        {
+          "attempt": 2,
+          "elapsedMs": 26006,
+          "calls": [
+            {
+              "systemChars": 4985,
+              "payloadChars": 21640,
+              "schemaChars": 31339,
+              "review": false
+            }
+          ],
+          "passed": false,
+          "error": "Planning and review took too long. No plan was returned; try a smaller request."
+        },
+        {
+          "attempt": 3,
+          "elapsedMs": 9826,
+          "calls": [
+            {
+              "systemChars": 4985,
+              "payloadChars": 21640,
+              "schemaChars": 31339,
+              "review": false
+            },
+            {
+              "systemChars": 5731,
+              "payloadChars": 23083,
+              "schemaChars": 31339,
+              "review": true
+            }
+          ],
+          "passed": true,
+          "result": {
+            "summary": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits.",
+            "actions": [
+              {
+                "type": "add_track",
+                "args": {
+                  "name": "QA Property A",
+                  "ref": "$qaA",
+                  "preset": "Init",
+                  "volume": 0.7
+                }
+              },
+              {
+                "type": "add_track",
+                "args": {
+                  "name": "QA Property B",
+                  "ref": "$qaB",
+                  "preset": "Init",
+                  "volume": 0.7
+                }
+              },
+              {
+                "type": "midi",
+                "args": {
+                  "trackId": "$qaA",
+                  "ref": "$qaClipA",
+                  "name": "QA Clip A",
+                  "sceneNumber": 1,
+                  "beats": 4,
+                  "notes": [
+                    {
+                      "pitch": 60,
+                      "start": 0,
+                      "duration": 1,
+                      "velocity": 0.5
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "midi",
+                "args": {
+                  "trackId": "$qaB",
+                  "ref": "$qaClipB",
+                  "name": "QA Clip B",
+                  "sceneNumber": 1,
+                  "beats": 4,
+                  "notes": [
+                    {
+                      "pitch": 48,
+                      "start": 0,
+                      "duration": 1,
+                      "velocity": 0.5
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "clip_properties",
+                "args": {
+                  "ids": [
+                    "$qaClipA"
+                  ],
+                  "changes": {
+                    "launch": {
+                      "mode": "toggle",
+                      "quantization": 4,
+                      "legato": true
+                    }
+                  }
+                }
+              },
+              {
+                "type": "clip_properties",
+                "args": {
+                  "ids": [
+                    "$qaClipB"
+                  ],
+                  "changes": {
+                    "launch": {
+                      "mode": "gate",
+                      "quantization": 0.5,
+                      "legato": false
+                    }
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "passed": true,
+      "result": {
+        "summary": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property A",
+              "ref": "$qaA",
+              "preset": "Init",
+              "volume": 0.7
+            }
+          },
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property B",
+              "ref": "$qaB",
+              "preset": "Init",
+              "volume": 0.7
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$qaA",
+              "ref": "$qaClipA",
+              "name": "QA Clip A",
+              "sceneNumber": 1,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 60,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$qaB",
+              "ref": "$qaClipB",
+              "name": "QA Clip B",
+              "sceneNumber": 1,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 48,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          },
+          {
+            "type": "clip_properties",
+            "args": {
+              "ids": [
+                "$qaClipA"
+              ],
+              "changes": {
+                "launch": {
+                  "mode": "toggle",
+                  "quantization": 4,
+                  "legato": true
+                }
+              }
+            }
+          },
+          {
+            "type": "clip_properties",
+            "args": {
+              "ids": [
+                "$qaClipB"
+              ],
+              "changes": {
+                "launch": {
+                  "mode": "gate",
+                  "quantization": 0.5,
+                  "legato": false
+                }
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "displayed-session-rectangle",
+      "prompt": "Select the Session rectangle from Lead scene 1 through Bass scene 3, including empty slots. Preserve the project, Devices panel and playback.",
+      "legacy": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 4270,
+          "calls": [
+            {
+              "systemChars": 986,
+              "payloadChars": 23602,
+              "schemaChars": 31339,
+              "review": false
+            },
+            {
+              "systemChars": 1732,
+              "payloadChars": 23884,
+              "schemaChars": 31339,
+              "review": true
+            }
+          ],
+          "passed": true,
+          "result": {
+            "summary": "Select the Session rectangle from Lead scene 1 through Bass scene 3, including empty slots.",
+            "actions": [
+              {
+                "type": "command",
+                "args": {
+                  "name": "select",
+                  "args": {
+                    "target": "session",
+                    "fromSlot": {
+                      "trackId": "a",
+                      "sceneNumber": 1
+                    },
+                    "toSlot": {
+                      "trackId": "b",
+                      "sceneNumber": 3
+                    }
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "passed": true,
+      "result": {
+        "summary": "Select the Session rectangle from Lead scene 1 through Bass scene 3, including empty slots.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "session",
+                "fromSlot": {
+                  "trackId": "a",
+                  "sceneNumber": 1
+                },
+                "toSlot": {
+                  "trackId": "b",
+                  "sceneNumber": 3
+                }
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "displayed-session-copy",
+      "prompt": "Copy the Lead and Bass Session clips from scene 1 to scene 4 on their same tracks. Use one rectangle copy; preserve original clips and every other project field. No runtime commands.",
+      "legacy": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 3575,
+          "calls": [
+            {
+              "systemChars": 4985,
+              "payloadChars": 23216,
+              "schemaChars": 31339,
+              "review": false
+            },
+            {
+              "systemChars": 5731,
+              "payloadChars": 23605,
+              "schemaChars": 31339,
+              "review": true
+            }
+          ],
+          "passed": true,
+          "result": {
+            "summary": "Copy Lead and Bass Session clips from scene 1 to scene 4 on their same tracks using one rectangle copy; preserve original clips and every other project field.",
+            "actions": [
+              {
+                "type": "session_clips",
+                "args": {
+                  "action": "copy",
+                  "slots": [
+                    {
+                      "trackId": "a",
+                      "sceneNumber": 1,
+                      "clipId": "x"
+                    },
+                    {
+                      "trackId": "b",
+                      "sceneNumber": 1,
+                      "clipId": "z"
+                    }
+                  ],
+                  "destination": {
+                    "trackId": "a",
+                    "sceneNumber": 4
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "passed": true,
+      "result": {
+        "summary": "Copy Lead and Bass Session clips from scene 1 to scene 4 on their same tracks using one rectangle copy; preserve original clips and every other project field.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "action": "copy",
+              "slots": [
+                {
+                  "trackId": "a",
+                  "sceneNumber": 1,
+                  "clipId": "x"
+                },
+                {
+                  "trackId": "b",
+                  "sceneNumber": 1,
+                  "clipId": "z"
+                }
+              ],
+              "destination": {
+                "trackId": "a",
+                "sceneNumber": 4
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "displayed-launch-scene",
+      "prompt": "Launch scene 2. Do not edit the project or change selections or panels.",
+      "legacy": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 2504,
+          "calls": [
+            {
+              "systemChars": 4985,
+              "payloadChars": 23105,
+              "schemaChars": 31339,
+              "review": false
+            },
+            {
+              "systemChars": 5731,
+              "payloadChars": 23212,
+              "schemaChars": 31339,
+              "review": true
+            }
+          ],
+          "passed": true,
+          "result": {
+            "summary": "Launch scene 2 as requested.",
+            "actions": [
+              {
+                "type": "command",
+                "args": {
+                  "name": "launch_scene",
+                  "args": {
+                    "sceneNumber": 2
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "passed": true,
+      "result": {
+        "summary": "Launch scene 2 as requested.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "launch_scene",
+              "args": {
+                "sceneNumber": 2
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}
