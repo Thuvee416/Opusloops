@@ -187,3 +187,8 @@ Authenticated `/functions/v1/studio-agent-allowance` performs only strongly cons
 
 
 Representative-song source audit: the existing edit/preflight surface builds the 32-bar Night Tide Core Study after real MIDI import. Whole-project/session recovery and actual SMF delivery tests check 224 note events and section isolation. This is a controlled source-level plan, not fresh model inference or manual UI/recording/WAV proof. The native audit awaits Mac unlock; all remaining gates are retained in ROADMAP.md and tests/fixtures/core-song-model-proof.json. 371 core + 68 backend checks pass.
+
+
+### 0.152 Candidate — Chosen Stem Channels (Not Deployed)
+
+Candidate `export_stems.args.channels` resolves namespaced track/return IDs and current-plan aliases through the shared manual/Odesa validator. Omitted channels still exports all files. Selected-track and chosen-dialog requests bind current original IDs and reject an over-broad ZIP before changes. The exact constructed manifest selection is checked at runtime; file selection never mutes unselected routed sources/sends. Three manual scopes and older-client negotiation are implemented. 378 core + 72 backend checks pass. Prepared native audio/UI gates remain unexecuted because the Mac is locked; no real-model or production claim is made. Production remains all-channel 0.151.0. The full-song and broader natural-language/musical-quality goals remain open.

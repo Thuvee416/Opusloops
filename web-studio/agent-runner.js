@@ -1,3 +1,5 @@
+import {checkStemSelectionRequirements,stemSelectionMetadata} from './stem-selection.js';
+import {deliveryOptions} from './delivery-options.js';
 import {prepareNavigationPreservation,checkNavigationPreserved} from './navigation-preservation.js';
 import {checkCreationLaunchRequirement} from './midi-creation-requirements.js';
 import {normalizeAgentActions,checkCreationSceneRequirement} from './agent-addressing.js';
@@ -17,7 +19,7 @@ const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null,creationLaunchRequirement=null,navigationPreservation=null}={}) {
+export function prepareAgentPlan(project, actions, {stemSelectionRequirements=null,deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null,creationLaunchRequirement=null,navigationPreservation=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   actions=normalizeAgentActions(actions);
   checkCreationLaunchRequirement(actions,creationLaunchRequirement);
@@ -47,7 +49,7 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null,qu
   if(Array.isArray(command.args?.ids))command.args.ids=command.args.ids.map(id=>aliases.get(id)||id);
   if(Array.isArray(command.args?.trackIds))command.args.trackIds=command.args.trackIds.map(id=>aliases.get(id)||id);
   if(Array.isArray(command.args?.slots))command.args.slots=command.args.slots.map(s=>({...s,trackId:aliases.get(s.trackId)||s.trackId,...(s.clipId?{clipId:aliases.get(s.clipId)||s.clipId}:{})}));for(const name of ['primary','fromSlot','toSlot'])if(command.args?.[name]){for(const key of ['trackId','clipId'])if(command.args[name][key])command.args[name][key]=aliases.get(command.args[name][key])||command.args[name][key];}
-  const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
+  const resolveChannel=channel=>{if(typeof channel!=='string'||!/^(track|return):/.test(channel))return channel;const split=channel.indexOf(':')+1;return channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));};if(command.args?.channel!==undefined)command.args.channel=resolveChannel(command.args.channel);if(Array.isArray(command.args?.channels))command.args.channels=command.args.channels.map(resolveChannel);
  }
   const prepared=new Map();let recordingPrefs=recordQuantizationState?patchRecordQuantization(DEFAULT_RECORD_QUANTIZATION,recordQuantizationState):null;
   const recordingRuntimeState=recordingState?{...recordingState}:null;
@@ -59,7 +61,9 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null,qu
     if(command.name==='record_input')prepared.set(command,prepareRecordInput(next,command.args,recordingRuntimeState));
     if(command.name==='export_midi')prepared.set(command,prepareMidiDelivery(next,command.args));
   }
+  checkStemSelectionRequirements(next,after,stemSelectionRequirements);
   const deliveryChecks=checkDeliveryRequirements(next,after,deliveryRequirements);
+  for(const command of after)if(command.name==='export_stems'&&(command.args?.channels!==undefined||stemSelectionRequirements)){const settings=deliveryOptions(next,command.args??{},'stems');if(!deliveryChecks.has(command))deliveryChecks.set(command,{kind:'stems',settings,source:settings.source==='auto'?(next.arrangement.length?'arrangement':'session'):settings.source,requested:{},requiredFormat:null});deliveryChecks.get(command).selection=stemSelectionMetadata(next,settings.channels);}
   const quantizeCheck=checkQuantizeRequirements(project,{next,after},quantizeRequirements);
   let internalClipboard=false,clipboardUsed=false;for(const action of edits){const args=decode(action);if(action.type==='session_clips'&&args.action==='paste'&&!internalClipboard)clipboardUsed=true;if(action.type==='session_clips'&&args.action==='cut')internalClipboard=true;}
   const liveSessionActive=edits.length>0&&edits.every(a=>a.type==='session_clips'&&decode(a).action==='active')&&sessionActivationOnly(project,next);

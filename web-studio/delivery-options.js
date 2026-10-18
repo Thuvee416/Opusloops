@@ -1,12 +1,15 @@
+import {selectedStemChannels} from './stem-selection.js';
 import {exportOptions} from './wav-export.js';
 import {exportChannel} from './export-channel.js';
 import {exportRangePlan} from './export-range.js';
 
 // One delivery contract for the export dialog, agent preflight and runtime.
+export const STEM_DELIVERY_KEYS=['channels'];
 export const DELIVERY_KEYS=['source','sampleRate','bitDepth','normalize','dither','includeTail','range'];
 export function deliveryOptions(project,options={},kind='wav'){
  if(!options||typeof options!=='object'||Array.isArray(options))throw new Error('Expected export settings.');
- const keys=[...DELIVERY_KEYS,...(kind==='wav'?['channel']:[])];
+ if(!['wav','stems'].includes(kind))throw new Error('Choose WAV Or Stem Delivery.');
+ const keys=[...DELIVERY_KEYS,...(kind==='wav'?['channel']:STEM_DELIVERY_KEYS)];
  if(Object.keys(options).some(key=>!keys.includes(key)))throw new Error('Unsupported '+kind+' export setting.');
  const value=exportOptions({bitDepth:24,includeTail:true,...options});
  if(typeof value.includeTail!=='boolean')throw new Error('Choose whether to include effect tails.');
@@ -20,7 +23,7 @@ export function deliveryOptions(project,options={},kind='wav'){
  if(kind==='wav'){
   value.channel=value.channel===undefined?'master':value.channel;
   exportChannel(project,value.channel);
- }
+ }else if(value.channels!==undefined)value.channels=selectedStemChannels(project,value.channels).map(c=>c.value);
  return structuredClone(value);
 }
 export function deliveryDescription(settings,effectiveSource,channel){

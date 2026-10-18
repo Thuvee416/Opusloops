@@ -34,3 +34,6 @@ displayedScenePlanSchema.properties.actions.items.properties.args.properties.ind
 // open clients cannot silently ignore a new constructor field they don't know.
 export const queuedScenePlanSchema=structuredClone(displayedScenePlanSchema);
 queuedScenePlanSchema.properties.actions.items.properties.args.properties.launch={...launch,description:'For midi creation: initial clip launch settings. Preserve exact requested mode, quantization in beats/global and legato. Use this directly on the new MIDI action, without a follow-up metadata action.'};
+
+// Negotiate the new inner command argument independently of scene addressing.
+export function stemSelectionPlanSchema(base,supported){const schema=structuredClone(base),args=schema.properties.actions.items.properties.args.properties.args.properties;if(supported)args.channels={type:'array',minItems:1,maxItems:20,uniqueItems:true,items:{type:'string',pattern:'^(track|return):.+'},description:'export_stems only. Distinct track:ID or return:ID files, or current-plan aliases. Omit for all tracks/returns. Never master.'};else delete args.channels;return schema;}

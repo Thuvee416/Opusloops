@@ -1,0 +1,59 @@
+{
+  "status": "candidate-not-deployed",
+  "branch": "codex/selected-stem-export",
+  "baseSourceCommit": "706e71ca740420209db8681d4682fb69519b1519",
+  "candidateVersion": "0.152.0-candidate",
+  "automated": {
+    "corePassed": 378,
+    "backendPassed": 72,
+    "artifactChecks": "passed",
+    "apiBundle": "built, not deployed",
+    "buildRetry": "Official HTTPS CA download initially timed out; same build succeeded with IPv4-first DNS. Certificate validation unchanged."
+  },
+  "sourceSha256": {
+    "web-studio/stem-selection.js": "cb55a725f98fb445c102bd84467fab10f67cbc5d8a500f9aeabb4785e8d1421f",
+    "web-studio/stem-export.js": "ee631f802561773bc04536fffb78dd1dc7f37da7feb257a13149c86806e18147",
+    "web-studio/agent-actions.js": "2d2efe60879b2021723bf5026d75e6d399fe83598b607bc005aa18bbd25bd9b8",
+    "web-studio/agent-runner.js": "c61fd2398b9a1fa5e1f32f56c6cb925eef278a5b95c892630b50ea78629c7a91",
+    "web-studio/agent-panel.js": "ee1970772618084efdb19fba7cb56f60e549ce5d99836cecd983cc484952df56",
+    "web-studio/agent-schema.js": "5b0167cae17701a82527d952042b09279940e2b9ea7ffc98d9edc87d90442ae8",
+    "web-studio/delivery-options.js": "28e791cc59eee49d05dcb9b19ac42af81b92f6a59f3d72d7a9b3f70e108ff18a",
+    "web-studio/delivery-requirements.js": "058dcee33fb300b38fbd4e142792293b6c44ebc4ef9f312ff8a184e94c2f593e",
+    "web-studio/app.js": "fa6e905733e90eec066a8232e895882de4905e83c34f1f6b7a796556f5e0dc0e",
+    "web-studio/index.html": "cf77e2771dc17ab328db40d851c9b494a67be55fb4d582c8e912f677ca7566c8",
+    "web-studio/release.json": "c7800f4e08253cbbb0a9706f35f9acf6047fab44f3dfd820fa86f36ab5bf080a",
+    "infra/aws-backend/runtime/studio-agent.mjs": "de3fcc0d48488c9d2e27b9b26eecaca9f6b2edacbb3b83e0aa1a6373ecd7f52d",
+    "infra/aws-backend/runtime/scene-planning.mjs": "b740f00af16850b1d7c34ef36f3fb15846fe0373a4d391fc48e066ef6b956e84",
+    "tests/stem-selection.test.cjs": "6016080594757f08a2b3dfd70b2c63477d2b47a66d6d7f9b5f22e1862ba6f67d",
+    "infra/aws-backend/tests/stem-selection.test.mjs": "d611a49838f95fc6bab43422a84b0084d75b408ebc3c8a792573bf55fcc64c19",
+    "tests/stem-selection-audio.mjs": "c5767f4f80d054cdb79b93da6fad3095a7f38e5a9ad16475c7d2c242aff4e9e3",
+    "tests/stem-selection-preview.mjs": "4c0db4cacb3a5f0d07760d4087a6dfad8547d55cdfc0771d265681040afa2c9b"
+  },
+  "nativeAudioGate": {
+    "url": "http://127.0.0.1:4204/audio-check.html",
+    "serverReady": true,
+    "executed": false,
+    "reason": "Mac locked; user unlock required. No bypass attempted."
+  },
+  "production": {
+    "version": "0.151.0",
+    "hosting": {
+      "provider": "aws-amplify",
+      "commit": "706e71ca740420209db8681d4682fb69519b1519",
+      "repository": "Thuvee416/Opusloops",
+      "branch": "main",
+      "appId": "d1zc92wmtmvg23",
+      "jobId": "0000000153",
+      "builtAt": "2026-10-18T20:44:00.363109Z"
+    },
+    "apiCodeSha256": "sEJfsPhnJl7FecO33QEcH24mEtpuDkR0Bvb4L7UUnhg=",
+    "unchanged": true
+  },
+  "pending": [
+    "Native chosen-versus-all WAV byte equality and independent spectral expectations",
+    "Native manual Selected Tracks Only/Chosen Channels controls and actual ZIP saves",
+    "390px layout, unchanged project/selection and normal reopen",
+    "Real-model planning and signed-in production execution after unchanged daily quota resets",
+    "Full-song recording, listening and delivery audit"
+  ]
+}

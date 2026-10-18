@@ -1,4 +1,4 @@
-import {deliveryOptions,DELIVERY_KEYS} from './delivery-options.js';
+import {deliveryOptions,DELIVERY_KEYS,STEM_DELIVERY_KEYS} from './delivery-options.js';
 
 // This is an execution guard for explicit encoding/range settings, not a planner.
 // Musical intent, named sections and settings that differ per artifact stay with
@@ -71,6 +71,7 @@ export function checkDeliveryRequirements(project,commands,requirements){
 export function checkDeliveryReceipt(project,result,expected){
  if(!expected)return;
  if(!result?.delivery||result.delivery.format!==expected.kind||!result.delivery.settings)throw failure('The export did not report its actual settings. Remaining actions stopped.','The generated export settings could not be verified. Remaining actions stopped.',{expected:expected.settings,reported:result?.delivery??null});
- const settings=deliveryOptions(project,result.delivery.settings,expected.kind),keys=[...DELIVERY_KEYS.filter(k=>k!=='source'),...(expected.kind==='wav'?['channel']:[])],mismatch=keys.filter(k=>!equal(settings[k],expected.settings[k])),source=effectiveSource(project,settings),sourceMismatch=source!==expected.source||result.delivery.source!==source;
+ const settings=deliveryOptions(project,result.delivery.settings,expected.kind),keys=[...DELIVERY_KEYS.filter(k=>k!=='source'),...(expected.kind==='wav'?['channel']:STEM_DELIVERY_KEYS)],mismatch=keys.filter(k=>!equal(settings[k],expected.settings[k])),source=effectiveSource(project,settings),sourceMismatch=source!==expected.source||result.delivery.source!==source;
+ if(expected.selection&&!equal(result.delivery.selection,expected.selection))mismatch.push('stem channels');
  if(mismatch.length||sourceMismatch)throw failure('An export was generated with unexpected '+[...mismatch,...(sourceMismatch?['source']:[])].join(', ')+'. Its ready receipt is not verification of the requested file; remaining actions stopped.','A generated export did not match the checked settings. Remaining actions stopped.',{expected:expected.settings,reported:result.delivery});
 }
