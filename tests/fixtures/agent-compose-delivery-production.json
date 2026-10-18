@@ -1,0 +1,48 @@
+{
+  "rate": 44100,
+  "frames": 88200,
+  "channels": 2,
+  "bitDepth": 24,
+  "duration": 2.0,
+  "bytes": 529244,
+  "peak": 0.10063409805297852,
+  "rms": 0.024230202392392347,
+  "frequencies": [
+    {
+      "pitch": 36,
+      "expectedHz": 65.40639,
+      "measuredHz": 65.40639
+    },
+    {
+      "pitch": 39,
+      "expectedHz": 77.78175,
+      "measuredHz": 77.78175
+    },
+    {
+      "pitch": 41,
+      "expectedHz": 87.30706,
+      "measuredHz": 87.30706
+    },
+    {
+      "pitch": 43,
+      "expectedHz": 97.99886,
+      "measuredHz": 97.99885
+    }
+  ],
+  "wavSha256": "bf6a5ddb859016a7d1d37394f0d868dc2771215f31674b437758f7868c6241fc",
+  "projectSha256": "dcbd02806dfdd0f0d601ccc3cb1f3d34ada0615b9e2dfacfd6ee0b55724e791d",
+  "restoreByteIdentical": true,
+  "baselineSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+  "release": "0.131.1",
+  "commit": "5f5f468db3024d1053d8c40d51bda600c543f066",
+  "amplifyJob": "97",
+  "authenticated": true,
+  "intercepted": false,
+  "playbackStarted": false,
+  "evidence": "Authenticated public studio; actual downloaded project/WAV; no intercepted planning or synthetic production identity.",
+  "limits": [
+    "One bounded Warm bass composition and chosen-track WAV workflow",
+    "No physical-output or perceptual-quality assessment",
+    "No production stem/return export proof"
+  ]
+}
