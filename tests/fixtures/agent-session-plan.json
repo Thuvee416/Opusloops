@@ -1,0 +1,46 @@
+{
+  "plan": {
+    "summary": "Launch scenes and export session clips as WAV",
+    "actions": [
+      {
+        "type": "command",
+        "args": {
+          "name": "launch_scene",
+          "args": {
+            "scene": 0
+          }
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "launch_scene",
+          "args": {
+            "scene": 1
+          }
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "pause"
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "export_wav",
+          "args": {
+            "source": "session"
+          }
+        }
+      }
+    ]
+  },
+  "provenance": {
+    "model": "amazon.nova-pro-v1:0",
+    "date": "2026-10-17",
+    "prompt": "Without editing the project, launch scene 0, then launch scene 1 and wait for its clip quantization to complete, then pause and export the Session clips as WAV. Use the explicit session export source even though there is an Arrangement.",
+    "source": "Operator Bedrock request against synthetic Session metadata; browser replay supplies generated tone audio. Not an authenticated production-browser inference."
+  }
+}

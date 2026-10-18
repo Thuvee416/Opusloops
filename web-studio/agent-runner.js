@@ -21,7 +21,9 @@ export function prepareAgentPlan(project, actions) {
     }
   }
   if (before.length + after.length > 8) throw new Error('Use at most eight runtime commands per request.');
-  const next = applyAgentActions(project, edits);
+  const aliases=new Map();
+  const next = applyAgentActions(project, edits,{aliases});
+  for(const command of [...before,...after])if(command.args?.trackId)command.args.trackId=aliases.get(command.args.trackId)||command.args.trackId;
   for (const command of [...before, ...after]) applyAgentActions(next, [{type:'command', args:command}]);
   return {next, editCount:edits.length, before, after};
 }
@@ -36,7 +38,7 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
   };
   const run = async command => {
     check();
-    const result = await execute(command, signal);
+    let result;try{result=await execute(command,signal);}catch(error){error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
     observations.push({name:command.name, result:result ?? null});
     completedCommands.push(command.name);
     // Runtime operations cannot silently replace/edit the project.

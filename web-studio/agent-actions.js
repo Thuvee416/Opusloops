@@ -8,7 +8,7 @@ import {editTrack,editScene} from './management.js';
 import {editArrangementTime,duplicateArrangementTime} from './time-edit.js';
 // A capability contract, never executable code supplied by the model.
 export const agentActions={
- command:'{name:play|pause|stop|seek|launch_scene|view|save_project|export_wav,args?:{beat?,scene?,view?:session|arrangement}} runtime operation; combine up to eight after project edits, or stop/pause before edits',
+ command:'{name:play|pause|stop|seek|launch_scene|launch_clip|stop_track|stop_clips|view|save_project|export_wav,args?:{beat?,scene? (zero-based),trackId?,view?:session|arrangement,source?:auto|session|arrangement (export only)}} runtime operation; launch_clip presses a trigger/toggle Session slot; launch_scene and clip stops wait for quantized activation. Gate/repeat clip holds remain manual. Session export snapshots active clips from their beginnings for four bars, excluding Arrangement automation; auto prefers Arrangement. Combine up to eight after project edits, or stop/pause before edits',
  project:'{name?,bpm?,master?,transport?:{loopEnabled,loopStart,loopEnd,metronome}}',
  track:'{id,changes:{name?,volume?(linear 0..1),pan?(-1..1),mute?,solo?,output?}}',
  add_track:'{name,ref? (unique $alias for subsequent actions),preset? (Init|Warm bass|Soft pad|Bright pluck)}',
@@ -29,10 +29,23 @@ export const agentActions={
 };
 const fail=m=>{throw new Error(m);};
 function assign(target,changes,allowed){if(!changes||typeof changes!=='object'||Array.isArray(changes))fail('Expected changes object');for(const [k,v] of Object.entries(changes)){if(!allowed.includes(k))fail('Unsupported parameter: '+k);target[k]=structuredClone(v);}}
-export function applyAgentActions(source,actions){
- if(!Array.isArray(actions)||actions.length>80)fail('Use at most 80 actions per request.');let p=structuredClone(source);const aliases=new Map(),resolve=id=>aliases.get(id)||id,remember=(ref,id)=>{if(ref!==undefined){if(typeof ref!=='string'||!/^\$[a-zA-Z][a-zA-Z0-9_-]{0,30}$/.test(ref)||aliases.has(ref))fail('Use a unique $alias');aliases.set(ref,id);}};
+export function applyAgentActions(source,actions,{aliases=new Map()}={}){
+ if(!Array.isArray(actions)||actions.length>80)fail('Use at most 80 actions per request.');let p=structuredClone(source);const resolve=id=>aliases.get(id)||id,remember=(ref,id)=>{if(ref!==undefined){if(typeof ref!=='string'||!/^\$[a-zA-Z][a-zA-Z0-9_-]{0,30}$/.test(ref)||aliases.has(ref))fail('Use a unique $alias');aliases.set(ref,id);}};
  for(const a of actions){if(!a||!Object.hasOwn(agentActions,a.type))fail('Unsupported action: '+a?.type);const x=typeof a.args==='string'?JSON.parse(a.args):structuredClone(a.args);if(!x||typeof x!=='object'||Array.isArray(x))fail('Invalid action arguments');
- if(a.type==='command'){if(actions.length!==1||!['play','pause','stop','seek','launch_scene','view','save_project','export_wav'].includes(x.name))fail('Use one supported runtime command at a time.');if(x.name==='seek'&&(!Number.isFinite(x.args?.beat)||x.args.beat<0||x.args.beat>16384))fail('Invalid seek beat');if(x.name==='launch_scene'&&(!Number.isInteger(x.args?.scene)||x.args.scene<0||x.args.scene>=p.scenes))fail('Invalid scene');if(x.name==='view'&&!['session','arrangement'].includes(x.args?.view))fail('Invalid view');const keys={seek:['beat'],launch_scene:['scene'],view:['view']}[x.name]||[];if(Object.keys(x).some(k=>!['name','args'].includes(k))||x.args!==undefined&&(!x.args||typeof x.args!=='object'||Array.isArray(x.args)||Object.keys(x.args).some(k=>!keys.includes(k))))fail('Unsupported runtime argument. '+x.name+' accepts '+(keys.join(', ')||'no arguments')+'.');}
+ if(a.type==='command'){
+  if(actions.length!==1||!['play','pause','stop','seek','launch_scene','launch_clip','stop_track','stop_clips','view','save_project','export_wav'].includes(x.name))fail('Use one supported runtime command at a time.');
+  if(x.name==='seek'&&(!Number.isFinite(x.args?.beat)||x.args.beat<0||x.args.beat>16384))fail('Invalid seek beat');
+  if(['launch_scene','launch_clip'].includes(x.name)&&(!Number.isInteger(x.args?.scene)||x.args.scene<0||x.args.scene>=p.scenes))fail('Invalid scene');
+  if(['launch_clip','stop_track'].includes(x.name)){
+   const t=p.tracks.find(t=>t.id===resolve(x.args?.trackId));if(!t)fail('Choose an existing regular track.');x.args.trackId=t.id;
+   if(x.name==='launch_clip'){const c=p.clips[t.slots[x.args.scene]];if(!c)fail('The requested Session slot is empty.');if(['gate','repeat'].includes(c.launch?.mode))fail('Gate/repeat clips require a held gesture. Choose a trigger/toggle clip or change its launch mode explicitly.');}
+  }
+  if(x.name==='view'&&!['session','arrangement'].includes(x.args?.view))fail('Invalid view');
+  const keys={seek:['beat'],launch_scene:['scene'],launch_clip:['trackId','scene'],stop_track:['trackId'],view:['view'],export_wav:['source']}[x.name]||[];
+  if(Object.keys(x).some(k=>!['name','args'].includes(k))||x.args!==undefined&&(!x.args||typeof x.args!=='object'||Array.isArray(x.args)||Object.keys(x.args).some(k=>!keys.includes(k))))fail('Unsupported runtime argument. '+x.name+' accepts '+(keys.join(', ')||'no arguments')+'.');
+  if(x.name==='export_wav'&&x.args?.source!==undefined&&!['auto','session','arrangement'].includes(x.args.source))fail('Choose auto, session or arrangement export source.');
+ }
+
  for(const key of ['id','trackId','returnId','deviceId','clipId','sampleClipId'])if(x[key])x[key]=resolve(x[key]);if(x.trackIds)x.trackIds=x.trackIds.map(resolve);
  const track=id=>[...p.tracks,...p.returns||[]].find(t=>t.id===id)||fail('Unknown track: '+id);
  if(a.type==='project'){const {transport,...rest}=x;assign(p,rest,['name','bpm','master']);if(transport)assign(p.transport,transport,['loopEnabled','loopStart','loopEnd','metronome','launchQuantization','followActionsEnabled']);}
