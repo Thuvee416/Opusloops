@@ -1,10 +1,35 @@
 # OPUS LOOPS feature-parity roadmap
 
-Updated 2026-10-17. The active goal is a browser DAW covering Ableton Live's workflows and feature categories. Full parity is **not achieved**. Build the core music-making workflow first; do not treat a feature label, menu entry, or narrow passing test as proof of a complete workflow.
+Updated 2026-10-17. The active goal is OPUS LOOPS: a browser DAW covering Ableton Live's workflows and feature categories, with natural-language agent control built into every aspect of the application. Full parity is **not achieved**. Build the core music-making workflow first; do not treat a feature label, menu entry, or narrow passing test as proof of a complete workflow.
 
 ## Current production source
 
 AWS Amplify publishes `web-studio/`. The older application in `mobile/` remains historical and does not establish functionality in the published studio. `web-studio/release.json` records the artifact revision; live `version.json` records the actual deployed commit. Hosting success and live runtime checks are separate evidence.
+
+## Application-wide natural-language control requirement
+
+Natural-language control is a requirement of the overall goal and of every existing and future feature. It is not confined to the Studio agent panel or to a separate mixing feature. Every core-first gate and every feature-parity category below includes its agent interface and verification work. A working manual UI alone does not complete a feature for this goal.
+
+Coverage must include:
+
+- Projects and files: create/open, naming, templates, saving, autosave, backups, recovery, version management, cloud synchronization where implemented, and project interchange.
+- Library and media: search, browsing, import, organization, sample and preset selection, metadata, and media management.
+- Composition and editing: Session and Arrangement, tracks/groups/returns, scenes, clips, selections, clipboard operations, song sections, time edits, notes, expressive MIDI, recording, take/comp workflows, audio edits and warping.
+- Sound and production: instruments, samplers, drum racks, audio/MIDI effects, racks/macros, routing, sends, automation, modulation, mixing, mastering and reference-guided arrangement or production.
+- Performance and delivery: transport, tempo, meter, launch behavior, live performance, controller mappings, synchronization, render settings, mix/stem/MIDI export and delivery checks.
+- Application operation: navigation, views, selections, configuration, preferences, device setup, account/project settings, accessibility, supported integrations, and diagnosing or recovering from errors.
+
+Implementation and completion requirements:
+
+1. Expose actual supported operations and inspectable state through one validated command/capability layer shared with the manual interface. Add agent access when adding a UI feature, and audit existing features for missing access.
+2. Resolve natural language into multi-step plans using current project, selection, transport, routing and relevant audio/MIDI analysis. Maintain conversational context and ask focused questions when necessary. Reference-song claims require actual reference evidence; state assumptions otherwise.
+3. Execute real application operations, observe their results, and use errors or measured output to repair plans. Verify that the requested musical or application outcome occurred; a generated plan or success message alone is insufficient.
+4. Preserve project integrity through validation, stale-state protection, cancellation and grouped Undo/Redo wherever supported. Respect browser/OS permissions and required user gestures; guide the user through those steps and resume the workflow, without claiming unattended execution.
+5. Keep model credentials server-side, disclose transmitted session/analysis data, enforce account/usage boundaries, and surface truthful progress, failures, limitations and completed actions.
+6. Maintain a coverage matrix for each feature: manual operation, agent command/state access, multi-step workflow evidence, Undo/recovery behavior, and browser/platform limitations. Missing agent access or verification keeps that feature incomplete.
+7. Verify authenticated production workflows and representative musical outcomes, including stem mixing and reference-guided restructuring. Include audible/rendered-output review where quality is part of the request; parameter edits alone do not establish professional mix quality.
+
+Goal completion requires both the requested DAW feature scope and application-wide natural-language control to be implemented and verified. The first agent release is partial and does not satisfy this completion condition.
 
 ## Agentic control as a core workflow
 
@@ -36,12 +61,13 @@ Evidence: `tests/session-recovery.test.cjs` verifies independent snapshots, fall
 
 ## Next work
 
-1. Audit the whole representative-song core workflow and preserve reproducible project/audio fixtures.
-2. Extend Arrangement selection with marquee selection, group trim and region fades/crossfades.
-3. Complete group/routing workflows and verify the audio output of live and offline paths.
-4. Add performance/recording measurements across actual browsers and input/output devices.
+1. Build the application-wide agent coverage matrix; close existing control gaps and verify the authenticated production agent workflow.
+2. Audit the whole representative-song core workflow through both manual and natural-language operation, preserving reproducible project/audio fixtures.
+3. Extend Arrangement group trim and region fades/crossfades with matching agent commands and verification.
+4. Complete group/routing workflows and their agent access; verify the audio output of live and offline paths.
+5. Add performance/recording measurements and natural-language workflow checks across actual browsers and input/output devices.
 
-Keep this objective active until every requested feature category and workflow has current implementation and verification evidence.
+Keep this objective active until every requested feature category and workflow, including natural-language control across all aspects of the application, has current implementation and verification evidence.
 
 ## 0.119 — Arrangement clip groups
 
