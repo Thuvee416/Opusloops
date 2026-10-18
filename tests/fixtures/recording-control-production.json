@@ -1,0 +1,182 @@
+{
+  "release": "0.143.0",
+  "commit": "2a65ecaa160dc19e566daa52f5e88627735e1f7c",
+  "amplifyJob": "132",
+  "baseline": {
+    "bytes": 1725,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+  },
+  "scope": "Normal signed-in Chrome, real keyboard input, normal UI commands and downloaded project/MIDI files. No injected recording events or production token extraction.",
+  "setup": {
+    "trackId": "5e57dba4-8811-4612-be4b-00ec3c0774e4",
+    "exactInit": true,
+    "volume": 0.4,
+    "pan": 0,
+    "originalPreserved": true
+  },
+  "capture": {
+    "id": "a17f895b-67eb-4609-9f62-d78486cd2206",
+    "name": "MIDI take",
+    "kind": "midi",
+    "sourceBpm": 120,
+    "beats": 16,
+    "notes": [
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 15.695933333237965,
+        "duration": 0.015466666618983993
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 15.72186666671435,
+        "duration": 0.000599999904631332
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 15.7327333334287,
+        "duration": 0.0003999998569490515
+      }
+    ]
+  },
+  "midi": {
+    "file": "MIDI-take (2).mid",
+    "bytes": 80,
+    "ppqn": 960,
+    "events": [
+      {
+        "tick": 15068,
+        "type": "noteOn",
+        "pitch": 60,
+        "velocity": 95
+      },
+      {
+        "tick": 15083,
+        "type": "noteOff",
+        "pitch": 60,
+        "velocity": 0
+      },
+      {
+        "tick": 15093,
+        "type": "noteOn",
+        "pitch": 64,
+        "velocity": 95
+      },
+      {
+        "tick": 15094,
+        "type": "noteOff",
+        "pitch": 64,
+        "velocity": 0
+      },
+      {
+        "tick": 15103,
+        "type": "noteOn",
+        "pitch": 67,
+        "velocity": 95
+      },
+      {
+        "tick": 15104,
+        "type": "noteOff",
+        "pitch": 67,
+        "velocity": 0
+      }
+    ]
+  },
+  "cancelPreservesSavedProjectBytes": true,
+  "savedProjectSha256": "56440838cc573650068f980addd14d173f6ddafe74aa4114a0820418dc24c956",
+  "receipts": [
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "9647937a-ca09-4d7b-a2c9-95e590e8d74f",
+        "source": "midi",
+        "trackId": "5e57dba4-8811-4612-be4b-00ec3c0774e4",
+        "countInBars": 0,
+        "action": "start",
+        "status": "recording"
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "9647937a-ca09-4d7b-a2c9-95e590e8d74f",
+        "source": "midi",
+        "trackId": "5e57dba4-8811-4612-be4b-00ec3c0774e4",
+        "countInBars": 0,
+        "action": "finish",
+        "status": "saved",
+        "clipId": "a17f895b-67eb-4609-9f62-d78486cd2206",
+        "scene": 0,
+        "noteCount": 3,
+        "quantized": false
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "97c507d3-f07c-4d58-acde-16a998b4f457",
+        "source": "midi",
+        "trackId": "5e57dba4-8811-4612-be4b-00ec3c0774e4",
+        "countInBars": 4,
+        "action": "start",
+        "status": "count_in"
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "97c507d3-f07c-4d58-acde-16a998b4f457",
+        "source": "midi",
+        "trackId": "5e57dba4-8811-4612-be4b-00ec3c0774e4",
+        "countInBars": 4,
+        "action": "cancel",
+        "status": "cancelled"
+      }
+    },
+    {
+      "inputRecording": {
+        "inputRecording": true,
+        "captureId": "4ede7e97-97eb-4381-b49a-52dd6ebb775b",
+        "source": "midi",
+        "trackId": "5e57dba4-8811-4612-be4b-00ec3c0774e4",
+        "countInBars": 0,
+        "action": "finish",
+        "status": "empty",
+        "noteCount": 0,
+        "quantized": false
+      }
+    }
+  ],
+  "reviewedModelRequests": 3,
+  "clientRepairs": 0,
+  "localIntentRequests": 2,
+  "emptyFinishPreservesSavedProjectBytes": true,
+  "undo1RemovesOnlySavedTake": true,
+  "recovery": {
+    "undo2ExactBaseline": true,
+    "reloadExactBaseline": true,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "inputsDisconnected": true,
+    "recordQuantization": "Off",
+    "recordTarget": "starts",
+    "view": "Session",
+    "detail": "Clip",
+    "detailHeightPercent": 20,
+    "newPageErrors": []
+  },
+  "deployment": {
+    "apiZipSha256": "dc380cfd93d8fe4950ff0e902680766f7d2e4557675c5f1f56beacfb73363914",
+    "lambdaActive": true,
+    "lambdaLastUpdate": "Successful",
+    "workerUnchanged": true,
+    "apexAndWwwEightChangedAssetsMatched": true
+  },
+  "limits": [
+    "No physical microphone/MIDI device timing verification",
+    "Synthetic audio input checked locally, not physical input in production",
+    "No overdub/direct Arrangement input or take-lane/comping support",
+    "No full Ableton feature parity"
+  ]
+}
