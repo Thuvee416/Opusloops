@@ -65,3 +65,10 @@ test('captured complete group composition and nesting preserve actual names, not
   const delivery=plan.after.find(c=>c.name==='export_wav');assert.equal(delivery.args.channel,'track:'+target.id);assert.equal(delivery.args.bitDepth,32);assert.equal(delivery.args.sampleRate,44100);assert.deepEqual(delivery.args.range,{start:0,length:4});assert.equal(delivery.args.includeTail,false);assert.equal(plan.after.find(c=>c.name==='fold_group').args.folded,true);
  }
 });
+
+test('group ID repair identifies stale aliases, output selectors and exact available group IDs without coercion',async()=>{
+ const t=await setup(),p=source(t),grouped=t.editTrackGroup(p,{ids:['a','b'],name:'Rhythm'}).project,g=grouped.tracks[0],before=structuredClone(grouped);
+ for(const id of ['$rhythm','Rhythm','track:'+g.id])assert.throws(()=>t.editTrackGroup(grouped,{ids:[id],name:'Band'}),e=>e.message.includes(JSON.stringify(id))&&e.message.includes(g.id)&&e.message.includes('Rhythm')&&e.message.includes('PREVIOUS request'));
+ assert.throws(()=>t.editTrackGroup(grouped,{ids:[g.id,g.id],name:'Band'}),/must be distinct/);assert.deepEqual(grouped,before);
+ const plan=t.prepareAgentPlan(grouped,[{type:'track_group',args:{ids:[g.id],name:'Band',ref:'$band',volume:1}}]);assert.equal(plan.next.tracks[0].name,'Band');assert.equal(plan.next.tracks[1].parentId,plan.next.tracks[0].id);
+});

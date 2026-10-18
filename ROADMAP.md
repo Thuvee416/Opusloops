@@ -328,3 +328,10 @@ Controlled local UI verification: captured grouping plan produced real parent ed
 Still incomplete: native multi-Session-clip editing, linked selected-track mixer adjustments, group creation spanning different parents (reparent first), complete group/clip color context menus, larger native track limits, Audio From/monitor taps/resampling, sidechain/MIDI/multichannel routing, delay compensation, physical/mobile-touch/device and representative musical testing. The full DAW and application-wide natural-language goal remain active. Authenticated production verification is recorded separately after deployment.
 
 The 390-pixel desktop-iframe preview verified nested group folding. It also exposed a pre-existing grid minimum-width overflow clipping playback controls and the agent; constraining the workspace column and wrapping the action bar made those controls visible. This is responsive-layout evidence, not a physical mobile/touch-device test.
+
+
+## Release 0.135.1 — Actionable Existing-Group Reference Repair
+
+The first authenticated 0.135.0 composition completed all eight edits and downloaded Rhythm, but its follow-up nesting request exhausted three reviewed attempts with the generic error Choose distinct existing track IDs. A project download confirmed only the successful four-track Rhythm state: no Band or partial nesting edits. The exact rejected plan payloads were not exposed by the production interface; its specific bad reference spelling is not asserted.
+
+Group ID validation now identifies missing IDs, duplicates and available actual track/group IDs with names. It explicitly distinguishes an actual ID from a display name, Audio To track:ID selector or a stale alias from a prior request. Alias lifetime is also explicit in the shared capability and server planning instructions. Seventeen group cases (144 core plus 22 backend) cover strict rejection and atomicity for each form and the corrected actual-ID nesting path. No unknown name or alias is silently coerced. Authenticated repair verification follows publication.

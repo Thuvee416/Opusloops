@@ -42,3 +42,5 @@ Every feature added after this audit must add or update its agent command/state 
 | Arrangement-only MIDI and device planning | MIDI may omit scene with later referenced region; beats/notes required; known device display names map to canonical DSP | Captured full two-tone group composition, missing-beats rejection and strict selector units | Broader language/repertoire and musical-quality evaluation |
 
 Group membership does not override deliberate custom audio routes. Group WAV/stems contain incoming audio and overlap member-source exports. View-only fold/select/export do not add history. Full application-wide agent coverage remains unfinished.
+
+0.135.0 authenticated group composition completed eight edits and exported Rhythm; the nested follow-up exhausted three reviewed plans with an insufficiently precise track-ID error, without applying nesting. 0.135.1 adds strict actionable ID/alias-lifetime feedback and one focused regression (144 core, 22 backend). Corrected production nesting must be verified separately.
