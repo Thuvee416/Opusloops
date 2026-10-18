@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-18",
+  "release": "0.139.0",
+  "sourceCommit": "e2e989718fb9cb41ea04481ff9cdfe210c38a2e2",
+  "hosting": {
+    "app": "d1zc92wmtmvg23",
+    "job": "121",
+    "status": "SUCCEED",
+    "apexAndWwwExactAssets": 8
+  },
+  "api": {
+    "codeSha256": "4b2b781b71af5ff3134f5a9c4f1e7644ea905410187263fdc053627e84c40851",
+    "state": "Active",
+    "update": "Successful",
+    "workerImageUnchanged": true
+  },
+  "method": "Existing signed-in OPUS session, normal inline Odesa requests and File/Edit menus; fresh downloaded bytes. No auth extraction or request interception.",
+  "model": "Odesa Tempo 1.0 / Amazon Nova Pro via Bedrock",
+  "requests": [
+    {
+      "kind": "composition",
+      "reviewed": true,
+      "actions": 3,
+      "clientRepairs": 0,
+      "project": "Exact requested track, synth, four notes, activation/release velocities, Session slot and Arrangement placement; original data preserved",
+      "failure": "Requested Arrangement Clip navigation opened Session clip instead."
+    },
+    {
+      "kind": "natural-language selective edit",
+      "reviewedPlans": 3,
+      "clientRepairs": 2,
+      "result": "Rejected invalid note indices during full-plan preflight; byte-identical composition afterwards. The rejected plan was not committed.",
+      "failure": "Invalid note indices persisted through repairs; not a successful edit."
+    },
+    {
+      "kind": "explicit operations and range selection",
+      "reviewed": true,
+      "actions": 4,
+      "clientRepairs": 0,
+      "result": "Quantize [0,2] to .25 beats, transpose +12, velocity delta -.1, duplicate at 5; exact saved data; selected copied indices [4,5] in Arrangement Clip view.",
+      "otherProjectData": "unchanged"
+    },
+    {
+      "kind": "Deactivate only the currently selected notes",
+      "reviewed": true,
+      "actions": 1,
+      "clientRepairs": 0,
+      "result": "Only indices [4,5] gained active:false; every other project field unchanged."
+    }
+  ],
+  "midi": {
+    "normalManualExport": true,
+    "savedBytes": 101,
+    "exactBytesMatchSharedExporter": true,
+    "format": 0,
+    "ppqn": 960,
+    "noteOnEvents": [
+      [
+        0,
+        72,
+        38
+      ],
+      [
+        1920,
+        79,
+        76
+      ],
+      [
+        2976,
+        72,
+        57
+      ],
+      [
+        4800,
+        72,
+        38
+      ],
+      [
+        6720,
+        79,
+        76
+      ]
+    ],
+    "releaseVelocities": [
+      13,
+      38,
+      51,
+      13,
+      38
+    ]
+  },
+  "recovery": {
+    "undoSelectionEdit": "exact edited project",
+    "undoFourTransforms": "exact composition",
+    "undoComposition": "exact original project bytes",
+    "afterNormalReloadAndFreshSave": "exact original project bytes",
+    "originalSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "view": "Session / Clip / 20 percent detail, stopped"
+  },
+  "artifacts": {
+    "Untitled-session (49).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Untitled-session (50).opusloop": {
+      "bytes": 2751,
+      "sha256": "b55ea71769fdc1059f84925657b6f05744b6f6baa4ef38fedc905f51f056fe2b"
+    },
+    "Untitled-session (51).opusloop": {
+      "bytes": 2751,
+      "sha256": "b55ea71769fdc1059f84925657b6f05744b6f6baa4ef38fedc905f51f056fe2b"
+    },
+    "Untitled-session (52).opusloop": {
+      "bytes": 2929,
+      "sha256": "12023f49ba5f876aaea4b8e876226a560ab85ab54cb3c80b3dc98434b1b896fd"
+    },
+    "Untitled-session (53).opusloop": {
+      "bytes": 2959,
+      "sha256": "0e3d9373c85f3631fbe8429fa27416dabb755dfde0bc10e6ff2081428838be65"
+    },
+    "Untitled-session (54).opusloop": {
+      "bytes": 2929,
+      "sha256": "12023f49ba5f876aaea4b8e876226a560ab85ab54cb3c80b3dc98434b1b896fd"
+    },
+    "Untitled-session (55).opusloop": {
+      "bytes": 2751,
+      "sha256": "b55ea71769fdc1059f84925657b6f05744b6f6baa4ef38fedc905f51f056fe2b"
+    },
+    "Untitled-session (56).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Untitled-session (57).opusloop": {
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "Phrase.mid": {
+      "bytes": 101,
+      "sha256": "629c31dd60c838d32fd2b6d1aa31cb5b2f3eb4ff25b945e4933a7b9c122b94fc"
+    }
+  },
+  "scope": "Native offline WAV frequency/oracle/range/reopen proof is a separate local test; no production WAV, physical-device or perceptual music-quality proof. General language/repair and Arrangement-vs-Session interpretation remain incomplete. Full DAW/agent objective remains active."
+}
