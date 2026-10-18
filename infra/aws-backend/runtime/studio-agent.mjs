@@ -1,3 +1,5 @@
+import {validateNoteActionShape} from '../../../web-studio/midi-note-edit.js';
+import {readNavigationPreservation,checkNavigationCommands} from '../../../web-studio/navigation-preservation.js';
 import {readCreationLaunchRequirement,checkCreationLaunchRequirement} from '../../../web-studio/midi-creation-requirements.js';
 import {displayedSceneContract,displayedSceneText,sceneModelContext,scenePlanningSystem,sceneReviewSystem,queuedScenePlanningSystem} from './scene-planning.mjs';
 import {displayedSceneData,normalizeAgentActions,readCreationSceneRequirement,checkCreationSceneRequirement} from '../../../web-studio/agent-addressing.js';
@@ -26,6 +28,7 @@ export async function studioAgent(body,{send=(command,options)=>client.send(comm
  const usesDisplayed=displayedSceneContract(body.context);
  const requestedCreationScene=usesDisplayed?readCreationSceneRequirement(body.prompt):null;
  const requestedCreationLaunch=readCreationLaunchRequirement(body.prompt);
+ const requestedNavigationPreservation=body.context.navigationPreservation?.version===1?readNavigationPreservation(body.prompt,body.context.studio):null;
  const requestedNoteQuantization=readQuantizeRequirements(body.prompt,body.context.project,body.context.studio?.noteQuantization);
  const requestedSessionClipboard=readSessionClipboardRequirements(body.prompt,body.context.project,body.context.studio);
  const requestedClipProperties=readClipPropertyRequirements(body.prompt,body.context.project,body.context.studio);
@@ -39,14 +42,14 @@ The exact navigation action shape is {"type":"command","args":{"name":"select","
  const deadline=Date.now()+Math.max(1000,Math.min(110000,Number.isFinite(budgetMs)?budgetMs:26000));
  const invoke=async(payload,review=false)=>{try{return readPlan(await send(new ConverseCommand({modelId:process.env.STUDIO_AGENT_MODEL_ID,system:[{text:profileSystem+(review?reviewGuide:'')}],messages:[{role:'user',content:[{text:JSON.stringify(payload)}]}],inferenceConfig:{maxTokens:6000,temperature:.2},toolConfig:{tools:[{toolSpec:{name:'submit_plan',description:'Submit validated studio action intentions or ask a question.',inputSchema:{json:profileSchema}}}],toolChoice:{tool:{name:'submit_plan'}}}}),{abortSignal:AbortSignal.any([AbortSignal.timeout(Math.max(1,deadline-Date.now())),...(signal?[signal]:[])])}));}catch(error){if(signal?.aborted)throw new ApiError(409,'agent_cancelled','Planning Was Canceled. No Project Changes Were Applied.');if(error.name==='AbortError'||error.name==='TimeoutError'||Date.now()>=deadline)throw new ApiError(504,'agent_timeout','Planning and review took too long. No plan was returned; try a smaller request.');if(['ValidationException','ModelErrorException'].includes(error.name)&&/invalid sequence|tool.?use/i.test(error.message))throw new ApiError(502,'invalid_agent_plan','The model did not return valid tool arguments. Repair the plan using the supported action schema.');throw error;}};
  let requestedDelivery;try{requestedDelivery=readDeliveryRequirements(body.prompt);}catch(error){throw new ApiError(400,'invalid_delivery_request',error.message);}
- const rawInput={request:body.prompt,session:body.context,requestedDelivery,requestedNoteQuantization,requestedSessionClipboard,requestedSessionSelection,requestedClipProperties,requestedCreationLaunch,...(requestedCreationScene?{requestedCreationScene}:{}),repair:body.feedback||null};
+ const rawInput={request:body.prompt,session:body.context,requestedDelivery,requestedNoteQuantization,requestedSessionClipboard,requestedSessionSelection,requestedClipProperties,requestedCreationLaunch,requestedNavigationPreservation,...(requestedCreationScene?{requestedCreationScene}:{}),repair:body.feedback||null};
  let input;try{
   const session=usesDisplayed?sceneModelContext(body.context):structuredClone(body.context);
   // This bounded request explicitly creates fresh material, forbids other
   // changes, and contains no reference to prior settings. Completed dialogue
   // is irrelevant to it and demonstrably contaminates model intentions.
   if(requestedCreationLaunch){delete session.conversation;if(session.studio)delete session.studio.conversation;}
-  input={...rawInput,session,...(usesDisplayed?{requestedNoteQuantization:displayedSceneData(requestedNoteQuantization),requestedSessionClipboard:displayedSceneData(requestedSessionClipboard),requestedSessionSelection:displayedSceneData(requestedSessionSelection)}:{})};
+  input={...rawInput,session,...(usesDisplayed?{requestedNoteQuantization:displayedSceneData(requestedNoteQuantization),requestedSessionClipboard:displayedSceneData(requestedSessionClipboard),requestedSessionSelection:displayedSceneData(requestedSessionSelection),requestedNavigationPreservation:displayedSceneData(requestedNavigationPreservation)}:{})};
  }catch(error){throw new ApiError(400,'invalid_agent_request',error.message);}
  await onPhase('drafting');
  const draft=await invoke(input);
@@ -55,7 +58,7 @@ The exact navigation action shape is {"type":"command","args":{"name":"select","
  // Never execute or return an unreviewed draft after a failed review.
  await onPhase('reviewing');
  const reviewed=await invoke({...input,draft},true);
- if(usesDisplayed&&!reviewed.question)try{normalizeAgentActions(reviewed.actions,{displayOnly:true});checkCreationSceneRequirement(reviewed.actions,requestedCreationScene);checkCreationLaunchRequirement(reviewed.actions,requestedCreationLaunch);}catch(error){throw new ApiError(502,'invalid_agent_plan',error.message);}
+ if(!reviewed.question)try{if(usesDisplayed){normalizeAgentActions(reviewed.actions,{displayOnly:true});checkCreationSceneRequirement(reviewed.actions,requestedCreationScene);checkCreationLaunchRequirement(reviewed.actions,requestedCreationLaunch);}checkNavigationCommands(reviewed.actions,requestedNavigationPreservation);for(const action of reviewed.actions)if(action.type==='notes')validateNoteActionShape(typeof action.args==='string'?JSON.parse(action.args):action.args);}catch(error){throw new ApiError(502,'invalid_agent_plan',error.message);}
  return {...reviewed,reviewed:true,model};
 }
 function readPlan(result){

@@ -118,7 +118,7 @@ function withoutMedia(v){if(Array.isArray(v))return v.map(withoutMedia);if(v&&ty
 export function agentContext(p){
  // Never upload encoded media. Bounds keep accidental giant MIDI sessions out of prompts.
  const clips=Object.values(p.clips).map(({data,...c})=>({...c,...(c.kind==='midi'?{noteCount:c.notes?.length??0,notes:(c.notes||[]).slice(0,256).map((note,index)=>({...note,index,pitchName:midiPitchName(note.pitch)})),...(c.notes?.length>256?{notesTruncated:true}:{})}:{}),...(data?{audioBytes:Math.floor(data.length*.75)}:{})}));
- return {planningTransport:{version:1},sceneAddressing:{version:SCENE_ADDRESSING_VERSION},automationTargets:automationChannelsForContext(p),project:{...withoutMedia(p),clips:Object.fromEntries(clips.map(c=>[c.id,withoutMedia(c)]))},capabilities:agentActions,effects:Object.fromEntries(Object.entries(DEVICE_TYPES).map(([k,v])=>[k,{name:v.name,params:v.params}]))};
+ return {navigationPreservation:{version:1},planningTransport:{version:1},sceneAddressing:{version:SCENE_ADDRESSING_VERSION},automationTargets:automationChannelsForContext(p),project:{...withoutMedia(p),clips:Object.fromEntries(clips.map(c=>[c.id,withoutMedia(c)]))},capabilities:agentActions,effects:Object.fromEntries(Object.entries(DEVICE_TYPES).map(([k,v])=>[k,{name:v.name,params:v.params}]))};
 }
 
 function automationChannelsForContext(p){return [...p.tracks,...(p.returns||[])].map(t=>({trackId:t.id,trackName:t.name,targets:automationTargetContext(t,p.returns)}));}

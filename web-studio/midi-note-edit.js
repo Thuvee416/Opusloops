@@ -31,11 +31,20 @@ export function noteIndices(clip,args,{allowEmpty=false}={}){
 const parameters={add:['notes'],update:['patch'],transpose:['amount'],velocity:['amount'],quantize:['grid','strength','gridMode','target'],move:['deltaBeats','deltaPitch','grid'],stretch:['factor'],split:['at'],chop:['parts'],duplicate:['at'],reverse:[],invert:[],legato:[],join:[],delete:[],activate:[],deactivate:[],'toggle-active':[]};
 const patchKeys=['pitch','start','duration','velocity','active','releaseVelocity'];
 function validatePatch(patch){if(!patch||typeof patch!=='object'||Array.isArray(patch)||!Object.keys(patch).length||Object.keys(patch).some(k=>!patchKeys.includes(k)))throw new Error('Note patches accept pitch, start, duration, velocity, active and releaseVelocity only.');}
+// Shape validation is also safe on the server’s bounded read-only preview.
+// Bounds and musical edits still require the full local source clip.
+export function validateNoteActionShape(args){
+ if(!args||typeof args!=='object'||Array.isArray(args))throw new Error('Expected MIDI Note Action Arguments.');
+ const {clipId,action,...options}=args,fields=Object.hasOwn(parameters,action)?parameters[action]:null;
+ if(!fields||Object.keys(options).some(k=>!fields.includes(k)&&!(action!=='add'&&NOTE_SELECTORS.includes(k))))throw new Error('Unsupported MIDI note action or argument. Read the notes capability contract.');
+ if(action!=='add'&&NOTE_SELECTORS.filter(k=>Object.hasOwn(options,k)).length!==1)throw new Error('Choose exactly one note selector: all:true, indices:[zero-based note indices], or where:{start?,end?,pitchMin?,pitchMax?,active?}.');
+ if(Object.hasOwn(options,'all')&&options.all!==true)throw new Error('Use all:true to choose every note.');
+ return {action,options};
+}
 // Edits operate on the full local clip, never on the model's truncated preview.
 export function editMidiNotes(clip,args){
  if(clip?.kind!=='midi')throw new Error('Select a MIDI clip.');
- const {clipId,action,...options}=args,fields=Object.hasOwn(parameters,action)?parameters[action]:null;
- if(!fields||Object.keys(options).some(k=>!fields.includes(k)&&!(action!=='add'&&NOTE_SELECTORS.includes(k))))throw new Error('Unsupported MIDI note action or argument. Read the notes capability contract.');
+ const {action,options}=validateNoteActionShape(args);
  const indices=action==='add'?[]:noteIndices(clip,options),before=clip.notes;
  for(const key of ({transpose:['amount'],velocity:['amount'],quantize:['grid'],stretch:['factor'],split:['at'],chop:['parts']}[action]||[]))if(!Object.hasOwn(options,key))throw new Error('MIDI '+action+' requires '+key+'.');
  if(action==='move'&&options.deltaBeats===undefined&&options.deltaPitch===undefined)throw new Error('MIDI move needs deltaBeats or deltaPitch.');

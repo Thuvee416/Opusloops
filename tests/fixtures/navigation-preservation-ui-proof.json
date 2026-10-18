@@ -1,0 +1,438 @@
+{
+  "baseline": "/Users/thuveem4/Downloads/Session-Clipboard-QA (33).opusloop",
+  "baselineSha256": "477a5016e11bf862200015d38e05a1bfb720b0ef4b863ab36d697fff17808e5d",
+  "startupNormalization": "Default Scene Names Intro/Lift/Breakdown/Return",
+  "cases": [
+    {
+      "step": "copy-devices",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (34).opusloop",
+      "wholeProjectOracle": true
+    },
+    {
+      "step": "copy-time-scope-collapsed-panel",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (40).opusloop",
+      "wholeProjectOracle": true
+    },
+    {
+      "step": "absolute-note-velocity",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (36).opusloop",
+      "wholeProjectOracle": true
+    },
+    {
+      "step": "arrangement-move",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (38).opusloop",
+      "wholeProjectOracle": true
+    },
+    {
+      "step": "one-undo",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (35).opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "one-undo",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (37).opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "one-undo",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (39).opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "one-undo",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (41).opusloop",
+      "byteIdenticalBaseline": true
+    },
+    {
+      "step": "conflicting-selected-track-removal-rejected-three-times",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (42).opusloop",
+      "byteIdenticalBaseline": true,
+      "kind": "Controlled Invalid Plan Fixture, Not Real Provider Output"
+    },
+    {
+      "step": "redo-survives-rejected-plan",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (43).opusloop",
+      "byteIdenticalCopy": true
+    },
+    {
+      "step": "undo-redo-recovery",
+      "file": "/Users/thuveem4/Downloads/Session-Clipboard-QA (44).opusloop",
+      "byteIdenticalBaseline": true
+    }
+  ],
+  "receipts": [
+    {
+      "kind": "copy",
+      "actual": {
+        "scopes": [
+          "selection",
+          "view",
+          "panel"
+        ],
+        "state": {
+          "selection": {
+            "trackId": "a",
+            "scene": 0,
+            "clipId": "x"
+          },
+          "selectedSession": [
+            {
+              "trackId": "a",
+              "scene": 0,
+              "clipId": "x"
+            },
+            {
+              "trackId": "b",
+              "scene": 0,
+              "clipId": "z"
+            }
+          ],
+          "sessionAnchor": {
+            "trackId": "b",
+            "scene": 0
+          },
+          "selectedTracks": [],
+          "selectedRegion": null,
+          "selectedRegions": [],
+          "selectedScene": 0,
+          "noteSelection": {
+            "clipId": "x",
+            "indices": [
+              1
+            ],
+            "primaryIndex": 1
+          },
+          "timeSelection": null,
+          "deviceTrackId": "room",
+          "view": "session",
+          "detailPanel": "devices",
+          "detailExpanded": true,
+          "detailHeightPercent": 20
+        }
+      },
+      "independentExpectedState": true
+    },
+    {
+      "kind": "notes",
+      "actual": {
+        "scopes": [
+          "selection",
+          "view",
+          "panel"
+        ],
+        "state": {
+          "selection": {
+            "trackId": "a",
+            "scene": 0,
+            "clipId": "x"
+          },
+          "selectedSession": [
+            {
+              "trackId": "a",
+              "scene": 0,
+              "clipId": "x"
+            },
+            {
+              "trackId": "b",
+              "scene": 0,
+              "clipId": "z"
+            }
+          ],
+          "sessionAnchor": {
+            "trackId": "b",
+            "scene": 0
+          },
+          "selectedTracks": [],
+          "selectedRegion": null,
+          "selectedRegions": [],
+          "selectedScene": 0,
+          "noteSelection": {
+            "clipId": "x",
+            "indices": [
+              1
+            ],
+            "primaryIndex": 1
+          },
+          "timeSelection": null,
+          "deviceTrackId": "room",
+          "view": "session",
+          "detailPanel": "devices",
+          "detailExpanded": true,
+          "detailHeightPercent": 20
+        }
+      },
+      "independentExpectedState": true
+    },
+    {
+      "kind": "arrangement",
+      "actual": {
+        "scopes": [
+          "selection",
+          "view",
+          "panel"
+        ],
+        "state": {
+          "selection": {
+            "trackId": "a",
+            "clipId": "x"
+          },
+          "selectedSession": [
+            {
+              "trackId": "a",
+              "scene": 0,
+              "clipId": "x"
+            },
+            {
+              "trackId": "b",
+              "scene": 0,
+              "clipId": "z"
+            }
+          ],
+          "sessionAnchor": {
+            "trackId": "b",
+            "scene": 0
+          },
+          "selectedTracks": [],
+          "selectedRegion": "reference",
+          "selectedRegions": [
+            "reference"
+          ],
+          "selectedScene": 0,
+          "noteSelection": {
+            "clipId": "x",
+            "indices": [
+              1
+            ],
+            "primaryIndex": 1
+          },
+          "timeSelection": null,
+          "deviceTrackId": "room",
+          "view": "arrangement",
+          "detailPanel": "devices",
+          "detailExpanded": true,
+          "detailHeightPercent": 20
+        }
+      },
+      "independentExpectedState": true
+    },
+    {
+      "kind": "time",
+      "actual": {
+        "scopes": [
+          "selection",
+          "view",
+          "panel"
+        ],
+        "state": {
+          "selection": {
+            "trackId": "a",
+            "clipId": "x"
+          },
+          "selectedSession": [
+            {
+              "trackId": "a",
+              "scene": 0,
+              "clipId": "x"
+            },
+            {
+              "trackId": "b",
+              "scene": 0,
+              "clipId": "z"
+            }
+          ],
+          "sessionAnchor": {
+            "trackId": "b",
+            "scene": 0
+          },
+          "selectedTracks": [],
+          "selectedRegion": null,
+          "selectedRegions": [],
+          "selectedScene": 0,
+          "noteSelection": {
+            "clipId": "x",
+            "indices": [
+              1
+            ],
+            "primaryIndex": 1
+          },
+          "timeSelection": {
+            "start": 2,
+            "length": 4,
+            "trackIds": [
+              "a"
+            ]
+          },
+          "deviceTrackId": "room",
+          "view": "arrangement",
+          "detailPanel": "devices",
+          "detailExpanded": false,
+          "detailHeightPercent": 20
+        }
+      },
+      "independentExpectedState": true
+    }
+  ],
+  "dom": {
+    "sessionBefore": {
+      "device": "Room",
+      "expanded": "true",
+      "panel": "devices",
+      "size": "20",
+      "slots": [
+        {
+          "label": "Folder, Scene 1, Group Slot",
+          "primary": "false"
+        },
+        {
+          "label": "Lead, Scene 1, Shared Loop",
+          "primary": "true"
+        },
+        {
+          "label": "Bass, Scene 1, Bass Loop",
+          "primary": "false"
+        }
+      ],
+      "view": "session"
+    },
+    "timeBefore": {
+      "device": "Room",
+      "expanded": "false",
+      "panel": "devices",
+      "size": "20",
+      "slots": [
+        {
+          "label": "Folder, Scene 1, Group Slot",
+          "primary": "false"
+        },
+        {
+          "label": "Lead, Scene 1, Shared Loop",
+          "primary": "true"
+        },
+        {
+          "label": "Bass, Scene 1, Bass Loop",
+          "primary": "false"
+        }
+      ],
+      "view": "arrangement"
+    },
+    "timeAfter": {
+      "device": "Room",
+      "expanded": "false",
+      "panel": "devices",
+      "size": "20",
+      "slots": [
+        {
+          "label": "Folder, Scene 1, Group Slot",
+          "primary": "false"
+        },
+        {
+          "label": "Lead, Scene 1, Shared Loop",
+          "primary": "true"
+        },
+        {
+          "label": "Bass, Scene 1, Bass Loop",
+          "primary": "false"
+        }
+      ],
+      "view": "arrangement"
+    }
+  },
+  "consoleErrors": [],
+  "rejectionLog": "/tmp/opus-nav-local-rejection-log.txt",
+  "controlledJobs": {
+    "quota": 3,
+    "dispatches": 3,
+    "modelCalls": 3,
+    "requests": [
+      {
+        "path": "/functions/v1/studio-agent",
+        "id": "b3f95d34-6cde-40e8-b0ea-cc4888d02377",
+        "prompt": "Remove Lead. Preserve the selection, view and panel."
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "b3f95d34-6cde-40e8-b0ea-cc4888d02377",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "b3f95d34-6cde-40e8-b0ea-cc4888d02377",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "b3f95d34-6cde-40e8-b0ea-cc4888d02377",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent",
+        "id": "6d2b3234-5712-4850-8b93-a932d6da9f5a",
+        "prompt": "Remove Lead. Preserve the selection, view and panel."
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "6d2b3234-5712-4850-8b93-a932d6da9f5a",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "6d2b3234-5712-4850-8b93-a932d6da9f5a",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "6d2b3234-5712-4850-8b93-a932d6da9f5a",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent",
+        "id": "a612c8fd-b512-4152-8eb0-b3d59ee0809f",
+        "prompt": "Remove Lead. Preserve the selection, view and panel."
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a612c8fd-b512-4152-8eb0-b3d59ee0809f",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a612c8fd-b512-4152-8eb0-b3d59ee0809f",
+        "action": "status"
+      },
+      {
+        "path": "/functions/v1/studio-agent-jobs",
+        "id": "a612c8fd-b512-4152-8eb0-b3d59ee0809f",
+        "action": "status"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "b3f95d34-6cde-40e8-b0ea-cc4888d02377",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792352217543,
+        "finishedAt": 1792352220747
+      },
+      {
+        "id": "6d2b3234-5712-4850-8b93-a932d6da9f5a",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792352222108,
+        "finishedAt": 1792352225315
+      },
+      {
+        "id": "a612c8fd-b512-4152-8eb0-b3d59ee0809f",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792352226677,
+        "finishedAt": 1792352229882
+      }
+    ]
+  }
+}

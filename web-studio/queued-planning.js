@@ -45,7 +45,7 @@ export async function queuedPlanning(body,{request,signal,onProgress=()=>{},now=
 }
 
 export function planningStateFingerprint(studio={}){
- const data=Object.fromEntries(['view','playing','performanceMode','insertMarker','selection','selectedSession','selectedTracks','selectedRegion','selectedRegions','selectedScene','noteSelection','noteQuantization','foldedGroups','deviceTrackId','detailPanel','detailExpanded','delivery'].map(key=>[key,studio[key]??null]));
+ const data=Object.fromEntries(['view','playing','performanceMode','insertMarker','selection','selectedSession','sessionAnchor','selectedTracks','selectedRegion','selectedRegions','selectedScene','noteSelection','noteQuantization','foldedGroups','deviceTrackId','detailPanel','detailExpanded','detailHeightPercent','timeSelection','delivery'].map(key=>[key,studio[key]??null]));
  data.recordingPreferences=Object.fromEntries(['mode','source','trackId','countInBars','audioConnected','recordQuantization'].map(key=>[key,studio.recording?.[key]??null]));
  return JSON.stringify(data,(_,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(key=>[key,value[key]])):value);
 }

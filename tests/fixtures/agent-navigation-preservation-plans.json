@@ -1,0 +1,519 @@
+{
+  "project": {
+    "format": "opus-loops",
+    "version": 1,
+    "name": "Session Clipboard QA",
+    "master": 0.8,
+    "bpm": 120,
+    "transport": {
+      "loopEnabled": false,
+      "loopStart": 0,
+      "loopEnd": 16,
+      "metronome": false,
+      "launchQuantization": 0
+    },
+    "scenes": 4,
+    "tracks": [
+      {
+        "id": "g",
+        "name": "Folder",
+        "color": "#d9a359",
+        "volume": 0.7,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "devices": [],
+        "slots": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "group": true
+      },
+      {
+        "id": "a",
+        "name": "Lead",
+        "color": "#8faed6",
+        "volume": 0.7,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "devices": [],
+        "slots": [
+          "x",
+          "y",
+          null,
+          null
+        ],
+        "parentId": "g",
+        "instrument": {
+          "type": "poly",
+          "wave": "sine",
+          "attack": 0.008,
+          "decay": 0.18,
+          "sustain": 0.65,
+          "release": 0.25,
+          "cutoff": 8000,
+          "resonance": 0.7,
+          "detune": 0,
+          "transpose": 0,
+          "level": 0.23
+        }
+      },
+      {
+        "id": "b",
+        "name": "Bass",
+        "color": "#b4a1d5",
+        "volume": 0.7,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "devices": [],
+        "slots": [
+          "z",
+          null,
+          "x",
+          null
+        ],
+        "parentId": "g",
+        "instrument": {
+          "type": "poly",
+          "wave": "sine",
+          "attack": 0.008,
+          "decay": 0.18,
+          "sustain": 0.65,
+          "release": 0.25,
+          "cutoff": 8000,
+          "resonance": 0.7,
+          "detune": 0,
+          "transpose": 0,
+          "level": 0.23
+        }
+      }
+    ],
+    "clips": {
+      "x": {
+        "id": "x",
+        "name": "Shared Loop",
+        "kind": "midi",
+        "sourceBpm": 120,
+        "beats": 4,
+        "notes": [
+          {
+            "pitch": 60,
+            "start": 0,
+            "duration": 3.5,
+            "velocity": 0.5
+          },
+          {
+            "pitch": 64,
+            "start": 1,
+            "duration": 1,
+            "velocity": 0.7
+          }
+        ]
+      },
+      "y": {
+        "id": "y",
+        "name": "Lead Variation",
+        "kind": "midi",
+        "sourceBpm": 120,
+        "beats": 4,
+        "notes": [
+          {
+            "pitch": 64,
+            "start": 0,
+            "duration": 3.5,
+            "velocity": 0.5
+          }
+        ]
+      },
+      "z": {
+        "id": "z",
+        "name": "Bass Loop",
+        "kind": "midi",
+        "sourceBpm": 120,
+        "beats": 4,
+        "notes": [
+          {
+            "pitch": 48,
+            "start": 0,
+            "duration": 3.5,
+            "velocity": 0.5
+          }
+        ]
+      }
+    },
+    "arrangement": [
+      {
+        "id": "reference",
+        "trackId": "a",
+        "clipId": "x",
+        "start": 0,
+        "length": 4,
+        "offset": 0
+      }
+    ],
+    "returns": [
+      {
+        "id": "room",
+        "name": "Room",
+        "volume": 0.7,
+        "pan": 0,
+        "mute": false,
+        "color": "#c5ae83",
+        "devices": [
+          {
+            "id": "baf2444d-d3ee-40b8-961d-271bbff0eb98",
+            "type": "reverb",
+            "enabled": true,
+            "params": {
+              "decay": 1.8,
+              "mix": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "session-copy",
+      "prompt": "Copy the complete Session rectangle from Lead scene 1 through Bass scene 1 to Lead scene 4. Keep the source clips and all other project data unchanged. Do not start playback or change the selection, view or panel.",
+      "studio": {
+        "view": "session",
+        "playing": false,
+        "performanceMode": "session",
+        "selection": {
+          "trackId": "a",
+          "scene": 0,
+          "clipId": "x"
+        },
+        "selectedSession": [
+          {
+            "trackId": "a",
+            "scene": 0,
+            "clipId": "x"
+          },
+          {
+            "trackId": "b",
+            "scene": 0,
+            "clipId": "z"
+          }
+        ],
+        "sessionAnchor": {
+          "trackId": "a",
+          "scene": 0
+        },
+        "selectedTracks": [
+          "a",
+          "b"
+        ],
+        "selectedRegion": null,
+        "selectedRegions": [],
+        "selectedScene": 0,
+        "noteSelection": {
+          "clipId": "x",
+          "indices": [
+            1
+          ],
+          "primaryIndex": 1
+        },
+        "timeSelection": null,
+        "deviceTrackId": "room",
+        "detailPanel": "devices",
+        "detailExpanded": true,
+        "detailHeightPercent": 20
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 5141,
+          "result": {
+            "summary": "Copy the complete Session rectangle from Lead scene 1 through Bass scene 1 to Lead scene 4. Keep the source clips and all other project data unchanged. Do not start playback or change the selection, view or panel.",
+            "actions": [
+              {
+                "type": "session_clips",
+                "args": {
+                  "action": "copy",
+                  "slots": [
+                    {
+                      "trackId": "a",
+                      "sceneNumber": 1,
+                      "clipId": "x"
+                    },
+                    {
+                      "trackId": "b",
+                      "sceneNumber": 1,
+                      "clipId": "z"
+                    }
+                  ],
+                  "destination": {
+                    "trackId": "a",
+                    "sceneNumber": 4
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          },
+          "passed": true
+        }
+      ],
+      "result": {
+        "summary": "Copy the complete Session rectangle from Lead scene 1 through Bass scene 1 to Lead scene 4. Keep the source clips and all other project data unchanged. Do not start playback or change the selection, view or panel.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "action": "copy",
+              "slots": [
+                {
+                  "trackId": "a",
+                  "sceneNumber": 1,
+                  "clipId": "x"
+                },
+                {
+                  "trackId": "b",
+                  "sceneNumber": 1,
+                  "clipId": "z"
+                }
+              ],
+              "destination": {
+                "trackId": "a",
+                "sceneNumber": 4
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "note-subset-preserved",
+      "prompt": "Set the velocity of every note in the MIDI clip named Shared Loop to exactly 0.4. Preserve the current selection, view and panel. Make no other edits or playback commands.",
+      "studio": {
+        "view": "session",
+        "playing": false,
+        "performanceMode": "session",
+        "selection": {
+          "trackId": "a",
+          "scene": 0,
+          "clipId": "x"
+        },
+        "selectedSession": [
+          {
+            "trackId": "a",
+            "scene": 0,
+            "clipId": "x"
+          },
+          {
+            "trackId": "b",
+            "scene": 0,
+            "clipId": "z"
+          }
+        ],
+        "sessionAnchor": {
+          "trackId": "a",
+          "scene": 0
+        },
+        "selectedTracks": [
+          "a",
+          "b"
+        ],
+        "selectedRegion": null,
+        "selectedRegions": [],
+        "selectedScene": 0,
+        "noteSelection": {
+          "clipId": "x",
+          "indices": [
+            1
+          ],
+          "primaryIndex": 1
+        },
+        "timeSelection": null,
+        "deviceTrackId": "room",
+        "detailPanel": "devices",
+        "detailExpanded": true,
+        "detailHeightPercent": 20
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 3156,
+          "result": {
+            "summary": "Set the velocity of every note in the MIDI clip named Shared Loop to exactly 0.4. Preserve the current selection, view and panel.",
+            "actions": [
+              {
+                "type": "notes",
+                "args": {
+                  "clipId": "x",
+                  "action": "update",
+                  "all": true,
+                  "patch": {
+                    "velocity": 0.4
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          },
+          "passed": true
+        }
+      ],
+      "result": {
+        "summary": "Set the velocity of every note in the MIDI clip named Shared Loop to exactly 0.4. Preserve the current selection, view and panel.",
+        "actions": [
+          {
+            "type": "notes",
+            "args": {
+              "clipId": "x",
+              "action": "update",
+              "all": true,
+              "patch": {
+                "velocity": 0.4
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "arrangement-region-preserved",
+      "prompt": "Move the Arrangement region with ID reference to start at beat 8 (zero-based), keeping its track, source, length and offset unchanged. Preserve the selection, view and panel. No other edits or commands.",
+      "studio": {
+        "view": "arrangement",
+        "playing": false,
+        "performanceMode": "session",
+        "selection": {
+          "trackId": "a",
+          "clipId": "x"
+        },
+        "selectedSession": [
+          {
+            "trackId": "a",
+            "scene": 0,
+            "clipId": "x"
+          },
+          {
+            "trackId": "b",
+            "scene": 0,
+            "clipId": "z"
+          }
+        ],
+        "sessionAnchor": {
+          "trackId": "a",
+          "scene": 0
+        },
+        "selectedTracks": [
+          "a",
+          "b"
+        ],
+        "selectedRegion": "reference",
+        "selectedRegions": [
+          "reference"
+        ],
+        "selectedScene": 0,
+        "noteSelection": {
+          "clipId": "x",
+          "indices": [
+            1
+          ],
+          "primaryIndex": 1
+        },
+        "timeSelection": null,
+        "deviceTrackId": "room",
+        "detailPanel": "devices",
+        "detailExpanded": true,
+        "detailHeightPercent": 20
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsedMs": 3325,
+          "result": {
+            "summary": "Move the Arrangement region with ID reference to start at beat 8 (zero-based), keeping its track, source, length and offset unchanged. Preserve the selection, view and panel.",
+            "actions": [
+              {
+                "type": "region",
+                "args": {
+                  "id": "reference",
+                  "start": 8
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          },
+          "passed": true
+        }
+      ],
+      "result": {
+        "summary": "Move the Arrangement region with ID reference to start at beat 8 (zero-based), keeping its track, source, length and offset unchanged. Preserve the selection, view and panel.",
+        "actions": [
+          {
+            "type": "region",
+            "args": {
+              "id": "reference",
+              "start": 8
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "passed": true
+    }
+  ]
+}

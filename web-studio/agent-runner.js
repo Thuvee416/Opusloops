@@ -1,3 +1,4 @@
+import {prepareNavigationPreservation,checkNavigationPreserved} from './navigation-preservation.js';
 import {checkCreationLaunchRequirement} from './midi-creation-requirements.js';
 import {normalizeAgentActions,checkCreationSceneRequirement} from './agent-addressing.js';
 import {checkClipPropertyRequirements} from './clip-property-requirements.js';
@@ -16,7 +17,7 @@ const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null,creationLaunchRequirement=null}={}) {
+export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null,creationLaunchRequirement=null,navigationPreservation=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   actions=normalizeAgentActions(actions);
   checkCreationLaunchRequirement(actions,creationLaunchRequirement);
@@ -64,20 +65,25 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null,qu
   const liveSessionActive=edits.length>0&&edits.every(a=>a.type==='session_clips'&&decode(a).action==='active')&&sessionActivationOnly(project,next);
   const clipPropertyIntent=checkClipPropertyRequirements(project,{next,before,after,editCount:edits.length},clipPropertyRequirements);
   const clipboardIntent=checkSessionClipboardRequirements(project,{next,prepared,before,after,edits,editCount:edits.length},sessionClipboardRequirements,sessionClipboard);
+  const preservation=prepareNavigationPreservation(project,next,actions,navigationPreservation);
   const selectionIntent=checkSessionSelectionRequirements(project,{next,before,after,editCount:edits.length},sessionSelectionRequirements);
-  return {next, prepared,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  return {next, prepared,navigationPreservation:preservation,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
-export async function runAgentPlan(plan, {getProject,getRecording,getClipboard, expected, locked, commit, execute, signal, onStep = () => {}}) {
+export async function runAgentPlan(plan, {getProject,getRecording,getClipboard,getNavigation, expected, locked, commit, execute, signal, onStep = () => {}}) {
   let fingerprint = expected, editsApplied = false;
   let captureBinding=plan.recordingBinding,recordingApplied=false;
   if(plan.recording&&!getRecording)throw new Error('Recording control requires a current take-state adapter.');
   const completedCommands = [], observations = [];
   const publicEdits=(plan.editObservations??[]).map(({clipboard,...observation})=>({...observation,...(clipboard?{clipboard:sessionClipboardSummary(clipboard)}:{})}));
   let commitStarted = false;
+  if(plan.navigationPreservation&&!getNavigation)throw new Error('Navigation Preservation Requires A Current Studio-State Adapter.');
+  let navigationEdited=false;
+  const verifyNavigation=()=>checkNavigationPreserved(plan.navigationPreservation?{...plan.navigationPreservation,expected:navigationEdited?plan.navigationPreservation.expected:plan.navigationPreservation.beforeExpected??plan.navigationPreservation.expected}:null,getNavigation?.());
   if(plan.clipboardUsed&&!getClipboard)throw new Error('Session paste requires a current clipboard adapter.');
   const check = () => {
     signal.throwIfAborted();
+    verifyNavigation();
     if(plan.clipboardUsed&&!commitStarted&&getClipboard()?.revision!==plan.clipboardRevision)throw new Error('Session clipboard changed. Remaining actions stopped.');
     if (signature(getProject()) !== fingerprint || locked('request')) throw new Error('The session changed while executing. Remaining actions stopped.');
     if(getRecording)assertRecordingBinding(captureBinding,getRecording());
@@ -95,6 +101,7 @@ export async function runAgentPlan(plan, {getProject,getRecording,getClipboard, 
     if(plan.clipboardIntent?.command===command)checkSessionClipboardReceipt(plan.clipboardIntent,result);
     observations.push({name:command.name, result:result ?? null});
     completedCommands.push(command.name);
+    verifyNavigation();
     const deliveryCheck=plan.deliveryChecks?.get(command);
     checkDeliveryReceipt(plan.next,result,deliveryCheck);
     if(deliveryCheck)result={...result,...(Object.keys(deliveryCheck.requested).length?{requestedSettingsVerified:deliveryCheck.requested}:{}),...(deliveryCheck.requiredFormat?{requestedFileTypeVerified:deliveryCheck.requiredFormat}:{})};
@@ -112,16 +119,18 @@ export async function runAgentPlan(plan, {getProject,getRecording,getClipboard, 
       if(intended!==fingerprint){
         if (locked(plan.liveSessionActive?'session-live':'edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
         commitStarted = true;
-        commit(plan.next,plan.editObservations??[]);
-        editsApplied = true;
+        commit(plan.next,plan.editObservations??[],{navigationPreservation:plan.navigationPreservation});
+        editsApplied = true;navigationEdited=true;
         fingerprint = signature(getProject());
         if (fingerprint !== intended) throw new Error('The applied project does not match the validated plan.');
       }
       onStep({type:'edits', count:editsApplied?plan.editCount:0,unchanged:!editsApplied,observations:publicEdits});
     }
+    verifyNavigation();
     for (const command of plan.after) await run(command);
+    const preservedNavigation=verifyNavigation();if(preservedNavigation)onStep({type:'verified_navigation',check:preservedNavigation});
     if(plan.quantizeCheck)onStep({type:'verified_notes',check:plan.quantizeCheck});
-    return {editsApplied,recordingApplied,...(plan.quantizeCheck?{quantizeVerified:plan.quantizeCheck}:{}),projectUnchanged:plan.editCount>0&&!editsApplied, completedCommands, observations,editObservations:publicEdits};
+    return {editsApplied,recordingApplied,...(preservedNavigation?{preservedNavigation}:{}),...(plan.quantizeCheck?{quantizeVerified:plan.quantizeCheck}:{}),projectUnchanged:plan.editCount>0&&!editsApplied, completedCommands, observations,editObservations:publicEdits};
   } catch (error) {
     // Preserve what actually happened: downloads/transport cannot be undone by
     // restoring a project, and a failed export must not hide committed edits.
