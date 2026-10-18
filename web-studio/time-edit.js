@@ -21,32 +21,37 @@ export function shiftEnvelope(envelope,action,start,length){
 export function validateTimeRange(start,length){
   if(!Number.isFinite(start)||!Number.isFinite(length)||start<0||length<.25||start+length>16384||start*4%1||length*4%1)throw new Error('Use quarter-beat positions and a time range of at least 0.25 beats within beats 1–16385.');
 }
-export function editArrangementTime(project,action,start,length){
+export function timeTrackScope(project,trackIds=null){
+ if(trackIds===null)return null;
+ if(!Array.isArray(trackIds)||!trackIds.length||new Set(trackIds).size!==trackIds.length||trackIds.some(id=>!project.tracks.some(t=>t.id===id)))throw new Error('Choose at least one existing track for the time edit.');
+ return new Set(trackIds);
+}
+export function editArrangementTime(project,action,start,length,trackIds=null){
   if(!['insert','delete'].includes(action))throw new Error('Choose Insert or Delete time.');validateTimeRange(start,length);
-  const next=structuredClone(project),end=start+length,move=beat=>mapTime(beat,action,start,length);
-  next.arrangement=project.arrangement.flatMap(r=>{const stop=r.start+r.length;if(stop<=start)return [{...r}];if(action==='insert'){
+  const scope=timeTrackScope(project,trackIds),next=structuredClone(project),end=start+length,move=beat=>mapTime(beat,action,start,length);
+  next.arrangement=project.arrangement.flatMap(r=>{if(scope&&!scope.has(r.trackId))return [{...r}];const stop=r.start+r.length;if(stop<=start)return [{...r}];if(action==='insert'){
     if(r.start>=start)return [{...r,start:r.start+length}];
     return [{...r,length:start-r.start},{...r,id:uid(),start:end,length:stop-start,offset:r.offset+start-r.start}];
   }
   if(r.start>=end)return [{...r,start:r.start-length}];
   const parts=[];if(r.start<start)parts.push({...r,length:start-r.start});if(stop>end)parts.push({...r,id:parts.length?uid():r.id,start,offset:r.offset+end-r.start,length:stop-end});return parts;
   });
-  if(next.locators)next.locators=next.locators.filter(l=>action==='insert'||l.beat<start||l.beat>=end).map(l=>({...l,beat:move(l.beat)}));
-  for(const channel of automationChannels(next))for(const target of automationTargets(channel,next.returns)){if(!target.envelope)continue;target.owner.automation={...target.owner.automation,[target.paramKey]:shiftEnvelope(target.envelope,action,start,length)};}
-  if(next.transport){const t=next.transport;t.loopStart=move(t.loopStart);t.loopEnd=move(t.loopEnd);if(t.loopEnd-t.loopStart<.25){t.loopEnabled=false;t.loopStart=Math.min(t.loopStart,16383.75);t.loopEnd=t.loopStart+.25;}}
+  if(!scope&&next.locators)next.locators=next.locators.filter(l=>action==='insert'||l.beat<start||l.beat>=end).map(l=>({...l,beat:move(l.beat)}));
+  for(const channel of automationChannels(next).filter(c=>!scope||scope.has(c.id)))for(const target of automationTargets(channel,next.returns)){if(!target.envelope)continue;target.owner.automation={...target.owner.automation,[target.paramKey]:shiftEnvelope(target.envelope,action,start,length)};}
+  if(!scope&&next.transport){const t=next.transport;t.loopStart=move(t.loopStart);t.loopEnd=move(t.loopEnd);if(t.loopEnd-t.loopStart<.25){t.loopEnabled=false;t.loopStart=Math.min(t.loopStart,16383.75);t.loopEnd=t.loopStart+.25;}}
   if(next.arrangement.some(r=>r.start+r.length>16384))throw new Error('The edit would move regions past the timeline limit.');
   validateProject(next);return next;
 }
 
-export function duplicateArrangementTime(project,start,length){
+export function duplicateArrangementTime(project,start,length,trackIds=null){
   // Inserting after the source preserves the original half-open range and
   // shifts later material before we populate the new span.
   if(!Number.isFinite(start)||start<0||start*4%1)throw new Error('Choose a valid quarter-beat start.');
-  const end=start+length,next=editArrangementTime(project,'insert',end,length);
-  for(const r of project.arrangement){const from=Math.max(start,r.start),to=Math.min(end,r.start+r.length);if(to<=from)continue;if(Object.keys(next.clips).length>=512)throw new Error('Duplicating this passage would exceed the 512-clip limit.');const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();next.clips[clip.id]=clip;next.arrangement.push({...r,id:uid(),clipId:clip.id,start:from+length,length:to-from,offset:r.offset+from-r.start});}
-  if(project.locators){next.locators.push(...project.locators.filter(l=>l.beat>=start&&l.beat<end).map(l=>({...l,id:uid(),beat:l.beat+length})));next.locators.sort((a,b)=>a.beat-b.beat);}
+  const scope=timeTrackScope(project,trackIds),end=start+length,next=editArrangementTime(project,'insert',end,length,trackIds);
+  for(const r of project.arrangement){if(scope&&!scope.has(r.trackId))continue;const from=Math.max(start,r.start),to=Math.min(end,r.start+r.length);if(to<=from)continue;if(Object.keys(next.clips).length>=512)throw new Error('Duplicating this passage would exceed the 512-clip limit.');const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();next.clips[clip.id]=clip;next.arrangement.push({...r,id:uid(),clipId:clip.id,start:from+length,length:to-from,offset:r.offset+from-r.start});}
+  if(!scope&&project.locators){next.locators.push(...project.locators.filter(l=>l.beat>=start&&l.beat<end).map(l=>({...l,id:uid(),beat:l.beat+length})));next.locators.sort((a,b)=>a.beat-b.beat);}
   const originals=new Map(automationChannels(project).map(c=>[c.id,c]));
-  for(const channel of automationChannels(next)){const sourceTargets=new Map(automationTargets(originals.get(channel.id),project.returns).map(t=>[t.key,t]));for(const target of automationTargets(channel,next.returns)){
+  for(const channel of automationChannels(next).filter(c=>!scope||scope.has(c.id))){const sourceTargets=new Map(automationTargets(originals.get(channel.id),project.returns).map(t=>[t.key,t]));for(const target of automationTargets(channel,next.returns)){
     const source=sourceTargets.get(target.key)?.envelope;if(!source?.points.length)continue;
     const active={...source,enabled:true},at=b=>envelopeValue(active,b,0),inside=source.points.filter(p=>p.beat>start&&p.beat<end),last=inside.at(-1)?.beat??start,guard=end-Math.min(1e-6,(end-last)/2);
     const copied=[{beat:end,value:at(start),curve:curveAt(source.points,start)},...inside.map(p=>({...p,beat:p.beat+length})),{beat:guard+length,value:at(guard),curve:curveAt(source.points,guard)}];

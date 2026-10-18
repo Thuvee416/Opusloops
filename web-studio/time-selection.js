@@ -15,10 +15,10 @@ export function scrollTimeSelection(view,direction,seconds,remainder=0){
  const atEdge=direction<0&&next.start===0||direction>0&&next.end===16384;
  return {view:next,remainder:atEdge?0:amount-steps};
 }
-export function installTimeSelection({timeline,startInput,lengthInput,modeButton,readout,getView,isLocked,onStart,onCommit,onPan,onChange}){
+export function installTimeSelection({timeline,startInput,lengthInput,modeButton,readout,getView,getTrackIds=()=>null,isLocked,onStart,onCommit,onPan,onChange}){
  let active=false,drag=null,suppressClick=false,frame=0,ends=null;
  const getRange=()=>{const start=Number(startInput.value)-1,length=Number(lengthInput.value);return Number.isFinite(start)&&Number.isFinite(length)&&start>=0&&length>=.25&&start+length<=16384&&start*4%1===0&&length*4%1===0?{start,length}:null;};
- function render(){onChange?.();timeline.querySelectorAll('.time-selection-range').forEach(el=>el.remove());const range=active&&getRange();readout.textContent=range?`Beats ${range.start+1}–${range.start+range.length+1} · all tracks · Shift+←/→ extends`:'Drag empty space or Shift-drag to select time';if(!range)return;const box=visibleInterval(range.start,range.length,getView());if(!box)return;for(const lane of timeline.querySelectorAll('.timeline-lane')){const el=document.createElement('div');el.className='time-selection-range';el.style.left=box.left+'%';el.style.width=box.width+'%';el.setAttribute('aria-hidden','true');lane.append(el);}}
+ function render(){onChange?.();timeline.querySelectorAll('.time-selection-range').forEach(el=>el.remove());const range=active&&getRange();readout.textContent=range?`Beats ${range.start+1}–${range.start+range.length+1} · ${getTrackIds()===null?'whole song':getTrackIds().length+' chosen tracks'} · Shift+←/→ extends`:'Drag empty space or Shift-drag to select time';if(!range)return;const box=visibleInterval(range.start,range.length,getView());if(!box)return;for(const lane of timeline.querySelectorAll('.timeline-lane')){const scope=getTrackIds();if(scope&&!scope.includes(lane.dataset.laneTrack)&&!lane.closest('.timeline-ruler'))continue;const el=document.createElement('div');el.className='time-selection-range';el.style.left=box.left+'%';el.style.width=box.width+'%';el.setAttribute('aria-hidden','true');lane.append(el);}}
  function set(range){startInput.value=range.start+1;lengthInput.value=range.length;active=true;render();}
  function release(pointer){if(timeline.hasPointerCapture(pointer))timeline.releasePointerCapture(pointer);}
  function stopScroll(){cancelAnimationFrame(frame);frame=0;}
