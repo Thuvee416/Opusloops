@@ -1,0 +1,122 @@
+{
+  "id": "copy-to",
+  "failures": [
+    {
+      "attempt": 1,
+      "error": "Choose Session delete, cut, active, duplicate, copy, move or paste.",
+      "plan": {
+        "summary": "Copied selected Session clips to Lead and Bass at Session scene 3.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "slots": [
+                {
+                  "trackId": "a",
+                  "scene": 0,
+                  "clipId": "x"
+                },
+                {
+                  "trackId": "b",
+                  "scene": 0,
+                  "clipId": "z"
+                }
+              ],
+              "destination": {
+                "trackId": "a",
+                "scene": 2
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "attempt": 2,
+      "error": "Choose Session delete, cut, active, duplicate, copy, move or paste.",
+      "plan": {
+        "summary": "Copied selected Session clips to Lead and Bass at Session scene 3.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "slots": [
+                {
+                  "trackId": "a",
+                  "scene": 0,
+                  "clipId": "x"
+                },
+                {
+                  "trackId": "b",
+                  "scene": 0,
+                  "clipId": "z"
+                }
+              ],
+              "destination": {
+                "trackId": "a",
+                "scene": 2
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "attempt": 3,
+      "error": "Choose Session delete, cut, active, duplicate, copy, move or paste.",
+      "plan": {
+        "summary": "Copied selected Session clips to Lead and Bass at Session scene 3.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "slots": [
+                {
+                  "trackId": "a",
+                  "scene": 0,
+                  "clipId": "x"
+                },
+                {
+                  "trackId": "b",
+                  "scene": 0,
+                  "clipId": "z"
+                }
+              ],
+              "destination": {
+                "trackId": "a",
+                "scene": 2
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

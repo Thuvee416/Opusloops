@@ -1,14 +1,18 @@
+import {sessionSlots,slotKey} from './session-batch.js';
 import {midiClip,noteIndices} from './midi-note-edit.js';
 import {isGroup} from './track-hierarchy.js';
 // View state only. The same selectors validate manual and agent navigation.
-export const SELECTION_KEYS=['target','trackId','clipId','scene','ids','primaryId','regionId','indices','all','where'];
+export const SELECTION_KEYS=['target','trackId','clipId','scene','ids','primaryId','regionId','indices','all','where','slots','primary'];
 export const DETAIL_PANELS=['clip','devices','recording','returns'];
 const fail=message=>{throw new Error(message);};
 export function selectionIntent(project,args){
  if(!args||typeof args!=='object'||Array.isArray(args))fail('Expected selection arguments.');
- const allowed={track:['target','trackId'],clip:['target','trackId','clipId','scene'],regions:['target','ids','primaryId'],notes:['target','clipId','regionId','trackId','scene','indices','all','where']}[args.target];
- if(!allowed)fail('Select target track, clip, regions or notes.');
+ const allowed={session:['target','slots','primary'],track:['target','trackId'],clip:['target','trackId','clipId','scene'],regions:['target','ids','primaryId'],notes:['target','clipId','regionId','trackId','scene','indices','all','where']}[args.target];
+ if(!allowed)fail('Select target track, clip, session, regions or notes.');
  const extra=Object.keys(args).filter(key=>!allowed.includes(key));if(extra.length)fail('Unsupported '+args.target+' selection fields: '+extra.join(', ')+'.');
+ if(args.target==='session'){
+  const slots=sessionSlots(project,args.slots,{expandGroups:true});let primary=args.primary?sessionSlots(project,[args.primary])[0]:slots[0];if(!slots.some(s=>slotKey(s)===slotKey(primary)))fail('The primary Session slot must be in the selected slots.');return {target:'session',slots,primary};
+ }
  if(args.target==='notes'){
   let placement,clipId;
   if(args.regionId!==undefined){
@@ -24,7 +28,7 @@ export function selectionIntent(project,args){
   return {target:'track',trackId:track.id};
  }
  if(args.target==='clip'){
-  const track=project.tracks.find(t=>t.id===args.trackId);if(!track)fail('Choose the regular track that owns the Session clip.');if(isGroup(track))fail('Group-slot multi-clip selection is not implemented. Select a contained clip or group devices, or use launch_group for contained playback.');
+  const track=project.tracks.find(t=>t.id===args.trackId);if(!track)fail('Choose the regular track that owns the Session clip.');if(isGroup(track))fail('Select group-contained Session slots with target session and slots:[{trackId,scene}], or choose a contained clip for target clip.');
   let scene=args.scene;
   if(scene===undefined){
    if(typeof args.clipId!=='string')fail('Choose a Session clipId or zero-based scene.');
@@ -45,6 +49,7 @@ export function detailPanelIntent(args){
  return args.panel;
 }
 export function describeNavigation(result){
+ if(result.target==='session')return 'Selected '+result.selectedSession.length+' Session Slots.';
  if(result.target==='notes')return 'Selected '+result.noteSelection.indices.length+' MIDI notes in '+result.clipName+'. Clip view open.';
  if(result.target==='track')return 'Showing devices for '+result.trackName+'.';
  if(result.target==='clip')return 'Selected '+result.clipName+' on '+result.trackName+', scene '+(result.selection.scene+1)+'. Clip view open.';

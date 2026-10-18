@@ -2,6 +2,7 @@ import {scheduleRegionFades} from './region-fades.js';
 // Keep contiguous windows on one source so resampling phase survives scheduler quanta.
 export class BufferScheduler {
  constructor(ctx,onNode=()=>{}){this.ctx=ctx;this.onNode=onNode;this.voices=new Map();}
+ release(trackId,time){const prefix=JSON.stringify([trackId]).slice(0,-1)+',';for(const [key,voice] of this.voices)if(key.startsWith(prefix)){voice.node.stop(time);this.voices.delete(key);}}
  schedule(target,buffer,rate,time,offset,duration,key,fade){
   const end=time+Math.min(duration,(buffer.duration-offset)/rate);if(end<=time)return;
   const previous=this.voices.get(key);

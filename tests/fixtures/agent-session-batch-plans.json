@@ -1,0 +1,156 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "copy-to",
+      "prompt": "Copy the selected Session clips down two scenes as one rectangle. Keep the sources and all notes unchanged. No other changes.",
+      "attempt": 1,
+      "failures": [],
+      "reviewed": true,
+      "plan": {
+        "summary": "Copied selected Session clips down two scenes as one rectangle.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "action": "copy",
+              "slots": [
+                {
+                  "trackId": "a",
+                  "scene": 0,
+                  "clipId": "x"
+                },
+                {
+                  "trackId": "b",
+                  "scene": 0,
+                  "clipId": "z"
+                }
+              ],
+              "destination": {
+                "trackId": "a",
+                "scene": 2
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "clipboard-copy",
+      "prompt": "Copy the selected two Session clips to the internal Session clipboard. Do not paste, edit the project or change the selection.",
+      "attempt": 1,
+      "failures": [],
+      "reviewed": true,
+      "plan": {
+        "summary": "Copied selected Session clips to the internal Session clipboard.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "session_clipboard",
+              "args": {
+                "action": "copy",
+                "slots": [
+                  {
+                    "trackId": "a",
+                    "scene": 0,
+                    "clipId": "x"
+                  },
+                  {
+                    "trackId": "b",
+                    "scene": 0,
+                    "clipId": "z"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "clipboard-paste",
+      "prompt": "Paste the existing internal Session clipboard at Lead, Session scene 3. Preserve its rectangle including the empty Bass slot in the second row. Keep the original sources and everything else unchanged. Do not reconstruct the clipboard.",
+      "attempt": 1,
+      "failures": [],
+      "reviewed": true,
+      "plan": {
+        "summary": "Pasted existing Session clipboard at Lead, Session scene 3.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "action": "paste",
+              "destination": {
+                "trackId": "a",
+                "scene": 2
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "live-active",
+      "prompt": "Deactivate only Shared Loop on Lead in Session scene 1 while playback keeps running. Do not change the source clip, the same clip on Bass, track mute, notes or Arrangement. No other changes.",
+      "attempt": 1,
+      "failures": [],
+      "reviewed": true,
+      "plan": {
+        "summary": "Deactivated Shared Loop on Lead in Session scene 1 while playback keeps running.",
+        "actions": [
+          {
+            "type": "session_clips",
+            "args": {
+              "action": "active",
+              "slots": [
+                {
+                  "trackId": "a",
+                  "scene": 0,
+                  "clipId": "x"
+                }
+              ],
+              "active": false
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

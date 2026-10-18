@@ -50,3 +50,9 @@
 /* The insert marker and moving playhead are separate transport positions. */
 .studio-shell .timeline-insert-marker{position:absolute;top:22px;bottom:0;width:1px;z-index:3;pointer-events:none;background:#337db7;border-left:1px dotted #d2e7f5}
 .studio-shell .timeline-insert-marker::before{content:'';position:absolute;top:-5px;left:-4px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #337db7}
+/* Deactivated Session placements remain editable and retain their source color identity. */
+.studio-shell .clip.inactive{background:#b9bdbc;border-color:#929b99;box-shadow:none}
+.studio-shell .clip.inactive .clip-select{color:#737c79;text-decoration:line-through;text-decoration-thickness:1px}
+.studio-shell .clip.inactive .launch,.studio-shell .clip.inactive.playing .launch{color:#828c88;background:#a9b2af}
+.studio-shell .slot.selected{box-shadow:inset 0 0 0 1px #253f39;background:#a5bdb6}
+.studio-shell .slot.selected .clip-select[aria-pressed=true]{background:transparent;color:inherit}

@@ -1,0 +1,53 @@
+{
+  "environment": "Controlled localhost Chrome; not production",
+  "actions": [
+    "Shift-click rectangle, Shift+Down includes empty cell",
+    "0 deactivates exact selected placements",
+    "Edit Copy/Paste retains empty Bass cell and inactive placements",
+    "Native Edit Undo removes pasted clips",
+    "Group slot label selects contained clips",
+    "Odesa activate/deactivate during actual playback preserves Play state",
+    "Native pointer drag moves both selected clips from row 1 to row 3"
+  ],
+  "download": {
+    "name": "Session-Clipboard-QA.opusloop",
+    "bytes": 1597,
+    "sha256": "5ab9b737bf994041706ba16c28aba77ae41b3391ae899fe719aece8364f68c0a"
+  },
+  "oracle": "Complete saved project deep-equal to independent expected slots/activation plus fixture. Original notes, shared source IDs, Arrangement, mixer/routing unchanged.",
+  "knownLimits": [
+    "CUA virtual clipboard intercepts native copy/paste chords; menu paths verified.",
+    "No physical-device or listening-quality claim."
+  ],
+  "clipboardAgentRoundTrip": {
+    "copyNoEdit": true,
+    "pasteMatchesIndependentProject": true,
+    "oneUndoByteIdentical": true,
+    "baselineSha256": "dc98797ff44013425686da8c2c2b055a1d49ade169f7afe49de6c0dd6baf40ae"
+  },
+  "audio": {
+    "status": "passed",
+    "scope": "Native Web Audio scheduling and independent PCM oracles; no physical-device or listening-quality claim.",
+    "cases": [
+      {
+        "kind": "offline_wav",
+        "arrangementSampleIdentical": true,
+        "inactiveSessionSilent": true,
+        "sharedOtherPlacementAudible": true,
+        "sampleRate": 48000
+      },
+      {
+        "kind": "instrument",
+        "transportContinues": true,
+        "inactiveNotScheduled": true,
+        "currentPhaseResume": true
+      },
+      {
+        "kind": "legacy_buffer",
+        "transportContinues": true,
+        "inactiveNotScheduled": true,
+        "currentPhaseResume": true
+      }
+    ]
+  }
+}
