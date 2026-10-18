@@ -25,7 +25,7 @@ export async function queuedPlanning(body,{request,signal,onProgress=()=>{},now=
    canceled(signal);
    if(job){
     if(job.status==='succeeded'){terminal=true;if(!job.result||typeof job.result.summary!=='string'||!Array.isArray(job.result.actions))throw fail('Odesa Did Not Return A Valid Plan. No Changes Were Applied.');complete=true;return job.result;}
-    if(job.status==='failed'){terminal=true;throw fail(String(job.error?.message||'Planning Could Not Finish. No Changes Were Applied.'),String(job.error?.code||'planning_unavailable'),Number(job.error?.status)||503);}
+    if(job.status==='failed'){terminal=true;const error=fail(String(job.error?.message||'Planning Could Not Finish. No Changes Were Applied.'),String(job.error?.code||'planning_unavailable'),Number(job.error?.status)||503);if(job.error?.quota)error.quota=job.error.quota;throw error;}
     if(job.status==='cancelled'){terminal=true;throw new DOMException('Planning Was Canceled. No Changes Were Applied.','AbortError');}
     if(job.status==='expired'){terminal=true;throw fail('This Planning Request Has Expired. Run It Again.','planning_expired',410);}
     progress(job);await wait(Math.min(pollInterval,Math.max(1,deadline-now())),signal);

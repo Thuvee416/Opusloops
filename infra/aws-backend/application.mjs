@@ -23,7 +23,7 @@ export function applicationTemplate({ outputs, account, region, codeKey, image, 
       ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
       Policies: [{ PolicyName: 'ApplicationServices', PolicyDocument: policy([
         { Effect: 'Allow', Action: 'bedrock:InvokeModel', Resource: 'arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-pro-v1:0' },
-        { Effect: 'Allow', Action: 'dynamodb:UpdateItem', Resource: attr('AgentUsage','Arn') },
+        { Effect: 'Allow', Action: ['dynamodb:UpdateItem','dynamodb:GetItem'], Resource: attr('AgentUsage','Arn') },
         { Effect: 'Allow', Action: ['dynamodb:GetItem','dynamodb:PutItem','dynamodb:UpdateItem'], Resource: attr('AgentPlans','Arn') },
         { Effect: 'Allow', Action: 'lambda:InvokeFunction', Resource: `arn:aws:lambda:${region}:${account}:function:opusloops-aws-database` },
         { Effect: 'Allow', Action: 'lambda:InvokeFunction', Resource: `arn:aws:lambda:${region}:${account}:function:opusloops-aws-api` },

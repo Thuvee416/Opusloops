@@ -24,7 +24,7 @@ export const planningStore={
  }
 };
 export const isPlannerEvent=event=>event?.source==='opusloops.agent-planner'&&event.version===1&&event.requestContext===undefined&&event.rawPath===undefined;
-const errorData=error=>error instanceof ApiError?{code:error.code,message:error.message,status:error.status}:{code:'planning_unavailable',message:'Planning Could Not Finish. No Project Changes Were Applied.',status:503};
+const errorData=error=>error instanceof ApiError?{code:error.code,message:error.message,status:error.status,...(error.quota?{quota:error.quota}:{})}:{code:'planning_unavailable',message:'Planning Could Not Finish. No Project Changes Were Applied.',status:503};
 const expired=()=>new ApiError(410,'planning_expired','This Planning Request Has Expired. Run The Request Again.');
 
 export function createPlanningJobs({store=planningStore,allowance=agentAllowance,planner=studioAgent,now=()=>Date.now(),newId=randomUUID,checkIntervalMs=1500,invoke=async event=>{const r=await lambda.send(new InvokeCommand({FunctionName:process.env.STUDIO_AGENT_PLANNER_FUNCTION,InvocationType:'Event',Payload:Buffer.from(JSON.stringify(event))}),{abortSignal:AbortSignal.timeout(8000)});if(r.StatusCode!==202)throw new Error('Planning Start Was Not Confirmed');}}={}){

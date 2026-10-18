@@ -41,7 +41,7 @@ export function createAgentSession({privateStorage=globalThis.sessionStorage,sha
   try{
    const response=await fetcher(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body),signal:controller.signal,credentials:'omit',cache:'no-store',redirect:'error',referrerPolicy:'no-referrer'});
    let result=null;try{if(response.status!==204)result=await response.json();}catch{if(response.ok)throw authError('The agent service returned an invalid response.','invalid_response',502);}
-   canceled(signal);if(timedOut)throw authError('The agent service took too long. Try again.','request_timeout',504);if(!response.ok){const error=authError(response.status===404?'The agent service is unavailable. Your session has not changed.':String(result?.message||'Agent service unavailable'),String(result?.code||'service_unavailable'),response.status);throw error;}return result;
+   canceled(signal);if(timedOut)throw authError('The agent service took too long. Try again.','request_timeout',504);if(!response.ok){const error=authError(response.status===404?'The agent service is unavailable. Your session has not changed.':String(result?.message||'Agent service unavailable'),String(result?.code||'service_unavailable'),response.status);if(result?.quota)error.quota=result.quota;throw error;}return result;
   }catch(error){canceled(signal);if(timedOut)throw authError('The agent service took too long. Try again.','request_timeout',504);throw error;}
   finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
  }
@@ -80,5 +80,5 @@ export function createAgentSession({privateStorage=globalThis.sessionStorage,sha
   try{await raw('/auth/v1/logout?scope=local',s.refresh_token?{refresh_token:s.refresh_token}:{},{token:s.access_token});return {remote:true};}catch{return {remote:false};}
  }
  function snapshot(){const r=sync();return {available:!!r,user:publicUser(r?.session.user),version};}
- sync();return {snapshot,lease,assertLease,plan,signIn,signOut,sync};
+ sync();return {snapshot,lease,assertLease,plan,allowance:options=>authorized('/functions/v1/studio-agent-allowance',{},{...options,timeout:8000}),signIn,signOut,sync};
 }

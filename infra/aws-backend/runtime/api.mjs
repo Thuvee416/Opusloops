@@ -1,3 +1,4 @@
+import {readAgentAllowance} from './agent-allowance.mjs';
 import {planningJobs,isPlannerEvent} from './planning-jobs.mjs';
 import {studioAgent,agentAllowance} from './studio-agent.mjs';
 import { randomUUID } from 'node:crypto';
@@ -9,8 +10,8 @@ import { registerEvent,deleteRetainedObject } from './storage.mjs';
 import { batchFailure,watchdog } from './lifecycle.mjs';
 
 const origins=new Set(['https://opusloops.com','https://www.opusloops.com','https://main.d1zc92wmtmvg23.amplifyapp.com','http://127.0.0.1:4173','http://127.0.0.1:4174','http://127.0.0.1:4178','http://localhost:4173']);
-function response(status,body,origin='') {
-  return {statusCode:status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',
+function response(status,body,origin='',extraHeaders={}) {
+  return {statusCode:status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...extraHeaders,
     ...(origin?{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization,content-type,apikey,x-client-info','Access-Control-Allow-Methods':'GET,POST,PUT,OPTIONS','Vary':'Origin'}:{})},body:status===204?'':JSON.stringify(body)};
 }
 async function retention() {
@@ -64,6 +65,7 @@ export async function handler(event) {
     const authorization=headers.authorization||'';
     if(!authorization.startsWith('Bearer '))throw new ApiError(401,'authentication_required','Sign in to continue');
     const user=await authenticate(authorization.slice(7));
+    if(path==='/functions/v1/studio-agent-allowance'&&method==='POST')return response(200,{allowance:await readAgentAllowance(user)},origin);
     if(path==='/functions/v1/studio-agent'&&method==='POST'){if(body.context?.planningTransport?.version===1)return response(202,{planningJob:await planningJobs.submit(user,body)},origin);await agentAllowance(user);return response(200,await studioAgent(body),origin);}
     if(path==='/functions/v1/studio-agent-jobs'&&method==='POST'){if(!['status','cancel'].includes(body.action))throw new ApiError(400,'invalid_request','Choose A Planning Status Or Cancel Action.');return response(200,{planningJob:await planningJobs[body.action](user,body.jobId)},origin);}
     if(path==='/auth/v1/user'&&method==='GET')return response(200,await getUser(user),origin);
@@ -80,7 +82,7 @@ export async function handler(event) {
     if(path==='/functions/v1/stem-import'&&method==='POST'){const result=await stemAction(user,body);return response(result.status,result.body,origin);}
     throw new ApiError(404,'not_found','Endpoint not found');
   } catch(error) {
-    if(error instanceof ApiError)return response(error.status,{code:error.code,message:error.message},permittedOrigin);
+    if(error instanceof ApiError)return response(error.status,{code:error.code,message:error.message,...(error.quota?{quota:error.quota}:{})},permittedOrigin,error.retryAfterSeconds?{'Retry-After':String(error.retryAfterSeconds),'Access-Control-Expose-Headers':'Retry-After'}:{});
     const authErrors={NotAuthorizedException:[401,'invalid_credentials','Email or password is incorrect'],UserNotFoundException:[401,'invalid_credentials','Email or password is incorrect'],TooManyRequestsException:[429,'rate_limited','Please wait and try again'],InvalidPasswordException:[400,'weak_password','Choose a stronger password'],AliasExistsException:[409,'account_exists','That email is already in use'],CodeMismatchException:[400,'invalid_code','Verification code is incorrect'],ExpiredCodeException:[400,'expired_code','Verification code has expired']};
     const [status,code,message]=authErrors[error.name]||[503,'service_unavailable','This service is temporarily unavailable'];
     return response(status,{code,message},permittedOrigin);

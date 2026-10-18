@@ -1,0 +1,199 @@
+{
+  "scope": "Native Chrome local controlled server; not public model execution. Assertions compare whole saved projects independently of the command runner.",
+  "cases": [
+    {
+      "case": "baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161241.083.opusloop",
+      "bytes": 420,
+      "sha256": "ac0c8017b54fe7445bd5d9f05d2cc2464eff7d16be8fe10f8a5725493e18ff91"
+    },
+    {
+      "case": "last counted request applies only BPM124",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161255.439.opusloop",
+      "bytes": 420,
+      "sha256": "9c03261d04fa8a29274054e275de7cb1beab1938df8079bb2becc9c20b6d3ad4"
+    },
+    {
+      "case": "local allowance question preserves project",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161256.629.opusloop",
+      "bytes": 420,
+      "sha256": "9c03261d04fa8a29274054e275de7cb1beab1938df8079bb2becc9c20b6d3ad4"
+    },
+    {
+      "case": "single Undo restores baseline bytes",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161258.039.opusloop",
+      "bytes": 420,
+      "sha256": "ac0c8017b54fe7445bd5d9f05d2cc2464eff7d16be8fe10f8a5725493e18ff91"
+    },
+    {
+      "case": "UTC rollover re-enables typed command without executing it",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161402.420.opusloop",
+      "bytes": 420,
+      "sha256": "ac0c8017b54fe7445bd5d9f05d2cc2464eff7d16be8fe10f8a5725493e18ff91"
+    },
+    {
+      "case": "keyboard recording baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161608.159.opusloop",
+      "bytes": 589,
+      "sha256": "b8d759eb77858a5764ea509e3644de7d6cf5fe43729568ec85ecbbe42ac120c5"
+    },
+    {
+      "case": "Finish Take at cap saves one valid C4 note",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161621.492.opusloop",
+      "bytes": 866,
+      "sha256": "4ce040c5596cf067f14a480f17adb04f42dd316ceb4c63563425bcc25b18e5e3"
+    },
+    {
+      "case": "single Undo restores first recording baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161813.944.opusloop",
+      "bytes": 589,
+      "sha256": "b8d759eb77858a5764ea509e3644de7d6cf5fe43729568ec85ecbbe42ac120c5"
+    },
+    {
+      "case": "pretyped Finish Take baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161826.769.opusloop",
+      "bytes": 589,
+      "sha256": "b8d759eb77858a5764ea509e3644de7d6cf5fe43729568ec85ecbbe42ac120c5"
+    },
+    {
+      "case": "pretyped Finish Take enables at recording start and saves one C4 note",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161829.335.opusloop",
+      "bytes": 865,
+      "sha256": "bac5db11979b93aef7954c14b09f71dffdafe142314f9281bf199928f278ce30"
+    },
+    {
+      "case": "single Undo restores second recording baseline",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161830.746.opusloop",
+      "bytes": 589,
+      "sha256": "b8d759eb77858a5764ea509e3644de7d6cf5fe43729568ec85ecbbe42ac120c5"
+    },
+    {
+      "case": "Cancel Take saves no clip and restores baseline bytes",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T161841.060.opusloop",
+      "bytes": 589,
+      "sha256": "b8d759eb77858a5764ea509e3644de7d6cf5fe43729568ec85ecbbe42ac120c5"
+    }
+  ],
+  "assertionsPassed": true,
+  "localBeforeRecording": {
+    "events": [
+      {
+        "mode": "available",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "available",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "available",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "available",
+        "path": "/functions/v1/studio-agent",
+        "bodyKeys": [
+          "prompt",
+          "context",
+          "feedback",
+          "planningRequestId"
+        ]
+      },
+      {
+        "mode": "available",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "available",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "reset",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "reset",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      }
+    ],
+    "accounts": [
+      {
+        "mode": "available",
+        "statusReads": 5,
+        "planRequests": 1,
+        "modelCalls": 1,
+        "rows": [
+          100,
+          1
+        ]
+      },
+      {
+        "mode": "reset",
+        "statusReads": 2,
+        "planRequests": 0,
+        "modelCalls": 0,
+        "rows": [
+          100,
+          6
+        ]
+      }
+    ]
+  },
+  "localRecordingAndMobile": {
+    "events": [
+      {
+        "mode": "exhausted",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "exhausted",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "exhausted",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "exhausted",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      },
+      {
+        "mode": "exhausted",
+        "path": "/functions/v1/studio-agent-allowance",
+        "bodyKeys": []
+      }
+    ],
+    "accounts": [
+      {
+        "mode": "exhausted",
+        "statusReads": 5,
+        "planRequests": 0,
+        "modelCalls": 0,
+        "rows": [
+          100
+        ]
+      }
+    ]
+  },
+  "screenshots": [
+    "/tmp/opus-allowance-before-reset.png",
+    "/tmp/opus-allowance-after-reset.png",
+    "/tmp/opus-allowance-mobile.png"
+  ],
+  "limitations": [
+    "No claim of production navigation-preservation model execution at the daily cap.",
+    "Recording timing validated for finite loop-bounded notes, not physical device latency.",
+    "Only controlled last-request and accelerated rollover use fixture counters; production quotas remain unchanged."
+  ]
+}
