@@ -1,0 +1,102 @@
+{
+  "id": "finish",
+  "failures": [
+    {
+      "attempt": 1,
+      "error": "record_input finish accepts action.",
+      "plan": {
+        "summary": "Finished the active input take and saved it into its Session slot.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "attempt": 2,
+      "error": "record_input finish accepts action.",
+      "plan": {
+        "summary": "Finished the active input take and saved it into its Session slot.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "attempt": 3,
+      "error": "record_input finish accepts action.",
+      "plan": {
+        "summary": "Finished the active input take and saved it into its Session slot.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ],
+  "otherFindings": [
+    {
+      "id": "initial-start-midi",
+      "attempt": 1,
+      "error": "The model did not return valid tool arguments. Repair the plan using the supported action schema.",
+      "resolution": "Second initial operator attempt passed; corrected four-case rerun passed all first operator attempts."
+    },
+    {
+      "id": "first-local-finish",
+      "error": "Panel navigation guard rejected showStudioPanel during an active take.",
+      "resolution": "Reveal the panel after finish/cancel, with actual receipt validation and active-capture locks retained."
+    }
+  ]
+}

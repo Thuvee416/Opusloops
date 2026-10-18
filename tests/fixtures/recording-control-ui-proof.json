@@ -1,0 +1,133 @@
+{
+  "scope": "Normal local Chrome UI and keyboard; controlled model plans and synthetic getUserMedia sine stream. No physical microphone/MIDI permission or hardware latency proof.",
+  "savedMidi": {
+    "517e65ee-ef36-4c0c-a3ab-c974a844b3b0": {
+      "id": "517e65ee-ef36-4c0c-a3ab-c974a844b3b0",
+      "name": "MIDI take",
+      "kind": "midi",
+      "sourceBpm": 120,
+      "beats": 0.75,
+      "notes": [
+        {
+          "pitch": 60,
+          "velocity": 0.75,
+          "start": 0.5208666664759318,
+          "duration": 0.0012000000476837247
+        },
+        {
+          "pitch": 64,
+          "velocity": 0.75,
+          "start": 0.5432000000476838,
+          "duration": 0.0007999999523162771
+        },
+        {
+          "pitch": 67,
+          "velocity": 0.75,
+          "start": 0.5647333334287008,
+          "duration": 0.0005999999046325533
+        }
+      ]
+    }
+  },
+  "quantizedMidi": {
+    "id": "a279933c-f844-4a9d-8ae2-9bff80fc0de4",
+    "name": "MIDI take",
+    "kind": "midi",
+    "sourceBpm": 120,
+    "beats": 1,
+    "notes": [
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.6666666666666666,
+        "duration": 0.33333333333333337
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.6666666666666666,
+        "duration": 0.33333333333333337
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.6666666666666666,
+        "duration": 0.33333333333333337
+      }
+    ]
+  },
+  "rawMidiUndo": {
+    "id": "a279933c-f844-4a9d-8ae2-9bff80fc0de4",
+    "name": "MIDI take",
+    "kind": "midi",
+    "sourceBpm": 120,
+    "beats": 0.75,
+    "notes": [
+      {
+        "pitch": 60,
+        "velocity": 0.75,
+        "start": 0.5323333333333267,
+        "duration": 0.0005999999046366611
+      },
+      {
+        "pitch": 64,
+        "velocity": 0.75,
+        "start": 0.564733333428677,
+        "duration": 0.011266666571316364
+      },
+      {
+        "pitch": 67,
+        "velocity": 0.75,
+        "start": 0.5969333332379563,
+        "duration": 0.010866666714349549
+      }
+    ]
+  },
+  "exactBaselineStages": [
+    13,
+    14,
+    17,
+    19,
+    20,
+    21
+  ],
+  "savedAudio": {
+    "kind": "audio",
+    "beats": 0.75,
+    "sampleRate": 48000,
+    "channels": 2,
+    "frames": 18000,
+    "bytes": 72044,
+    "rms": 0.6196895941244246,
+    "estimatedHz": 437.5316501483035,
+    "stereoIdentical": true,
+    "periodEstimatedHz": 439.99997978084224
+  },
+  "directStopUsedNoModelRequests": true,
+  "staleFinishPreservedNewCapture": true,
+  "activeEditsRejected": true,
+  "audioConnectionCalls": 2,
+  "apiRequests": [
+    "start-midi",
+    "start-midi",
+    "count-in",
+    "start-midi",
+    "invalid-active",
+    "invalid-active",
+    "invalid-active",
+    "start-midi",
+    "stale-finish",
+    "start-quantized",
+    "start-audio",
+    "start-audio",
+    "start-audio",
+    "start-audio",
+    "start-audio"
+  ],
+  "developmentFindings": [
+    "Initial finish was blocked by navigation guard; panel reveal now happens after capture ends.",
+    "Model finish repeatedly included the active track ID; optional matching owner is now validated, wrong owners reject.",
+    "Undo disconnects inputs through the existing install path; synthetic audio was explicitly enabled again before further tests."
+  ],
+  "plannedEmptyFinishUnchanged": true
+}

@@ -44,7 +44,7 @@ const fs=require('node:fs/promises');
  await page.locator('#play').focus();await page.keyboard.press('Control+z');assert.equal(await page.locator('#bpm').inputValue(),'126');
  await page.evaluate(()=>{OfflineAudioContext.prototype.startRendering=async function(){await new Promise(r=>setTimeout(r,1000));return window.qaRender.call(this);};});
  await run('Change tempo and export, then cancel the render.');
- await page.waitForFunction(()=>document.getElementById('bpm').value==='127');await page.getByRole('button',{name:'Cancel',exact:true}).click();
+ await page.waitForFunction(()=>document.getElementById('bpm').value==='127');await page.getByRole('button',{name:'Cancel Request',exact:true}).click();
  await page.getByText(/Cancelled.*Project edits remain applied/).waitFor();assert.equal(downloads.length,2);assert.equal(await page.locator('#bpm').inputValue(),'127');
  await page.evaluate(()=>{OfflineAudioContext.prototype.startRendering=window.qaRender;});
  await page.locator('#play').focus();await page.keyboard.press('Control+z');assert.equal(await page.locator('#bpm').inputValue(),'126');

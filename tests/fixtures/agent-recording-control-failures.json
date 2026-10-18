@@ -1,0 +1,89 @@
+{
+  "id": "finish",
+  "failures": [
+    {
+      "attempt": 1,
+      "error": "record_input finish accepts action.",
+      "plan": {
+        "summary": "Finished the active input take and saved it into its Session slot.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "attempt": 2,
+      "error": "record_input finish accepts action.",
+      "plan": {
+        "summary": "Finished the active input take and saved it into its Session slot.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "attempt": 3,
+      "error": "record_input finish accepts action.",
+      "plan": {
+        "summary": "Finished the active input take and saved it into its Session slot.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

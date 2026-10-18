@@ -1,0 +1,225 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "start-midi",
+      "prompt": "Start a new MIDI input take on Lead with a one-bar count-in. I will play the notes myself. Keep existing project contents unchanged. Do not play clips, export or create notes.",
+      "state": {
+        "active": false,
+        "captureId": null,
+        "phase": "idle",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "audioConnected": false,
+        "playing": false,
+        "recordQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        },
+        "takeQuantization": null
+      },
+      "expected": {
+        "action": "start",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 1
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Starting a new MIDI input take on Lead with a one-bar count-in.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "start",
+                "source": "midi",
+                "trackId": "lead",
+                "countInBars": 1
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "start-audio",
+      "prompt": "Start a new audio input take on Lead now with no count-in, using the already connected audio input. Preserve the existing project. Do not export or play clips.",
+      "state": {
+        "active": false,
+        "captureId": null,
+        "phase": "idle",
+        "source": "audio",
+        "trackId": "lead",
+        "countInBars": 0,
+        "audioConnected": true,
+        "playing": false,
+        "recordQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        },
+        "takeQuantization": null
+      },
+      "expected": {
+        "action": "start",
+        "source": "audio",
+        "trackId": "lead",
+        "countInBars": 0
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Started a new audio input take on Lead with no count-in.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "start",
+                "source": "audio",
+                "trackId": "lead",
+                "countInBars": 0
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "finish",
+      "prompt": "Wrap up the active input take and save what I performed into its Session slot. Do nothing else.",
+      "state": {
+        "active": true,
+        "captureId": "operator-take",
+        "phase": "recording",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "audioConnected": false,
+        "playing": false,
+        "recordQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        },
+        "takeQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        }
+      },
+      "expected": {
+        "action": "finish"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Finished the active input take and saved it into its Session slot.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "cancel",
+      "prompt": "Discard my current input performance without creating a clip. Do nothing else.",
+      "state": {
+        "active": true,
+        "captureId": "operator-take",
+        "phase": "recording",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "audioConnected": false,
+        "playing": false,
+        "recordQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        },
+        "takeQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        }
+      },
+      "expected": {
+        "action": "cancel"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Discarded current input performance without creating a clip.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "cancel",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}
