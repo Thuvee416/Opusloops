@@ -53,7 +53,7 @@ export function editRegionGroup(project,ids,action,{delta,trackOffset=0}={}){
  else if(action==='active'){const active=regions.some(r=>r.active===false);next=project.arrangement.map(r=>selected.has(r.id)?{...r,active}:r);}
  else if(action==='move'||action==='duplicate'){
   const span=Math.max(...regions.map(r=>r.start+r.length))-Math.min(...regions.map(r=>r.start));
-  const plan=planRegionGroup(project,ids,delta??(action==='duplicate'?span:0),trackOffset,action==='duplicate');
+  const plan=planRegionGroup(project,ids,delta??(action==='duplicate'?Math.ceil(span*4)/4:0),trackOffset,action==='duplicate');
   if(action==='duplicate'){
    for(const r of plan){const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();clip.name=clip.name.slice(0,195)+' copy';clips[clip.id]=clip;r.id=uid();r.clipId=clip.id;}
    next=[...project.arrangement,...plan];selectedIds=plan.map(r=>r.id);
