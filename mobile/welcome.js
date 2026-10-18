@@ -13,6 +13,7 @@
   const logout = document.querySelector('#logout-submit');
   const toggle = document.querySelector('#registration-toggle');
   const registrationFields = document.querySelector('#registration-fields');
+  const externalIcon = '<svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18 18 6M6 6h12v12"/></svg>';
   let registering = false;
   let busy = false;
   let signedOut = new URLSearchParams(location.search).has('signedout');
@@ -49,7 +50,7 @@
   function render() {
     const session = cloud?.getSession();
     if (link) {
-      link.textContent = session ? 'Your account ↗' : 'Sign in ↗';
+      link.innerHTML = session ? 'Your Account ' + externalIcon : 'Sign In ' + externalIcon;
     }
     if (!form) return;
     form.hidden = Boolean(session);
@@ -61,7 +62,7 @@
     form.password.minLength = registering ? 8 : 1;
     form.password.autocomplete = registering ? 'new-password' : 'current-password';
     toggle.textContent = registering ? 'Already registered? Sign in' : 'Create an account';
-    submit.querySelector('span').textContent = registering ? 'Create account ↗' : 'Sign in ↗';
+    submit.querySelector('[data-action-label]').textContent = registering ? 'Create Account' : 'Sign In';
     title.textContent = session ? 'Your space.' : signedOut ? 'Signed out.' : 'Sign in.';
     description.textContent = session ? (session.user?.email || 'You’re signed in.') : signedOut ? 'See you at the next session.' : 'Pick up where you left off.';
     status.textContent = '';
@@ -88,7 +89,7 @@
     busy = true;
     error.hidden = true;
     submit.disabled = true;
-    submit.querySelector('span').textContent = registering ? 'Creating account…' : 'Signing in…';
+    submit.querySelector('[data-action-label]').textContent = registering ? 'Creating Account…' : 'Signing In…';
     status.textContent = 'Connecting to your workspace…';
     try {
       if (!cloud?.configured()) throw new Error('Sign-in is unavailable. Please try again later.');
@@ -104,7 +105,7 @@
     } finally {
       busy = false;
       submit.disabled = false;
-      submit.querySelector('span').textContent = registering ? 'Create account ↗' : 'Sign in ↗';
+      submit.querySelector('[data-action-label]').textContent = registering ? 'Create Account' : 'Sign In';
     }
   });
 

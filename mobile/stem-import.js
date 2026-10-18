@@ -707,7 +707,7 @@
         remove.className = "grid-event-remove";
         remove.dataset.removeGridEvent = event.id;
         remove.setAttribute("aria-label", `Remove timing event ${index + 1} at ${event.time.toFixed(3)} seconds`);
-        remove.textContent = "×";
+        remove.innerHTML = '<svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>';
         row.append(number, time, type, remove);
         dom.gridEventList.append(row);
       });
@@ -974,7 +974,7 @@
     function renderAuditionControl() {
       const snapshot = getAuditionState();
       const active = snapshot.playing || snapshot.loading;
-      dom.clickAuditionIcon.textContent = active ? "Ⅱ" : "▶";
+      dom.clickAuditionIcon.dataset.playing = String(active);
       dom.clickAudition.setAttribute("aria-pressed", String(active));
       dom.clickAudition.setAttribute("aria-label", active ? "Pause timing audition" : "Play timing audition");
       dom.clickAudition.toggleAttribute("aria-busy", snapshot.loading);

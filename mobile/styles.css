@@ -3479,3 +3479,12 @@ body.has-persistent-player .toast {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Monochrome vectors stay crisp and use the surrounding control color on phones. */
+.ui-icon { display: inline-block; width: 16px; height: 16px; flex: 0 0 auto; vertical-align: -.125em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.ui-icon path { vector-effect: non-scaling-stroke; }
+
+.ready-mark .ui-icon { width: 24px; height: 24px; }
+.click-audition-icon .audition-pause { display: none; }
+.click-audition-icon[data-playing="true"] .audition-play { display: none; }
+.click-audition-icon[data-playing="true"] .audition-pause { display: inline-block; }

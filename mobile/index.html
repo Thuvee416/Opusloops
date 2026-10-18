@@ -8,7 +8,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <link rel="manifest" href="./manifest.webmanifest?v=6" />
-    <link rel="stylesheet" href="./welcome.css?v=3" />
+    <link rel="stylesheet" href="./welcome.css?v=4" />
     <title>Opusloops · Your AI DAW</title>
   </head>
   <body>
@@ -22,13 +22,13 @@
       <h1 class="entrance">Your AI DAW.</h1>
       <p class="subtitle entrance">The AI DAW for music’s next wave.</p>
       <div class="hero-actions entrance">
-        <a class="primary pixel-action" data-open-studio href="./studio.html"><canvas data-pixel-button aria-hidden="true"></canvas><span>OPEN STUDIO <span aria-hidden="true">↗</span></span></a>
+        <a class="primary pixel-action" data-open-studio href="./studio.html"><canvas data-pixel-button aria-hidden="true"></canvas><span>OPEN STUDIO <svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18 18 6M6 6h12v12"/></svg></span></a>
         <p class="micro">Upload. Arrange. Mix.</p>
       </div>
     </main>
     <footer class="site-footer"><span>A studio for AI stems.</span><span>Made for your fingertips.</span></footer>
     <dialog id="account-modal" class="account-modal" aria-labelledby="account-title" aria-describedby="account-description">
-      <button class="modal-close" id="account-close" type="button" aria-label="Close account dialog">×</button>
+      <button class="modal-close" id="account-close" type="button" aria-label="Close account dialog"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
       <section class="account-content" aria-labelledby="account-title">
         <p class="eyebrow">Your workspace</p>
         <h2 id="account-title">Sign in.</h2>
@@ -44,10 +44,10 @@
             <input id="invite" name="invite" type="text" autocomplete="off" disabled />
             <p class="micro">Registration currently requires an invitation.</p>
           </div>
-          <button class="primary pixel-action" id="login-submit" type="submit"><canvas data-pixel-button aria-hidden="true"></canvas><span>Sign in <span aria-hidden="true">↗</span></span></button>
+          <button class="primary pixel-action" id="login-submit" type="submit"><canvas data-pixel-button aria-hidden="true"></canvas><span><span data-action-label>Sign In</span> <svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18 18 6M6 6h12v12"/></svg></span></button>
         </form>
         <div id="session-actions" hidden>
-          <a class="primary pixel-action" href="./studio.html"><canvas data-pixel-button aria-hidden="true"></canvas><span>OPEN STUDIO <span aria-hidden="true">↗</span></span></a>
+          <a class="primary pixel-action" href="./studio.html"><canvas data-pixel-button aria-hidden="true"></canvas><span>OPEN STUDIO <svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18 18 6M6 6h12v12"/></svg></span></a>
           <button class="secondary" id="logout-submit" type="button">Sign out on this device</button>
           <p class="micro">Saved projects stay in your account.</p>
         </div>
@@ -57,7 +57,7 @@
     </dialog>
     <script src="./config.js?v=2" defer></script>
     <script src="./cloud-client.js?v=12" defer></script>
-    <script src="./welcome.js?v=3" defer></script>
+    <script src="./welcome.js?v=4" defer></script>
     <script src="./scanner.mjs?v=1" type="module"></script>
     <script src="./welcome-pixels.mjs?v=3" type="module"></script>
   </body>

@@ -17,7 +17,7 @@
     <link rel="icon" href="./icons/icon-192.png?v=3" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=3" />
     <script src="./frame-guard.js?v=1"></script>
-    <link rel="stylesheet" href="./styles.css?v=43" />
+    <link rel="stylesheet" href="./styles.css?v=44" />
     <link rel="stylesheet" href="./pixel-dock.css?v=1" />
     <link rel="stylesheet" href="./grainient-mixer.css?v=1" />
     <link rel="stylesheet" href="./soft-aurora-player.css?v=1" />
@@ -98,7 +98,7 @@
 
           <section class="import-panel process-panel" id="stem-process-panel" aria-labelledby="stem-process-title" hidden>
             <div class="import-panel-heading">
-              <span class="stage-number" aria-hidden="true">↗</span>
+              <span class="stage-number" aria-hidden="true"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18 18 6M6 6h12v12"/></svg></span>
               <div>
                 <p class="eyebrow">Live process</p>
                 <h2 id="stem-process-title">Preparing import</h2>
@@ -229,7 +229,7 @@
               </div>
             </div>
             <button class="click-audition" id="stem-click-audition" type="button" aria-pressed="false">
-              <span class="click-audition-icon" aria-hidden="true">▶</span>
+              <span class="click-audition-icon" aria-hidden="true"><svg class="ui-icon audition-play" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m8 5 11 7-11 7Z"/></svg><svg class="ui-icon audition-pause" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14M16 5v14"/></svg></span>
               <span><strong>Play click audition</strong><small id="stem-click-audition-copy">Compare the click against the reference</small></span>
             </button>
             <audio id="stem-click-audio" preload="metadata"></audio>
@@ -249,7 +249,7 @@
           </section>
 
           <section class="import-panel ready-panel" id="stem-ready-panel" aria-labelledby="stem-ready-title" hidden>
-            <span class="ready-mark" aria-hidden="true">✓</span>
+            <span class="ready-mark" aria-hidden="true"><svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"/></svg></span>
             <p class="eyebrow">Import complete</p>
             <h2 id="stem-ready-title">Your stems are ready.</h2>
             <p>Open Studio to arrange aligned preview segments, or Mix to balance every track.</p>
@@ -453,7 +453,7 @@
 
           <details class="about-details">
             <summary>About Opusloops</summary>
-            <p><a href="./index.html">Opusloops home ↗</a></p>
+            <p><a href="./index.html">Opusloops Home <svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 18 18 6M6 6h12v12"/></svg></a></p>
             <p>
               Opusloops is a focused Web Audio studio with private account sync. Sign-in is required.
               Desktop plugin hosting, scripting, remote-control servers, and local model downloads are intentionally excluded.
@@ -703,7 +703,7 @@
     <script src="./studio-access.js?v=1" defer></script>
     <script src="./stem-import-core.js?v=9" defer></script>
     <script src="./stem-player.js?v=5" defer></script>
-    <script src="./stem-import.js?v=10" defer></script>
+    <script src="./stem-import.js?v=11" defer></script>
     <script src="./app.js?v=38" defer></script>
     <script src="./pixel-dock.mjs?v=3" type="module"></script>
     <script src="./grainient-mixer.mjs?v=2" type="module"></script>

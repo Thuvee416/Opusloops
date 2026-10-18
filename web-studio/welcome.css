@@ -34,3 +34,6 @@
 @keyframes welcome-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media(max-width:540px){#opus-welcome{max-height:85dvh}#opus-welcome .welcome-top{padding:10px 16px}#opus-welcome .welcome-hero{padding:22px 20px 16px}#opus-welcome .welcome-body{padding:0 20px 20px}#opus-welcome .welcome-features{grid-template-columns:1fr;gap:18px}#opus-welcome .welcome-footer{padding:12px 16px}#opus-welcome .welcome-footer p{max-width:125px}#opus-welcome .welcome-enter{gap:10px;padding:8px 10px}#opus-welcome .welcome-aurora{height:58px}}
 @media(prefers-reduced-motion:reduce){#opus-welcome,#opus-welcome *{animation:none!important;transition:none!important}}
+
+#opus-welcome .welcome-close .studio-icon{width:14px;height:14px}
+#opus-welcome .welcome-enter .studio-icon{width:16px;height:16px}
