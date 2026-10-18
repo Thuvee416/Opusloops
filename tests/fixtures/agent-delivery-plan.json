@@ -1,0 +1,551 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "fixture": "tests/fixtures/delivery-project.mjs",
+  "sourceContext": {
+    "project": {
+      "format": "opus-loops",
+      "version": 1,
+      "name": "Agent delivery proof",
+      "master": 0.65,
+      "bpm": 120,
+      "transport": {
+        "loopEnabled": false,
+        "loopStart": 0,
+        "loopEnd": 16,
+        "metronome": false
+      },
+      "scenes": 4,
+      "tracks": [
+        {
+          "id": "lead",
+          "name": "Lead",
+          "color": "#d9a359",
+          "volume": 0.5,
+          "pan": 0,
+          "mute": false,
+          "solo": false,
+          "devices": [],
+          "slots": [
+            "low",
+            null,
+            null,
+            null
+          ],
+          "sends": {
+            "room": {
+              "amount": 0.4,
+              "pre": false
+            }
+          }
+        },
+        {
+          "id": "pad",
+          "name": "Muted pad",
+          "color": "#d9a359",
+          "volume": 0.7,
+          "pan": 0,
+          "mute": true,
+          "solo": false,
+          "devices": [],
+          "slots": [
+            "high",
+            null,
+            null,
+            null
+          ]
+        }
+      ],
+      "clips": {
+        "low": {
+          "id": "low",
+          "kind": "audio",
+          "name": "low",
+          "beats": 2,
+          "sourceBpm": 120,
+          "audioBytes": 352845
+        },
+        "high": {
+          "id": "high",
+          "kind": "audio",
+          "name": "high",
+          "beats": 2,
+          "sourceBpm": 120,
+          "audioBytes": 352845
+        }
+      },
+      "arrangement": [
+        {
+          "id": "arr-low",
+          "trackId": "lead",
+          "clipId": "low",
+          "start": 0,
+          "length": 16,
+          "offset": 0.5
+        },
+        {
+          "id": "arr-high",
+          "trackId": "pad",
+          "clipId": "high",
+          "start": 0,
+          "length": 16,
+          "offset": 0
+        }
+      ],
+      "returns": [
+        {
+          "id": "room",
+          "name": "Room",
+          "volume": 0.7,
+          "pan": 0,
+          "mute": false,
+          "color": "#c5ae83",
+          "devices": [
+            {
+              "id": "e960caa7-0b21-4608-bba4-2edacb22ad80",
+              "type": "delay",
+              "enabled": true,
+              "params": {
+                "time": 0.25,
+                "feedback": 0.3,
+                "mix": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "capabilities": {
+      "command": "{name:play|pause|stop|seek|launch_scene|launch_clip|stop_track|stop_clips|view|save_project|export_wav|export_stems,args?:{beat?,scene? (zero-based),trackId?,view?:session|arrangement,source?:auto|session|arrangement,sampleRate?:44100|48000|88200|96000,bitDepth?:16|24|32 (32=float),normalize?:boolean,dither?:none|triangular (none for float),includeTail?:boolean,range?:{start,length} (zero-based Arrangement beats),channel?:master|track:ID|return:ID (WAV only)}} runtime operation; launch_clip presses a trigger/toggle Session slot; launch_scene and clip stops wait for quantized activation. Gate/repeat clip holds remain manual. Session export snapshots active clips from their beginnings for four bars, excluding Arrangement automation; auto prefers Arrangement. Defaults: 44.1 kHz/24-bit, no normalization/dither, tails included. Range forces Arrangement and cannot combine with Session source. export_stems downloads an aligned ZIP of all tracks and returns before the master bus; each file obeys mute/solo, crossfade and independent normalization/dither. Channel selection is WAV-only. Combine up to eight after project edits, or stop/pause before edits",
+      "project": "{name?,bpm?,master?,transport?:{loopEnabled,loopStart,loopEnd,metronome}}",
+      "track": "{id,changes:{name?,volume?(linear 0..1),pan?(-1..1),mute?,solo?,output?}}",
+      "add_track": "{name,ref? (unique $alias for subsequent actions),preset? (Init|Warm bass|Soft pad|Bright pluck)}",
+      "manage_track": "{id,action:rename|color|move|duplicate|delete,value?}",
+      "scene": "{index,action:rename|insert|duplicate|delete|move,value?}",
+      "device": "{trackId,type?,deviceId?,remove?,enabled?,params?} add/update/remove an effect on a track or return",
+      "instrument": "{trackId,preset?,kind?:poly|drums|sampler,sampleClipId?,params?} presets for poly; sampler copies audio from an existing clip",
+      "add_return": "{name,ref?} create a return with wet reverb",
+      "midi_effects": "{trackId,effectsJSON:JSON-encoded array of complete MIDI effect objects from session}",
+      "drum_pad": "{trackId,pitch,changes:{name?,source?,level?,pan?,tune?,decay?,choke?,mute?,solo?}}",
+      "send": "{trackId,returnId,amount,pre?}",
+      "automation": "{trackId,key:volume|pan,points:[{beat,value}],enabled:true}",
+      "midi": "{ref?,clipId?,trackId?,scene?,name?,beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip",
+      "clip": "{id,changes:{name?,beats?,sourceBpm?,audioEdit?,warp?,launch?}}",
+      "region": "{id?,trackId?,clipId?,start?,length?,offset?,active?,remove?} add/update/delete Arrangement clip",
+      "time": "{operation:insert|delete|duplicate,start,length,trackIds?} beats are zero-based; omit trackIds for whole song",
+      "locators": "{items:[{id?,name,beat}]} replace song section markers"
+    },
+    "effects": {
+      "utility": {
+        "name": "Utility",
+        "params": {
+          "bassMono": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "bassFrequency": [
+            50,
+            500,
+            1,
+            120,
+            "Hz"
+          ],
+          "bassAudition": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "stereoMode": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "midSide": [
+            -1,
+            1,
+            0.01,
+            0,
+            ""
+          ],
+          "channel": [
+            0,
+            2,
+            1,
+            0,
+            ""
+          ],
+          "gain": [
+            -60,
+            35,
+            0.1,
+            0,
+            "dB"
+          ],
+          "width": [
+            0,
+            200,
+            1,
+            100,
+            "%"
+          ],
+          "swap": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "invertL": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "invertR": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "balance": [
+            -1,
+            1,
+            0.01,
+            0,
+            ""
+          ],
+          "mono": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "mute": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "dc": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ]
+        }
+      },
+      "autopan": {
+        "name": "Auto Pan",
+        "params": {
+          "mode": [
+            0,
+            1,
+            1,
+            0,
+            ""
+          ],
+          "division": [
+            0,
+            12,
+            1,
+            2,
+            ""
+          ],
+          "amount": [
+            0,
+            100,
+            1,
+            50,
+            "%"
+          ],
+          "rate": [
+            0.01,
+            20,
+            0.01,
+            1,
+            "Hz"
+          ],
+          "phase": [
+            0,
+            360,
+            1,
+            180,
+            "°"
+          ],
+          "offset": [
+            0,
+            360,
+            1,
+            0,
+            "°"
+          ],
+          "wave": [
+            0,
+            3,
+            1,
+            0,
+            ""
+          ]
+        }
+      },
+      "chorus": {
+        "name": "Chorus",
+        "params": {
+          "delay": [
+            10,
+            40,
+            0.1,
+            20,
+            "ms"
+          ],
+          "depth": [
+            0,
+            5,
+            0.1,
+            2,
+            "ms"
+          ],
+          "rate": [
+            0.05,
+            10,
+            0.01,
+            1.5,
+            "Hz"
+          ],
+          "feedback": [
+            -0.85,
+            0.85,
+            0.01,
+            0,
+            ""
+          ],
+          "phase": [
+            0,
+            360,
+            1,
+            180,
+            "°"
+          ],
+          "mix": [
+            0,
+            1,
+            0.01,
+            0.5,
+            ""
+          ]
+        }
+      },
+      "filter": {
+        "name": "Filter",
+        "params": {
+          "frequency": [
+            20,
+            20000,
+            1,
+            18000,
+            "Hz"
+          ],
+          "q": [
+            0.1,
+            15,
+            0.1,
+            0.7,
+            "Q"
+          ]
+        }
+      },
+      "eq": {
+        "name": "Three-band EQ",
+        "params": {
+          "low": [
+            -24,
+            24,
+            0.5,
+            0,
+            "dB"
+          ],
+          "mid": [
+            -24,
+            24,
+            0.5,
+            0,
+            "dB"
+          ],
+          "high": [
+            -24,
+            24,
+            0.5,
+            0,
+            "dB"
+          ]
+        }
+      },
+      "delay": {
+        "name": "Delay",
+        "params": {
+          "time": [
+            0.02,
+            1,
+            0.01,
+            0.25,
+            "s"
+          ],
+          "feedback": [
+            0,
+            0.85,
+            0.01,
+            0.3,
+            ""
+          ],
+          "mix": [
+            0,
+            1,
+            0.01,
+            0.25,
+            ""
+          ]
+        }
+      },
+      "reverb": {
+        "name": "Reverb",
+        "params": {
+          "decay": [
+            0.2,
+            4,
+            0.1,
+            1.8,
+            "s"
+          ],
+          "mix": [
+            0,
+            1,
+            0.01,
+            0.2,
+            ""
+          ]
+        }
+      },
+      "drive": {
+        "name": "Saturation",
+        "params": {
+          "drive": [
+            1,
+            20,
+            0.5,
+            3,
+            "×"
+          ],
+          "mix": [
+            0,
+            1,
+            0.01,
+            0.3,
+            ""
+          ]
+        }
+      },
+      "compressor": {
+        "name": "Compressor",
+        "params": {
+          "threshold": [
+            -60,
+            0,
+            1,
+            -24,
+            "dB"
+          ],
+          "ratio": [
+            1,
+            20,
+            0.5,
+            4,
+            ":1"
+          ],
+          "attack": [
+            0.001,
+            0.2,
+            0.001,
+            0.01,
+            "s"
+          ],
+          "release": [
+            0.02,
+            1,
+            0.01,
+            0.25,
+            "s"
+          ]
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "kind": "wav",
+      "prompt": "Export only the Lead track as a WAV file. Use displayed beat 5 as the start and export exactly 4 beats of the Arrangement at 48 kHz, 24-bit PCM, no normalization, no dither, no effect tails. Do not edit the project or start playback. Use a single export command.",
+      "plan": {
+        "summary": "Export Lead track as WAV",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "export_wav",
+              "args": {
+                "channel": "track:lead",
+                "sampleRate": 48000,
+                "bitDepth": 24,
+                "normalize": false,
+                "dither": "none",
+                "includeTail": false,
+                "range": {
+                  "start": 4,
+                  "length": 4
+                },
+                "source": "arrangement"
+              }
+            }
+          }
+        ]
+      },
+      "attempt": 1
+    },
+    {
+      "kind": "stems",
+      "prompt": "Export all tracks and returns as one aligned stem ZIP. Use displayed beat 5 as the start and export exactly 4 beats of the Arrangement at 48 kHz, 24-bit PCM, no normalization, no dither, no effect tails. Do not edit the project or start playback. Use a single export command.",
+      "plan": {
+        "summary": "Export all tracks and returns as one aligned stem ZIP.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "export_stems",
+              "args": {
+                "sampleRate": 48000,
+                "bitDepth": 24,
+                "normalize": false,
+                "dither": "none",
+                "includeTail": false,
+                "range": {
+                  "start": 4,
+                  "length": 4
+                }
+              }
+            }
+          }
+        ]
+      },
+      "attempt": 1
+    }
+  ]
+}

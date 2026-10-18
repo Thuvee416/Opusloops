@@ -1,3 +1,4 @@
+import {deliveryOptions,deliveryDescription} from './delivery-options.js';
 import {icon} from './icons.js';
 import {performSessionCommand,sessionPerformanceState} from './agent-performance.js';
 import {installAgent} from './agent-panel.js';
@@ -211,7 +212,7 @@ const openTemplates=installTemplateDialog({getProject:()=>project,exclusive:with
 $('save-template').onclick=run(()=>openTemplates('save'));$('open-templates').onclick=run(()=>openTemplates());
 $('save').onclick=run(()=>executeStudioCommand({name:'save_project'}));
 $('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const file=e.target.files[0];if(!file)return;if(file.size>150*1024*1024)throw new Error('Project files must be smaller than 150 MB.');const p=validateProject(JSON.parse(await file.text()));install(p);changed();e.target.value='';setStatus('Project opened. Press Play to hear it.');});
-$('export').onclick=run(()=>exportStudioWav({channel:$('export-channel').value,sampleRate:Number($('export-rate').value),bitDepth:Number($('export-depth').value),normalize:$('export-normalize').checked,dither:$('export-dither').value,includeTail:$('export-tail').checked,...($('export-source').value==='session'?{source:'session'}:{}),...($('export-source').value==='range'?{range:{start:Number($('export-start').value)-1,length:Number($('export-length').value)}}:{})}));
+$('export').onclick=run(()=>executeStudioCommand({name:'export_wav',args:readDeliveryOptions(true)}));
 $('help').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.code==='KeyZ'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();$(e.shiftKey?'redo':'undo').click();return;}if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement.tagName)||document.querySelector('dialog[open]'))return;if(e.code==='Space'){e.preventDefault();$('play').click();}if(e.code==='Tab'&&document.activeElement===document.body&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();switchView(view==='session'?'arrangement':'session');}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseNotes();if(inputActive())run(finishInput)();}if(document.hidden&&engine?.playing){engine.stop();setStatus('Playback stopped while the studio is in the background.');}});
@@ -735,7 +736,7 @@ $('export-midi-arrangement').onclick=run(()=>{if($('export-source').value==='ses
 
 function renderExportChannels(){const select=$('export-channel');if(!select)return;const previous=select.value;select.innerHTML='<option value="master">Master mix</option>'+project.tracks.map(t=>`<option value="${esc('track:'+t.id)}">Track · ${esc(t.name)}</option>`).join('')+(project.returns||[]).map(t=>`<option value="${esc('return:'+t.id)}">Return · ${esc(t.name)}</option>`).join('');if([...select.options].some(o=>o.value===previous))select.value=previous;}
 
-$('export-stems').onclick=run(async()=>{if(busy||engine.recording||engine.automationTake||inputActive())throw new Error('Finish recording before exporting stems.');const options={sampleRate:Number($('export-rate').value),bitDepth:Number($('export-depth').value),normalize:$('export-normalize').checked,dither:$('export-dither').value,includeTail:$('export-tail').checked,...($('export-source').value==='session'?{source:'session'}:{}),...($('export-source').value==='range'?{range:{start:Number($('export-start').value)-1,length:Number($('export-length').value)}}:{})},name=filename();stemAbort=new AbortController();busy=true;$('cancel-stems').disabled=false;renderTransport();try{const data=await renderStemArchive(engine,options,{signal:stemAbort.signal,onProgress:({index,total,name})=>setStatus(`Rendering stem ${index+1}/${total}: ${name}…`)});download(data,name+'-stems.zip','application/zip');setStatus('Stem ZIP exported with aligned tracks, returns and a manifest.');}catch(error){if(error.name==='AbortError')setStatus('Stem export canceled.');else throw error;}finally{stemAbort=null;busy=false;$('cancel-stems').disabled=true;renderTransport();}});
+$('export-stems').onclick=run(async()=>{try{await executeStudioCommand({name:'export_stems',args:readDeliveryOptions()});}catch(error){if(error.name==='AbortError')setStatus('Stem export canceled.');else throw error;}});
 $('cancel-stems').onclick=()=>{stemAbort?.abort();setStatus('Canceling after the current channel render…');$('cancel-stems').disabled=true;};
 
 function chordEffectControls(d,i,count){return `<div class="midi-effect" data-midi-effect="${esc(d.id)}"><div class="instrument-heading"><strong>${i+1}. Chord</strong><label><input type="checkbox" data-midi-param="enabled" data-instrument-edit aria-label="Chord ${i+1} enabled" ${d.enabled?'checked':''}> On</label><button data-midi-action="up" data-instrument-edit aria-label="Move Chord ${i+1} up" ${i===0?'disabled data-midi-bound':''}><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-up"/></svg></button><button data-midi-action="down" data-instrument-edit aria-label="Move Chord ${i+1} down" ${i===count-1?'disabled data-midi-bound':''}><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-down"/></svg></button><button data-midi-action="remove" data-instrument-edit aria-label="Remove Chord ${i+1}"><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-close"/></svg></button></div><div class="synth-controls">${d.shifts.map((shift,j)=>`<label>Voice ${j+1} shift<input data-instrument-edit data-midi-param="shifts:${j}" aria-label="Chord ${i+1} voice ${j+1} shift" type="number" min="-36" max="36" step="1" value="${shift}"></label><label>Velocity %<input data-instrument-edit data-midi-param="velocities:${j}" aria-label="Chord ${i+1} voice ${j+1} velocity" type="number" min="0" max="200" step="1" value="${Math.round(d.velocities[j]*100)}"></label>`).join('')}${[["strumMs","Strum ms",-400,400],["tension","Tension %",-100,100],["crescendo","Crescendo %",-100,100]].map(([key,label,min,max])=>`<label>${label}<input data-instrument-edit data-midi-param="${key}" aria-label="Chord ${i+1} ${label}" type="number" min="${min}" max="${max}" step="1" value="${d[key]??0}"></label>`).join('')}</div><p class="micro">Original note plus six shifted voices. A shift of 0 disables that extra voice.</p></div>`;}
@@ -843,15 +844,31 @@ window.addEventListener('pointercancel',e=>{if(warpDrag?.pointer===e.pointerId){
 $('clip-editor').addEventListener('keydown',run(async e=>{const handle=e.target.closest('[data-warp-handle]');if(!handle||!['ArrowLeft','ArrowRight','Delete','Backspace','Escape'].includes(e.key))return;e.preventDefault();if(e.key==='Escape'){warpDrag=null;renderEditor();return;}const clip=markerClip(),index=Number(handle.dataset.warpHandle),markers=structuredClone(clip.warp.markers);if(e.key==='Delete'||e.key==='Backspace')markers.splice(index,1);else markers[index].target+=(e.key==='ArrowRight'?1:-1)*(e.shiftKey?1:1/16)/clip.beats;await applyMarkers(clip,markers,index);}));
 
 // Manual controls and the agent use the same runtime operations.
+function readDeliveryOptions(channel=false){
+ return {...(channel?{channel:$('export-channel').value}:{}),sampleRate:Number($('export-rate').value),bitDepth:Number($('export-depth').value),normalize:$('export-normalize').checked,dither:$('export-dither').value,includeTail:$('export-tail').checked,...($('export-source').value==='session'?{source:'session'}:{}),...($('export-source').value==='range'?{source:'arrangement',range:{start:Number($('export-start').value)-1,length:Number($('export-length').value)}}:{})};
+}
+function effectiveDeliverySource(options){return options.source==='auto'?(project.arrangement.length?'arrangement':'session'):options.source;}
+async function exportStudioStems(options,signal){
+ if(busy||engine.recording||engine.automationTake||inputActive())throw new Error('Finish recording or the current operation before exporting stems.');
+ signal?.throwIfAborted();options=deliveryOptions(project,options,'stems');
+ const controller=new AbortController(),abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
+ const source=effectiveDeliverySource(options),name=filename()+'-stems.zip';stemAbort=controller;busy=true;$('cancel-stems').disabled=false;renderTransport();
+ try{
+  const data=await renderStemArchive(engine,options,{signal:controller.signal,onProgress:({index,total,name})=>setStatus(`Rendering stem ${index+1}/${total}: ${name}…`)});
+  controller.signal.throwIfAborted();download(data,name,'application/zip');setStatus('Stem ZIP exported with aligned tracks, returns and a manifest.');
+  return {download:name,bytes:data.byteLength,delivery:{format:'stems',settings:options,source},description:deliveryDescription(options,source,'all tracks and returns, before master gain/compression')};
+ }finally{signal?.removeEventListener('abort',abort);stemAbort=null;busy=false;$('cancel-stems').disabled=true;renderTransport();}
+}
 async function exportStudioWav(options,signal){
- if(engine.recording||engine.automationTake||inputActive())throw new Error('Stop recording before exporting.');
+ if(busy||engine.recording||engine.automationTake||inputActive())throw new Error('Stop recording or finish the current operation before exporting.');
+ signal?.throwIfAborted();options=deliveryOptions(project,options);const source=effectiveDeliverySource(options);
  busy=true;renderTransport();setStatus('Rendering stereo WAV…');
  try{
   signal?.throwIfAborted();const output=exportChannel(project,options.channel||'master');
   const data=await engine.render(options);signal?.throwIfAborted();
   const name=filename()+(output.type==='master'?'':'-'+output.type+'-'+output.name.replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,50))+'.wav';
   download(data,name,'audio/wav');setStatus('Stereo WAV exported.');
-  return {download:name,bytes:data.byteLength};
+  return {download:name,bytes:data.byteLength,delivery:{format:'wav',settings:options,source,channel:output.name},description:deliveryDescription(options,source,output.name)};
  }finally{busy=false;renderTransport();clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(()=>{$('save-state').textContent='Autosave unavailable · download a project';}),600);}
 }
 async function executeStudioCommand(x,signal){
@@ -873,11 +890,12 @@ async function executeStudioCommand(x,signal){
   if(engine.recording||engine.automationTake)throw new Error('Stop recording before saving.');
   validateProject(project);const name=filename()+'.opusloop';download(JSON.stringify(project),name,'application/json');setStatus('Project downloaded with embedded audio.');return {download:name};
  }
- if(x.name==='export_wav')return exportStudioWav({channel:'master',sampleRate:44100,bitDepth:24,normalize:false,includeTail:true,source:a.source??'auto'},signal);
+ if(x.name==='export_wav')return exportStudioWav(a,signal);
+ if(x.name==='export_stems')return exportStudioStems(a,signal);
  throw new Error('Unsupported studio command.');
 }
 
-installAgent({getProject:()=>project,getSession:()=>({view,selection,selectedRegion,selectedRegions:[...regionSelection],selectedScene:selectedSessionScene,performance:sessionPerformanceState(engine),playing:engine.playing,position:engine.beat()}),
+installAgent({getProject:()=>project,getSession:()=>({view,selection,selectedRegion,selectedRegions:[...regionSelection],selectedScene:selectedSessionScene,delivery:{wav:readDeliveryOptions(true),stems:readDeliveryOptions()},performance:sessionPerformanceState(engine),playing:engine.playing,position:engine.beat()}),
  execute:executeStudioCommand,locked:mode=>busy||engine.recording||!!engine.automationTake||!!engine.startPromise||(mode==='edit'&&engine.playing)||inputActive()||!!gesture||clipMarquee?.dragging,
  commit:next=>{stopToEdit();engine.masterVolume=next.master??.8;installManagedProject(next);$('project-name').value=project.name;$('bpm').value=project.bpm;changed();setStatus('Agent edits applied. Undo reverses this request.');},
  analyze:async signal=>{const metrics=[];for(const c of Object.values(project.clips)){signal.throwIfAborted();if(c.kind!=='audio')continue;const raw=Uint8Array.from(atob(c.data),v=>v.charCodeAt(0));const ctx=new AudioContext();try{const b=await ctx.decodeAudioData(raw.buffer);let peak=0,sum=0,n=0,clipped=0;for(let ch=0;ch<b.numberOfChannels;ch++){const a=b.getChannelData(ch);for(let i=0;i<a.length;i++){if(i%1000000===0){await new Promise(resolve=>setTimeout(resolve,0));signal.throwIfAborted();}const v=a[i];peak=Math.max(peak,Math.abs(v));sum+=v*v;n++;if(Math.abs(v)>=.999)clipped++;}}metrics.push({clipId:c.id,duration:b.duration,peakDB:peak?20*Math.log10(peak):-120,rmsDB:sum?10*Math.log10(sum/n):-120,clippedSamples:clipped,measurement:'raw source, before effects and faders; not LUFS or a listening assessment'});}finally{await ctx.close();}}return metrics;}});

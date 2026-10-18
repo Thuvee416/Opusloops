@@ -23,7 +23,10 @@ export function prepareAgentPlan(project, actions) {
   if (before.length + after.length > 8) throw new Error('Use at most eight runtime commands per request.');
   const aliases=new Map();
   const next = applyAgentActions(project, edits,{aliases});
-  for(const command of [...before,...after])if(command.args?.trackId)command.args.trackId=aliases.get(command.args.trackId)||command.args.trackId;
+  for(const command of [...before,...after]){
+  if(command.args?.trackId)command.args.trackId=aliases.get(command.args.trackId)||command.args.trackId;
+  const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
+ }
   for (const command of [...before, ...after]) applyAgentActions(next, [{type:'command', args:command}]);
   return {next, editCount:edits.length, before, after};
 }

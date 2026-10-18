@@ -31,7 +31,7 @@ const fs=require('node:fs/promises');
  assert.ok(data?.length>44100*3);let sum=0,peak=0;for(let i=0;i+2<data.length;i+=3){const v=data.readIntLE(i,3)/8388608;sum+=v*v;peak=Math.max(peak,Math.abs(v));}
  assert.ok(Math.sqrt(sum/(data.length/3))>1e-5,'Export must contain sound');assert.ok(peak<1,'Fixture must not clip');
  const saved=JSON.parse(await fs.readFile(await downloads[1].path(),'utf8'));assert.equal(saved.bpm,128);assert.equal(saved.arrangement.length,1);assert.ok(Object.values(saved.clips)[0].notes.length>=1);
- const log=await page.locator('.agent-log').innerText();assert.ok(log.indexOf('Completed: view')<log.indexOf('Completed: play'));assert.ok(log.indexOf('Completed: pause')<log.indexOf('Completed: export_wav'));
+ const log=await page.locator('.agent-log').innerText();assert.ok(log.indexOf('Completed: view')<log.indexOf('Completed: play'));assert.ok(log.indexOf('Completed: pause')<log.indexOf('Export ready:'));
  await page.locator('#play').focus();await page.keyboard.press('Control+z');assert.equal(await page.locator('#bpm').inputValue(),'120');assert.equal(await page.locator('.region[data-region]').count(),0);
  await page.keyboard.press('Control+Shift+z');assert.equal(await page.locator('#bpm').inputValue(),'128');
  await page.locator('#play').click();await page.waitForFunction(()=>document.getElementById('play').classList.contains('playing'));
