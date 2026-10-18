@@ -1,0 +1,30 @@
+/* The agent is part of the workspace, with the same chrome and controls. */
+.studio-center{flex:1;min-width:0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:5px}
+.studio-center>main{min-height:0}
+.studio-center.agent-collapsed{grid-template-columns:minmax(0,1fr)}
+.studio-agent{min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:3px;overflow:hidden;font:11px/1.5 Arial,Helvetica,sans-serif}
+.agent-heading{display:flex;align-items:center;gap:8px;min-height:28px;padding:3px 8px;background:var(--bg);border-bottom:1px solid var(--line)}
+.agent-heading strong{font-size:11px;font-weight:600}.agent-state{margin-left:auto;color:var(--muted);font-size:9px}.agent-state:before{content:'';display:inline-block;width:5px;height:5px;margin-right:5px;border-radius:50%;background:var(--accent)}
+.studio-shell .agent-collapse{padding:0;width:20px;height:20px;font-size:18px;background:transparent;border-color:transparent;line-height:1}
+.agent-content{min-height:0;flex:1;display:flex;flex-direction:column;gap:10px;padding:10px;overflow:auto;scrollbar-width:thin}
+.agent-intro p{margin:0;color:var(--muted)}.agent-intro .agent-kicker{font-size:9px;letter-spacing:1px;font-weight:600;color:var(--text);margin-bottom:6px}
+.agent-log{flex:1;min-height:90px;overflow:auto;overscroll-behavior:contain;background:#c9cbcd;border:1px solid var(--line);border-radius:2px;padding:8px;scrollbar-width:thin;overflow-wrap:anywhere}
+.agent-log p{white-space:pre-wrap;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid #999c9f}.agent-log p:last-child{margin-bottom:0;padding-bottom:0;border-bottom:0}.agent-log .agent-empty{color:var(--muted)}
+.agent-log details{font-size:10px;margin:4px 0 10px}.agent-log pre{font:10px/1.5 monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted)}
+.agent-prompt{flex-shrink:0;min-width:0}.agent-prompt label{display:block;font-weight:600;margin-bottom:5px}
+.agent-prompt textarea{box-sizing:border-box;display:block;resize:vertical;width:100%;min-height:72px;max-height:180px;background:#d8dadd;color:var(--text);border:1px solid var(--line);border-radius:2px;padding:8px;font:11px/1.5 Arial,Helvetica,sans-serif}
+.agent-prompt textarea::placeholder{color:#55595c}.studio-agent :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.agent-actions{display:flex;gap:5px;margin-top:6px}.studio-shell .agent-actions button{padding:5px 10px;font-size:11px}.agent-hint{margin:7px 0 0;font-size:9px;color:var(--muted)}
+.agent-account{flex-shrink:0;border-top:1px solid var(--line);padding-top:7px;color:var(--muted)}.agent-account summary,.agent-log summary{cursor:pointer}.agent-account p{margin:6px 0;font-size:10px}
+.agent-auth{display:grid;gap:5px;margin:7px 0}.agent-auth input{width:100%;min-width:0;font-size:11px}.studio-shell .agent-account button{padding:4px 8px;font-size:10px}
+#agent-open{white-space:nowrap;margin-left:4px}.studio-shell #agent-open[aria-expanded=true]{box-shadow:inset 0 -2px var(--accent);background:var(--panel)}
+@media(max-width:1150px){
+ .studio-center{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 224px}.studio-center.agent-collapsed{grid-template-rows:minmax(0,1fr)}
+ .agent-content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:7px 12px;padding:8px}
+ .agent-intro{display:none}.agent-log{grid-column:1;grid-row:1;min-height:0}.agent-account{grid-column:1;grid-row:2}.agent-prompt{grid-column:2;grid-row:1/3;overflow:auto}.agent-prompt textarea{min-height:65px}.agent-account[open]{max-height:132px;overflow:auto}
+}
+@media(max-width:620px){
+ .studio-center{grid-template-rows:minmax(0,1fr) 260px;gap:3px}
+ .agent-content{display:flex;gap:6px;padding:7px}.agent-log{min-height:45px;flex:1}.agent-prompt textarea{min-height:48px;height:48px}.agent-hint{display:none}.agent-account{padding-top:4px}.agent-account[open]{overflow:visible;max-height:none}.agent-content:has(.agent-account[open]) .agent-log{flex:none}
+ .agent-heading{min-height:26px}.studio-shell .view-actions #agent-open{font-size:9px;padding:2px 5px}
+}

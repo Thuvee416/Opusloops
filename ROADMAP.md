@@ -110,3 +110,12 @@ Individual trigger/toggle clip launch, per-track clip stop and all-clips stop ar
 Explicit Session WAV source exports the active clip snapshot even when an Arrangement exists; automatic source retains prior Arrangement preference. Session snapshots start each clip from its beginning for sixteen beats and bypass Arrangement automation. Manual WAV/stem export shares the Session source option. Gate/repeat holds, mixed Arrangement/Session capture, live phase preservation, broader performance workflows and authenticated production inference remain open.
 
 Evidence: native/receipt unit tests and `tests/agent-session.cjs`, with generated tones and a captured real-model Session plan. The browser fixture checks slow clip quantization, retained no-stop slots, the new high-frequency clip in Session output, exactly muted Arrangement output, individual/all stops, and cancellation that does not leak a late clip launch into a subsequent render. These are scheduling and offline-output checks, not physical audio-device or perceptual-quality verification.
+
+
+## 0.125 — Shared studio theme and inline agent
+
+The welcome modal and Studio agent now share the application's neutral surfaces, accent token, Arial typography, compact borders, controls and black logo. The welcome keeps its SoftAurora band and per-visit dismissal behavior. Its agent description reflects the currently available experimental controls.
+
+The Studio agent is a persistent workspace dock beside the timeline on wide screens and below it on smaller screens. It no longer uses a modal dialog or blocks the rest of the studio. Collapse preserves conversation, prompt and running work; explicit Cancel stops a request. Conversation updates scroll only their own feed. Account sign-in remains inline.
+
+Evidence: `tests/agent-layout.cjs` checks desktop, tablet and small-phone bounds, shared theme, keyboard safety, background view switching, account access and a task completing while collapsed. Existing agent edit/Undo, stale-plan, cancellation, sequenced playback/export and Session performance suites remain covered with mocked/captured model responses; authenticated production model inference remains unverified.
