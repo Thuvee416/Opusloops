@@ -246,7 +246,7 @@ export class Engine {
         if(this.mode==='session'||this.overrides.has(track.id)){
           const a=this.active.get(track.id);if(a?.clipId)this.schedule(this.context,target,this.project.clips[a.clipId],time,beat-a.start,step,track.id,`session:${a.start}`,Infinity,a.bufferIdentity);
         }else for(const slice of arrangementSlices(this.project,track.id,pos,step)){
-          const region=segmentAt(this.project,track.id,pos+slice.delay+1e-8),limit=time+(region.start+region.length-pos)*spb;
+          const region=this.project.arrangement.find(r=>r.id===slice.regionId),limit=time+(region.start+region.length-pos)*spb;
           this.schedule(this.context,target,this.project.clips[slice.clipId],time+slice.delay*spb,slice.offset,slice.length,track.id,region.id,limit,undefined,{region,beat:pos+slice.delay-region.start});
         }
       }this.nextBeat+=step;
@@ -268,8 +268,10 @@ export class Engine {
     }
   }
   async consolidate(regionId){
-    if(this.playing)throw new Error('Stop playback before consolidating.');const {region,clip}=consolidationSource(this.project,regionId),snapshot={...region};await this.init(false);const raw=await this.prepareClip(clip);if(!raw)throw new Error('The source audio is unavailable.');const channels=raw.numberOfChannels,sampleRate=raw.sampleRate,frames=Math.ceil(snapshot.length*60/this.project.bpm*sampleRate);if(channels>2)throw new Error('Consolidation currently supports mono and stereo clips.');if(frames*channels*4+44>CONSOLIDATE_BYTES)throw new Error('Consolidated audio must fit within 30 MB. Shorten the region.');
-    const ctx=new OfflineAudioContext(channels,frames,sampleRate);this.schedule(ctx,ctx.destination,clip,0,snapshot.offset,snapshot.length,snapshot.trackId,snapshot.id,Infinity,undefined,{region:snapshot,beat:0});return ctx.startRendering();
+    if(this.playing)throw new Error('Stop playback before consolidating.');const passage=consolidationSource(this.project,regionId),regions=structuredClone(passage.regions);await this.init(false);
+    const buffers=[];for(const region of regions){const buffer=await this.prepareClip(this.project.clips[region.clipId]);if(!buffer)throw new Error('The source audio is unavailable.');buffers.push(buffer);}
+    const channels=Math.max(...buffers.map(b=>b.numberOfChannels)),sampleRate=this.context.sampleRate,frames=Math.ceil(passage.length*60/this.project.bpm*sampleRate);if(channels>2)throw new Error('Consolidation currently supports mono and stereo clips.');if(frames*channels*4+44>CONSOLIDATE_BYTES)throw new Error('Consolidated audio must fit within 30 MB. Shorten the passage.');
+    const ctx=new OfflineAudioContext(channels,frames,sampleRate),spb=60/this.project.bpm;for(const region of regions.filter(isRegionActive))this.schedule(ctx,ctx.destination,this.project.clips[region.clipId],(region.start-passage.start)*spb,region.offset,region.length,region.trackId,region.id,(region.start+region.length-passage.start)*spb,undefined,{region,beat:0});return ctx.startRendering();
   }
   async render(options={}){const settings=exportOptions(options),output=exportChannel(this.project,settings.channel),sessionSource=settings.source==='session'||settings.source!=='arrangement'&&!this.project.arrangement.length;if(settings.source==='arrangement'&&!this.project.arrangement.length)throw new Error('Add Arrangement clips before exporting the Arrangement.');if(settings.range!==undefined&&(sessionSource||!this.project.arrangement.length))throw new Error('Record an Arrangement before exporting a range.');await this.prepare();const events=!sessionSource?this.project.arrangement:[...this.active].filter(([,a])=>a.clipId).map(([id,a])=>({trackId:id,clipId:a.clipId,start:0,length:16,offset:0}));
     if(!events.length)throw new Error('Launch a scene or record an arrangement before exporting.');

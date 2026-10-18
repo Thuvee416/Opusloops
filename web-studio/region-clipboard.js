@@ -1,4 +1,4 @@
-import {uid,validateProject} from './model.js';
+import {uid,validateProject,canPlace} from './model.js';
 
 export function copyRegionSelection(project,ids){
  validateProject(project);
@@ -21,7 +21,7 @@ export function pasteRegionSelection(project,clipboard,start,trackId){
   const {trackOffset,...source}=r;
   const region={...structuredClone(source),id:uid(),trackId:project.tracks[base+trackOffset].id,clipId:clip.id,start:start+r.start};
   if(region.start+region.length>16384)throw new Error('The copied clips exceed the timeline limit.');
-  if(project.arrangement.some(o=>o.trackId===region.trackId&&o.start<region.start+region.length-1e-7&&o.start+o.length>region.start+1e-7))throw new Error('Pasted clips would overlap existing clips. Choose an empty destination.');
+  if(!canPlace(project,region))throw new Error('Pasted clips would overlap existing clips. Choose an empty destination.');
   return region;
  });
  const arrangement=[...project.arrangement,...regions];validateProject({...project,clips,arrangement});

@@ -1,4 +1,4 @@
-import {validateRegionFades,sliceRegion} from './region-fades.js';
+import {validateRegionFades,sliceRegion,regionsCanOverlap} from './region-fades.js';
 import {validateWarp} from './warp.js';
 import {validateFollow} from './follow-actions.js';
 import {validReleaseVelocity,validNoteActivation} from './note-state.js';
@@ -24,7 +24,7 @@ export function segmentAt(project,trackId,beat) {return project.arrangement.find
 export function arrangementSlices(project,trackId,start,length){
   return project.arrangement.filter(s=>isRegionActive(s)&&s.trackId===trackId&&s.start<start+length&&s.start+s.length>start).map(s=>{
     const from=Math.max(start,s.start),to=Math.min(start+length,s.start+s.length);
-    return {clipId:s.clipId,delay:from-start,offset:s.offset+from-s.start,length:to-from};
+    return {regionId:s.id,clipId:s.clipId,delay:from-start,offset:s.offset+from-s.start,length:to-from};
   });
 }
 export function splitSegment(segment,at) {
@@ -32,7 +32,7 @@ export function splitSegment(segment,at) {
   const length=at-segment.start;
   return [sliceRegion(segment,0,length),sliceRegion(segment,length,segment.length-length,{id:uid()})];
 }
-export function canPlace(project,segment,ignoreId=segment.id) {return !project.arrangement.some(s=>s.id!==ignoreId && s.trackId===segment.trackId && s.start<segment.start+segment.length-1e-7 && s.start+s.length>segment.start+1e-7);}
+export function canPlace(project,segment,ignoreId=segment.id) {return !project.arrangement.some(s=>s.id!==ignoreId && s.trackId===segment.trackId && s.start<segment.start+segment.length-1e-7 && s.start+s.length>segment.start+1e-7&&!regionsCanOverlap(s,segment,project.clips));}
 export function validateProject(p) {
   const fail=()=>{throw new Error('This is not a valid OPUS LOOPS project.');};
   const num=(x,min,max)=>Number.isFinite(x)&&x>=min&&x<=max;

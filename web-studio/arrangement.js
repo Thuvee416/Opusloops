@@ -54,7 +54,7 @@ export function planRegionTrim(project,ids,edge,delta){
  if(next.some(r=>r.start<0||r.length<minimum||r.start+r.length>16384))throw new Error('Keep every trimmed clip within the timeline.');
  // Resizing can make selected clips collide with one another as well as neighbors.
  const all=[...project.arrangement.filter(r=>!selected.has(r.id)),...next].sort((a,b)=>a.trackId===b.trackId?a.start-b.start:a.trackId<b.trackId?-1:1);
- for(let i=1;i<all.length;i++)if(all[i-1].trackId===all[i].trackId&&all[i-1].start+all[i-1].length>all[i].start+1e-7)throw new Error('Selected clip edges would overlap another clip.');
+ for(const r of next)if(!canPlace({...project,arrangement:all},r))throw new Error('Selected clip edges would overlap another clip without a complementary crossfade.');
  return next;
 }
 
@@ -64,7 +64,7 @@ export function planRegionGroup(project,ids,delta=0,trackOffset=0,copy=false){
  delta=Math.max(-Math.min(...regions.map(r=>r.start)),Math.round(delta*4)/4);
  const next=regions.map(r=>{const index=project.tracks.findIndex(t=>t.id===r.trackId)+trackOffset;if(index<0||index>=project.tracks.length)throw new Error('Keep every selected clip within the available tracks.');const n={...r,start:r.start+delta,trackId:project.tracks[index].id};if(n.start+n.length>16384)throw new Error('The group exceeds the timeline limit.');return n;});
  const others=copy?project.arrangement:project.arrangement.filter(r=>!selected.has(r.id));
- for(const r of next)if(others.some(o=>o.trackId===r.trackId&&o.start<r.start+r.length-1e-7&&o.start+o.length>r.start+1e-7))throw new Error('Selected clips would overlap another clip.');
+ for(const r of next)if(!canPlace({...project,arrangement:[...others,...next.filter(n=>n!==r)]},r,copy?'copy:'+r.id:r.id))throw new Error('Selected clips would overlap another clip without a complementary crossfade.');
  return next;
 }
 export function editRegionGroup(project,ids,action,{delta,trackOffset=0,edge}={}){

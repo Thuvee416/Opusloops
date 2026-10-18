@@ -63,3 +63,17 @@ export function scheduleRegionFades(ctx,source,target,region,origin,time,spb){
  }
  previous.connect(target);return nodes;
 }
+
+// An overlap is legal only when two audio envelopes form a complementary join.
+// Cropped/split ramps retain that invariant without stored partner IDs.
+export function regionsCanOverlap(a,b,clips){
+ const start=Math.max(a.start,b.start),end=Math.min(a.start+a.length,b.start+b.length);
+ if(end-start<=1e-7)return true;
+ if(!clips[a.clipId]||!clips[b.clipId]||clips[a.clipId].kind==='midi'||clips[b.clipId].kind==='midi'||!a.fades||!b.fades)return false;
+ try{
+  const at=(r,beat)=>regionGainAt(r,beat-r.start),da=at(a,end)-at(a,start),db=at(b,end)-at(b,start);
+  if(da*db>=0||Math.abs(da)<1e-9||Math.abs(db)<1e-9)return false;
+  const points=[start,end];for(const r of [a,b])for(const f of Object.values(r.fades))for(const point of [r.start+f.start,r.start+f.end])if(point>start&&point<end)points.push(point);
+  return points.every(beat=>Math.abs(at(a,beat)+at(b,beat)-1)<1e-7);
+ }catch{return false;}
+}
