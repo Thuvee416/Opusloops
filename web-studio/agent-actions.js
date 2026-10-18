@@ -29,7 +29,7 @@ export const agentActions={
  drum_pad:'{trackId,pitch,changes:{name?,source?,level?,pan?,tune?,decay?,choke?,mute?,solo?}}',
  send:'{trackId,returnId,amount,pre?}',
  automation:'{trackId,key:volume|pan,points:[{beat,value}],enabled:true}',
- midi:'{ref?,clipId?,trackId?,scene?,name?,beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip',
+ midi:'{ref?,clipId?,trackId?,scene?,name? (display name: include any exact user-provided clip name),beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip',
  clip:'{id,changes:{name?,beats?,sourceBpm?,audioEdit?,warp?,launch?}}',
  region_group:'{ids:[existing Arrangement region IDs],action:move|duplicate|delete|active|trim,delta? (beats),trackOffset? (move/duplicate only),edge?:start|end (trim only)} trim moves all chosen starts or ends by one shared quarter-beat-snapped delta; positive moves right, negative left. Shorten starts by 1 beat: edge=start,delta=+1. Shorten ends by 1 beat: edge=end,delta=-1. Negative start delta extends earlier; positive end delta extends later. Starts preserve original ends and source timing. Clamp together at timeline/minimum length boundaries, reject overlaps atomically. Does not alter source clips or track automation',
  region:'{id?,ref? (unique alias for a NEW region),trackId?,clipId?,start?,length?,offset?,active?,remove?} add/update/delete Arrangement clip',

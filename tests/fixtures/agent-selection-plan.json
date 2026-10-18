@@ -160,7 +160,7 @@
           "color": "#c5ae83",
           "devices": [
             {
-              "id": "7835c849-2d12-4214-b01f-9158ed1f152d",
+              "id": "8cbfc8e8-5644-4ad2-85d7-b755c1a3afd5",
               "type": "reverb",
               "enabled": true,
               "params": {
@@ -188,7 +188,7 @@
       "drum_pad": "{trackId,pitch,changes:{name?,source?,level?,pan?,tune?,decay?,choke?,mute?,solo?}}",
       "send": "{trackId,returnId,amount,pre?}",
       "automation": "{trackId,key:volume|pan,points:[{beat,value}],enabled:true}",
-      "midi": "{ref?,clipId?,trackId?,scene?,name?,beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip",
+      "midi": "{ref?,clipId?,trackId?,scene?,name? (display name: include any exact user-provided clip name),beats,notes:[{pitch,start,duration,velocity}]} replaces notes or creates MIDI clip",
       "clip": "{id,changes:{name?,beats?,sourceBpm?,audioEdit?,warp?,launch?}}",
       "region_group": "{ids:[existing Arrangement region IDs],action:move|duplicate|delete|active|trim,delta? (beats),trackOffset? (move/duplicate only),edge?:start|end (trim only)} trim moves all chosen starts or ends by one shared quarter-beat-snapped delta; positive moves right, negative left. Shorten starts by 1 beat: edge=start,delta=+1. Shorten ends by 1 beat: edge=end,delta=-1. Negative start delta extends earlier; positive end delta extends later. Starts preserve original ends and source timing. Clamp together at timeline/minimum length boundaries, reject overlaps atomically. Does not alter source clips or track automation",
       "region": "{id?,ref? (unique alias for a NEW region),trackId?,clipId?,start?,length?,offset?,active?,remove?} add/update/delete Arrangement clip",
@@ -573,7 +573,7 @@
       "prompt": "Select the Four-note bass Session clip on Bass in displayed scene 2 and open its Clip detail. Do not launch it, start playback, change notes, or edit the project.",
       "attempt": 1,
       "plan": {
-        "summary": "Select Four-note bass Session clip on Bass in displayed scene 2 and open its Clip detail.",
+        "summary": "Select the Four-note bass Session clip on Bass in displayed scene 2 and open its Clip detail.",
         "actions": [
           {
             "type": "command",
@@ -664,7 +664,7 @@
     {
       "kind": "compose",
       "prompt": "Create a new Bright pluck track named New lead. Create a four-beat MIDI clip on that track in scene 1 (displayed) with pitches 72, 76, 79 at beats 0, 1, 2, each one beat at velocity 0.6. Place it in the Arrangement at zero-based beat 64 for four beats, then select that new Arrangement region and show its Clip detail. Preserve all existing material and do not start playback.",
-      "attempt": 1,
+      "attempt": 2,
       "plan": {
         "summary": "Created new Bright pluck track and MIDI clip",
         "actions": [
@@ -673,14 +673,15 @@
             "args": {
               "name": "New lead",
               "preset": "Bright pluck",
-              "ref": "$newLead"
+              "ref": "$new_lead"
             }
           },
           {
             "type": "midi",
             "args": {
-              "trackId": "$newLead",
-              "ref": "$riff",
+              "trackId": "$new_lead",
+              "ref": "$pluck_clip",
+              "name": "Pluck riff",
               "scene": 0,
               "beats": 4,
               "notes": [
@@ -708,11 +709,12 @@
           {
             "type": "region",
             "args": {
-              "trackId": "$newLead",
-              "clipId": "$riff",
+              "trackId": "$new_lead",
+              "clipId": "$pluck_clip",
               "start": 64,
               "length": 4,
-              "ref": "$region"
+              "offset": 0,
+              "ref": "$new_region"
             }
           },
           {
@@ -722,9 +724,160 @@
               "args": {
                 "target": "regions",
                 "ids": [
-                  "$region"
+                  "$new_region"
                 ],
-                "primaryId": "$region"
+                "primaryId": "$new_region"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "show_panel",
+              "args": {
+                "panel": "clip"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "named_group",
+      "prompt": "Create a Warm bass track named Navigation Proof and a return named Navigation Room. On Navigation Proof, create Navigation A in displayed scene 1 and Navigation B in displayed scene 2. Each MIDI clip must be four beats with pitches 36, 39, 41, 43 at zero-based starts 0, 1, 2, 3, each lasting one beat at velocity 0.8. Place Navigation A in the Arrangement at zero-based beat 0 for four beats, and Navigation B at zero-based beat 128 for four beats. Select both of these Arrangement regions with Navigation B primary, reveal both, and open Clip detail. Preserve every existing track and all other existing material. Do not start playback.",
+      "attempt": 1,
+      "plan": {
+        "summary": "Created Warm bass track and return, added MIDI clips and Arrangement regions, selected regions with Navigation B primary, and opened Clip detail.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "Navigation Proof",
+              "preset": "Warm bass",
+              "ref": "$navProof"
+            }
+          },
+          {
+            "type": "add_return",
+            "args": {
+              "name": "Navigation Room",
+              "ref": "$navRoom"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$navProof",
+              "ref": "$navA",
+              "name": "Navigation A",
+              "scene": 0,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 36,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.8
+                },
+                {
+                  "pitch": 39,
+                  "start": 1,
+                  "duration": 1,
+                  "velocity": 0.8
+                },
+                {
+                  "pitch": 41,
+                  "start": 2,
+                  "duration": 1,
+                  "velocity": 0.8
+                },
+                {
+                  "pitch": 43,
+                  "start": 3,
+                  "duration": 1,
+                  "velocity": 0.8
+                }
+              ]
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$navProof",
+              "ref": "$navB",
+              "name": "Navigation B",
+              "scene": 1,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 36,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.8
+                },
+                {
+                  "pitch": 39,
+                  "start": 1,
+                  "duration": 1,
+                  "velocity": 0.8
+                },
+                {
+                  "pitch": 41,
+                  "start": 2,
+                  "duration": 1,
+                  "velocity": 0.8
+                },
+                {
+                  "pitch": 43,
+                  "start": 3,
+                  "duration": 1,
+                  "velocity": 0.8
+                }
+              ]
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "trackId": "$navProof",
+              "clipId": "$navA",
+              "ref": "$navARegion",
+              "start": 0,
+              "length": 4,
+              "offset": 0
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "trackId": "$navProof",
+              "clipId": "$navB",
+              "ref": "$navBRegion",
+              "start": 128,
+              "length": 4,
+              "offset": 0
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "regions",
+                "ids": [
+                  "$navARegion",
+                  "$navBRegion"
+                ],
+                "primaryId": "$navBRegion"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "show_panel",
+              "args": {
+                "panel": "clip"
               }
             }
           }

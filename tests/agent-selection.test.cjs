@@ -35,3 +35,9 @@ test('selection-only plans preserve prior Undo history and cannot edit after nav
 test('first-open pitch fitting covers every note including the previously hidden highest bass note',async()=>{
  const {selectionProject}=await setup(),{fitPianoPitches}=await import('../web-studio/piano-view.js');for(const notes of [selectionProject().clips.riff.notes,[{pitch:0},{pitch:127}],[{pitch:127}],[]]){const view=fitPianoPitches(notes);assert.ok(notes.every(n=>n.pitch>=view.base&&n.pitch<view.base+view.count));assert.ok(view.base>=0&&view.base+view.count<=128);}
 });
+test('captured named multi-clip composition retains display names, scenes, source material and final group primary',async()=>{
+ const {selectionProject,prepareAgentPlan}=await setup(),{readFile}=require('node:fs/promises'),fixture=JSON.parse(await readFile(require('node:path').join(__dirname,'fixtures/agent-selection-plan.json'),'utf8')),p=selectionProject(),before=structuredClone(p),plan=prepareAgentPlan(p,fixture.cases.find(c=>c.kind==='named_group').plan.actions),track=plan.next.tracks.at(-1),regions=[];
+ assert.deepEqual(plan.next.tracks.slice(0,2),p.tracks);assert.equal(plan.next.returns.at(-1).name,'Navigation Room');
+ for(const [scene,name]of ['Navigation A','Navigation B'].entries()){const clip=plan.next.clips[track.slots[scene]];assert.equal(clip.name,name);assert.deepEqual(clip.notes,[36,39,41,43].map((pitch,start)=>({pitch,start,duration:1,velocity:.8})));const region=plan.next.arrangement.find(r=>r.clipId===clip.id);assert.equal(region.start,scene*128);regions.push(region);}
+ const selection=plan.after.filter(c=>c.name==='select').at(-1);assert.deepEqual(new Set(selection.args.ids),new Set(regions.map(r=>r.id)));assert.equal(selection.args.primaryId,regions[1].id);assert.deepEqual(p,before);assert.ok(plan.after.every(c=>['select','show_panel'].includes(c.name)));
+});
