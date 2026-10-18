@@ -78,3 +78,8 @@ test('inline creation launch settings are negotiated only for queued displayed-s
   }});assert.equal(calls,1);
  }
 });
+
+test('fresh creation ignores spoofed client requirements and rejects reviewed launch settings from prior conversation',async()=>{
+ const {emptyProject}=await import('../../../web-studio/model.js'),{agentContext}=await import('../../../web-studio/agent-actions.js'),project=emptyProject(),context={...agentContext(project),requestedCreationLaunch:null,conversation:[{role:'user',text:'Earlier task: use Toggle, four beats and legato.'}]},before=structuredClone(context),prompt='Add a four-beat MIDI clip in scene 1. No other edits or commands.';
+ for(const carry of [false,true]){let calls=0;const task=()=>studioAgent({prompt,context},{send:async c=>{const payload=JSON.parse(c.input.messages[0].content[0].text);assert.deepEqual(payload.requestedCreationLaunch,{kind:'fresh-midi-default-launch'});assert.equal(payload.session.requestedCreationLaunch,undefined);assert.match(c.input.system[0].text,/Earlier conversation describes earlier work/);calls++;return response({summary:'Create',actions:[{type:'midi',args:{trackId:project.tracks[0].id,sceneNumber:1,beats:4,notes:[],...(carry?{launch:{mode:'toggle',quantization:4,legato:true}}:{})}}]});}});if(carry)await assert.rejects(task,e=>e.code==='invalid_agent_plan'&&/Earlier Conversation/.test(e.message));else assert.equal((await task()).reviewed,true);assert.equal(calls,2);}assert.deepEqual(context,before);
+});

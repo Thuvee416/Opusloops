@@ -1,0 +1,327 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "budgetMs": 100000,
+  "cases": [
+    {
+      "id": "complex",
+      "prompt": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits.",
+      "launches": true,
+      "result": {
+        "summary": "Create two new Init synth tracks and MIDI clips as requested.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property A",
+              "preset": "Init",
+              "ref": "$qaA"
+            }
+          },
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property B",
+              "preset": "Init",
+              "ref": "$qaB"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$qaA",
+              "name": "QA Clip A",
+              "sceneNumber": 1,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 60,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ],
+              "launch": {
+                "mode": "toggle",
+                "quantization": 4,
+                "legato": true
+              }
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$qaB",
+              "name": "QA Clip B",
+              "sceneNumber": 1,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 48,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ],
+              "launch": {
+                "mode": "gate",
+                "quantization": 0.5,
+                "legato": false
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "result": {
+            "summary": "Create two new Init synth tracks and MIDI clips as requested.",
+            "actions": [
+              {
+                "type": "add_track",
+                "args": {
+                  "name": "QA Property A",
+                  "preset": "Init",
+                  "ref": "$qaA"
+                }
+              },
+              {
+                "type": "add_track",
+                "args": {
+                  "name": "QA Property B",
+                  "preset": "Init",
+                  "ref": "$qaB"
+                }
+              },
+              {
+                "type": "midi",
+                "args": {
+                  "trackId": "$qaA",
+                  "name": "QA Clip A",
+                  "sceneNumber": 1,
+                  "beats": 4,
+                  "notes": [
+                    {
+                      "pitch": 60,
+                      "start": 0,
+                      "duration": 1,
+                      "velocity": 0.5
+                    }
+                  ],
+                  "launch": {
+                    "mode": "toggle",
+                    "quantization": 4,
+                    "legato": true
+                  }
+                }
+              },
+              {
+                "type": "midi",
+                "args": {
+                  "trackId": "$qaB",
+                  "name": "QA Clip B",
+                  "sceneNumber": 1,
+                  "beats": 4,
+                  "notes": [
+                    {
+                      "pitch": 48,
+                      "start": 0,
+                      "duration": 1,
+                      "velocity": 0.5
+                    }
+                  ],
+                  "launch": {
+                    "mode": "gate",
+                    "quantization": 0.5,
+                    "legato": false
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          },
+          "phases": [
+            {
+              "phase": "drafting",
+              "elapsedMs": 2
+            },
+            {
+              "phase": "reviewing",
+              "elapsedMs": 3465
+            }
+          ],
+          "elapsedMs": 6741,
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "plain-scene-one",
+      "prompt": "Add two Init synth tracks named QA Property A and QA Property B. Each needs a four-beat MIDI clip in scene 1, named QA Clip A and QA Clip B respectively. Each clip has one note: start 0, duration 1 beat, velocity 0.5; pitch 60 on A, 48 on B. No other edits or commands.",
+      "result": {
+        "summary": "Add two Init synth tracks with four-beat MIDI clips in scene 1.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property A",
+              "preset": "Init",
+              "ref": "$qaA"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$qaA",
+              "name": "QA Clip A",
+              "sceneNumber": 1,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 60,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          },
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property B",
+              "preset": "Init",
+              "ref": "$qaB"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$qaB",
+              "name": "QA Clip B",
+              "sceneNumber": 1,
+              "beats": 4,
+              "notes": [
+                {
+                  "pitch": 48,
+                  "start": 0,
+                  "duration": 1,
+                  "velocity": 0.5
+                }
+              ]
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "result": {
+            "summary": "Add two Init synth tracks with four-beat MIDI clips in scene 1.",
+            "actions": [
+              {
+                "type": "add_track",
+                "args": {
+                  "name": "QA Property A",
+                  "preset": "Init",
+                  "ref": "$qaA"
+                }
+              },
+              {
+                "type": "midi",
+                "args": {
+                  "trackId": "$qaA",
+                  "name": "QA Clip A",
+                  "sceneNumber": 1,
+                  "beats": 4,
+                  "notes": [
+                    {
+                      "pitch": 60,
+                      "start": 0,
+                      "duration": 1,
+                      "velocity": 0.5
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "add_track",
+                "args": {
+                  "name": "QA Property B",
+                  "preset": "Init",
+                  "ref": "$qaB"
+                }
+              },
+              {
+                "type": "midi",
+                "args": {
+                  "trackId": "$qaB",
+                  "name": "QA Clip B",
+                  "sceneNumber": 1,
+                  "beats": 4,
+                  "notes": [
+                    {
+                      "pitch": 48,
+                      "start": 0,
+                      "duration": 1,
+                      "velocity": 0.5
+                    }
+                  ]
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          },
+          "phases": [
+            {
+              "phase": "drafting",
+              "elapsedMs": 2
+            },
+            {
+              "phase": "reviewing",
+              "elapsedMs": 2623
+            }
+          ],
+          "elapsedMs": 5433,
+          "passed": true
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

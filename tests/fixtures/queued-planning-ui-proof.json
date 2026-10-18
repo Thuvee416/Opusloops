@@ -212,5 +212,35 @@
         "finishedAt": 1792348736667
       }
     ]
+  },
+  "historyCarryoverClientGuard": {
+    "base": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145714.655.opusloop",
+    "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145747.286.opusloop",
+    "undo": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T145748.937.opusloop",
+    "wholeProjectOracle": true,
+    "oneUndoByteIdentical": true,
+    "repairs": 1,
+    "jobs": [
+      {
+        "id": "4c0817dc-e388-49a3-88fb-bd68c8564ef9",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792349835198,
+        "finishedAt": 1792349838406
+      },
+      {
+        "id": "1503327e-7631-48c6-b353-83227d9dd56a",
+        "status": "succeeded",
+        "phase": "complete",
+        "hasPayload": false,
+        "hasResult": true,
+        "startedAt": 1792349839837,
+        "finishedAt": 1792349843043
+      }
+    ],
+    "log": "/tmp/opus-queue-history-repair-local-log.txt",
+    "consoleErrors": []
   }
 }

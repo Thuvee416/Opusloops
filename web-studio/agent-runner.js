@@ -1,3 +1,4 @@
+import {checkCreationLaunchRequirement} from './midi-creation-requirements.js';
 import {normalizeAgentActions,checkCreationSceneRequirement} from './agent-addressing.js';
 import {checkClipPropertyRequirements} from './clip-property-requirements.js';
 import {checkSessionSelectionRequirements,checkSessionSelectionReceipt} from './session-selection-requirements.js';
@@ -15,9 +16,10 @@ const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null}={}) {
+export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null,creationLaunchRequirement=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   actions=normalizeAgentActions(actions);
+  checkCreationLaunchRequirement(actions,creationLaunchRequirement);
   const creationSceneIntent=checkCreationSceneRequirement(actions,creationSceneRequirement);
   const edits = [], before = [], after = [];
   const hasEdits = actions.some(a => a?.type !== 'command');
