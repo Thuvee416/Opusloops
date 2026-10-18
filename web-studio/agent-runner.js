@@ -55,7 +55,7 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
     completedCommands.push(command.name);
     const deliveryCheck=plan.deliveryChecks?.get(command);
     checkDeliveryReceipt(plan.next,result,deliveryCheck);
-    if(deliveryCheck)result={...result,requestedSettingsVerified:deliveryCheck.requested};
+    if(deliveryCheck)result={...result,...(Object.keys(deliveryCheck.requested).length?{requestedSettingsVerified:deliveryCheck.requested}:{}),...(deliveryCheck.requiredFormat?{requestedFileTypeVerified:deliveryCheck.requiredFormat}:{})};
     observations.at(-1).result=result??null;
     // Runtime operations cannot silently replace/edit the project.
     check();

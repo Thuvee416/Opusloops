@@ -22,7 +22,7 @@ test('native invalid ToolUse during review is repairable without releasing the d
 });
 test('draft and review receive current explicit shared delivery requirements rather than stale session metadata',async()=>{
  let calls=0;const prompt='Export a WAV and a stem ZIP at 48 kHz, 24-bit, range start 6 length 4, no effect tails and no normalization for every export.';
- const result=await studioAgent({prompt,context:{...body.context,requestedDelivery:{settings:{range:{start:0,length:16}}}}},{send:async c=>{const data=JSON.parse(c.input.messages[0].content[0].text);assert.deepEqual(data.requestedDelivery.settings.range,{start:6,length:4});assert.equal(data.requestedDelivery.settings.sampleRate,48000);assert.equal(data.requestedDelivery.scope,'shared');assert.match(c.input.system[0].text,/EVERY audio export command/);calls++;return response({summary:'Export with checked settings',actions:[]});}});
+ const result=await studioAgent({prompt,context:{...body.context,requestedDelivery:{settings:{range:{start:0,length:16}}}}},{send:async c=>{const data=JSON.parse(c.input.messages[0].content[0].text);assert.deepEqual(data.requestedDelivery.settings.range,{start:6,length:4});assert.equal(data.requestedDelivery.settings.sampleRate,48000);assert.equal(data.requestedDelivery.scope,'shared');assert.deepEqual(new Set(data.requestedDelivery.requiredFormats),new Set(['wav','stems']));assert.match(c.input.system[0].text,/EVERY audio export command/);calls++;return response({summary:'Export with checked settings',actions:[]});}});
  assert.equal(calls,2);assert.equal(result.reviewed,true);
 });
 test('contradictory explicit shared delivery settings fail before any provider invocation',async()=>{
