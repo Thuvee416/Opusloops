@@ -1,0 +1,527 @@
+{
+  "site": "https://opusloops.com",
+  "firstPass": {
+    "version": "0.145.0",
+    "commit": "5e73db54611c2cce4ecf3b915537a0fbe766cfca",
+    "amplifyJob": 136,
+    "hosting": {
+      "commit": "5e73db54611c2cce4ecf3b915537a0fbe766cfca",
+      "checks": [
+        {
+          "host": "opusloops.com",
+          "asset": "agent-actions.js",
+          "sha256": "981fc60650337d0808270f3a400485c86ab1ab90e345be635b9b9837e5879d67"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-panel.js",
+          "sha256": "ac30acfc98f3d22e69f9d5dd906aa41a7c29a655c01dfca8b756fe4ef9582db0"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-runner.js",
+          "sha256": "414e54930c5e331bd6959a423bf79ad10c3a9c3cdcd6a8ff434dc031b57a961b"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-schema.js",
+          "sha256": "d26d5a353d4af0fd0963125237c801ead0e0b7a8b7b56b21089cf062bcf63a0f"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "app.js",
+          "sha256": "31e045d88d1354093f0fe0974be4db577fe365d41c03f8eccefdac1a0b5f79a7"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "audio.js",
+          "sha256": "ce85195bdb2e6ff00d5d87594443a917a57599a4e41a272abce4e1b88e9c8598"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "buffer-scheduler.js",
+          "sha256": "ade112b7b4a653c3e5806595f8481bfc226f1e49444ec9eb7b23f895d7a6c5f5"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "capture-scene.js",
+          "sha256": "7c5ca62a369563c69670af6e378596a88640f602982f18200ef3aa01f8135116"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "interaction-theme.css",
+          "sha256": "9f1c84dc708fa556e0d25d13dadbce3c076c8dbfe14ee66da279a1558c58118e"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "management.js",
+          "sha256": "7d7468073f186b8b0f160b460ef8a0250208e1b32c56304b5856e508bbac8a34"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "menus.js",
+          "sha256": "394fc35eaaa335c811628b22dcea5b5e194d0e1af86a2767a057bc5a4277c282"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "model.js",
+          "sha256": "890e0a5c1194c72533e315528943566a95ff5612e70fa88d2b18eea1e7532e2b"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "release.json",
+          "sha256": "3fa71d19f734e7dac4301bb7d0287c84a51733bf8a3504a5d85fa513aeca467d"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "session-batch.js",
+          "sha256": "897184b4fe5b691f0818802dc3230f9603e53851fe78cfaa6182f1b416f78db7"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "session-edit.js",
+          "sha256": "4ce7e8a51939f128862e703a4789a9dbceeb2354377b94c837c5e1c85e8173d8"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "slot-metadata.js",
+          "sha256": "7925885affe47d6cb48f0c1911786fc7ef30ea25eda0ae57e5921bade3ffe32d"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "studio-selection.js",
+          "sha256": "5b3178c9749348a8f9825706f089c97e43b14d2758b09c88a3d0c66d1e674377"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-actions.js",
+          "sha256": "981fc60650337d0808270f3a400485c86ab1ab90e345be635b9b9837e5879d67"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-panel.js",
+          "sha256": "ac30acfc98f3d22e69f9d5dd906aa41a7c29a655c01dfca8b756fe4ef9582db0"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-runner.js",
+          "sha256": "414e54930c5e331bd6959a423bf79ad10c3a9c3cdcd6a8ff434dc031b57a961b"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-schema.js",
+          "sha256": "d26d5a353d4af0fd0963125237c801ead0e0b7a8b7b56b21089cf062bcf63a0f"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "app.js",
+          "sha256": "31e045d88d1354093f0fe0974be4db577fe365d41c03f8eccefdac1a0b5f79a7"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "audio.js",
+          "sha256": "ce85195bdb2e6ff00d5d87594443a917a57599a4e41a272abce4e1b88e9c8598"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "buffer-scheduler.js",
+          "sha256": "ade112b7b4a653c3e5806595f8481bfc226f1e49444ec9eb7b23f895d7a6c5f5"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "capture-scene.js",
+          "sha256": "7c5ca62a369563c69670af6e378596a88640f602982f18200ef3aa01f8135116"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "interaction-theme.css",
+          "sha256": "9f1c84dc708fa556e0d25d13dadbce3c076c8dbfe14ee66da279a1558c58118e"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "management.js",
+          "sha256": "7d7468073f186b8b0f160b460ef8a0250208e1b32c56304b5856e508bbac8a34"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "menus.js",
+          "sha256": "394fc35eaaa335c811628b22dcea5b5e194d0e1af86a2767a057bc5a4277c282"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "model.js",
+          "sha256": "890e0a5c1194c72533e315528943566a95ff5612e70fa88d2b18eea1e7532e2b"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "release.json",
+          "sha256": "3fa71d19f734e7dac4301bb7d0287c84a51733bf8a3504a5d85fa513aeca467d"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "session-batch.js",
+          "sha256": "897184b4fe5b691f0818802dc3230f9603e53851fe78cfaa6182f1b416f78db7"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "session-edit.js",
+          "sha256": "4ce7e8a51939f128862e703a4789a9dbceeb2354377b94c837c5e1c85e8173d8"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "slot-metadata.js",
+          "sha256": "7925885affe47d6cb48f0c1911786fc7ef30ea25eda0ae57e5921bade3ffe32d"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "studio-selection.js",
+          "sha256": "5b3178c9749348a8f9825706f089c97e43b14d2758b09c88a3d0c66d1e674377"
+        }
+      ],
+      "versions": {
+        "opusloops.com": {
+          "provider": "aws-amplify",
+          "commit": "5e73db54611c2cce4ecf3b915537a0fbe766cfca",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000136",
+          "builtAt": "2026-10-18T16:01:21.151880Z"
+        },
+        "www.opusloops.com": {
+          "provider": "aws-amplify",
+          "commit": "5e73db54611c2cce4ecf3b915537a0fbe766cfca",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000136",
+          "builtAt": "2026-10-18T16:01:21.151880Z"
+        }
+      }
+    },
+    "baseline": {
+      "file": "Untitled-session - 2026-10-18T115826.816.opusloop",
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "setup": {
+      "file": "Untitled-session - 2026-10-18T120257.194.opusloop",
+      "bytes": 2550,
+      "sha256": "b3a1d8f3bd4d1c112d9eeeb8006179160ec762ba78b4ce64768e6134504e9b42",
+      "correctMusicalData": true,
+      "originalFieldsPreserved": true,
+      "missedInstructions": [
+        "Global launch quantization remained unchanged; Record Quantization Off was returned instead.",
+        "Single clip selected instead of both requested placements."
+      ],
+      "manualCorrection": "Global Launch None and Shift-click two placements."
+    },
+    "copyRequest": {
+      "reviewed": true,
+      "observed": "Clip selection only; no clipboard-copy receipt. Treated as failed, regardless of model summary.",
+      "fixedBy": "0.145.1 focused original-request contract and prepared snapshot receipt."
+    },
+    "restored": {
+      "file": "Untitled-session - 2026-10-18T120701.616.opusloop",
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+      "byteIdentical": true
+    }
+  },
+  "followUp": {
+    "version": "0.145.1",
+    "status": "authenticated workflow, five exact Undo states and reload verified",
+    "commit": "c6ba9c1fa58366882d309615a8d9cd01db110d9a",
+    "amplifyJob": 137,
+    "apiZipSha256": "cf53f1613a912c3c37df55c2459a60417296093a7b511bbd8a23aae1b9abc598",
+    "hosting": {
+      "commit": "c6ba9c1fa58366882d309615a8d9cd01db110d9a",
+      "checks": [
+        {
+          "host": "opusloops.com",
+          "asset": "agent-actions.js",
+          "sha256": "981fc60650337d0808270f3a400485c86ab1ab90e345be635b9b9837e5879d67"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-panel.js",
+          "sha256": "37d961485550c3c6b3df75f630ae29e02c34f6fd1ab2e5edee0e2766a51d8992"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-runner.js",
+          "sha256": "d82fc17b5cd8925d69125c2ab86630615cabe83c7ef2dc7e78f547630619c177"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-schema.js",
+          "sha256": "d26d5a353d4af0fd0963125237c801ead0e0b7a8b7b56b21089cf062bcf63a0f"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "app.js",
+          "sha256": "31e045d88d1354093f0fe0974be4db577fe365d41c03f8eccefdac1a0b5f79a7"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "audio.js",
+          "sha256": "ce85195bdb2e6ff00d5d87594443a917a57599a4e41a272abce4e1b88e9c8598"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "buffer-scheduler.js",
+          "sha256": "ade112b7b4a653c3e5806595f8481bfc226f1e49444ec9eb7b23f895d7a6c5f5"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "capture-scene.js",
+          "sha256": "7c5ca62a369563c69670af6e378596a88640f602982f18200ef3aa01f8135116"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "interaction-theme.css",
+          "sha256": "9f1c84dc708fa556e0d25d13dadbce3c076c8dbfe14ee66da279a1558c58118e"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "management.js",
+          "sha256": "7d7468073f186b8b0f160b460ef8a0250208e1b32c56304b5856e508bbac8a34"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "menus.js",
+          "sha256": "394fc35eaaa335c811628b22dcea5b5e194d0e1af86a2767a057bc5a4277c282"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "model.js",
+          "sha256": "890e0a5c1194c72533e315528943566a95ff5612e70fa88d2b18eea1e7532e2b"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "release.json",
+          "sha256": "bf2129254e598f7b99ad143891e64b72ef69a21b55f44e2ae6cde6ee239ef2c4"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "session-batch.js",
+          "sha256": "897184b4fe5b691f0818802dc3230f9603e53851fe78cfaa6182f1b416f78db7"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "session-clipboard-requirements.js",
+          "sha256": "f5aefc92fd8caa0d3f31b37d69b49b6eb91a8351da9e291aef0c809228603c17"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "session-edit.js",
+          "sha256": "4ce7e8a51939f128862e703a4789a9dbceeb2354377b94c837c5e1c85e8173d8"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "slot-metadata.js",
+          "sha256": "7925885affe47d6cb48f0c1911786fc7ef30ea25eda0ae57e5921bade3ffe32d"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "studio-selection.js",
+          "sha256": "5b3178c9749348a8f9825706f089c97e43b14d2758b09c88a3d0c66d1e674377"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-actions.js",
+          "sha256": "981fc60650337d0808270f3a400485c86ab1ab90e345be635b9b9837e5879d67"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-panel.js",
+          "sha256": "37d961485550c3c6b3df75f630ae29e02c34f6fd1ab2e5edee0e2766a51d8992"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-runner.js",
+          "sha256": "d82fc17b5cd8925d69125c2ab86630615cabe83c7ef2dc7e78f547630619c177"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-schema.js",
+          "sha256": "d26d5a353d4af0fd0963125237c801ead0e0b7a8b7b56b21089cf062bcf63a0f"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "app.js",
+          "sha256": "31e045d88d1354093f0fe0974be4db577fe365d41c03f8eccefdac1a0b5f79a7"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "audio.js",
+          "sha256": "ce85195bdb2e6ff00d5d87594443a917a57599a4e41a272abce4e1b88e9c8598"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "buffer-scheduler.js",
+          "sha256": "ade112b7b4a653c3e5806595f8481bfc226f1e49444ec9eb7b23f895d7a6c5f5"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "capture-scene.js",
+          "sha256": "7c5ca62a369563c69670af6e378596a88640f602982f18200ef3aa01f8135116"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "interaction-theme.css",
+          "sha256": "9f1c84dc708fa556e0d25d13dadbce3c076c8dbfe14ee66da279a1558c58118e"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "management.js",
+          "sha256": "7d7468073f186b8b0f160b460ef8a0250208e1b32c56304b5856e508bbac8a34"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "menus.js",
+          "sha256": "394fc35eaaa335c811628b22dcea5b5e194d0e1af86a2767a057bc5a4277c282"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "model.js",
+          "sha256": "890e0a5c1194c72533e315528943566a95ff5612e70fa88d2b18eea1e7532e2b"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "release.json",
+          "sha256": "bf2129254e598f7b99ad143891e64b72ef69a21b55f44e2ae6cde6ee239ef2c4"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "session-batch.js",
+          "sha256": "897184b4fe5b691f0818802dc3230f9603e53851fe78cfaa6182f1b416f78db7"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "session-clipboard-requirements.js",
+          "sha256": "f5aefc92fd8caa0d3f31b37d69b49b6eb91a8351da9e291aef0c809228603c17"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "session-edit.js",
+          "sha256": "4ce7e8a51939f128862e703a4789a9dbceeb2354377b94c837c5e1c85e8173d8"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "slot-metadata.js",
+          "sha256": "7925885affe47d6cb48f0c1911786fc7ef30ea25eda0ae57e5921bade3ffe32d"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "studio-selection.js",
+          "sha256": "5b3178c9749348a8f9825706f089c97e43b14d2758b09c88a3d0c66d1e674377"
+        }
+      ],
+      "versions": {
+        "opusloops.com": {
+          "provider": "aws-amplify",
+          "commit": "c6ba9c1fa58366882d309615a8d9cd01db110d9a",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000137",
+          "builtAt": "2026-10-18T16:10:19.510677Z"
+        },
+        "www.opusloops.com": {
+          "provider": "aws-amplify",
+          "commit": "c6ba9c1fa58366882d309615a8d9cd01db110d9a",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000137",
+          "builtAt": "2026-10-18T16:10:19.510677Z"
+        }
+      }
+    },
+    "requests": 5,
+    "reviewedPlans": 6,
+    "clientRepairs": 1,
+    "checks": {
+      "copyRealReceipt": true,
+      "copyByteIdentical": true,
+      "completePasteOracle": true,
+      "onlyCopiedSlotsDeactivate": true,
+      "originalPlacementsRemainActive": true,
+      "activationByteIdenticalToPasted": true,
+      "playbackContinuedThroughActivationAndDeactivation": true,
+      "fiveUndoStatesByteIdentical": true,
+      "setupMusicalDataAndOriginalFieldsVerified": true
+    },
+    "downloads": [
+      {
+        "name": "Untitled-session - 2026-10-18T121200.877.opusloop",
+        "bytes": 2550,
+        "sha256": "629e6592a6f250b2b1245a6d3e605bae45b2593595bff9627d9bca8c5b8106f2"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121202.890.opusloop",
+        "bytes": 2573,
+        "sha256": "94fb65dce32a6ce3048ab050dfcb91fb118f196bb55fe196e80c9eb534c58a20"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121226.645.opusloop",
+        "bytes": 2573,
+        "sha256": "94fb65dce32a6ce3048ab050dfcb91fb118f196bb55fe196e80c9eb534c58a20"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121248.700.opusloop",
+        "bytes": 3049,
+        "sha256": "d50f1eb08b241b545ca0e2e0333338695acc4357682204cf921d4617fab4bba8"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121333.187.opusloop",
+        "bytes": 3071,
+        "sha256": "25e544951d42b62dd7e3beec9f258a8508b3086a9dc6481dffe83c1bc31ec16f"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121349.805.opusloop",
+        "bytes": 3049,
+        "sha256": "d50f1eb08b241b545ca0e2e0333338695acc4357682204cf921d4617fab4bba8"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121412.690.opusloop",
+        "bytes": 3071,
+        "sha256": "25e544951d42b62dd7e3beec9f258a8508b3086a9dc6481dffe83c1bc31ec16f"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121416.438.opusloop",
+        "bytes": 3049,
+        "sha256": "d50f1eb08b241b545ca0e2e0333338695acc4357682204cf921d4617fab4bba8"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121418.690.opusloop",
+        "bytes": 2573,
+        "sha256": "94fb65dce32a6ce3048ab050dfcb91fb118f196bb55fe196e80c9eb534c58a20"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121420.775.opusloop",
+        "bytes": 2550,
+        "sha256": "629e6592a6f250b2b1245a6d3e605bae45b2593595bff9627d9bca8c5b8106f2"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T121422.871.opusloop",
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+      }
+    ],
+    "remainingLimits": [
+      "The original explicit multi-destination wording remains safely rejected.",
+      "The earlier compound setup omitted preferences and multi-selection; bounded clipboard verification does not fix arbitrary compound intent.",
+      "No physical-device, broad browser or professional listening-quality claim."
+    ],
+    "reload": {
+      "name": "Untitled-session - 2026-10-18T121504.913.opusloop",
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+      "byteIdentical": true,
+      "stopped": true,
+      "newPageErrors": 0
+    }
+  }
+}
