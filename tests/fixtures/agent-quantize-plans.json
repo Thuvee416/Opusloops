@@ -1,0 +1,257 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "triplet-both-half",
+      "prompt": "In Phrase, quantize only the C4 and G4 notes to eighth-note triplets at 50 percent amount. Adjust both note starts and note ends. Preserve all other notes, velocities, activation, release velocities, the clip length and its Arrangement position. Then show those two notes in their Arrangement Clip view. No playback, export or new tracks.",
+      "settings": {
+        "grid": 0.5,
+        "gridMode": "triplet",
+        "target": "both",
+        "strength": 0.5
+      },
+      "attempt": 3,
+      "failures": [
+        {
+          "attempt": 1,
+          "error": "Planning and review took too long. No plan was returned; try a smaller request."
+        },
+        {
+          "attempt": 2,
+          "error": "Requested quantization: {\"clipId\":\"phrase\",\"pitches\":[60,67],\"indices\":[0,2],\"settings\":{\"grid\":0.5,\"strength\":0.5,\"gridMode\":\"triplet\",\"target\":\"both\"},\"selection\":\"arrangement\"}. Preserve every unchosen note and all note metadata. Use exact indices or separate exact-pitch filters, never a range containing other pitches. Select target notes using these indices and the actual source regionId/Session placement.",
+          "plan": {
+            "summary": "Quantize the C4 and G4 notes in the 'Phrase' clip to eighth-note triplets at 50 percent amount, adjusting both note starts and note ends. Preserve all other notes, velocities, activation, release velocities, the clip length and its Arrangement position. Then show those two notes in their Arrangement Clip view.",
+            "actions": [
+              {
+                "type": "notes",
+                "args": {
+                  "clipId": "phrase",
+                  "action": "quantize",
+                  "indices": [
+                    0,
+                    2
+                  ],
+                  "grid": 0.5,
+                  "gridMode": "triplet",
+                  "target": "both",
+                  "strength": 0.5
+                }
+              },
+              {
+                "type": "command",
+                "args": {
+                  "name": "show_panel",
+                  "args": {
+                    "panel": "clip"
+                  }
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "plan": {
+        "summary": "Quantize the C4 and G4 notes in the 'Phrase' clip to eighth-note triplets at 50 percent amount, adjusting both note starts and note ends. Preserve all other notes, velocities, activation, release velocities, the clip length and its Arrangement position. Then show those two notes in their Arrangement Clip view.",
+        "actions": [
+          {
+            "type": "notes",
+            "args": {
+              "clipId": "phrase",
+              "action": "quantize",
+              "indices": [
+                0,
+                2
+              ],
+              "grid": 0.5,
+              "gridMode": "triplet",
+              "target": "both",
+              "strength": 0.5
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "notes",
+                "regionId": "phrase-region",
+                "indices": [
+                  0,
+                  2
+                ]
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "ends-only",
+      "prompt": "Quantize only the ends of the C4 and G4 notes in Phrase to straight sixteenth notes at 100 percent. Keep their start times exactly and preserve all other notes and project data. Show those two notes in their Arrangement Clip view. Do not play, export or create tracks.",
+      "settings": {
+        "grid": 0.25,
+        "gridMode": "straight",
+        "target": "ends",
+        "strength": 1
+      },
+      "attempt": 2,
+      "failures": [
+        {
+          "attempt": 1,
+          "error": "Use one supported runtime command in {type:command,args:{name:select,args:{target:notes,regionId:EXISTING_REGION_ID,indices:[0,2]}}} form. name selects the runtime command; its options are inside nested args. Quantize target starts/ends/both belongs to the notes edit, not a runtime command.",
+          "plan": {
+            "summary": "Quantize the ends of the C4 and G4 notes in Phrase to straight sixteenth notes at 100 percent. Keep their start times exactly and preserve all other notes and project data.",
+            "actions": [
+              {
+                "type": "notes",
+                "args": {
+                  "clipId": "phrase",
+                  "action": "quantize",
+                  "indices": [
+                    0,
+                    2
+                  ],
+                  "grid": 0.25,
+                  "strength": 1,
+                  "gridMode": "straight",
+                  "target": "ends"
+                }
+              },
+              {
+                "type": "command",
+                "args": {
+                  "target": "ends"
+                }
+              }
+            ],
+            "reviewed": true,
+            "model": {
+              "id": "tempo",
+              "name": "Tempo",
+              "version": "1.0",
+              "provider": "Amazon Bedrock",
+              "providerModelId": "amazon.nova-pro-v1:0",
+              "providerModelName": "Amazon Nova Pro"
+            }
+          }
+        }
+      ],
+      "plan": {
+        "summary": "Quantize the ends of the C4 and G4 notes in Phrase to straight sixteenth notes at 100 percent. Keep their start times exactly and preserve all other notes and project data.",
+        "actions": [
+          {
+            "type": "notes",
+            "args": {
+              "clipId": "phrase",
+              "action": "quantize",
+              "indices": [
+                0,
+                2
+              ],
+              "grid": 0.25,
+              "strength": 1,
+              "gridMode": "straight",
+              "target": "ends"
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "notes",
+                "regionId": "phrase-region",
+                "indices": [
+                  0,
+                  2
+                ]
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "mixed-grid",
+      "prompt": "In Phrase, quantize the C4 and G4 notes on both starts and ends to the nearest eighth-note OR eighth-note-triplet line (the combined straight-and-triplet grid) at full strength. Keep all other notes, their expression data and the rest of the session unchanged. Show these two notes in their Arrangement Clip view. No playback or export.",
+      "settings": {
+        "grid": 0.5,
+        "gridMode": "both",
+        "target": "both",
+        "strength": 1
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Quantize the C4 and G4 notes on both starts and ends to the nearest eighth-note OR eighth-note-triplet line (the combined straight-and-triplet grid) at full strength. Keep all other notes, their expression data and the rest of the session unchanged. Show these two notes in their Arrangement Clip view.",
+        "actions": [
+          {
+            "type": "notes",
+            "args": {
+              "clipId": "phrase",
+              "action": "quantize",
+              "indices": [
+                0,
+                2
+              ],
+              "grid": 0.5,
+              "gridMode": "both",
+              "target": "both",
+              "strength": 1
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "notes",
+                "regionId": "phrase-region",
+                "indices": [
+                  0,
+                  2
+                ]
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

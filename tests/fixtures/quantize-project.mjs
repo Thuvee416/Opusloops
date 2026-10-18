@@ -1,0 +1,8 @@
+import {noteProject} from './agent-notes-project.mjs';
+export function quantizeProject(){const p=noteProject();p.name='Quantize Proof';p.clips.phrase.notes[0].duration=.43;p.clips.phrase.notes[2].duration=.43;return p;}
+export const quantizeCases=[
+ {id:'triplet-both-half',prompt:'In Phrase, quantize only the C4 and G4 notes to eighth-note triplets at 50 percent amount. Adjust both note starts and note ends. Preserve all other notes, velocities, activation, release velocities, the clip length and its Arrangement position. Then show those two notes in their Arrangement Clip view. No playback, export or new tracks.',settings:{grid:.5,gridMode:'triplet',target:'both',strength:.5}},
+ {id:'ends-only',prompt:'Quantize only the ends of the C4 and G4 notes in Phrase to straight sixteenth notes at 100 percent. Keep their start times exactly and preserve all other notes and project data. Show those two notes in their Arrangement Clip view. Do not play, export or create tracks.',settings:{grid:.25,gridMode:'straight',target:'ends',strength:1}},
+ {id:'mixed-grid',prompt:'In Phrase, quantize the C4 and G4 notes on both starts and ends to the nearest eighth-note OR eighth-note-triplet line (the combined straight-and-triplet grid) at full strength. Keep all other notes, their expression data and the rest of the session unchanged. Show these two notes in their Arrangement Clip view. No playback or export.',settings:{grid:.5,gridMode:'both',target:'both',strength:1}}
+];
+export function quantizeActions(settings){return [{type:'notes',args:{clipId:'phrase',action:'quantize',indices:[0,2],...settings}},{type:'command',args:{name:'select',args:{target:'notes',regionId:'phrase-region',indices:[0,2]}}}];}

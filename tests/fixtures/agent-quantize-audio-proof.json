@@ -1,0 +1,103 @@
+{
+  "status": "passed",
+  "sampleRate": 48000,
+  "results": [
+    {
+      "case": "triplet-both-half",
+      "frames": 192000,
+      "metrics": {
+        "oracleMaxError": 0,
+        "reopenMaxError": 0,
+        "rangeMaxError": 0,
+        "inactiveWindowPeak": 0
+      },
+      "noteOnEvents": [
+        [
+          48,
+          60,
+          51
+        ],
+        [
+          1968,
+          67,
+          89
+        ],
+        [
+          2976,
+          72,
+          57
+        ]
+      ],
+      "noteOffTicks": [
+        574,
+        2494,
+        3360
+      ]
+    },
+    {
+      "case": "ends-only",
+      "frames": 192000,
+      "metrics": {
+        "oracleMaxError": 0,
+        "reopenMaxError": 0,
+        "rangeMaxError": 0,
+        "inactiveWindowPeak": 0
+      },
+      "noteOnEvents": [
+        [
+          96,
+          60,
+          51
+        ],
+        [
+          2016,
+          67,
+          89
+        ],
+        [
+          2976,
+          72,
+          57
+        ]
+      ],
+      "noteOffTicks": [
+        480,
+        2400,
+        3360
+      ]
+    },
+    {
+      "case": "mixed-grid",
+      "frames": 192000,
+      "metrics": {
+        "oracleMaxError": 0,
+        "reopenMaxError": 0,
+        "rangeMaxError": 0,
+        "inactiveWindowPeak": 0
+      },
+      "noteOnEvents": [
+        [
+          0,
+          60,
+          51
+        ],
+        [
+          1920,
+          67,
+          89
+        ],
+        [
+          2976,
+          72,
+          57
+        ]
+      ],
+      "noteOffTicks": [
+        480,
+        2400,
+        3360
+      ]
+    }
+  ],
+  "scope": "Native Chromium OfflineAudioContext, actual float WAV and SMF bytes. Independent requested-endpoint oracle, ranges/reopen, inactive-note silence and onset/end/release ticks. No physical-output or perceptual-quality claim."
+}

@@ -28,7 +28,7 @@ export function noteIndices(clip,args,{allowEmpty=false}={}){
  if(!allowEmpty&&!indices.length)throw new Error('No notes match this selection. No notes were edited.');
  return indices;
 }
-const parameters={add:['notes'],update:['patch'],transpose:['amount'],velocity:['amount'],quantize:['grid','strength'],move:['deltaBeats','deltaPitch','grid'],stretch:['factor'],split:['at'],chop:['parts'],duplicate:['at'],reverse:[],invert:[],legato:[],join:[],delete:[],activate:[],deactivate:[],'toggle-active':[]};
+const parameters={add:['notes'],update:['patch'],transpose:['amount'],velocity:['amount'],quantize:['grid','strength','gridMode','target'],move:['deltaBeats','deltaPitch','grid'],stretch:['factor'],split:['at'],chop:['parts'],duplicate:['at'],reverse:[],invert:[],legato:[],join:[],delete:[],activate:[],deactivate:[],'toggle-active':[]};
 const patchKeys=['pitch','start','duration','velocity','active','releaseVelocity'];
 function validatePatch(patch){if(!patch||typeof patch!=='object'||Array.isArray(patch)||!Object.keys(patch).length||Object.keys(patch).some(k=>!patchKeys.includes(k)))throw new Error('Note patches accept pitch, start, duration, velocity, active and releaseVelocity only.');}
 // Edits operate on the full local clip, never on the model's truncated preview.
@@ -50,6 +50,7 @@ export function editMidiNotes(clip,args){
   result=editNoteGroup(clip,'paste',{clipboard:copyNotes(clip,indices),at:options.at});
  }else result=editNoteGroup(clip,action,{...options,indices});
  const changed=JSON.stringify(before)!==JSON.stringify(result.notes),observation={type:'midi_notes',clipId:clip.id,clipName:clip.name,action,selectedCount:indices.length,beforeCount:before.length,afterCount:result.notes.length,resultSelection:result.selection,changed};
+ if(result.quantization)observation.quantization=result.quantization;
  if(['velocity','move'].includes(action)){
   const i=indices[0],next=result.notes[i],original=before[i];
   if(action==='velocity'){observation.requestedAmount=options.amount;observation.appliedAmount=next.velocity-original.velocity;observation.clamped=Math.abs(observation.appliedAmount-options.amount)>1e-9;}

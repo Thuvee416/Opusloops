@@ -1,17 +1,18 @@
+import {quantizeNote,quantizeSettings} from './note-quantize.js';
 import {validReleaseVelocity,validNoteActivation,isNoteActive} from './note-state.js';
-export function editNotes(clip,action,{index=0,patch={},all=false,amount=0,grid=.25,strength=1}={}){
-  if(clip.kind!=='midi')throw new Error('Select a MIDI clip.');const notes=structuredClone(clip.notes),selected=notes[index];let selection=index;
+export function editNotes(clip,action,{index=0,patch={},all=false,amount=0,grid=.25,strength=1,gridMode='straight',target='starts'}={}){
+  if(clip.kind!=='midi')throw new Error('Select a MIDI clip.');const notes=structuredClone(clip.notes),selected=notes[index];let selection=index,quantization;
   if(['update','delete','duplicate'].includes(action)&&!selected)throw new Error('Select a note first.');
   if(action==='update')Object.assign(selected,patch);
   else if(action==='add'){notes.push({pitch:60,start:0,duration:Math.min(.25,clip.beats),velocity:.75,...patch});selection=notes.length-1;}
   else if(action==='delete'){notes.splice(index,1);selection=Math.max(0,index-1);}
   else if(action==='duplicate'){const start=selected.start+selected.duration;if(start+selected.duration>clip.beats)throw new Error('There is no room after this note. Move or shorten it first.');notes.push({...selected,start});selection=notes.length-1;}
   else if(action==='transpose'){if(!Number.isInteger(amount))throw new Error('Transpose by a whole number of semitones.');notes.forEach((n,i)=>{if(all||i===index)n.pitch+=amount;});}
-  else if(action==='quantize'){if(![.0625,.125,.25,.5,1,2,4].includes(grid)||!Number.isFinite(strength)||strength<0||strength>1)throw new Error('Choose a valid quantization grid and strength.');notes.forEach((n,i)=>{if(all||i===index){const target=Math.min(clip.beats-.0625,Math.round(n.start/grid)*grid);n.start+=(target-n.start)*strength;}});}
+  else if(action==='quantize'){quantization={...quantizeSettings({grid,strength,gridMode,target}),boundaryAdjusted:0};notes.forEach((n,i)=>{if(all||i===index){const result=quantizeNote(n,clip.beats,quantization);notes[i]=result.note;quantization.boundaryAdjusted+=Number(result.boundaryAdjusted);}});}
   else if(action!=='update')throw new Error('Unknown note edit.');
   if(notes.length>4096)throw new Error('A clip supports up to 4096 notes.');
   for(const n of notes)if(!validNoteActivation(n)||!validReleaseVelocity(n)||!Number.isInteger(n.pitch)||n.pitch<0||n.pitch>127||!Number.isFinite(n.start)||n.start<0||n.start>=clip.beats||!Number.isFinite(n.duration)||n.duration<=0||n.duration>256||!Number.isFinite(n.velocity)||n.velocity<0||n.velocity>1)throw new Error('Use MIDI pitch 0–127, a start inside the loop, a positive length up to 256 beats, and velocity 0–100%.');
-  return {notes,selection};
+  return {notes,selection,...(quantization?{quantization}:{})};
 }
 export function dragNote(note,{deltaBeats=0,deltaPitch=0,resize=false,grid=.25,beats}){
   const snap=n=>Math.round(n/grid)*grid;
@@ -24,8 +25,8 @@ export function selectedNotes(clip,indices){
   if(ids.some(i=>!Number.isInteger(i)||i<0||i>=clip.notes.length))throw new Error('The note selection is no longer valid.');return ids;
 }
 export function copyNotes(clip,indices){const ids=selectedNotes(clip,indices),notes=ids.map(i=>structuredClone(clip.notes[i])),start=Math.min(...notes.map(n=>n.start));return {notes:notes.map(n=>({...n,start:n.start-start})),span:Math.max(...notes.map(n=>n.start+n.duration))-start};}
-export function editNoteGroup(clip,action,{indices=[],clipboard=null,at=0,amount=0,grid=.25,strength=1,deltaBeats=0,deltaPitch=0,parts=2,factor=1}={}){
-  const notes=structuredClone(clip.notes),ids=action==='paste'?[]:selectedNotes(clip,indices);let selection=[...ids];
+export function editNoteGroup(clip,action,{indices=[],clipboard=null,at=0,amount=0,grid=.25,strength=1,deltaBeats=0,deltaPitch=0,parts=2,factor=1,gridMode='straight',target='starts'}={}){
+  const notes=structuredClone(clip.notes),ids=action==='paste'?[]:selectedNotes(clip,indices);let selection=[...ids],quantization;
   if(['activate','deactivate','toggle-active'].includes(action)){const active=action==='activate'||(action==='toggle-active'&&!ids.some(i=>isNoteActive(notes[i])));ids.forEach(i=>notes[i].active=active);
   }else if(action==='invert'){
     const low=Math.min(...ids.map(i=>notes[i].pitch)),high=Math.max(...ids.map(i=>notes[i].pitch));ids.forEach(i=>notes[i].pitch=low+high-notes[i].pitch);
@@ -58,12 +59,12 @@ export function editNoteGroup(clip,action,{indices=[],clipboard=null,at=0,amount
     const added=structuredClone(clipboard.notes).map(n=>({...n,start:n.start+at}));if(added.some(n=>n.start+n.duration>clip.beats+1e-9))throw new Error('The phrase does not fit in this loop. Choose an earlier paste beat or extend the clip.');selection=added.map((n,i)=>notes.length+i);notes.push(...added);
   }else if(action==='velocity'){if(!Number.isFinite(amount))throw new Error('Use a finite velocity adjustment.');const low=Math.min(...ids.map(i=>notes[i].velocity)),high=Math.max(...ids.map(i=>notes[i].velocity)),delta=Math.max(-low,Math.min(1-high,amount));ids.forEach(i=>notes[i].velocity=Math.max(0,Math.min(1,notes[i].velocity+delta)));
   }else if(action==='transpose'){if(!Number.isInteger(amount))throw new Error('Use whole semitones.');ids.forEach(i=>notes[i].pitch+=amount);}
-  else if(action==='quantize'){const subset={...clip,notes:ids.map(i=>notes[i])},result=editNotes(subset,'quantize',{all:true,grid,strength});ids.forEach((id,i)=>notes[id]=result.notes[i]);}
+  else if(action==='quantize'){const subset={...clip,notes:ids.map(i=>notes[i])},result=editNotes(subset,'quantize',{all:true,grid,strength,gridMode,target});quantization=result.quantization;ids.forEach((id,i)=>notes[id]=result.notes[i]);}
   else if(action==='move'){
     if(!Number.isFinite(deltaBeats)||!Number.isInteger(deltaPitch)||![.0625,.125,.25,.5,1].includes(grid))throw new Error('Invalid note movement.');
     const start=Math.min(...ids.map(i=>notes[i].start)),last=Math.max(...ids.map(i=>notes[i].start+notes[i].duration)),low=Math.min(...ids.map(i=>notes[i].pitch)),high=Math.max(...ids.map(i=>notes[i].pitch));
     const time=Math.max(-start,Math.min(Math.max(0,clip.beats-last),Math.round(deltaBeats/grid)*grid)),pitch=Math.max(-low,Math.min(127-high,deltaPitch));ids.forEach(i=>{notes[i].start+=time;notes[i].pitch+=pitch;});
   }else throw new Error('Unknown group edit.');
-  editNotes({...clip,notes},'transpose',{all:true,amount:0});return {notes,selection};
+  editNotes({...clip,notes},'transpose',{all:true,amount:0});return {notes,selection,...(quantization?{quantization}:{})};
 }
 export function notesInRange(clip,{start,end,low,high}){return clip.notes.flatMap((n,i)=>n.start<Math.max(start,end)&&n.start+n.duration>Math.min(start,end)&&n.pitch>=Math.min(low,high)&&n.pitch<=Math.max(low,high)?[i]:[]);}

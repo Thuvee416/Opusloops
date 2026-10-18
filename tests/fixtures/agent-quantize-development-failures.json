@@ -1,0 +1,934 @@
+{
+  "scope": "Operator-IAM development failures before final grounded/focused planner; none is production execution proof. Final canary attempts are in agent-quantize-plans.json.",
+  "stages": [
+    {
+      "stage": "agent-quantize-canary-failures",
+      "result": {
+        "case": "ends-only",
+        "failures": [
+          {
+            "attempt": 1,
+            "error": "Use one supported runtime command in {type:command,args:{name:select,args:{target:notes,regionId:EXISTING_REGION_ID,indices:[0,2]}}} form. name selects the runtime command; its options are inside nested args. Quantize target starts/ends/both belongs to the notes edit, not a runtime command.",
+            "plan": {
+              "summary": "Quantize the ends of the C4 and G4 notes in Phrase to straight sixteenth notes at 100 percent. Keep their start times exactly and preserve all other notes and project data.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "indices": [
+                      0,
+                      2
+                    ],
+                    "grid": 0.25,
+                    "strength": 1,
+                    "gridMode": "straight",
+                    "target": "ends"
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "target": "ends"
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stage": "agent-quantize-contract-motivation",
+      "result": {
+        "case": "mixed-grid",
+        "failures": [
+          {
+            "attempt": 1,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n            active: false,\n+           duration: 0.5,\n-           duration: 0.4,\n            pitch: 64,\n            releaseVelocity: 0.2,\n+           start: 1,\n-           start: 1.1,\n            velocity: 0.55\n          },\n          {\n            duration: 0.5,\n            pitch: 67,\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to nearest eighth-note OR eighth-note-triplet line, showed notes in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.5,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "indices": [
+                        0,
+                        2
+                      ]
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 2,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n            active: false,\n+           duration: 0.5,\n-           duration: 0.4,\n            pitch: 64,\n            releaseVelocity: 0.2,\n+           start: 1,\n-           start: 1.1,\n            velocity: 0.55\n          },\n          {\n            duration: 0.5,\n            pitch: 67,\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to nearest eighth-note OR eighth-note-triplet line, showed notes in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.5,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "indices": [
+                        0,
+                        2
+                      ]
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 3,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n            active: false,\n+           duration: 0.5,\n-           duration: 0.4,\n            pitch: 64,\n            releaseVelocity: 0.2,\n+           start: 1,\n-           start: 1.1,\n            velocity: 0.55\n          },\n          {\n            duration: 0.5,\n            pitch: 67,\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to nearest eighth-note OR eighth-note-triplet line, showed notes in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.5,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "indices": [
+                        0,
+                        2
+                      ]
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stage": "agent-quantize-guarded-initial-failure",
+      "result": {
+        "case": "triplet-both-half",
+        "failures": [
+          {
+            "attempt": 1,
+            "error": "Requested quantization: {\"clipId\":\"phrase\",\"pitches\":[60,67],\"indices\":[0,2],\"settings\":{\"grid\":0.5,\"strength\":0.5,\"gridMode\":\"triplet\",\"target\":\"both\"},\"selection\":\"arrangement\"}. Preserve every unchosen note and all note metadata. Use exact indices or separate exact-pitch filters, never a range containing other pitches. Select target notes using these indices and the actual source regionId/Session placement.",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes to eighth-note triplets at 50 percent amount, preserving all other notes, velocities, activation, release velocities, the clip length and its Arrangement position. Shown those two notes in their Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.5,
+                    "gridMode": "triplet",
+                    "target": "both",
+                    "strength": 0.5
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "indices": [
+                        0,
+                        2
+                      ]
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 2,
+            "error": "Requested quantization: {\"clipId\":\"phrase\",\"pitches\":[60,67],\"indices\":[0,2],\"settings\":{\"grid\":0.5,\"strength\":0.5,\"gridMode\":\"triplet\",\"target\":\"both\"},\"selection\":\"arrangement\"}. Preserve every unchosen note and all note metadata. Use exact indices or separate exact-pitch filters, never a range containing other pitches. Select target notes using these indices and the actual source regionId/Session placement.",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes to eighth-note triplets at 50 percent amount, preserving all other notes, velocities, activation, release velocities, the clip length and its Arrangement position. Shown those two notes in their Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.5,
+                    "gridMode": "triplet",
+                    "target": "both",
+                    "strength": 0.5
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "indices": [
+                        0,
+                        2
+                      ]
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 3,
+            "error": "Requested quantization: {\"clipId\":\"phrase\",\"pitches\":[60,67],\"indices\":[0,2],\"settings\":{\"grid\":0.5,\"strength\":0.5,\"gridMode\":\"triplet\",\"target\":\"both\"},\"selection\":\"arrangement\"}. Preserve every unchosen note and all note metadata. Use exact indices or separate exact-pitch filters, never a range containing other pitches. Select target notes using these indices and the actual source regionId/Session placement.",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes to eighth-note triplets at 50 percent amount, preserving all other notes, velocities, activation, release velocities, the clip length and its Arrangement position. Shown those two notes in their Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.5,
+                    "gridMode": "triplet",
+                    "target": "both",
+                    "strength": 0.5
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "indices": [
+                        0,
+                        2
+                      ]
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stage": "agent-quantize-initial-failure",
+      "result": {
+        "case": "ends-only",
+        "failures": [
+          {
+            "attempt": 1,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n          {\n+           duration: 0.43,\n-           duration: 0.3999999999999999,\n            pitch: 67,\n            releaseVelocity: 0.3,\n            start: 2.1,\n            velocity: 0.7\n          },\n",
+            "plan": {
+              "summary": "Quantized ends of C4 and G4 notes in Phrase to straight sixteenth notes and showed them in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 60
+                    },
+                    "grid": 0.25,
+                    "target": "ends",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 64,
+                      "pitchMax": 64
+                    },
+                    "grid": 0.25,
+                    "target": "ends",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "clip",
+                      "trackId": "lead",
+                      "clipId": "phrase"
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 2,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n          {\n+           duration: 0.43,\n-           duration: 0.3999999999999999,\n            pitch: 67,\n            releaseVelocity: 0.3,\n            start: 2.1,\n            velocity: 0.7\n          },\n",
+            "plan": {
+              "summary": "Quantized ends of C4 and G4 notes in Phrase to straight sixteenth notes and showed them in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 60
+                    },
+                    "grid": 0.25,
+                    "target": "ends",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 64,
+                      "pitchMax": 64
+                    },
+                    "grid": 0.25,
+                    "target": "ends",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "clip",
+                      "trackId": "lead",
+                      "clipId": "phrase"
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 3,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n          {\n+           duration: 0.43,\n-           duration: 0.3999999999999999,\n            pitch: 67,\n            releaseVelocity: 0.3,\n            start: 2.1,\n            velocity: 0.7\n          },\n",
+            "plan": {
+              "summary": "Quantized ends of C4 and G4 notes in Phrase to straight sixteenth notes and showed them in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 60
+                    },
+                    "grid": 0.25,
+                    "target": "ends",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 64,
+                      "pitchMax": 64
+                    },
+                    "grid": 0.25,
+                    "target": "ends",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "clip",
+                      "trackId": "lead",
+                      "clipId": "phrase"
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stage": "agent-quantize-mixed-initial-failure",
+      "result": {
+        "case": "mixed-grid",
+        "failures": [
+          {
+            "attempt": 1,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n          {\n+           duration: 0.33333333333333337,\n-           duration: 0.5,\n            pitch: 60,\n            releaseVelocity: 0.1,\n+           start: 0.16666666666666666,\n-           start: 0,\n            velocity: 0.4\n          },\n          {\n            active: false,\n+           duration: 0.3333333333333335,\n-           duration: 0.4,\n            pitch: 64,\n            releaseVelocity: 0.2,\n+           start: 1.1666666666666665,\n-           start: 1.1,\n            velocity: 0.55\n          },\n          {\n+           duration: 0.3333333333333335,\n-           duration: 0.5,\n            pitch: 67,\n            releaseVelocity: 0.3,\n+           start: 2.1666666666666665,\n-           start: 2,\n            velocity: 0.7\n          },\n          {\n            duration: 0.4,\n            pitch: 72,\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to the nearest eighth-note or eighth-note-triplet line and showed them in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.25,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "all": true
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 2,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n          {\n+           duration: 0.33333333333333337,\n-           duration: 0.5,\n            pitch: 60,\n            releaseVelocity: 0.1,\n+           start: 0.16666666666666666,\n-           start: 0,\n            velocity: 0.4\n          },\n          {\n            active: false,\n+           duration: 0.3333333333333335,\n-           duration: 0.4,\n            pitch: 64,\n            releaseVelocity: 0.2,\n+           start: 1.1666666666666665,\n-           start: 1.1,\n            velocity: 0.55\n          },\n          {\n+           duration: 0.3333333333333335,\n-           duration: 0.5,\n            pitch: 67,\n            releaseVelocity: 0.3,\n+           start: 2.1666666666666665,\n-           start: 2,\n            velocity: 0.7\n          },\n          {\n            duration: 0.4,\n            pitch: 72,\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to the nearest eighth-note or eighth-note-triplet line and showed them in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.25,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "all": true
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 3,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    arrangement: [\n      {\n        clipId: 'phrase',\n        id: 'phrase-region',\n...\n          {\n+           duration: 0.33333333333333337,\n-           duration: 0.5,\n            pitch: 60,\n            releaseVelocity: 0.1,\n+           start: 0.16666666666666666,\n-           start: 0,\n            velocity: 0.4\n          },\n          {\n            active: false,\n+           duration: 0.3333333333333335,\n-           duration: 0.4,\n            pitch: 64,\n            releaseVelocity: 0.2,\n+           start: 1.1666666666666665,\n-           start: 1.1,\n            velocity: 0.55\n          },\n          {\n+           duration: 0.3333333333333335,\n-           duration: 0.5,\n            pitch: 67,\n            releaseVelocity: 0.3,\n+           start: 2.1666666666666665,\n-           start: 2,\n            velocity: 0.7\n          },\n          {\n            duration: 0.4,\n            pitch: 72,\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to the nearest eighth-note or eighth-note-triplet line and showed them in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "where": {
+                      "pitchMin": 60,
+                      "pitchMax": 67
+                    },
+                    "grid": 0.25,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "all": true
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stage": "agent-quantize-runtime-shape-failure",
+      "result": {
+        "case": "triplet-both-half",
+        "failures": [
+          {
+            "attempt": 1,
+            "error": "Use one supported runtime command at a time.",
+            "plan": {
+              "summary": "Quantize C4 and G4 notes in the 'Phrase' clip to eighth-note triplets at 50 percent amount, adjusting both note starts and ends. Preserve all other notes, velocities, activation, release velocities, the clip length, and its Arrangement position. Then show those two notes in their Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "indices": [
+                      0,
+                      2
+                    ],
+                    "grid": 0.5,
+                    "gridMode": "triplet",
+                    "target": "both",
+                    "strength": 0.5
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "target": "both"
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 2,
+            "error": "Use one supported runtime command at a time.",
+            "plan": {
+              "summary": "Quantize C4 and G4 notes in the 'Phrase' clip to eighth-note triplets at 50 percent amount, adjusting both note starts and ends. Preserve all other notes, velocities, activation, release velocities, the clip length, and its Arrangement position. Then show those two notes in their Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "indices": [
+                      0,
+                      2
+                    ],
+                    "grid": 0.5,
+                    "gridMode": "triplet",
+                    "target": "both",
+                    "strength": 0.5
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "target": "both"
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 3,
+            "error": "Use one supported runtime command at a time.",
+            "plan": {
+              "summary": "Quantize C4 and G4 notes in the 'Phrase' clip to eighth-note triplets at 50 percent amount, adjusting both note starts and ends. Preserve all other notes, velocities, activation, release velocities, the clip length, and its Arrangement position. Then show those two notes in their Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "indices": [
+                      0,
+                      2
+                    ],
+                    "grid": 0.5,
+                    "gridMode": "triplet",
+                    "target": "both",
+                    "strength": 0.5
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "target": "both"
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "stage": "agent-quantize-selection-initial-failure",
+      "result": {
+        "case": "mixed-grid",
+        "failures": [
+          {
+            "attempt": 1,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    0,\n+   1,\n    2,\n+   3\n  ]\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to nearest eighth-note OR eighth-note-triplet line, showed notes in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "indices": [
+                      0,
+                      2
+                    ],
+                    "grid": 0.5,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "all": true
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 2,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    0,\n+   1,\n    2,\n+   3\n  ]\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to nearest eighth-note OR eighth-note-triplet line, showed notes in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "indices": [
+                      0,
+                      2
+                    ],
+                    "grid": 0.5,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "all": true
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          },
+          {
+            "attempt": 3,
+            "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    0,\n+   1,\n    2,\n+   3\n  ]\n",
+            "plan": {
+              "summary": "Quantized C4 and G4 notes in Phrase to nearest eighth-note OR eighth-note-triplet line, showed notes in Arrangement Clip view.",
+              "actions": [
+                {
+                  "type": "notes",
+                  "args": {
+                    "clipId": "phrase",
+                    "action": "quantize",
+                    "indices": [
+                      0,
+                      2
+                    ],
+                    "grid": 0.5,
+                    "gridMode": "both",
+                    "target": "both",
+                    "strength": 1
+                  }
+                },
+                {
+                  "type": "command",
+                  "args": {
+                    "name": "select",
+                    "args": {
+                      "target": "notes",
+                      "regionId": "phrase-region",
+                      "all": true
+                    }
+                  }
+                }
+              ],
+              "reviewed": true,
+              "model": {
+                "id": "tempo",
+                "name": "Tempo",
+                "version": "1.0",
+                "provider": "Amazon Bedrock",
+                "providerModelId": "amazon.nova-pro-v1:0",
+                "providerModelName": "Amazon Nova Pro"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

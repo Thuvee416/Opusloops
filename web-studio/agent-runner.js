@@ -1,3 +1,4 @@
+import {checkQuantizeRequirements} from './note-quantize-requirements.js';
 import {prepareMidiDelivery} from './midi-delivery.js';
 import {applyAgentActions} from './agent-actions.js';
 import {checkDeliveryRequirements,checkDeliveryReceipt} from './delivery-requirements.js';
@@ -7,7 +8,7 @@ const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions, {deliveryRequirements=null}={}) {
+export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   const edits = [], before = [], after = [];
   const hasEdits = actions.some(a => a?.type !== 'command');
@@ -37,7 +38,8 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null}={
     if(command.name==='export_midi')prepared.set(command,prepareMidiDelivery(next,command.args));
   }
   const deliveryChecks=checkDeliveryRequirements(next,after,deliveryRequirements);
-  return {next, prepared, deliveryChecks, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  const quantizeCheck=checkQuantizeRequirements(project,{next,after},quantizeRequirements);
+  return {next, prepared, deliveryChecks, quantizeCheck, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject, expected, locked, commit, execute, signal, onStep = () => {}}) {
@@ -78,7 +80,8 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
       onStep({type:'edits', count:editsApplied?plan.editCount:0,unchanged:!editsApplied,observations:plan.editObservations??[]});
     }
     for (const command of plan.after) await run(command);
-    return {editsApplied,projectUnchanged:plan.editCount>0&&!editsApplied, completedCommands, observations,editObservations:plan.editObservations??[]};
+    if(plan.quantizeCheck)onStep({type:'verified_notes',check:plan.quantizeCheck});
+    return {editsApplied,...(plan.quantizeCheck?{quantizeVerified:plan.quantizeCheck}:{}),projectUnchanged:plan.editCount>0&&!editsApplied, completedCommands, observations,editObservations:plan.editObservations??[]};
   } catch (error) {
     // Preserve what actually happened: downloads/transport cannot be undone by
     // restoring a project, and a failed export must not hide committed edits.
