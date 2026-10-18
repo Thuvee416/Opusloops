@@ -1,64 +1,40 @@
-# Opusloops roadmap
+# OPUS LOOPS feature-parity roadmap
 
-Last reviewed: October 2, 2026.
+Updated 2026-10-17. The active goal is a browser DAW covering Ableton Live's workflows and feature categories. Full parity is **not achieved**. Build the core music-making workflow first; do not treat a feature label, menu entry, or narrow passing test as proof of a complete workflow.
 
-## Direction
+## Current production source
 
-Make the journey from a folder of stems to an intentional arrangement feel direct on a phone or desktop. Keep musical decisions visible, preserve source audio, and make processing understandable.
+AWS Amplify publishes `web-studio/`. The older application in `mobile/` remains historical and does not establish functionality in the published studio. `web-studio/release.json` records the artifact revision; live `version.json` records the actual deployed commit. Hosting success and live runtime checks are separate evidence.
 
-This is a proposed direction, not a release schedule. Items below are not shipped unless identified as an existing foundation. No dates or contributor commitments are implied. Discuss scope and acceptance tests in issues before implementation.
+## Core-first gates
 
-## Existing foundation
-
-The source includes a responsive studio, authenticated project storage, resumable ZIP uploads, staged timing analysis and approval, shared-map tempo rendering, four- or eight-bar editing windows, section looping, mute and solo, and a persistent player. Desktop adds project commands, horizontal lanes, and mixer faders.
-
-See the [current limitations](README.md#project-status-and-boundaries). These capabilities do not guarantee that every large or unusual project will process correctly.
-
-## Priority 1: Trust the session
-
-| Proposed work | Success criteria |
+| Gate | Current scope and remaining verification |
 | --- | --- |
-| Large-project playback hardening | Documented device/browser tests with measured memory use, synchronization, and seek behavior |
-| Audible mixer regression tests | Gain, mute, solo, and section edits verified against audio, not just UI values |
-| Recoverable processing failures | Clear failure stages and safe retries without duplicate jobs or silent data loss |
-| Better timing confidence | Ambiguous sections identified with short auditions and corrections that avoid editing hundreds of events |
-| Account recovery | Verified password recovery and email-change flows with expired-link and account-isolation tests |
+| Project and playback reliability | Local project storage, embedded media, project files, transport, loop/seek, and undo exist. Release 0.118 adds validated session-start recovery. Multi-track long-playback stress tests, interruption matrices and device measurements remain incomplete. |
+| Compose and arrange a song | Session clips/scenes, Arrangement editing, capture, MIDI editing and sample import exist as subsets. Multi-region selection, track-limited time editing, region fades/crossfades and full workflow coverage remain unfinished. |
+| Record and edit performances | Browser audio/MIDI recording, input controls and count-in exist as subsets. Physical-device timing, monitoring/latency measurements, take lanes, comping and broader expressive MIDI remain unfinished. |
+| Finish the sound and mix | Synth, sampler, drums, serial effects, sends/returns and automation exist as subsets. Track grouping, broader routing/device families and representative audible live/export comparisons remain unfinished. |
+| Deliver and recover | WAV, MIDI and stem exports and project downloads exist as subsets. Session-start checkpoints and corrupt-autosave fallback have current browser evidence. A fresh-session complete-song round trip, aligned audible exports and device/browser reliability matrix remain required. |
 
-## Priority 2: Finish arrangements with less friction
+Core completion requires creating a representative multitrack song from an empty set using imported and recorded audio, MIDI, Session-to-Arrangement work, edits, instruments, effects and automation; saving, closing, reopening, continuing edits and exporting a mix plus aligned stems. Record project size, timing/content preservation, audible results, keyboard/menu behavior and browser/device limits.
 
-| Proposed work | Success criteria |
-| --- | --- |
-| Section operations | A coherent workflow for duplicating, moving, splitting, and removing sections on touch and desktop |
-| Undo and redo | Recoverable edits with a documented history model and clear server-operation boundaries |
-| Navigation and selection | Predictable zoom, selection, and keyboard focus without accidental edits |
-| Full stem-project export | Whole-arrangement mixdown with progress, cancellation, headroom controls, and verified duration/alignment |
-| Portable project backup | Documented export/import format preserving arrangement data and explaining audio dependencies |
+## Full feature scope after the core gates
 
-## Priority 3: Make contribution and self-hosting easier
+Maintain investigations and implementation for Arrangement and Session depth; audio recording/comping/warping; expressive MIDI and editing; instruments and audio/MIDI effects; racks/macros; groups and routing; automation/modulation; browser/media management; project/version recovery; export/interchange; controller/MIDI mappings, sync/Link and external devices; browser plug-ins and native bridging; a scripting/modular equivalent to Max workflows; accessibility, performance and reliability. Native VST/AU/Max compatibility is unproven and needs separate runtime work. Browser and platform limitations must be documented, not counted as parity.
 
-| Proposed work | Success criteria |
-| --- | --- |
-| Contributor demo mode | Synthetic audio fixtures and a local-only demo that never bypasses production authentication |
-| Reproducible backend setup | Parameterized deployment and a successful clean-account installation guide |
-| Cost transparency | Measured processing examples, retention choices, and resource teardown instructions |
-| Accessibility coverage | Keyboard and screen-reader workflows plus reduced-motion and contrast checks |
-| Release documentation | Versioned release notes and an honest browser/project-format compatibility matrix |
+The reference baseline is the Ableton Live 12 manual and installed Live version recorded by each focused investigation. Use REA when an authorized investigation needs observed behavior; record the actual target/version and evidence. Do not infer current parity from historical release notes.
 
-## Longer-term exploration
+## 0.118 — Session-start recovery
 
-These are ideas to evaluate, not approved implementation plans:
+On opening a valid browser-local project, save one validated checkpoint in the existing project database. Keep it separate from the previous set retained by New/Open. Subsequent autosaves leave it unchanged until the next page session. File → Open Live Set Backups → Restore Session Start restores it and keeps the displaced current set as Previous Set. If current autosave validation fails, startup tries the checkpoint without overwriting it. Storage failure during checkpoint creation retains the valid current project and reports that recovery backup was unavailable.
 
-- Assisted arrangement suggestions that users can preview, edit, and reject.
-- Additional tempo/downbeat analysis approaches evaluated on rights-cleared material.
-- Level and transition automation with understandable touch controls.
-- Audio effects that fit browser CPU budgets and export consistently.
-- Optional project sharing with explicit ownership, storage, and permission rules.
-- Interchange with other music tools through documented exports.
+Evidence: `tests/session-recovery.test.cjs` verifies independent snapshots, fallback validation, checkpoint-write failure and missing/corrupt data. `tests/session-recovery.cjs` verifies actual IndexedDB, an embedded WAV, unchanged checkpoints after edits, File-menu restore, preservation of the displaced set and corrupt-current reload recovery in Chromium. These checks do not establish physical-device behavior, quota capacity or full crash/eviction durability. Browser-local copies share the browser's storage failure/eviction risk; project downloads remain the portable backup.
 
-Native plugin hosting, full-song generative model training, and real-time collaboration are not current commitments. Each needs its own technical, licensing, cost, and product review.
+## Next work
 
-## Help set priorities
+1. Audit the whole representative-song core workflow and preserve reproducible project/audio fixtures.
+2. Implement Arrangement multi-region selection and track-limited editing with grouped undo.
+3. Complete group/routing workflows and verify the audio output of live and offline paths.
+4. Add performance/recording measurements across actual browsers and input/output devices.
 
-Open a [feature request](https://github.com/Thuvee416/Opusloops/issues/new?template=feature_request.yml) describing the musical outcome, current workaround, device, and a small example. Link an existing issue where appropriate. Reproducible failures and real workflows help prioritize work more than broad wish lists.
-
-For a contribution, agree on a small scope and acceptance tests first. See [CONTRIBUTING.md](CONTRIBUTING.md). A roadmap item is not assigned work or a promise of acceptance.
+Keep this objective active until every requested feature category and workflow has current implementation and verification evidence.
