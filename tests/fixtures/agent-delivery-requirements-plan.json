@@ -1,0 +1,93 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "prompt": "Without changing the project, export Lead and Muted pad separately as two WAV files, then export all tracks and returns as one aligned stem ZIP. Use explicit Arrangement range {start:6,length:4}, 48000 Hz, 24-bit PCM, no effect tails, no normalization and dither none for EVERY export, including the ZIP. Keep playback stopped.",
+  "requirements": {
+    "scope": "shared",
+    "formats": [
+      "wav",
+      "stems"
+    ],
+    "settings": {
+      "sampleRate": 48000,
+      "bitDepth": 24,
+      "normalize": false,
+      "dither": "none",
+      "includeTail": false,
+      "range": {
+        "start": 6,
+        "length": 4
+      },
+      "source": "arrangement"
+    },
+    "unresolved": []
+  },
+  "attempt": 2,
+  "reviewed": true,
+  "failures": [
+    {
+      "attempt": 1,
+      "error": "Planning and review took too long. No plan was returned; try a smaller request."
+    }
+  ],
+  "plan": {
+    "summary": "Exported Lead and Muted pad separately, then all tracks and returns as one aligned stem ZIP.",
+    "actions": [
+      {
+        "type": "command",
+        "args": {
+          "name": "export_wav",
+          "args": {
+            "channel": "track:lead",
+            "source": "arrangement",
+            "range": {
+              "start": 6,
+              "length": 4
+            },
+            "sampleRate": 48000,
+            "bitDepth": 24,
+            "normalize": false,
+            "dither": "none",
+            "includeTail": false
+          }
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "export_wav",
+          "args": {
+            "channel": "track:pad",
+            "source": "arrangement",
+            "range": {
+              "start": 6,
+              "length": 4
+            },
+            "sampleRate": 48000,
+            "bitDepth": 24,
+            "normalize": false,
+            "dither": "none",
+            "includeTail": false
+          }
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "export_stems",
+          "args": {
+            "sampleRate": 48000,
+            "bitDepth": 24,
+            "normalize": false,
+            "dither": "none",
+            "includeTail": false,
+            "range": {
+              "start": 6,
+              "length": 4
+            }
+          }
+        }
+      }
+    ],
+    "reviewed": true
+  }
+}

@@ -1,12 +1,13 @@
 import {prepareMidiDelivery} from './midi-delivery.js';
 import {applyAgentActions} from './agent-actions.js';
+import {checkDeliveryRequirements,checkDeliveryReceipt} from './delivery-requirements.js';
 
 const decode = action => typeof action.args === 'string' ? JSON.parse(action.args) : structuredClone(action.args);
 const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions) {
+export function prepareAgentPlan(project, actions, {deliveryRequirements=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   const edits = [], before = [], after = [];
   const hasEdits = actions.some(a => a?.type !== 'command');
@@ -35,7 +36,8 @@ export function prepareAgentPlan(project, actions) {
     applyAgentActions(next, [{type:'command', args:command}]);
     if(command.name==='export_midi')prepared.set(command,prepareMidiDelivery(next,command.args));
   }
-  return {next, prepared, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  const deliveryChecks=checkDeliveryRequirements(next,after,deliveryRequirements);
+  return {next, prepared, deliveryChecks, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject, expected, locked, commit, execute, signal, onStep = () => {}}) {
@@ -51,6 +53,10 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
     let result;try{result=await execute(command,signal,plan.prepared?.get(command));}catch(error){error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
     observations.push({name:command.name, result:result ?? null});
     completedCommands.push(command.name);
+    const deliveryCheck=plan.deliveryChecks?.get(command);
+    checkDeliveryReceipt(plan.next,result,deliveryCheck);
+    if(deliveryCheck)result={...result,requestedSettingsVerified:deliveryCheck.requested};
+    observations.at(-1).result=result??null;
     // Runtime operations cannot silently replace/edit the project.
     check();
     onStep({type:'command', name:command.name, result:result ?? null});

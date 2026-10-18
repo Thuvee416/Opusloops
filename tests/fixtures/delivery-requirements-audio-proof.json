@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "sampleRate": 48000,
+  "bitDepth": 24,
+  "range": {
+    "start": 6,
+    "length": 4
+  },
+  "wholeArrangementBeats": 16,
+  "frames": 96000,
+  "wavBytes": 576044,
+  "stemFiles": 4,
+  "sourceWavEqualsStem": true,
+  "mutedStemSilent": true,
+  "rangeVersusFullCropMaxPcmDifference": 1,
+  "wrongStartMaxPcmDifference": 566245,
+  "lateRangeMismatchRejectedBeforeEdits": true,
+  "verifiedRuntimeReceipts": 2,
+  "sourceProjectUnchanged": true,
+  "scope": "Normal Chromium native offline audio and actual in-memory ZIP bytes; excludes physical output, perceptual quality and OS/browser file-save verification."
+}
