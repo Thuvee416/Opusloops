@@ -2,11 +2,11 @@
 
 Audit: 2026-10-18; group-trim/no-op update 0.127.1. Source of truth: `web-studio/`, especially `agent-actions.js`, `agent-runner.js`, `agent-schema.js`, `app.js` and `menus.js`. This is a coverage audit, not a full-parity claim. Existing manual controls do not prove complete Ableton workflows. Disabled menu labels are not implemented features.
 
-Evidence levels: **model** means an actual Bedrock plan was validated locally; **browser** means real application execution with deterministic mocked planning; **model + production** requires an authenticated real model request through the published studio, which remains unverified. Browser coverage does not establish musical quality or physical-device behavior.
+Evidence levels: **model** means an actual Bedrock plan was validated locally; **browser** means real application execution with deterministic mocked planning; **model + production** requires an authenticated real model request through the published studio. Release 0.131 verified session inspection, tempo 120 → 123 and one Undo back to 120 in normal Chrome. That proof does not establish composition, audio delivery or the other unverified feature-specific workflows below. Browser coverage does not establish musical quality or physical-device behavior.
 
 | Area | Current agent control | Evidence | Remaining work |
 | --- | --- | --- | --- |
-| Project identity, tempo, master, loop/metronome | Project action; validated transport settings | Unit and browser; real-model tempo plan | Time signature, advanced configuration and broader workflow checks |
+| Project identity, tempo, master, loop/metronome | Project action; validated transport settings | Unit and browser; authenticated published-studio read/tempo edit/Undo on 0.131 | Time signature, advanced configuration and broader workflow checks |
 | Project save | Embedded-media project download; can follow edits in a plan | Sequence browser downloads and parses project (including captured model plan) | Reopen the agent-generated project in a fresh session; cloud project lifecycle |
 | New/open/templates/default set | Manual controls exist; no agent workflow | Source audit | Guided file gestures, template selection, project lifecycle and replacement safeguards |
 | Recovery/backups/previous set | Manual recovery exists; no agent workflow | Existing recovery tests apply only to manual path | Agent inspection and guided restore, with displaced-set recovery |

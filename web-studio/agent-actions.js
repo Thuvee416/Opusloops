@@ -50,7 +50,9 @@ export function applyAgentActions(source,actions,{aliases=new Map(),observations
   }
   if(x.name==='view'&&!['session','arrangement'].includes(x.args?.view))fail('Invalid view');
   const keys={seek:['beat'],launch_scene:['scene'],launch_clip:['trackId','scene'],stop_track:['trackId'],view:['view'],export_wav:[...DELIVERY_KEYS,'channel'],export_stems:DELIVERY_KEYS,export_midi:MIDI_DELIVERY_KEYS}[x.name]||[];
-  if(Object.keys(x).some(k=>!['name','args'].includes(k))||x.args!==undefined&&(!x.args||typeof x.args!=='object'||Array.isArray(x.args)||Object.keys(x.args).some(k=>!keys.includes(k))))fail('Unsupported runtime argument. '+x.name+' accepts '+(keys.join(', ')||'no arguments')+'.');
+  const invalidArgs=x.args!==undefined&&(!x.args||typeof x.args!=='object'||Array.isArray(x.args));
+  const unexpected=[...Object.keys(x).filter(k=>!['name','args'].includes(k)).map(k=>'command.'+k),...(!invalidArgs&&x.args?Object.keys(x.args).filter(k=>!keys.includes(k)).map(k=>'command.args.'+k):[])];
+  if(invalidArgs||unexpected.length)fail('Unsupported runtime argument. '+(invalidArgs?'command.args must be an object. ':'Unexpected fields: '+unexpected.join(', ')+'. ')+x.name+' accepts '+(keys.join(', ')||'no arguments')+' inside command.args.'+(x.name==='export_wav'?' Select a WAV track with command.args.channel="track:ID" (or "track:$alias"), never trackId.':''));
   if(x.name==='export_midi')midiDeliveryOptions(p,x.args??{});
   if(['export_wav','export_stems'].includes(x.name))deliveryOptions(p,x.args??{},x.name==='export_wav'?'wav':'stems');
  }
