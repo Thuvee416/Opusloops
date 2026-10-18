@@ -1,0 +1,158 @@
+{
+  "sampleRate": 44100,
+  "frames": 88200,
+  "channels": 2,
+  "format": "IEEE float 32",
+  "rms": {
+    "inner": 0.009631408461056692,
+    "outer": 0.009631408461056692,
+    "a": 0.01537244798876309
+  },
+  "outerVersusInnerMaxDifference": 0.0,
+  "innerGainAtSourceAFrequencyDb": -5.999209776460177,
+  "spectralPower": {
+    "261.6255653005986": 2.848658226951524e-05,
+    "391.99543598174927": 1.604397078352481e-05,
+    "173": 2.5532020915993862e-11,
+    "600": 2.6165980431306623e-11
+  },
+  "files": {
+    "inner": {
+      "name": "Untitled-session-track-Rhythm (3).wav",
+      "bytes": 705644,
+      "sha256": "9dcd96288f2b06b581afa5f2a8307991568a63fcd37022c1ba565fcdcbd29311"
+    },
+    "outer": {
+      "name": "Untitled-session-track-Band (2).wav",
+      "bytes": 705644,
+      "sha256": "9dcd96288f2b06b581afa5f2a8307991568a63fcd37022c1ba565fcdcbd29311"
+    },
+    "a": {
+      "name": "Untitled-session-track-Group-Proof-A (1).wav",
+      "bytes": 705644,
+      "sha256": "0924faac1c179053c65dc262487037b9db0c96bf7ded1d441d4774a368fb00b1"
+    }
+  },
+  "projectBytes": 4128,
+  "projectSha256": "2ef8d3f89ce173bdc06f144f2071ef5917b83f3a287f135683293061afd3e7d9",
+  "baselineSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+  "scope": "Actual authenticated published-studio composition/nesting, real project and three saved WAVs. Unity nested output, two requested pitches and frequency-selective -6 dB transfer verified. Separate B WAV and stem ZIP were generated but not saved by browser automation, so full independent source-sum and saved ZIP checks remain unverified in production; local native audio covers them separately. No physical-output or listening-quality assessment.",
+  "release": {
+    "version": "0.135.2",
+    "executedCommit": "dfef76157a5b11ace87111842cf4e6e99ddfcc29",
+    "amplifyJob": "110",
+    "hosts": [
+      {
+        "host": "opusloops.com",
+        "version": {
+          "provider": "aws-amplify",
+          "commit": "dfef76157a5b11ace87111842cf4e6e99ddfcc29",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000110",
+          "builtAt": "2026-10-18T09:06:57.418379Z"
+        },
+        "matchingAssets": 18
+      },
+      {
+        "host": "www.opusloops.com",
+        "version": {
+          "provider": "aws-amplify",
+          "commit": "dfef76157a5b11ace87111842cf4e6e99ddfcc29",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000110",
+          "builtAt": "2026-10-18T09:06:57.418379Z"
+        },
+        "matchingAssets": 18
+      }
+    ],
+    "assetSha256": {
+      "app.js": "e51d03a887d16b8f3816689e5c68d0917b319ed01c557fde14100ec15cf60b90",
+      "downloads.js": "a6cf39c3656c337dc794871ed3938418f3dfab5e80d99f1a6467c34b23e35f03",
+      "agent.css": "50016678333bff2b954451cead5e42013ce48c9cf3cf6ca23c98948fd9074090",
+      "track-groups.js": "33dd4e4fc5a9072fa6e75c5d9497d5f19877412b1781e3cec16512d6b780d061",
+      "track-hierarchy.js": "59867526bae5d2394992a2a87927173a92c6a26b2f281b0e3fed927bc1139a92",
+      "track-routing.js": "8876d14803b4c975831c441b4babc567f76f4cae9c21dd2d8fe7dbf2619aa4cc",
+      "management.js": "502abb33c87e7dfe223ef5f31ae4d496b0876e29dfe29491ec8be115566d0302",
+      "model.js": "5ad4f69dc4646284853e85872157c7e0fd773ec5f79e2898adfaabd3d3a07c56",
+      "audio.js": "95f0df34420e57341b02180b7fdc67487ccbe856bbb1319e63030ca967d9218e",
+      "agent-actions.js": "09325b667b3c7b0f1853c620ef5fceceace31cfd9f6f1d2315327ee6285885bd",
+      "agent-schema.js": "421e699e2ec1bbb84fd34acce3c9852c430d1d28a5780d70af1b296f60355fd9",
+      "agent-panel.js": "754fa45189e83b9e629ea6a884713f52616be8ead0a4526bfe7cad0f75ae306c",
+      "agent-performance.js": "e3f5797648d6c7970240d3894b591df1c3143e9cb3c1ca60b6ab5a134a447982",
+      "library.js": "c74d93593595c4c9db7d936b40ddbb0075ab60e2e7d5db04d85a4e6f72230426",
+      "brand.css": "f623b68552f3acd707dd87837e4f97a9977e96c2f76ee5eab76ac7516740afcd",
+      "stem-export.js": "c170fb7049eed79f84339809d1da24e3458662627599adfa48ccb429e7884464",
+      "startup.js": "995bee251056d14230106e58b8e145efb6c887aa2d2ef009577861fcd51991aa",
+      "release.json": "97df3a724767b55348623735ddb040b2183a1840894cb0806cde496f7077d9b6"
+    }
+  },
+  "backend": {
+    "apiZipSha256": "22e4727c0969940db8e300befb1fee3fdefcd8a5b2aece672bc60fd68e35c1ee",
+    "state": "Active",
+    "updateStatus": "Successful",
+    "workerImagePreserved": true
+  },
+  "tests": {
+    "core": 146,
+    "backend": 22,
+    "artifactValidation": true
+  },
+  "realReviewedRequests": [
+    {
+      "kind": "compose",
+      "editActions": 8,
+      "clientRepairs": 0,
+      "requestedGroup": "Rhythm",
+      "savedWav": true
+    },
+    {
+      "kind": "nest",
+      "editActions": 2,
+      "clientRepairs": 0,
+      "requestedGroup": "Band",
+      "savedWav": true
+    },
+    {
+      "kind": "multi-export",
+      "editActions": 0,
+      "clientRepairs": 0,
+      "sourceAWasSaved": true,
+      "sourceBAndZipSaved": false,
+      "zipRangeOmittedDespiteRequest": true
+    },
+    {
+      "kind": "explicit-zip-only",
+      "editActions": 0,
+      "clientRepairs": 0,
+      "observedRange": {
+        "start": 0,
+        "length": 4
+      },
+      "zipSaved": false
+    }
+  ],
+  "productionDelivery": {
+    "explicitProjectLinkSaved": true,
+    "retainedSourceBAndZipLinksObserved": true,
+    "independentSourceSumVerified": false,
+    "savedZipVerified": false,
+    "projectBeforeAfterExportByteEqualityVerified": false,
+    "limitation": "Chrome automation did not save Source B or the ZIP, including isolated link clicks; blob-link downloadMedia is unsupported. Internal Chrome Downloads inspection was blocked by browser URL policy. No permissions or browser security controls were changed."
+  },
+  "restoration": {
+    "normalUndoSteps": 2,
+    "undoUnavailableAfterward": true,
+    "normalReopenVerified": true,
+    "originalProjectBytes": 1725,
+    "restoredProjectBytes": 1725,
+    "originalAndRestoredSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "byteIdentical": true,
+    "viewsRestored": "Session / Clip",
+    "detailPercent": 20
+  },
+  "verifiedAt": "2026-10-18T09:17:08.584326+00:00"
+}
