@@ -161,3 +161,6 @@ Queued draft/review has owner-scoped encrypted temporary storage, immutable idem
 
 
 0.149.1 preserves the observed 0.149 fresh-composition launch-setting carryover failure and adds independent current-request guards before server release/client commit. Explicit fresh MIDI plus no-other-edits and no requested/referenced launch settings binds default launch behavior; both constructor and metadata actions are checked. 343 core + 56 backend tests pass. The history-contaminated provider canary reproduced a bad candidate, rejected it, then passed a complete independent project comparison on repair. This remains bounded semantic validation, not arbitrary-language fidelity.
+
+
+0.149.2 limits conversation omission to the bounded fresh-MIDI/default-launch request contract: irrelevant completed instructions are excluded, while explicit follow-ups retain dialogue. Current project/selection and repair feedback remain. Signed-in 0.149.1 exhausted repairs safely without edits; one failed worker ran 46.932 seconds and was observed via polling. Both actual-provider history cases passed first attempt after context isolation. 343 core + 57 backend checks pass; public final-backend/client proof remains separate.

@@ -7,7 +7,7 @@
       "prompt": "Create two new Init synth tracks named QA Property A and QA Property B. Preserve the existing Audio 1 track and all existing project data. On each new track create a four-beat MIDI clip in scene 1: name them QA Clip A and QA Clip B. Clip A must contain exactly one C4 note (MIDI 60), start 0, duration 1 beat, velocity 0.5. Clip B must contain exactly one C3 note (MIDI 48), start 0, duration 1 beat, velocity 0.5. Set Clip A launch mode Toggle, launch quantization 4 beats, legato true. Set Clip B launch mode Gate, launch quantization 0.5 beat, legato false. Do not start playback, change selections or panels, or make any other edits.",
       "launches": true,
       "result": {
-        "summary": "Create two new Init synth tracks and MIDI clips with specified properties.",
+        "summary": "Create two new Init synth tracks and MIDI clips as requested.",
         "actions": [
           {
             "type": "add_track",
@@ -30,8 +30,8 @@
             "args": {
               "ref": "$clipA",
               "trackId": "$trackA",
-              "sceneNumber": 1,
               "name": "QA Clip A",
+              "sceneNumber": 1,
               "beats": 4,
               "notes": [
                 {
@@ -53,8 +53,8 @@
             "args": {
               "ref": "$clipB",
               "trackId": "$trackB",
-              "sceneNumber": 1,
               "name": "QA Clip B",
+              "sceneNumber": 1,
               "beats": 4,
               "notes": [
                 {
@@ -86,7 +86,7 @@
         {
           "attempt": 1,
           "result": {
-            "summary": "Create two new Init synth tracks and MIDI clips with specified properties.",
+            "summary": "Create two new Init synth tracks and MIDI clips as requested.",
             "actions": [
               {
                 "type": "add_track",
@@ -109,8 +109,8 @@
                 "args": {
                   "ref": "$clipA",
                   "trackId": "$trackA",
-                  "sceneNumber": 1,
                   "name": "QA Clip A",
+                  "sceneNumber": 1,
                   "beats": 4,
                   "notes": [
                     {
@@ -132,8 +132,8 @@
                 "args": {
                   "ref": "$clipB",
                   "trackId": "$trackB",
-                  "sceneNumber": 1,
                   "name": "QA Clip B",
+                  "sceneNumber": 1,
                   "beats": 4,
                   "notes": [
                     {
@@ -168,10 +168,10 @@
             },
             {
               "phase": "reviewing",
-              "elapsedMs": 3630
+              "elapsedMs": 2953
             }
           ],
-          "elapsedMs": 7236,
+          "elapsedMs": 6054,
           "passed": true
         }
       ],
@@ -181,7 +181,7 @@
       "id": "plain-scene-one",
       "prompt": "Add two Init synth tracks named QA Property A and QA Property B. Each needs a four-beat MIDI clip in scene 1, named QA Clip A and QA Clip B respectively. Each clip has one note: start 0, duration 1 beat, velocity 0.5; pitch 60 on A, 48 on B. No other edits or commands.",
       "result": {
-        "summary": "Create two new Init synth tracks and MIDI clips as requested.",
+        "summary": "Add two Init synth tracks with four-beat MIDI clips in scene 1",
         "actions": [
           {
             "type": "add_track",
@@ -189,14 +189,6 @@
               "name": "QA Property A",
               "preset": "Init",
               "ref": "$qaA"
-            }
-          },
-          {
-            "type": "add_track",
-            "args": {
-              "name": "QA Property B",
-              "preset": "Init",
-              "ref": "$qaB"
             }
           },
           {
@@ -214,6 +206,14 @@
                   "velocity": 0.5
                 }
               ]
+            }
+          },
+          {
+            "type": "add_track",
+            "args": {
+              "name": "QA Property B",
+              "preset": "Init",
+              "ref": "$qaB"
             }
           },
           {
@@ -247,24 +247,8 @@
       "attempts": [
         {
           "attempt": 1,
-          "phases": [
-            {
-              "phase": "drafting",
-              "elapsedMs": 2
-            },
-            {
-              "phase": "reviewing",
-              "elapsedMs": 3257
-            }
-          ],
-          "elapsedMs": 6531,
-          "passed": false,
-          "error": "This Request Creates Fresh MIDI Clips With Default Launch Settings And Says No Other Edits. Omit All Launch And Legato Changes; Do Not Carry Settings From Earlier Conversation. Return A Complete Replacement Plan."
-        },
-        {
-          "attempt": 2,
           "result": {
-            "summary": "Create two new Init synth tracks and MIDI clips as requested.",
+            "summary": "Add two Init synth tracks with four-beat MIDI clips in scene 1",
             "actions": [
               {
                 "type": "add_track",
@@ -272,14 +256,6 @@
                   "name": "QA Property A",
                   "preset": "Init",
                   "ref": "$qaA"
-                }
-              },
-              {
-                "type": "add_track",
-                "args": {
-                  "name": "QA Property B",
-                  "preset": "Init",
-                  "ref": "$qaB"
                 }
               },
               {
@@ -297,6 +273,14 @@
                       "velocity": 0.5
                     }
                   ]
+                }
+              },
+              {
+                "type": "add_track",
+                "args": {
+                  "name": "QA Property B",
+                  "preset": "Init",
+                  "ref": "$qaB"
                 }
               },
               {
@@ -330,14 +314,14 @@
           "phases": [
             {
               "phase": "drafting",
-              "elapsedMs": 0
+              "elapsedMs": 2
             },
             {
               "phase": "reviewing",
-              "elapsedMs": 2421
+              "elapsedMs": 2332
             }
           ],
-          "elapsedMs": 5360,
+          "elapsedMs": 4795,
           "passed": true
         }
       ],

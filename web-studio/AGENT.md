@@ -332,3 +332,6 @@ Release 0.149 adds account-owned queued planning: POST studio-agent with `contex
 
 
 0.149.1 adds a bounded fresh-MIDI default-launch contract derived from the CURRENT original request, independently on server and client. If the request explicitly creates MIDI clips, says no other edits/changes, and neither asks for launch/legato nor refers to earlier settings, constructor and source-property launch changes reject before execution. This closes the observed conversation carryover in the tested wording; historical settings remain available for explicit follow-ups, and arbitrary-language scope is still unproven. The actual-provider history canary needed one rejected candidate and a reviewed repair before its full-project oracle passed.
+
+
+0.149.2 removes completed conversation from the model snapshot only for the bounded fresh-MIDI/no-other-edits/default-launch contract. The current request, current project/selection, independently derived requirements and repair feedback remain authoritative. Explicit references to earlier settings retain conversation; raw client context stays immutable. This follows the observed signed-in 0.149.1 repair exhaustion, which made no project edits. Actual-provider history canaries then passed the complete complex/default-launch expectations on first attempts.
