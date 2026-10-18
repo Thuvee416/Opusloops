@@ -13,7 +13,8 @@ export function readDeliveryRequirements(prompt){
  if(!/\b(?:export|render|bounce|download)\b/i.test(text)||/\b(?:do not|don't|never)\s+(?:export|render|bounce|download)\b/i.test(text))return null;
  const formats=[...(/\bwavs?\b/i.test(text)?['wav']:[]),...(/\b(?:stems?|zip)\b/i.test(text)?['stems']:[])];if(!formats.length)return null;
  if(/\bmidi\b/i.test(text)&&!/\b(?:wavs?|zip|audio)\b/i.test(text))return null;
- const shared=/\b(?:every|each|all)\s+(?:(?:audio|requested|two|three)\s+)?(?:exports?|downloads?|files?)\b|\b(?:same|identical)\s+(?:export\s+)?(?:settings|options|format|range)\b|\bfor\s+both\b/i.test(text);
+ const shared=/\b(?:every|each|all)\s+(?:(?:audio|requested|two|three)\s+)?(?:exports?|downloads?|files?)\b|\b(?:same|identical)\s+(?:export\s+)?(?:settings|options)\b|\bfor\s+both\s+(?:exports?|files?|downloads?|formats?)\b|\bfor\s+both\s*(?:[.!?;]|$)/i.test(text);
+ const sharedFields=new Set();for(const [key,phrase]of [['range','range'],['sampleRate','sample rate'],['bitDepth','bit depth'],['normalize','normalization'],['dither','dither'],['includeTail','effect tails?']])if(new RegExp('\\b(?:same|identical)\\s+'+phrase+'\\b','i').test(text))sharedFields.add(key);
  const values=new Map(),unresolved=[];const add=(key,value)=>{const list=values.get(key)||[];if(!list.some(v=>equal(v,value)))list.push(value);values.set(key,list);};
  for(const m of text.matchAll(new RegExp('\\b'+number+'\\s*(kHz|Hz)\\b','gi'))){const rate=Number(m[1])*(m[2].toLowerCase()==='khz'?1000:1),prefix=text.slice(Math.max(0,m.index-40),m.index);if(/\b(?:filter|cutoff|frequency|tone|oscillator|lfo|crossover)\s*(?:to|at|of|[:=])?\s*$/i.test(prefix))continue;if(rate>=8000||/\b(?:sample\s*rate|export\s*(?:at)?|render\s*(?:at)?|rate)\s*[:=]?\s*$/i.test(prefix))add('sampleRate',rate);}
  for(const m of text.matchAll(/\b(16|24|32)\s*[- ]?bit\b/gi))add('bitDepth',Number(m[1]));
@@ -33,10 +34,10 @@ export function readDeliveryRequirements(prompt){
   if(keys.length!==2||parts.length!==2||parts.some(p=>!['start','length'].includes(p[1]))||new Set(parts.map(p=>p[1])).size!==2)throw new Error('An explicit export range needs numeric start and length only.');
   for(const part of parts)range[part[1]]=Number(part[2]);add('range',{start:range.start,length:range.length});
  }
- const settings={};for(const [key,list]of values){if(list.length===1)settings[key]=list[0];else if(shared)throw new Error('Conflicting shared export '+key+' values. Specify one value for every export, or request separately configured files.');else unresolved.push(key);}
+ const settings={};for(const [key,list]of values){if(list.length===1&&(shared||!sharedFields.size||sharedFields.has(key)))settings[key]=list[0];else if(list.length>1&&(shared||sharedFields.has(key)))throw new Error('Conflicting shared export '+key+' values. Specify one value for every export, or request separately configured files.');else unresolved.push(key);}
  if(settings.range){if(settings.source==='session')throw new Error('An Arrangement export range cannot be combined with a Session snapshot.');settings.source='arrangement';}
  if(!Object.keys(settings).length)return null;
- return {scope:shared?'shared':'single',formats,settings,unresolved};
+ return {scope:shared||sharedFields.size?'shared':'single',formats,settings,unresolved};
 }
 const effectiveSource=(project,settings)=>settings.source==='auto'?(project.arrangement.length?'arrangement':'session'):settings.source;
 function differences(settings,expected){return Object.keys(expected).filter(key=>!equal(settings[key],expected[key]));}
