@@ -8,3 +8,8 @@ export function inputEventTime(context, timestamp, now = performance.now()) {
       !Number.isFinite(now) || now < 0 || timestamp > now) return current;
   return Math.max(0, current - (now - timestamp) / 1000);
 }
+
+export function inputTimingState(context) {
+  const rate=context?.sampleRate;
+  return {eventTimestamps:true,minimumNoteSeconds:Number.isFinite(rate)&&rate>=8000&&rate<=384000?1/rate:null,latencyCompensation:false};
+}
