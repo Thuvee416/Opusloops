@@ -1,0 +1,33 @@
+{
+  "release": "0.133.0",
+  "commit": "2449d2c712250580f6f4f7475881f47848e60be6",
+  "amplifyJob": "101",
+  "apiZipSha256": "7351b4f00a64a83dedf066d4ba98debbe076195ec095b4fd78c38540fe53ae18",
+  "authenticated": true,
+  "intercepted": false,
+  "reviewedRequests": 4,
+  "clientRepairs": 0,
+  "projectEdits": 6,
+  "newRegularTracks": 1,
+  "newReturnTracks": 1,
+  "namedMidiClips": [
+    "Navigation A",
+    "Navigation B"
+  ],
+  "notesPerClip": 4,
+  "regionStarts": [
+    0,
+    128
+  ],
+  "groupPrimary": "Navigation B",
+  "sessionSceneIndex": 1,
+  "returnDeviceFocusVerified": true,
+  "recordingPanelOpenedWithoutInputConnection": true,
+  "playbackStarted": false,
+  "selectionOnlyProjectByteIdentical": true,
+  "createdProjectSha256": "7919cbbfb4de8fe7f9c8251c03712ce82459785c227fd923fbe4c277286cca7c",
+  "baselineSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+  "singleUndoRestoredBaselineByteIdentical": true,
+  "remainingUndoSteps": 0,
+  "scope": "One signed-in normal Chrome session; no production authentication bypass or intercepted planning; no physical-output or broader semantic correctness claim."
+}
