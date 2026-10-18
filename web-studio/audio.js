@@ -38,7 +38,7 @@ export function synthesize(context,clip,bpm){
   return buffer;
 }
 export class Engine {
-  constructor(project,changed){this.project=project;this.project.transport??=defaultTransport();this.changed=changed;this.context=null;this.buffers=new Map();this.midiBuffers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();this.sampleBuffers=new Map();this.active=new Map();this.pending=new Map();this.follows=new Map();this.activeScene=null;this.pendingScene=null;this.sceneFollow=null;this.gateHolds=new Map();this.overrides=new Set();this.automationOverrides=new Set();this.nodes=new Set();this.records=new Map();this.playing=false;this.recording=false;this.mode='session';this.nextBeat=0;this.position=0;this.playGeneration=0;this.masterVolume=project.master??.8;}
+  constructor(project,changed){this.project=project;this.project.transport??=defaultTransport();this.changed=changed;this.context=null;this.buffers=new Map();this.midiBuffers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();this.sampleBuffers=new Map();this.active=new Map();this.pending=new Map();this.follows=new Map();this.activeScene=null;this.pendingScene=null;this.sceneFollow=null;this.gateHolds=new Map();this.overrides=new Set();this.automationOverrides=new Set();this.nodes=new Set();this.records=new Map();this.playing=false;this.recording=false;this.mode='session';this.nextBeat=0;this.position=0;this.insertMarker=0;this.playGeneration=0;this.masterVolume=project.master??.8;}
   async init(resume=true){if(!this.context){this.context=new AudioContext();this.master=this.context.createGain();this.master.gain.value=this.masterVolume;this.compressor=this.context.createDynamicsCompressor();this.master.connect(this.compressor);this.compressor.connect(this.context.destination);this.mixers=new Map();this.resetMixers();}if(resume)await this.context.resume();}
   channels(){return automationChannels(this.project);}
   mixer(id){return this.mixers?.get(id)||this.returnMixers?.get(id);}
@@ -105,11 +105,11 @@ export class Engine {
   }
   stop(){this.halt(true);}
   pause(){this.halt(false);}
-  async seek(position){
+  async seek(position,{moveMarker=true,snap=true}={}){
     if(this.recording)throw new Error('Finish recording before seeking.');
     if(!Number.isFinite(position)||position<0||position>16384)throw new Error('Choose a position within the timeline.');
     const resume=this.playing;this.pause();
-    const next=Math.round(position*4)/4;
+    const next=snap?Math.round(position*4)/4:position;if(moveMarker)this.insertMarker=next;
     for(const a of this.active.values())a.start+=next-this.position;
     for(const f of this.follows.values())f.beat+=next-this.position;if(this.sceneFollow)this.sceneFollow.beat+=next-this.position;this.position=next;this.changed();if(resume)await this.play(this.mode);
   }

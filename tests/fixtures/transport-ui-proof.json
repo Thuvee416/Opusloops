@@ -1,0 +1,132 @@
+{
+  "version": "0.144.2",
+  "environment": "Controlled localhost Chrome UI; provider responses stubbed only in tests/midi-overdub-preview.mjs. Real provider planning is separately retained in agent-transport-plans.json.",
+  "project": {
+    "baseline": "Overdub-Proof (10).opusloop",
+    "afterRuntimeChecks": "Overdub-Proof (11).opusloop",
+    "afterGateChecksAndFourUndos": "Overdub-Proof (12).opusloop",
+    "bytes": 803,
+    "sha256": "5fa2f05c2b33f25edad18a527d284d95699958d0f544106dc0590215c5cddf20"
+  },
+  "checks": [
+    "Enter on selected clip launches it",
+    "Arrow keys select empty slots without file import",
+    "Enter on empty stop slot stops clip while global transport remains playing",
+    "Arrows navigate from last track to scenes and back",
+    "First Stop retained 005:2:1; second Stop returned 001:1:1",
+    "Shift+Space resumed retained 005:2:1",
+    "Seek at zero-based beat 8 exposed Insert Marker: Beat 9",
+    "Normal Play began at 003:1:2 after a retained stop at 013:4:3",
+    "Controlled Odesa play/stop/continue/reset used shared runtime controls and current insert-marker context",
+    "Held Enter on a Gate cell released its clip while global playback continued",
+    "No new browser error/warning logs observed"
+  ],
+  "controlledPlans": [
+    {
+      "prompt": "Play from the insert marker",
+      "transport": {
+        "playing": false,
+        "position": 8,
+        "insertMarker": 8
+      }
+    },
+    {
+      "prompt": "Stop playback",
+      "transport": {
+        "playing": true,
+        "position": 21.408,
+        "insertMarker": 8
+      }
+    },
+    {
+      "prompt": "Continue from the stop point",
+      "transport": {
+        "playing": false,
+        "position": 21.418666666666667,
+        "insertMarker": 8
+      }
+    },
+    {
+      "prompt": "Return to the beginning",
+      "transport": {
+        "playing": true,
+        "position": 36.959999999999994,
+        "insertMarker": 8
+      }
+    }
+  ],
+  "nativeAudio": {
+    "status": "passed",
+    "scope": "Controlled receipt timestamps, native real-time scheduler preview for instrument and legacy tracks, native OfflineAudioContext WAV/SMF oracles. No physical device/latency or listening-quality claim.",
+    "cases": [
+      {
+        "kind": "instrument",
+        "laterLoopPreview": true,
+        "secondLaterLoopPreview": true,
+        "cancelRestoresSource": true,
+        "projectUnchanged": true,
+        "transportContinues": true
+      },
+      {
+        "kind": "legacy_buffer",
+        "laterLoopPreview": true,
+        "secondLaterLoopPreview": true,
+        "cancelRestoresSource": true,
+        "projectUnchanged": true,
+        "transportContinues": true
+      },
+      {
+        "kind": "arrangement_queued",
+        "laterLoopPreview": true,
+        "secondLaterLoopPreview": true,
+        "cancelRestoresSource": true,
+        "projectUnchanged": true,
+        "transportContinues": true
+      },
+      {
+        "kind": "raw",
+        "frames": 96000,
+        "sampleRate": 48000,
+        "maxSampleError": 1.1175870895385742e-08,
+        "midiEvents": [
+          {
+            "tick": 192,
+            "type": "noteOn",
+            "velocity": 76
+          },
+          {
+            "tick": 384,
+            "type": "noteOff",
+            "velocity": 38
+          }
+        ],
+        "originalNotesPreserved": true
+      },
+      {
+        "kind": "triplet_both",
+        "frames": 96000,
+        "sampleRate": 48000,
+        "maxSampleError": 1.862645149230957e-09,
+        "midiEvents": [
+          {
+            "tick": 320,
+            "type": "noteOn",
+            "velocity": 76
+          },
+          {
+            "tick": 640,
+            "type": "noteOff",
+            "velocity": 38
+          }
+        ],
+        "originalNotesPreserved": true
+      }
+    ]
+  },
+  "limits": [
+    "Not authenticated production execution",
+    "No physical device/latency or listening-quality claim",
+    "Insert markers are runtime state and reset when a set or Undo rebuilds the engine",
+    "Session multi-selection, all context menus and full keyboard/device parity remain incomplete"
+  ]
+}

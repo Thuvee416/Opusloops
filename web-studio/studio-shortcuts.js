@@ -8,6 +8,6 @@ export function studioShortcut(e,{typing=false,dialog=false,menu=false,agent=fal
  if(e.altKey&&!mod&&!e.shiftKey&&['Digit1','Digit2'].includes(e.code))return e.code==='Digit1'?'session':'arrangement';
  if(mod||e.altKey)return null;
  if(e.code==='Tab'&&!e.shiftKey&&!tabNavigation)return 'toggle_view';
- if(e.shiftKey)return null;
- return {Space:'toggle_play',F9:'record',F10:'back'}[e.code]??null;
+ if(e.shiftKey)return e.code==='Space'?'continue_play':null;
+ return {Space:'toggle_play',F9:'record',F10:'back',Home:'return_start'}[e.code]??null;
 }

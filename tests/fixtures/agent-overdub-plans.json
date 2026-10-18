@@ -1,0 +1,176 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "stopped-count-in",
+      "state": {
+        "active": false,
+        "captureId": null,
+        "mode": "new",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "playing": false,
+        "overdubReady": true,
+        "audioConnected": false,
+        "recordQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        }
+      },
+      "prompt": "Start overdubbing keyboard MIDI into Existing Loop on Lead, Session scene 1, with a one-bar count-in. Keep existing notes, loop length and all project data unchanged. Do not generate notes or create another clip.",
+      "expected": {
+        "action": "start",
+        "mode": "overdub",
+        "source": "midi",
+        "trackId": "lead",
+        "scene": 0,
+        "countInBars": 1
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Prepared to overdub MIDI into Existing Loop on Lead, Session scene 1, with a one-bar count-in.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "start",
+                "source": "midi",
+                "trackId": "lead",
+                "countInBars": 1,
+                "mode": "overdub",
+                "scene": 0
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "running-phase",
+      "state": {
+        "active": false,
+        "captureId": null,
+        "mode": "new",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "playing": true,
+        "overdubReady": true,
+        "audioConnected": false,
+        "recordQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        }
+      },
+      "prompt": "Overdub more keyboard MIDI into the already-playing Existing Loop on Lead in Session scene 1, without a count-in or any other changes. Do not replace existing notes or create a new take clip.",
+      "expected": {
+        "action": "start",
+        "mode": "overdub",
+        "source": "midi",
+        "trackId": "lead",
+        "scene": 0,
+        "countInBars": 0
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Overdubbed MIDI into Existing Loop on Lead in Session scene 1.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "start",
+                "source": "midi",
+                "trackId": "lead",
+                "countInBars": 0,
+                "mode": "overdub",
+                "scene": 0
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "finish",
+      "state": {
+        "active": true,
+        "captureId": "operator-overdub",
+        "mode": "overdub",
+        "source": "midi",
+        "trackId": "lead",
+        "countInBars": 0,
+        "playing": true,
+        "overdubReady": true,
+        "audioConnected": false,
+        "recordQuantization": {
+          "enabled": false,
+          "grid": 0.25,
+          "gridMode": "straight",
+          "target": "starts"
+        },
+        "clipId": "loop",
+        "scene": 0,
+        "loopBeats": 2
+      },
+      "prompt": "Finish the current MIDI overdub, keeping the loop playing. No other actions.",
+      "expected": {
+        "action": "finish"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Finish the current MIDI overdub, keeping the loop playing.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_input",
+              "args": {
+                "action": "finish",
+                "trackId": "lead"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

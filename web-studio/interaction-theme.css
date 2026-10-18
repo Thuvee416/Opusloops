@@ -45,3 +45,8 @@
 .studio-shell input[type=range]:not([data-volume]):not(#master)::-webkit-slider-thumb{appearance:none;width:6px;height:10px;margin-top:-4px;background:#3c4545;border:1px solid #242b2b;border-radius:0;box-shadow:none}
 .studio-shell input[type=range]:not([data-volume]):not(#master)::-moz-range-track{height:2px;background:#7b8484;border:0;border-radius:0}
 .studio-shell input[type=range]:not([data-volume]):not(#master)::-moz-range-thumb{width:5px;height:9px;background:#3c4545;border:1px solid #242b2b;border-radius:0;box-shadow:none}
+/* Keyboard selection shares the same slot boundaries as pointer selection. */
+.studio-shell .slot:focus-visible{outline:1px solid #233a36;outline-offset:-1px;background:#a6beb8}
+/* The insert marker and moving playhead are separate transport positions. */
+.studio-shell .timeline-insert-marker{position:absolute;top:22px;bottom:0;width:1px;z-index:3;pointer-events:none;background:#337db7;border-left:1px dotted #d2e7f5}
+.studio-shell .timeline-insert-marker::before{content:'';position:absolute;top:-5px;left:-4px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #337db7}

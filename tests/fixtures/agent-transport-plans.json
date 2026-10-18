@@ -1,0 +1,147 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "continue",
+      "playing": false,
+      "position": 17.125,
+      "insertMarker": 8,
+      "prompt": "Continue playback exactly from the retained stop point. Do not restart at the insert marker. Do not change my project or anything else.",
+      "name": "play",
+      "expected": {
+        "from": "continue"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Continued playback from the retained stop point.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "play",
+              "args": {
+                "from": "continue"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "stop-retain",
+      "playing": true,
+      "position": 21.125,
+      "insertMarker": 8,
+      "prompt": "Stop playback here and retain this stop position. Do not rewind or edit the project.",
+      "name": "stop",
+      "expected": {
+        "reset": false
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Stopped playback and retained the stop position.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "stop",
+              "args": {}
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "stop-reset",
+      "playing": true,
+      "position": 21.125,
+      "insertMarker": 8,
+      "prompt": "Stop and return the entire transport to 1.1.1, resetting the insert marker too. Use one runtime command and make no project edits.",
+      "name": "stop",
+      "expected": {
+        "reset": true
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Stopped and reset the transport to 1.1.1.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "stop",
+              "args": {
+                "reset": true
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "play-marker",
+      "playing": false,
+      "position": 21.125,
+      "insertMarker": 8,
+      "prompt": "Start playback from the insert marker, not from the last stop point. No other changes.",
+      "name": "play",
+      "expected": {
+        "from": "marker"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Started playback from the insert marker.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "play",
+              "args": {
+                "from": "marker"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

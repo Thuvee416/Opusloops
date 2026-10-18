@@ -6,7 +6,8 @@ test('Live transport/view shortcuts preserve consumed editor keys, typing, compo
  assert.equal(s(key('Digit1',{altKey:true})),'session');assert.equal(s(key('Digit2',{altKey:true})),'arrangement');
  assert.equal(s(key('KeyZ',{metaKey:true,shiftKey:true})),'redo');assert.equal(s(key('KeyZ',{ctrlKey:true})),'undo');
  for(const context of [{typing:true},{dialog:true},{menu:true},{agent:true}])for(const code of ['Space','Tab','F9','F10','KeyZ'])assert.equal(s(key(code,{metaKey:code==='KeyZ'}),context),null);
- for(const extra of [{defaultPrevented:true},{repeat:true},{isComposing:true},{altKey:true},{metaKey:true},{ctrlKey:true},{shiftKey:true}])assert.equal(s(key('Space',extra)),null);
+ for(const extra of [{defaultPrevented:true},{repeat:true},{isComposing:true},{altKey:true},{metaKey:true},{ctrlKey:true}])assert.equal(s(key('Space',extra)),null);
+ assert.equal(s(key('Space',{shiftKey:true})),'continue_play');assert.equal(s(key('Home')),'return_start');
  assert.equal(s(key('Tab'),{tabNavigation:true}),null);assert.equal(s(key('Tab',{shiftKey:true})),null);
 });
 test('keyboard focus preference survives storage failures without blocking transport',async()=>{
