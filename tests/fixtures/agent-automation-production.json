@@ -1,0 +1,97 @@
+{
+  "release": "0.137.2",
+  "executionCommit": "3f809761776cbd37939bd2cdabd0f216d464b2de",
+  "amplifyJob": "118",
+  "apiZipSha256": "8e0e19a344a27b9f44418c521deee8ee831cb37dd33c8a48985b299ef2a2f832",
+  "branding": {
+    "assistant": "Odesa",
+    "currentModelConfiguration": "Tempo 1.0",
+    "provider": "Amazon Bedrock",
+    "baseModel": "Amazon Nova Pro",
+    "plannedOnly": [
+      "Forte",
+      "Prelude"
+    ]
+  },
+  "tests": {
+    "core": 178,
+    "backend": 25
+  },
+  "publication": [
+    {
+      "host": "opusloops.com",
+      "commit": "3f809761776cbd37939bd2cdabd0f216d464b2de",
+      "assets": 9,
+      "job": "0000000118"
+    },
+    {
+      "host": "www.opusloops.com",
+      "commit": "3f809761776cbd37939bd2cdabd0f216d464b2de",
+      "assets": 9,
+      "job": "0000000118"
+    }
+  ],
+  "priorFailures": [
+    {
+      "release": "0.137.0",
+      "failure": "Requested initial return volume .6 omitted; saved project had .7. Setup rejected as exact-intent success; normal Undo restored exact baseline."
+    },
+    {
+      "release": "0.137.1",
+      "failure": "Automation exhausted three reviewed drafts with an unresolved track/return reference. Fresh project bytes unchanged; normal Undo restored exact baseline."
+    }
+  ],
+  "successfulRun": {
+    "authentication": "Normal existing signed-in Chrome session. No injected production session, extracted tokens or intercepted planning.",
+    "reviewedRequests": 2,
+    "clientRepairs": 0,
+    "setupActions": 6,
+    "automationActions": 3,
+    "setupVerified": "Exact requested eight-beat Init MIDI note/region, .4 track level, default Utility, wet Reverb return .6, post-fader send .2; original track retained.",
+    "automationVerified": "Only Utility gain -12 to 0 dB, send amount 0 to .5 and return Reverb mix 1 to .5 gained two enabled linear points at zero-based beats 0 and 8. Whole saved project equals expected composition plus these three envelopes.",
+    "undo": "One Undo exactly restores composition; second Undo exactly restores original project.",
+    "hashes": {
+      "baseline": {
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+      },
+      "composition": {
+        "bytes": 3029,
+        "sha256": "fda3ad3d8eea4de0929f709950d4c22c6de25883adc428809113c48e8c531c47"
+      },
+      "automation": {
+        "bytes": 3414,
+        "sha256": "713939d6986c9b35395510a53a502c0de4da7149970d4e9c6c2aa4cde22b0b10"
+      },
+      "undoAutomation": {
+        "bytes": 3029,
+        "sha256": "fda3ad3d8eea4de0929f709950d4c22c6de25883adc428809113c48e8c531c47"
+      },
+      "restored": {
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+      }
+    },
+    "savedFiles": "Fresh normal File-menu project downloads, not stale prior files.",
+    "consoleErrors": 0
+  },
+  "nativeAudio": {
+    "status": "passed",
+    "sampleRate": 48000,
+    "frames": 192000,
+    "metrics": {
+      "deviceGainMaxError": 1.862645149230957e-09,
+      "sendMaxError": 1.862645149230957e-09,
+      "returnEffectMaxError": 3.725290298461914e-09,
+      "rangeMaxError": 0,
+      "saveReopenMaxError": 0,
+      "stemMaxError": 0
+    },
+    "scope": "Native Chromium OfflineAudioContext. Independent per-sample dB-gain and delay/send/dry-wet predictions; WAV, stem and range audio plus JSON reopen. No physical-output or perceptual quality claim."
+  },
+  "limits": [
+    "One corrected bounded production run is not a reliability estimate.",
+    "Native audio measurements are local Chromium offline rendering, not physical/perceptual quality.",
+    "Full automation families, modulation/recording via language, device/browser matrix and full DAW parity remain open."
+  ]
+}
