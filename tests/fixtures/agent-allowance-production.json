@@ -1,0 +1,194 @@
+{
+  "baselineFile": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T162918.466.opusloop",
+  "baselineBytes": 1725,
+  "baselineSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+  "unauthenticatedAllowance": {
+    "status": 401,
+    "body": {
+      "code": "authentication_required",
+      "message": "Sign in to continue"
+    },
+    "cacheControl": "no-store"
+  },
+  "release": "0.151.0",
+  "hosting": {
+    "jobId": "151",
+    "commit": "aa0daa7562b22a862db72c271b88e70f3b2ba2c9",
+    "versions": {
+      "opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "aa0daa7562b22a862db72c271b88e70f3b2ba2c9",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000151",
+        "builtAt": "2026-10-18T20:30:06.907142Z"
+      },
+      "www.opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "aa0daa7562b22a862db72c271b88e70f3b2ba2c9",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000151",
+        "builtAt": "2026-10-18T20:30:06.907142Z"
+      }
+    },
+    "assets": [
+      {
+        "host": "opusloops.com",
+        "path": "agent-allowance.js",
+        "sha256": "d5d0b6d5ed0ecf010b3fa262664610ecc6ae6196fc76e68248ca1f0ae71334c4",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "agent-panel.js",
+        "sha256": "633b98c6848aab40c230ebde0af49edf6aea702a1a55d37cdd14aeb2040f7485",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "agent-session.js",
+        "sha256": "cadc098ed99292012f0c1547ec32f4c11cea50c98f7a1fcc8835f43b645ce341",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "agent.css",
+        "sha256": "4c2ec6b094c868b60d7622208da2b718ae6aa69f877d931643aed2dffa5e8dcc",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "queued-planning.js",
+        "sha256": "db99cc5a8bc0cc12e8999464aaf256ff7a94cc0c63b0bb05dcfe52e4852d7b33",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "release.json",
+        "sha256": "1048a8a2d5104210068cf8dae8c819a41e5cda18a569572ef3d0915138f3cdc3",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "agent-allowance.js",
+        "sha256": "d5d0b6d5ed0ecf010b3fa262664610ecc6ae6196fc76e68248ca1f0ae71334c4",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "agent-panel.js",
+        "sha256": "633b98c6848aab40c230ebde0af49edf6aea702a1a55d37cdd14aeb2040f7485",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "agent-session.js",
+        "sha256": "cadc098ed99292012f0c1547ec32f4c11cea50c98f7a1fcc8835f43b645ce341",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "agent.css",
+        "sha256": "4c2ec6b094c868b60d7622208da2b718ae6aa69f877d931643aed2dffa5e8dcc",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "queued-planning.js",
+        "sha256": "db99cc5a8bc0cc12e8999464aaf256ff7a94cc0c63b0bb05dcfe52e4852d7b33",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "release.json",
+        "sha256": "1048a8a2d5104210068cf8dae8c819a41e5cda18a569572ef3d0915138f3cdc3",
+        "matches": true
+      }
+    ]
+  },
+  "aws": {
+    "deployed": {
+      "deployed": "opusloops-aws-application",
+      "codeSha256": "b0425fb0f867265ec579c3b7dd011c1f6e2612da6e0e447406f6f82fb5149e18",
+      "outputs": [
+        {
+          "OutputKey": "WorkerImage",
+          "OutputValue": "368310207026.dkr.ecr.us-east-1.amazonaws.com/opusloops/stem-worker@sha256:ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4"
+        },
+        {
+          "OutputKey": "ApiUrl",
+          "OutputValue": "https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com"
+        }
+      ]
+    },
+    "lambda": {
+      "State": "Active",
+      "LastUpdateStatus": "Successful",
+      "CodeSha256": "sEJfsPhnJl7FecO33QEcH24mEtpuDkR0Bvb4L7UUnhg=",
+      "Timeout": 120
+    },
+    "usagePolicy": {
+      "Action": [
+        "dynamodb:UpdateItem",
+        "dynamodb:GetItem"
+      ],
+      "Resource": "arn:aws:dynamodb:us-east-1:368310207026:table/opusloops-aws-application-AgentUsage-12OPVO5EDA2P",
+      "Effect": "Allow"
+    }
+  },
+  "before": {
+    "checkedAt": 1792355343101,
+    "counts": {
+      "minute": 0,
+      "day": 100
+    },
+    "ownerCountAtDailyCap": 1,
+    "readOnly": true
+  },
+  "after": {
+    "checkedAt": 1792355489276,
+    "counts": {
+      "minute": 0,
+      "day": 100
+    },
+    "unchanged": true,
+    "readOnly": true
+  },
+  "authenticatedUI": {
+    "status": "Daily Limit Reached \u00b7 0 Of 100 Left",
+    "reset": "Oct 18, 8:00 PM EDT",
+    "refreshPassed": true,
+    "requests": [
+      "What\u2019s my quota?",
+      "When does my quota reset?"
+    ],
+    "answersReportBothWindows": true,
+    "dailyRemaining": 0,
+    "minuteRemaining": 6,
+    "nonLocalMusicPromptDisabled": true,
+    "clearedPromptAfterVerification": true,
+    "consoleErrors": []
+  },
+  "restoration": {
+    "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T163142.716.opusloop",
+    "bytes": 1725,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "byteIdenticalOriginal": true,
+    "layout": {
+      "view": "session",
+      "panel": "clip",
+      "size": "20",
+      "expanded": "true",
+      "playing": false
+    }
+  },
+  "screenshot": "/tmp/opus-allowance-production.png",
+  "limitations": [
+    "This verifies signed-in read-only allowance/status questions, not the pending navigation-preservation music-action round trip.",
+    "Last available request, accelerated rollover and local take control at cap were checked in a separate controlled native local fixture.",
+    "No production quota/identity bypass, reset or increase was performed."
+  ]
+}
