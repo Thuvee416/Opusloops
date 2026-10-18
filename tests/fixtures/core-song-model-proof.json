@@ -1,0 +1,75 @@
+{
+  "scope": "Source-level 32-bar/64-second study through MIDI import, Odesa edit preflight, project serialization/session recovery and actual SMF note delivery. No claim of manual UI, recording, audible mix, WAV/stem rendering or authenticated inference.",
+  "project": {
+    "file": "/tmp/opus-core-song-media/Night-Tide-Core-Study.opusloop",
+    "bytes": 949367,
+    "sha256": "1d2451e3579fe15ff1e58a359a5650e6843aa7f4e2b51b34406b79400adc739b",
+    "bpm": 120,
+    "tracks": 4,
+    "returns": 1,
+    "regions": 25,
+    "beats": 128,
+    "sections": [
+      {
+        "name": "Intro",
+        "start": 0,
+        "length": 16
+      },
+      {
+        "name": "First Theme",
+        "start": 16,
+        "length": 32
+      },
+      {
+        "name": "Break",
+        "start": 48,
+        "length": 16
+      },
+      {
+        "name": "Return",
+        "start": 64,
+        "length": 48
+      },
+      {
+        "name": "Outro",
+        "start": 112,
+        "length": 16
+      }
+    ]
+  },
+  "midi": {
+    "file": "/tmp/opus-core-song-media/Night-Tide-Core-Study.mid",
+    "bytes": 2311,
+    "sha256": "d750c4b7d52b5e777ab3dd1d1b2a3144df6cbe37a2b863ece73c81bd0932775b",
+    "format": "midi",
+    "settings": {
+      "source": "arrangement",
+      "applyEffects": false
+    },
+    "source": "arrangement",
+    "smfFormat": 1,
+    "ticksPerBeat": 960,
+    "durationTicks": 122880,
+    "noteCount": 224,
+    "noteTracks": 3,
+    "midiChannels": [
+      1
+    ],
+    "excluded": [
+      "audio",
+      "instruments",
+      "mixer mute/solo",
+      "audio effects",
+      "automation"
+    ]
+  },
+  "pending": [
+    "Native empty-set imports and keyboard recording",
+    "Session-to-Arrangement capture and UI edit/Undo",
+    "Save/close/open/continue UI round trip",
+    "Audible playback and aligned WAV/stem export with section-boundary expectations",
+    "Authenticated natural-language counterpart after existing cap resets",
+    "Physical audio-input recording and device latency measurements"
+  ],
+  "browserBlocker": "Mac locked; native app reported automatic unlock unavailable. Unlock requested from user; no bypass attempted."
+}

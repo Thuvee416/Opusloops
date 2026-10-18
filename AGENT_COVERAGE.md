@@ -184,3 +184,6 @@ Authenticated `/functions/v1/studio-agent-allowance` performs only strongly cons
 369 core + 68 backend checks and independent native local saved-project/request-count evidence pass. Full live music inference/navigation-preservation verification remains separate from status endpoint and hosting proof. See `tests/fixtures/agent-allowance-ui-proof.json` and the production follow-up evidence.
 
 0.151.0 live follow-up: signed-in Refresh and two read-only quota/reset questions pass against the actual exhausted account; both reset windows are shown, counters remain minute=0/day=100 and the original project bytes/layout survive reload. Job151/apex/www assets and final API ZIP are verified separately. `tests/fixtures/agent-allowance-production.json` retains that scope; the cap prevented the earlier 0.150 music-action check and was not changed.
+
+
+Representative-song source audit: the existing edit/preflight surface builds the 32-bar Night Tide Core Study after real MIDI import. Whole-project/session recovery and actual SMF delivery tests check 224 note events and section isolation. This is a controlled source-level plan, not fresh model inference or manual UI/recording/WAV proof. The native audit awaits Mac unlock; all remaining gates are retained in ROADMAP.md and tests/fixtures/core-song-model-proof.json. 371 core + 68 backend checks pass.
