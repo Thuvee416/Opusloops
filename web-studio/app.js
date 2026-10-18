@@ -241,7 +241,7 @@ function regionCommand(region,action){
 function selectAllRegions(){
  regionSelection=new Set(project.arrangement.map(r=>r.id));if(!regionSelection.has(selectedRegion))selectedRegion=[...regionSelection][0]??null;
  const primary=project.arrangement.find(r=>r.id===selectedRegion);if(primary)selection={trackId:primary.trackId,clipId:primary.clipId};
- timeSelection?.clear();renderTimeline();renderEditor();setStatus(`${regionSelection.size} Arrangement clips selected.`);
+ timeSelection?.clear();renderTimeline();renderEditor();focusRegion();setStatus(`${regionSelection.size} Arrangement clips selected.`);
 }
 const selectAllRegionsButton=document.createElement('button');selectAllRegionsButton.id='arrangement-select-all';selectAllRegionsButton.hidden=true;document.body.append(selectAllRegionsButton);selectAllRegionsButton.onclick=selectAllRegions;
 $('timeline').setAttribute('aria-description','Ctrl or Command-click toggles clip selection. Ctrl or Command+A selects all Arrangement clips. Drag or use arrow keys to move selected clips together.');
