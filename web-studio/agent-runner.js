@@ -38,7 +38,7 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null,qu
   for(const key of ['trackId','clipId','primaryId','regionId'])if(command.args?.[key])command.args[key]=aliases.get(command.args[key])||command.args[key];
   if(Array.isArray(command.args?.ids))command.args.ids=command.args.ids.map(id=>aliases.get(id)||id);
   if(Array.isArray(command.args?.trackIds))command.args.trackIds=command.args.trackIds.map(id=>aliases.get(id)||id);
-  if(Array.isArray(command.args?.slots))command.args.slots=command.args.slots.map(s=>({...s,trackId:aliases.get(s.trackId)||s.trackId,...(s.clipId?{clipId:aliases.get(s.clipId)||s.clipId}:{})}));if(command.args?.primary){for(const key of ['trackId','clipId'])if(command.args.primary[key])command.args.primary[key]=aliases.get(command.args.primary[key])||command.args.primary[key];}
+  if(Array.isArray(command.args?.slots))command.args.slots=command.args.slots.map(s=>({...s,trackId:aliases.get(s.trackId)||s.trackId,...(s.clipId?{clipId:aliases.get(s.clipId)||s.clipId}:{})}));for(const name of ['primary','fromSlot','toSlot'])if(command.args?.[name]){for(const key of ['trackId','clipId'])if(command.args[name][key])command.args[name][key]=aliases.get(command.args[name][key])||command.args[name][key];}
   const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
  }
   const prepared=new Map();let recordingPrefs=recordQuantizationState?patchRecordQuantization(DEFAULT_RECORD_QUANTIZATION,recordQuantizationState):null;

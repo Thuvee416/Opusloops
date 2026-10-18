@@ -1,0 +1,38 @@
+{
+  "id": "deselect",
+  "failures": [
+    {
+      "attempt": 1,
+      "error": "An empty Session selection cannot have a primary.",
+      "result": {
+        "summary": "Deselected all Session clip slots.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "session",
+                "slots": [],
+                "primary": {
+                  "trackId": "a",
+                  "scene": 0,
+                  "clipId": "x"
+                }
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

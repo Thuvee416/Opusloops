@@ -1,0 +1,58 @@
+{
+  "environment": "Controlled localhost Chrome, first native interaction pass",
+  "native": {
+    "rectangle": "Empty Bass scene 2 to Lead scene 1 selected four leaf slots, including one hole, with three clips.",
+    "context": "Right-click inside rectangle retained all four placements; Rename/Import/Export disabled accurately for batch; Copy/Paste used the same canonical edit implementation.",
+    "copyPasteOracle": true,
+    "selectionAndOneUndoByteIdentical": true,
+    "files": [
+      {
+        "name": "Session-Clipboard-QA (4).opusloop",
+        "bytes": 1576,
+        "sha256": "9a3484a2d1957c252ed2b228b3c5a91591bde4663b89a1419210ae0d122998b2"
+      },
+      {
+        "name": "Session-Clipboard-QA (5).opusloop",
+        "bytes": 1576,
+        "sha256": "9a3484a2d1957c252ed2b228b3c5a91591bde4663b89a1419210ae0d122998b2"
+      },
+      {
+        "name": "Session-Clipboard-QA (6).opusloop",
+        "bytes": 2307,
+        "sha256": "1d5f29f5ad4ef40fbe13c73e7b5c377e76df6d0718395bd5b17fa647db7a9a1b"
+      },
+      {
+        "name": "Session-Clipboard-QA (7).opusloop",
+        "bytes": 1576,
+        "sha256": "9a3484a2d1957c252ed2b228b3c5a91591bde4663b89a1419210ae0d122998b2"
+      }
+    ],
+    "keyboardMenu": true,
+    "renameFocusWithoutEdit": true,
+    "asyncProjectChangeRejectsStaleDelete": true,
+    "controlledOdesaRectangleAndClear": true,
+    "navigationAndStaleEditUndoByteIdentical": true,
+    "narrowViewport": "Native right-click menu remained within 390x844 iframe; all menu rows visible. This is not physical-touch coverage.",
+    "foldedGroupShiftAndFocus": true,
+    "devicesPanelPreserved": true,
+    "arrangementRegionSelectionPreserved": true,
+    "liveContextCopyEnabledDeleteDisabled": true,
+    "contextDeactivationRetainsPlayback": true,
+    "finalNavigationAndLiveEditUndoByteIdentical": true
+  },
+  "controllerHarness": {
+    "status": "passed",
+    "cases": [
+      "rectangle_and_redraw",
+      "escape_rollback",
+      "pointer_cancel",
+      "touch_interruption",
+      "operation_lock",
+      "two_axis_scroll_and_rollback",
+      "context_keyboard_bounds_focus",
+      "disabled_and_stale_commands",
+      "exclusive_menu_ownership"
+    ],
+    "scope": "Real DOM controllers with synthetic pointer events/capture adapter for cancellation and held-edge scrolling; normal Studio native drag/menu proof is recorded separately."
+  }
+}

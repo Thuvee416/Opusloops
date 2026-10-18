@@ -6,8 +6,8 @@ export function mountMenubar({host,menus,enabled,invoke,rememberContext,shortcut
  const roots=menus.map(([name],i)=>{const b=document.createElement('button');b.type='button';b.textContent=name;b.setAttribute('role','menuitem');b.setAttribute('aria-haspopup','menu');b.setAttribute('aria-expanded','false');b.tabIndex=i?-1:0;b.onclick=()=>active===i?close(true):open(i);b.onpointerenter=()=>{if(active>=0&&active!==i)open(i);};nav.append(b);return b;});
  const rows=level=>[...level.el.querySelectorAll('[role^="menuitem"]')].filter(b=>b.getAttribute('aria-disabled')!=='true');
  function trim(depth){clearTimeout(hoverTimer);while(levels.length>depth){const level=levels.pop();level.el.remove();level.trigger?.setAttribute('aria-expanded','false');}levels.forEach(l=>l.el.hidden=false);}
- function close(restore=false){const root=roots[active],hadFocus=levels.some(l=>l.el.contains(document.activeElement));trim(0);roots.forEach(b=>b.setAttribute('aria-expanded','false'));document.body.classList.remove('menu-open');active=-1;typeahead='';clearTimeout(typeTimer);if(restore)(returnFocus?.isConnected?returnFocus:root)?.focus({preventScroll:true});else if(hadFocus)root?.focus({preventScroll:true});}
- function open(i,fromEnd=false){if(active<0){returnFocus=lastFocus||document.activeElement;rememberContext(returnFocus);}trim(0);active=i;roots.forEach((b,j)=>{b.tabIndex=j===i?0:-1;b.setAttribute('aria-expanded',String(j===i));});document.body.classList.add('menu-open');create(menus[i][1],0,roots[i],menus[i][0],true,fromEnd);}
+ function close(restore=false){const root=roots[active],hadFocus=levels.some(l=>l.el.contains(document.activeElement));trim(0);roots.forEach(b=>b.setAttribute('aria-expanded','false'));if(!document.querySelector('.app-menu-popup'))document.body.classList.remove('menu-open');active=-1;typeahead='';clearTimeout(typeTimer);if(restore)(returnFocus?.isConnected?returnFocus:root)?.focus({preventScroll:true});else if(hadFocus)root?.focus({preventScroll:true});}
+ function open(i,fromEnd=false){document.dispatchEvent(new CustomEvent('opus-menu-opening',{detail:{owner:nav}}));if(active<0){returnFocus=lastFocus||document.activeElement;rememberContext(returnFocus);}trim(0);active=i;roots.forEach((b,j)=>{b.tabIndex=j===i?0:-1;b.setAttribute('aria-expanded',String(j===i));});document.body.classList.add('menu-open');create(menus[i][1],0,roots[i],menus[i][0],true,fromEnd);}
  function position(level,depth){const bounds=level.trigger.getBoundingClientRect(),el=level.el,w=el.getBoundingClientRect().width,h=el.getBoundingClientRect().height;
   let left=depth?bounds.right-1:bounds.left,top=depth?bounds.top-4:host.getBoundingClientRect().bottom+1;
   const compact=depth&&innerWidth<w*2+12;if(compact){left=levels[0].el.getBoundingClientRect().left;top=host.getBoundingClientRect().bottom+1;for(const parent of levels.slice(0,depth))parent.el.hidden=true;}
@@ -29,6 +29,7 @@ export function mountMenubar({host,menus,enabled,invoke,rememberContext,shortcut
   }
   el.onpointerenter=()=>clearTimeout(hoverTimer);position(level,depth);if(focus){const items=rows(level);items[fromEnd?items.length-1:0]?.focus({preventScroll:true});}
  }
+ document.addEventListener('opus-menu-opening',e=>{if(e.detail?.owner!==nav&&active>=0)close();});
  document.addEventListener('pointerdown',e=>{if(active>=0&&!nav.contains(e.target)&&!levels.some(l=>l.el.contains(e.target)))close();},true);
  document.addEventListener('keydown',e=>{
   if(document.querySelector('dialog[open]'))return;

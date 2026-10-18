@@ -56,3 +56,5 @@
 .studio-shell .clip.inactive .launch,.studio-shell .clip.inactive.playing .launch{color:#828c88;background:#a9b2af}
 .studio-shell .slot.selected{box-shadow:inset 0 0 0 1px #253f39;background:#a5bdb6}
 .studio-shell .slot.selected .clip-select[aria-pressed=true]{background:transparent;color:inherit}
+/* Empty Session space selects; only the explicit plus button imports. */
+.session-grid{position:relative}.session-empty-space{flex:1;align-self:stretch;min-width:20px;cursor:default;touch-action:pan-x pan-y}.studio-shell .empty-slot-controls>.empty-slot{flex:0 0 17px;width:17px;min-width:17px}.session-marquee{position:absolute;z-index:8;pointer-events:none;border:1px solid #315e56;background:#7fb5a926;box-sizing:border-box}.session-context-menu{width:230px!important;max-height:calc(100dvh - 8px)!important}.session-grid.session-selecting{user-select:none;cursor:crosshair}.session-grid.session-selecting .session-empty-space{cursor:crosshair}
