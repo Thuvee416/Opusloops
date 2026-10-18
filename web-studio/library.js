@@ -37,6 +37,7 @@ export function installLibrary(host,openPanel){
  search.addEventListener('input',render);category.addEventListener('change',render);$('library-clear').onclick=()=>{search.value='';render();search.focus();};
  search.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();search.value='';render();}if(e.key==='ArrowDown'){e.preventDefault();results.querySelector('button:not(:disabled)')?.focus();}});
  let queued=false;const scheduleRender=()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;render();});};const observer=new MutationObserver(scheduleRender);document.addEventListener('opus-session-library',e=>{sessionClips=Array.isArray(e.detail?.clips)?e.detail.clips:[];sessionLocked=!!e.detail?.locked;scheduleRender();});
+ document.addEventListener('opus-navigation-lock',e=>{const next=!!e.detail?.locked;if(next!==sessionLocked){sessionLocked=next;scheduleRender();}});
  for(const id of ['session-grid','device-track','instrument','midi-effects','add-device'])observer.observe($(id),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
  // Track names can change through inputs before a grid rebuild.
  $('session-grid').addEventListener('change',render);document.addEventListener('opus-sound-presets',e=>{presets=e.detail;render();});render();
