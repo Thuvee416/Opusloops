@@ -26,7 +26,7 @@ Implementation and completion requirements:
 3. Execute real application operations, observe their results, and use errors or measured output to repair plans. Verify that the requested musical or application outcome occurred; a generated plan or success message alone is insufficient.
 4. Preserve project integrity through validation, stale-state protection, cancellation and grouped Undo/Redo wherever supported. Respect browser/OS permissions and required user gestures; guide the user through those steps and resume the workflow, without claiming unattended execution.
 5. Keep model credentials server-side, disclose transmitted session/analysis data, enforce account/usage boundaries, and surface truthful progress, failures, limitations and completed actions.
-6. Maintain a coverage matrix for each feature: manual operation, agent command/state access, multi-step workflow evidence, Undo/recovery behavior, and browser/platform limitations. Missing agent access or verification keeps that feature incomplete.
+6. Maintain a coverage matrix for each feature (current audit: `AGENT_COVERAGE.md`): manual operation, agent command/state access, multi-step workflow evidence, Undo/recovery behavior, and browser/platform limitations. Missing agent access or verification keeps that feature incomplete.
 7. Verify authenticated production workflows and representative musical outcomes, including stem mixing and reference-guided restructuring. Include audible/rendered-output review where quality is part of the request; parameter edits alone do not establish professional mix quality.
 
 Goal completion requires both the requested DAW feature scope and application-wide natural-language control to be implemented and verified. The first agent release is partial and does not satisfy this completion condition.
@@ -61,7 +61,7 @@ Evidence: `tests/session-recovery.test.cjs` verifies independent snapshots, fall
 
 ## Next work
 
-1. Build the application-wide agent coverage matrix; close existing control gaps and verify the authenticated production agent workflow.
+1. Use `AGENT_COVERAGE.md` to close existing control gaps and verify the authenticated production agent workflow.
 2. Audit the whole representative-song core workflow through both manual and natural-language operation, preserving reproducible project/audio fixtures.
 3. Extend Arrangement group trim and region fades/crossfades with matching agent commands and verification.
 4. Complete group/routing workflows and their agent access; verify the audio output of live and offline paths.
@@ -96,3 +96,9 @@ Time-range highlighting and its readout reflect the chosen scope. Chosen mode re
 Evidence: seven `tests/time-scope.test.cjs` cases cover track/automation isolation, boundary splitting, independent duplication, pinned clipboard scope, invalid selections, whole-song compatibility and unchosen material at the timeline limit. All 16 pre-existing time-edit/time-clipboard model regressions were rerun against the current published modules. `tests/time-scope.cjs` verifies the actual controls, chosen-lane highlighting, all five destructive operations, Edit-menu paste, scope retention, playhead/global bounds, Undo and playback locks in Chromium. Group editing, region clipboard, startup, welcome and session recovery browser regressions also pass.
 
 `tests/time-scope-audio.cjs` renders non-silent embedded audio before/after a chosen-track insertion over a fixed 16-beat range at 44.1 kHz: the unchosen delay track has zero maximum sample difference across 352800 stereo frames; inserted silence has zero RMS; source-phase and volume-envelope alignment after the insertion differ by less than 1e-4 (observed maximum about 5.8e-11). These are focused offline checks, not full live/export equivalence or physical-device evidence. The core-song completion gate and broader parity work remain open.
+
+## 0.123 — Sequenced agent workflows
+
+Plans may stop/pause first, apply their validated project edits together, then execute up to eight ordered runtime commands. This permits composing/arranging, switching views, playing, pausing and downloading in one request. Entire-plan preflight rejects an invalid late command before any project or transport change. Manual and agent transport, project download and WAV export share runtime helpers. Agent work is locked during active recording/takes and pending playback startup.
+
+Runtime operations are separate from project history: all project edits use one Undo/Redo step; failed exports or cancellation after editing retain those edits and report how to undo them, plus any runtime operations already completed. Full application coverage and authenticated production inference remain unverified. See `AGENT_COVERAGE.md` for the audited gaps.

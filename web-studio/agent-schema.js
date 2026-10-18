@@ -1,3 +1,4 @@
+import {agentActions} from './agent-actions.js';
 import {DEVICE_TYPES} from './devices.js';
 import {SYNTH_PARAMS} from './instruments.js';
 import {SAMPLER_PARAMS} from './sampler.js';
@@ -13,4 +14,4 @@ const changes=object({name:string,color:string,volume:number,pan:number,mute:boo
 // Explicit properties matter: Nova treats a schema with an empty properties map
 // as an empty object rather than generating arbitrary action arguments.
 const args=object({id:string,ref:{type:'string',description:'Assign a new unique $alias to a newly created item, not an existing selector'},name:string,bpm:number,master:number,transport,changes,trackId:{type:'string',description:'Existing track ID or alias from earlier add_track; REQUIRED when creating MIDI'},returnId:string,deviceId:string,clipId:string,sampleClipId:string,kind:string,type:string,preset:string,action:string,value:string,index:number,scene:number,remove:boolean,enabled:boolean,params,amount:number,pre:boolean,key:string,points:array(object({beat:number,value:number,curve:string})),beats:number,notes:array(note),start:number,length:number,offset:number,active:boolean,operation:string,trackIds:array(string),items:array(object({id:string,name:string,beat:number})),pitch:number,effectsJSON:{type:'string',description:'JSON-encoded array of complete MIDI effect objects'},args:object({beat:number,scene:number,view:string})});
-export const agentPlanSchema=object({summary:string,question:string,actions:array({type:'object',properties:{type:string,args},required:['type','args']})});agentPlanSchema.required=['summary','actions'];
+export const agentPlanSchema=object({summary:string,question:string,actions:array({type:'object',properties:{type:{type:'string',enum:Object.keys(agentActions)},args},required:['type','args']})});agentPlanSchema.required=['summary','actions'];

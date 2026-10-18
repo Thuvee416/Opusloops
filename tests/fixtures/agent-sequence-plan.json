@@ -1,0 +1,121 @@
+{
+  "source": {
+    "format": "opus-loops",
+    "version": 1,
+    "name": "Agent sequence",
+    "master": 0.8,
+    "bpm": 120,
+    "transport": {
+      "loopEnabled": false,
+      "loopStart": 0,
+      "loopEnd": 16,
+      "metronome": false
+    },
+    "scenes": 4,
+    "tracks": [
+      {
+        "id": "b97a1580-db59-48e8-85fe-e547ec365148",
+        "name": "Audio 1",
+        "color": "#d9a359",
+        "volume": 0.7,
+        "pan": 0,
+        "mute": false,
+        "solo": false,
+        "devices": [],
+        "slots": [
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    "clips": {},
+    "arrangement": []
+  },
+  "plan": {
+    "summary": "Set tempo, create bass MIDI clip, and perform runtime operations.",
+    "actions": [
+      {
+        "type": "project",
+        "args": {
+          "bpm": 128
+        }
+      },
+      {
+        "type": "add_track",
+        "args": {
+          "name": "Bass",
+          "preset": "Warm bass",
+          "ref": "$bass"
+        }
+      },
+      {
+        "type": "midi",
+        "args": {
+          "trackId": "$bass",
+          "ref": "$riff",
+          "scene": 0,
+          "beats": 4,
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "duration": 1,
+              "velocity": 0.8
+            }
+          ]
+        }
+      },
+      {
+        "type": "region",
+        "args": {
+          "trackId": "$bass",
+          "clipId": "$riff",
+          "start": 0,
+          "length": 8,
+          "offset": 0
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "view",
+          "args": {
+            "view": "arrangement"
+          }
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "play"
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "pause"
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "export_wav"
+        }
+      },
+      {
+        "type": "command",
+        "args": {
+          "name": "save_project"
+        }
+      }
+    ]
+  },
+  "provenance": {
+    "model": "amazon.nova-pro-v1:0",
+    "date": "2026-10-17",
+    "source": "Real Bedrock Converse response using operator credentials; not an authenticated production-browser model request.",
+    "request": "Set tempo to 128 BPM, create and arrange an existing-track Warm bass MIDI phrase, then view Arrangement, play, pause, export WAV, save project."
+  }
+}

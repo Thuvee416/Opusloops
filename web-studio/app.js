@@ -173,9 +173,9 @@ $('clip-editor').addEventListener('click',run(async e=>{const c=project.clips[se
   if(e.target.id==='new-midi'){stopToEdit();let slot=t.slots.indexOf(null);if(slot<0){if(project.scenes>=32)throw new Error('Choose a track with an empty slot.');slot=project.scenes++;project.sceneFollows?.push(null);project.tracks.forEach(track=>track.slots.push(null));}const clip={id:uid(),name:'New MIDI clip',kind:'midi',beats:4,sourceBpm:project.bpm,notes:[]};project.clips[clip.id]=clip;t.slots[slot]=clip.id;selection={trackId:t.id,clipId:clip.id};selectedRegion=null;render();changed();}
   if(['split','duplicate','delete-region','region-active'].includes(e.target.id)){stopToEdit();if(!s)return;if(e.target.id==='split'){const at=Math.round((Number($('split-at').value)-1)*4)/4;const parts=splitSegment(s,at);project.arrangement.splice(project.arrangement.indexOf(s),1,...parts);selectedRegion=parts[0].id;}if(['duplicate','delete-region','region-active'].includes(e.target.id))regionCommand(s,e.target.id);renderTimeline();renderEditor();changed();}
 }));
-$('play').onclick=run(async()=>{if(engine.playing)engine.pause();else{if(view==='arrangement'){engine.overrides.clear();await engine.play('arrangement');}else if(![...engine.active.values()].some(a=>a.clipId))await engine.scene(0);else await engine.play('session');drawWave();}});
-$('pause').onclick=()=>{engine.pause();setStatus('Paused. Press Play to resume.');};
-$('stop').onclick=run(async()=>{await finishInput();releaseNotes();engine.stop();followSuspended=false;followWasPlaying=false;renderFollow();renderEditor();setStatus('Stopped.');});
+$('play').onclick=run(()=>executeStudioCommand({name:engine.playing?'pause':'play'}));
+$('pause').onclick=()=>executeStudioCommand({name:'pause'});
+$('stop').onclick=run(()=>executeStudioCommand({name:'stop'}));
 $('record').onclick=run(async()=>{if(!engine.recording&&project.arrangement.length&&!confirm('Replace the existing Arrangement with a new recording? Save a project copy first if you want to keep it.'))return;await engine.startRecording();setStatus(engine.recording?'Recording Session performance. Launch clips or scenes; press Stop to finish.':'Recording finished.');});
 $('back').onclick=()=>{engine.mode='arrangement';engine.back();setStatus(engine.playing?'Arrangement resumes at the global launch quantization.':'Arrangement playback restored.');};
 $('bpm').onchange=run(()=>{stopToEdit();const bpm=Number($('bpm').value);if(!Number.isFinite(bpm)||bpm<40||bpm>240){$('bpm').value=project.bpm;throw new Error('Tempo must be 40–240 BPM.');}project.bpm=bpm;changed();renderEditor();});
@@ -207,9 +207,9 @@ $('restore-session-start').onclick=lifecycleRun(async()=>{
 $('restore-previous-set').onclick=lifecycleRun(async()=>{const previous=await readSet('previous');if(!previous)throw new Error('No previous set is saved in this browser yet.');if(!confirm('Restore the previous set? The current set will become the previous set.'))return;await replaceSet(previous);setStatus('Previous set restored.');});
 const openTemplates=installTemplateDialog({getProject:()=>project,exclusive:withSetLock,replaceSet,writeDefault:p=>writeSets([['default',p]]),download,setStatus});
 $('save-template').onclick=run(()=>openTemplates('save'));$('open-templates').onclick=run(()=>openTemplates());
-$('save').onclick=run(()=>{if(engine.recording||engine.automationTake)throw new Error('Stop recording before saving.');validateProject(project);download(JSON.stringify(project),filename()+'.opusloop','application/json');setStatus('Project downloaded with embedded audio.');});
+$('save').onclick=run(()=>executeStudioCommand({name:'save_project'}));
 $('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const file=e.target.files[0];if(!file)return;if(file.size>150*1024*1024)throw new Error('Project files must be smaller than 150 MB.');const p=validateProject(JSON.parse(await file.text()));install(p);changed();e.target.value='';setStatus('Project opened. Press Play to hear it.');});
-$('export').onclick=run(async()=>{if(engine.recording||engine.automationTake)throw new Error('Stop recording before exporting.');busy=true;renderTransport();setStatus('Rendering stereo WAV…');try{const channel=$('export-channel').value,output=exportChannel(project,channel),data=await engine.render({channel,sampleRate:Number($('export-rate').value),bitDepth:Number($('export-depth').value),normalize:$('export-normalize').checked,dither:$('export-dither').value,includeTail:$('export-tail').checked,...($('export-source').value==='range'?{range:{start:Number($('export-start').value)-1,length:Number($('export-length').value)}}:{})});download(data,filename()+(output.type==='master'?'':'-'+output.type+'-'+output.name.replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,50))+'.wav','audio/wav');setStatus('Stereo WAV exported.');}finally{busy=false;renderTransport();clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(()=>{$('save-state').textContent='Autosave unavailable · download a project';}),600);}});
+$('export').onclick=run(()=>exportStudioWav({channel:$('export-channel').value,sampleRate:Number($('export-rate').value),bitDepth:Number($('export-depth').value),normalize:$('export-normalize').checked,dither:$('export-dither').value,includeTail:$('export-tail').checked,...($('export-source').value==='range'?{range:{start:Number($('export-start').value)-1,length:Number($('export-length').value)}}:{})}));
 $('help').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.code==='KeyZ'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();$(e.shiftKey?'redo':'undo').click();return;}if(['INPUT','TEXTAREA','SELECT','BUTTON'].includes(document.activeElement.tagName)||document.querySelector('dialog[open]'))return;if(e.code==='Space'){e.preventDefault();$('play').click();}if(e.code==='Tab'&&document.activeElement===document.body&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();switchView(view==='session'?'arrangement':'session');}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseNotes();if(inputActive())run(finishInput)();}if(document.hidden&&engine?.playing){engine.stop();setStatus('Playback stopped while the studio is in the background.');}});
@@ -840,7 +840,41 @@ window.addEventListener('pointerup',run(async e=>{const d=warpDrag;if(!d||e.poin
 window.addEventListener('pointercancel',e=>{if(warpDrag?.pointer===e.pointerId){warpDrag=null;renderEditor();}});
 $('clip-editor').addEventListener('keydown',run(async e=>{const handle=e.target.closest('[data-warp-handle]');if(!handle||!['ArrowLeft','ArrowRight','Delete','Backspace','Escape'].includes(e.key))return;e.preventDefault();if(e.key==='Escape'){warpDrag=null;renderEditor();return;}const clip=markerClip(),index=Number(handle.dataset.warpHandle),markers=structuredClone(clip.warp.markers);if(e.key==='Delete'||e.key==='Backspace')markers.splice(index,1);else markers[index].target+=(e.key==='ArrowRight'?1:-1)*(e.shiftKey?1:1/16)/clip.beats;await applyMarkers(clip,markers,index);}));
 
+// Manual controls and the agent use the same runtime operations.
+async function exportStudioWav(options,signal){
+ if(engine.recording||engine.automationTake||inputActive())throw new Error('Stop recording before exporting.');
+ busy=true;renderTransport();setStatus('Rendering stereo WAV…');
+ try{
+  signal?.throwIfAborted();const output=exportChannel(project,options.channel||'master');
+  const data=await engine.render(options);signal?.throwIfAborted();
+  const name=filename()+(output.type==='master'?'':'-'+output.type+'-'+output.name.replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,50))+'.wav';
+  download(data,name,'audio/wav');setStatus('Stereo WAV exported.');
+  return {download:name,bytes:data.byteLength};
+ }finally{busy=false;renderTransport();clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(()=>{$('save-state').textContent='Autosave unavailable · download a project';}),600);}
+}
+async function executeStudioCommand(x,signal){
+ signal?.throwIfAborted();const a=x.args||{};
+ if(x.name==='play'){
+  if(view==='arrangement'){engine.overrides.clear();await engine.play('arrangement');}
+  else if(![...engine.active.values()].some(a=>a.clipId)){engine.mode='session';await engine.scene(0);}
+  else await engine.play('session');drawWave();
+  if(!engine.playing)throw new Error('Playback did not start. Check the audio output and try again.');
+  return {playing:engine.playing,mode:engine.mode};
+ }
+ if(x.name==='pause'){engine.pause();setStatus('Paused. Press Play to resume.');return {playing:engine.playing};}
+ if(x.name==='stop'){await finishInput();releaseNotes();engine.stop();followSuspended=false;followWasPlaying=false;renderFollow();renderEditor();setStatus('Stopped.');return {playing:engine.playing,position:engine.beat()};}
+ if(x.name==='seek'){await engine.seek(a.beat);return {position:engine.beat()};}
+ if(x.name==='launch_scene'){await engine.scene(a.scene);drawWave();return {scene:a.scene,playing:engine.playing};}
+ if(x.name==='view'){switchView(a.view);return {view};}
+ if(x.name==='save_project'){
+  if(engine.recording||engine.automationTake)throw new Error('Stop recording before saving.');
+  validateProject(project);const name=filename()+'.opusloop';download(JSON.stringify(project),name,'application/json');setStatus('Project downloaded with embedded audio.');return {download:name};
+ }
+ if(x.name==='export_wav')return exportStudioWav({channel:'master',sampleRate:44100,bitDepth:24,normalize:false,includeTail:true},signal);
+ throw new Error('Unsupported studio command.');
+}
+
 installAgent({getProject:()=>project,getSession:()=>({view,selection,selectedRegion,selectedRegions:[...regionSelection],scene:selectedSessionScene,playing:engine.playing,position:engine.beat()}),
- execute:async x=>{const a=x.args||{};if(x.name==='play'){engine.overrides.clear();if(view==='arrangement')await engine.play('arrangement');else if(![...engine.active.values()].some(a=>a.clipId))await engine.scene(0);else await engine.play('session');drawWave();}if(x.name==='pause')engine.pause();if(x.name==='stop')engine.stop();if(x.name==='seek')await engine.seek(a.beat);if(x.name==='launch_scene'){await engine.scene(a.scene);drawWave();}if(x.name==='view')switchView(a.view);if(x.name==='save_project'){validateProject(project);download(JSON.stringify(project),filename()+'.opusloop','application/json');}if(x.name==='export_wav'){busy=true;renderTransport();try{const data=await engine.render({channel:'master',sampleRate:44100,bitDepth:24,normalize:false,includeTail:true});download(data,filename()+'.wav','audio/wav');}finally{busy=false;renderTransport();}}},locked:mode=>busy||(mode==='edit'&&engine.playing)||inputActive()||!!gesture||clipMarquee?.dragging,
+ execute:executeStudioCommand,locked:mode=>busy||engine.recording||!!engine.automationTake||!!engine.startPromise||(mode==='edit'&&engine.playing)||inputActive()||!!gesture||clipMarquee?.dragging,
  commit:next=>{stopToEdit();engine.masterVolume=next.master??.8;installManagedProject(next);$('project-name').value=project.name;$('bpm').value=project.bpm;changed();setStatus('Agent edits applied. Undo reverses this request.');},
  analyze:async signal=>{const metrics=[];for(const c of Object.values(project.clips)){signal.throwIfAborted();if(c.kind!=='audio')continue;const raw=Uint8Array.from(atob(c.data),v=>v.charCodeAt(0));const ctx=new AudioContext();try{const b=await ctx.decodeAudioData(raw.buffer);let peak=0,sum=0,n=0,clipped=0;for(let ch=0;ch<b.numberOfChannels;ch++){const a=b.getChannelData(ch);for(let i=0;i<a.length;i++){if(i%1000000===0){await new Promise(resolve=>setTimeout(resolve,0));signal.throwIfAborted();}const v=a[i];peak=Math.max(peak,Math.abs(v));sum+=v*v;n++;if(Math.abs(v)>=.999)clipped++;}}metrics.push({clipId:c.id,duration:b.duration,peakDB:peak?20*Math.log10(peak):-120,rmsDB:sum?10*Math.log10(sum/n):-120,clippedSamples:clipped,measurement:'raw source, before effects and faders; not LUFS or a listening assessment'});}finally{await ctx.close();}}return metrics;}});
