@@ -1,0 +1,216 @@
+{
+  "baseline": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T154025.791.opusloop",
+  "baselineBytes": 1725,
+  "baselineSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+  "cases": [
+    {
+      "step": "signed-in-setup-quota-rejection",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T154421.893.opusloop",
+      "byteIdenticalBaseline": true,
+      "agentExecutionVerified": false,
+      "reason": "Authenticated request denied by the existing 100/day cap before provider inference."
+    },
+    {
+      "step": "normal-reload-after-quota-rejection",
+      "file": "/Users/thuveem4/Downloads/Untitled-session - 2026-10-18T154816.455.opusloop",
+      "byteIdenticalBaseline": true,
+      "bytes": 1725,
+      "layout": {
+        "view": "session",
+        "detailPanel": "clip",
+        "detailHeightPercent": 20,
+        "odesaExpanded": true,
+        "playing": false
+      },
+      "consoleErrors": []
+    }
+  ],
+  "quota": {
+    "requestId": "bb229c91-263b-4671-8a8e-812cacd783b2",
+    "at": "2026-10-18T19:43:57.400Z",
+    "counters": {
+      "minute": 1,
+      "day": 100
+    },
+    "resetUTC": "2026-10-19T00:00:00.000Z",
+    "error": {
+      "code": "agent_limit",
+      "message": "Agent limit reached (6 requests/minute, 100/day). Please try later.",
+      "status": 429
+    },
+    "readOnly": true,
+    "resetToronto": "2026-10-18 20:00 EDT"
+  },
+  "hosting": {
+    "jobId": "149",
+    "commit": "13ab23b8c8caca1962986115d53b3d887c734651",
+    "versions": {
+      "opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "13ab23b8c8caca1962986115d53b3d887c734651",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000149",
+        "builtAt": "2026-10-18T19:41:55.745256Z"
+      },
+      "www.opusloops.com": {
+        "provider": "aws-amplify",
+        "commit": "13ab23b8c8caca1962986115d53b3d887c734651",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000149",
+        "builtAt": "2026-10-18T19:41:55.745256Z"
+      }
+    },
+    "assets": [
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-runner.js",
+        "sha256": "4fc2bf9e72b86c2271ac1b2aec702470645c146a38983632e3714837c0400290",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/release.json",
+        "sha256": "7159b011158f3e8c7dc4bab6b5d31b67d404ae1d6af1af4e975c188843b1a414",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-panel.js",
+        "sha256": "c8659b2709774e72077611eafb39d66a8dbf56d77b6e2e96ff7c926279c7c89c",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/queued-planning.js",
+        "sha256": "fa930c4861505f691c4a6e3ffafa4d026aec776a947e5a7914d3ce34ca11b4ad",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-actions.js",
+        "sha256": "c414215b07a363a8baf852620f8422bbd0b3be6fa13f7c5339ed22050c69e9f7",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/navigation-preservation.js",
+        "sha256": "2110061cf67eb9d77008585a5b6c2449baf1052741a8633c6da51d9086807148",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/agent-schema.js",
+        "sha256": "b84c08fc2e80619f963e6360c41f54a485bb9b673c398e191ae71ad18753b9ec",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/midi-note-edit.js",
+        "sha256": "d855dc81e17c292b49b4af5de469f2c893fca21cb3f51c38c048a70a9fdeee2b",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/AGENT.md",
+        "sha256": "878d30254542e414f9e4396a5b74113fe3eee703baa77cde053ee321a4d649ce",
+        "matches": true
+      },
+      {
+        "host": "opusloops.com",
+        "path": "web-studio/app.js",
+        "sha256": "8613e25d1562894a2168932a47086a6bcc945424704428869770ad3409069d25",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-actions.js",
+        "sha256": "c414215b07a363a8baf852620f8422bbd0b3be6fa13f7c5339ed22050c69e9f7",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/release.json",
+        "sha256": "7159b011158f3e8c7dc4bab6b5d31b67d404ae1d6af1af4e975c188843b1a414",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/midi-note-edit.js",
+        "sha256": "d855dc81e17c292b49b4af5de469f2c893fca21cb3f51c38c048a70a9fdeee2b",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/queued-planning.js",
+        "sha256": "fa930c4861505f691c4a6e3ffafa4d026aec776a947e5a7914d3ce34ca11b4ad",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-schema.js",
+        "sha256": "b84c08fc2e80619f963e6360c41f54a485bb9b673c398e191ae71ad18753b9ec",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/navigation-preservation.js",
+        "sha256": "2110061cf67eb9d77008585a5b6c2449baf1052741a8633c6da51d9086807148",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-runner.js",
+        "sha256": "4fc2bf9e72b86c2271ac1b2aec702470645c146a38983632e3714837c0400290",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/agent-panel.js",
+        "sha256": "c8659b2709774e72077611eafb39d66a8dbf56d77b6e2e96ff7c926279c7c89c",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/app.js",
+        "sha256": "8613e25d1562894a2168932a47086a6bcc945424704428869770ad3409069d25",
+        "matches": true
+      },
+      {
+        "host": "www.opusloops.com",
+        "path": "web-studio/AGENT.md",
+        "sha256": "878d30254542e414f9e4396a5b74113fe3eee703baa77cde053ee321a4d649ce",
+        "matches": true
+      }
+    ]
+  },
+  "aws": {
+    "deployment": {
+      "deployed": "opusloops-aws-application",
+      "codeSha256": "4619db3c8eeecdfe861d18951ec6d00bec965e902b7e029cc5f34e026d46983a",
+      "outputs": [
+        {
+          "OutputKey": "WorkerImage",
+          "OutputValue": "368310207026.dkr.ecr.us-east-1.amazonaws.com/opusloops/stem-worker@sha256:ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4"
+        },
+        {
+          "OutputKey": "ApiUrl",
+          "OutputValue": "https://2psb3vs3pl.execute-api.us-east-1.amazonaws.com"
+        }
+      ]
+    },
+    "api": {
+      "state": "Active",
+      "lastUpdateStatus": "Successful",
+      "codeSha256": "RhnbPI7uzf6GHRiVHsbQC+yWXpArfgKcxfNOAm1GmDo=",
+      "timeout": 120,
+      "plansTable": "opusloops-aws-application-AgentPlans-15PXYY0RPY46A"
+    }
+  },
+  "verificationBoundary": "Code/API hosting and local native + real operator-provider execution passed. Signed-in application inference/execution for the new preservation flow remains unverified until the existing daily allowance resets.",
+  "screenshot": "/tmp/opus-navigation-live-quota.png",
+  "restoredScreenshot": "/tmp/opus-navigation-original-restored.png"
+}
