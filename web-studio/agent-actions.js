@@ -29,7 +29,7 @@ export const agentActions={
  scene:'{index,action:rename|insert|duplicate|delete|move,value?}',
  device:'{trackId,ref? (unique alias for a NEW device only),type? (canonical audio device key),name? (known display name for a new device),deviceId?,remove?,enabled?,params?} create with type OR a known displayed name such as Utility; existing devices use deviceId. Both selectors must agree when provided. Custom device renaming is not implemented. Add/update/remove audio processing on a track, group or return',
  instrument:'{trackId,preset?,kind?:poly|drums|sampler,sampleClipId?,params?} presets for poly; sampler copies audio from an existing clip',
- add_return:'{name,ref?} create a return with wet reverb',
+ add_return:'{name,ref?,volume? (linear 0..1),pan? (-1..1),mute? (boolean)} create a return with wet reverb. Include explicit requested initial volume/pan/mute; default volume is 0.7',
  midi_effects:'{trackId,effectsJSON:JSON-encoded array of complete MIDI effect objects from session}',
  drum_pad:'{trackId,pitch,changes:{name?,source?,level?,pan?,tune?,decay?,choke?,mute?,solo?}}',
  send:'{trackId,returnId,amount,pre?}',
@@ -72,7 +72,7 @@ export function applyAgentActions(source,actions,{aliases=new Map(),observations
  if(a.type==='project'){const {transport,...rest}=x;assign(p,rest,['name','bpm','master']);if(transport)assign(p.transport,transport,['loopEnabled','loopStart','loopEnd','metronome','launchQuantization','followActionsEnabled']);}
  if(a.type==='track'||a.type==='manage_track'&&x.action==='changes'){const allowed=a.type==='track'?['id','changes']:['id','action','changes'];if(Object.keys(x).some(key=>!allowed.includes(key)))fail('Track changes accept id and changes only (plus action:changes for manage_track). Put volume, pan and output inside changes.');if(typeof x.changes?.output==='string'&&x.changes.output.startsWith('track:'))x.changes.output='track:'+resolve(x.changes.output.slice(6));assign(track(x.id),x.changes,['name','volume','pan','mute','solo','output']);}
  if(a.type==='add_track'){const extra=Object.keys(x).filter(key=>!['name','ref','preset','volume','pan','output'].includes(key));if(extra.length)fail('Unsupported add_track arguments: '+extra.join(', ')+'. Use direct volume, pan and output args, or a later track changes action.');const t=makeTrack(x.name,p.tracks.length);t.slots=Array(p.scenes).fill(null);if(x.preset!==undefined)t.instrument=newSynth(x.preset);initialTrackMix(t,{...x,...(typeof x.output==='string'&&x.output.startsWith('track:')?{output:'track:'+resolve(x.output.slice(6))}:{})});p.tracks.push(t);remember(x.ref,t.id);}
- if(a.type==='add_return'){p.returns??=[];const t=newReturn(x.name);p.returns.push(t);remember(x.ref,t.id);}
+ if(a.type==='add_return'){if(Object.keys(x).some(k=>!['name','ref','volume','pan','mute'].includes(k)))fail('Return creation accepts name, ref, volume, pan and mute only.');p.returns??=[];const t=newReturn(x.name);for(const key of ['volume','pan','mute'])if(x[key]!==undefined)t[key]=x[key];p.returns.push(t);remember(x.ref,t.id);}
  if(a.type==='midi_effects')track(x.trackId).midiEffects=typeof x.effectsJSON==='string'?JSON.parse(x.effectsJSON):x.effects;
  if(a.type==='drum_pad'){const pad=track(x.trackId).instrument?.pads?.find(v=>v.pitch===x.pitch)||fail('Unknown drum pad');assign(pad,x.changes,['name','source','level','pan','tune','decay','choke','mute','solo']);}
  if(a.type==='manage_track'&&x.action!=='changes')p=editTrack(p,x.id,x.action,x.action==='move'?Number(x.value):x.value).project;
