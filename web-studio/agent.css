@@ -30,3 +30,5 @@
 }
 
 #studio-agent .agent-auth[hidden],#studio-agent .agent-signout[hidden]{display:none}
+
+.agent-download{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 8px;align-items:center}.agent-download a{display:inline-block;padding:4px 7px;border:1px solid var(--line);border-radius:2px;color:var(--text);background:var(--bg);text-decoration:none;font-weight:600}.agent-download a:hover{border-color:var(--accent)}.agent-download a[aria-disabled=true]{opacity:.5;pointer-events:none}.agent-download span{overflow-wrap:anywhere;font-size:10px}.agent-download small{grid-column:1/-1;color:var(--muted);font-size:9px}

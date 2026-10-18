@@ -10,6 +10,11 @@ export function installAgent({getProject,commit,locked,analyze,execute,getSessio
  // Typing and scrolling within the agent must not trigger DAW shortcuts or MIDI notes.
  panel.addEventListener('keydown',event=>{if(!event.ctrlKey&&!event.metaKey)event.stopPropagation();});
  let controller=null;const dialogue=[];const log=(message,details,kind='performance')=>{const feed=panel.querySelector('.agent-log');feed.querySelector('.agent-empty')?.remove();const row=document.createElement('p');row.textContent=message;feed.append(row);if(details){const extra=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');extra.dataset[kind]='true';summary.textContent=kind==='delivery'?'Export details':kind==='navigation'?'Selection details':'Performance details';pre.textContent=JSON.stringify(details,null,2);extra.append(summary,pre);feed.append(extra);}feed.scrollTop=feed.scrollHeight;};
+ document.addEventListener('opus-download-ready',event=>{
+  const {ready,expired=[]}=event.detail??{},feed=panel.querySelector('.agent-log');
+  for(const row of feed.querySelectorAll('[data-ready-download]'))if(expired.includes(row.dataset.readyDownload)){row.querySelector('a').removeAttribute('href');row.querySelector('a').setAttribute('aria-disabled','true');row.querySelector('small').textContent='Expired · Export Again';}
+  if(!ready)return;feed.querySelector('.agent-empty')?.remove();const row=document.createElement('p'),link=document.createElement('a'),name=document.createElement('span'),status=document.createElement('small');row.className='agent-download';row.dataset.readyDownload=ready.url;link.href=ready.url;link.download=ready.name;link.textContent='Download File';link.setAttribute('aria-label','Download '+ready.name);name.textContent=ready.name;status.textContent='Ready In This Tab';row.append(link,name,status);feed.append(row);feed.scrollTop=feed.scrollHeight;
+ });
  function renderAccount(state=auth.snapshot()){
   panel.querySelector('.agent-auth').hidden=state.available;panel.querySelector('.agent-signout').hidden=!state.available;
   panel.querySelector('.agent-account-state').textContent=state.available?'Account: '+(state.user?.email||'Signed In'):'Sign In Required';

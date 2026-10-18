@@ -44,3 +44,5 @@ Every feature added after this audit must add or update its agent command/state 
 Group membership does not override deliberate custom audio routes. Group WAV/stems contain incoming audio and overlap member-source exports. View-only fold/select/export do not add history. Full application-wide agent coverage remains unfinished.
 
 0.135.0 authenticated group composition completed eight edits and exported Rhythm; the nested follow-up exhausted three reviewed plans with an insufficiently precise track-ID error, without applying nesting. 0.135.1 adds strict actionable ID/alias-lifetime feedback and one focused regression (144 core, 22 backend). Corrected production nesting must be verified separately.
+
+0.135.2 exposes generated project/MIDI/WAV/stem files as retained explicit links in the inline agent, independently of automatic browser download acceptance. Two bounded retention/eviction tests and a real local click/download check cover the delivery layer. Generated/ready, browser-dispatched and actually saved files remain separate evidence levels; production audio/stem delivery is recorded in ROADMAP.md.
