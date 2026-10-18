@@ -28,7 +28,7 @@ export function prepareAgentPlan(project, actions) {
   const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
  }
   for (const command of [...before, ...after]) applyAgentActions(next, [{type:'command', args:command}]);
-  return {next, editCount:edits.length, before, after,editObservations};
+  return {next, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject, expected, locked, commit, execute, signal, onStep = () => {}}) {
@@ -53,17 +53,19 @@ export async function runAgentPlan(plan, {getProject, expected, locked, commit, 
     for (const command of plan.before) await run(command);
     if (plan.editCount) {
       check();
-      if (locked('edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
       const intended = signature(plan.next);
-      commitStarted = true;
-      commit(plan.next);
-      editsApplied = true;
-      fingerprint = signature(getProject());
-      if (fingerprint !== intended) throw new Error('The applied project does not match the validated plan.');
-      onStep({type:'edits', count:plan.editCount,observations:plan.editObservations??[]});
+      if(intended!==fingerprint){
+        if (locked('edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
+        commitStarted = true;
+        commit(plan.next);
+        editsApplied = true;
+        fingerprint = signature(getProject());
+        if (fingerprint !== intended) throw new Error('The applied project does not match the validated plan.');
+      }
+      onStep({type:'edits', count:editsApplied?plan.editCount:0,unchanged:!editsApplied,observations:plan.editObservations??[]});
     }
     for (const command of plan.after) await run(command);
-    return {editsApplied, completedCommands, observations,editObservations:plan.editObservations??[]};
+    return {editsApplied,projectUnchanged:plan.editCount>0&&!editsApplied, completedCommands, observations,editObservations:plan.editObservations??[]};
   } catch (error) {
     // Preserve what actually happened: downloads/transport cannot be undone by
     // restoring a project, and a failed export must not hide committed edits.

@@ -27,19 +27,19 @@ export function installAgent({getProject,commit,locked,analyze,execute,getSessio
   let plan;
   try {
    plan=prepareAgentPlan(original,result.actions);
-   if(plan.editCount&&!plan.before.length&&locked('edit'))throw new Error('Stop playback before editing. Add a stop command before the project edits.');
+   if(plan.changesProject&&!plan.before.length&&locked('edit'))throw new Error('Stop playback before editing. Add a stop command before the project edits.');
   } catch(error) {
    feedback={error:error.message,previousPlan:result};
    if(attempt===2)throw new Error('Plan rejected: '+error.message);
    continue;
   }
   const execution=await runAgentPlan(plan,{getProject,expected:fingerprint,locked,commit,execute,signal,onStep:step=>{
-   if(step.type==='edits'){log('Applied '+step.count+' '+(step.count===1?'action':'actions')+'. Undo reverses these project edits.');for(const observation of step.observations??[])if(observation.type==='region_trim')log('Trimmed '+observation.count+' clip '+(observation.edge==='start'?'starts':'ends')+' by '+Number(observation.appliedDelta.toFixed(6))+' '+(Math.abs(observation.appliedDelta)===1?'beat':'beats')+'.'+(observation.clamped?' Limited by clip/timeline bounds; requested '+observation.requestedDelta+' beats.':''));}
+   if(step.type==='edits'){log(step.unchanged?'No project changes were needed. No Undo step was added.':'Applied '+step.count+' '+(step.count===1?'action':'actions')+'. Undo reverses these project edits.');for(const observation of step.observations??[])if(observation.type==='region_trim')log('Trimmed '+observation.count+' clip '+(observation.edge==='start'?'starts':'ends')+' by '+Number(observation.appliedDelta.toFixed(6))+' '+(Math.abs(observation.appliedDelta)===1?'beat':'beats')+'.'+(observation.clamped?' Limited by clip/timeline bounds; requested '+observation.requestedDelta+' beats.':''));}
    else if(step.result?.delivery)log('Export ready: '+step.result.download+'. '+step.result.description,{delivery:step.result.delivery},'delivery');
    else if(step.result?.sessionPerformance)log('Observed '+step.name+': '+describePerformance(step.result),{command:step.name,state:step.result});else log('Completed: '+step.name+'. '+(result.actions.length===1?result.summary:''));
   }});
   dialogue.push({role:'assistant',text:result.summary+' Observed edit results: '+JSON.stringify(execution.editObservations)+' Observed runtime results: '+JSON.stringify(execution.observations)});
-  log(execution.editObservations.some(o=>o.clamped)?'Group trim applied within clip/timeline limits. See the observed amount above.':execution.observations.some(o=>o.result?.sessionPerformance)?'Session performance steps finished. See observed states above.':result.summary||'No changes needed.');break;
+  log(execution.projectUnchanged?(execution.completedCommands.length?'Runtime steps finished; the project is unchanged. No Undo step was added.':'The project is unchanged. No Undo step was added.'):execution.editObservations.some(o=>o.clamped)?'Group trim applied within clip/timeline limits. See the observed amount above.':execution.observations.some(o=>o.result?.sessionPerformance)?'Session performance steps finished. See observed states above.':result.summary||'No changes needed.');break;
  }
  }catch(error){const progress=error.agentEditsApplied?' Project edits remain applied; Undo reverses them.':'';const runtime=(error.agentCompletedCommands?.length?' Completed runtime actions: '+error.agentCompletedCommands.join(', ')+'.':'')+(error.agentInterruptedCommand?' Interrupted command: '+error.agentInterruptedCommand.name+'.'+(error.agentInterruptedCommand.state?' '+describePerformance(error.agentInterruptedCommand.state):''):'');const message=(error.name==='AbortError'?(progress||runtime?'Cancelled. Remaining actions stopped.':'Cancelled. No changes applied.'):error.message)+progress+runtime;log(message,error.agentInterruptedCommand?.state?{interrupted:error.agentInterruptedCommand.name,state:error.agentInterruptedCommand.state}:null);dialogue.push({role:'assistant',text:message+' '+(error.agentInterruptedCommand?.state?JSON.stringify(error.agentInterruptedCommand.state):'')});}finally{controller=null;panel.querySelector('.agent-state').textContent='Ready';open.removeAttribute('aria-label');panel.removeAttribute('aria-busy');f.querySelector('[type=submit]').disabled=false;panel.querySelector('.agent-cancel').disabled=true;}};
 }
