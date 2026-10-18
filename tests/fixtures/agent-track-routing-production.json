@@ -1,0 +1,59 @@
+{
+  "sampleRate": 44100,
+  "frames": 88200,
+  "channels": 2,
+  "format": "IEEE float 32",
+  "rms": {
+    "bus": 0.009631408461056692,
+    "a": 0.01537244798876309,
+    "b": 0.01153658152467168
+  },
+  "busReferenceGainDb": -6,
+  "busVersusScaledSourceSumMaxDifference": 3.282494481088305e-09,
+  "spectralPower": {
+    "261.6255653005986": 2.848658226951524e-05,
+    "391.99543598174927": 1.604397078352481e-05,
+    "173": 2.5532020915993862e-11,
+    "600": 2.6165980431306623e-11
+  },
+  "files": {
+    "bus": {
+      "name": "Untitled-session-track-Routing-Bus.wav",
+      "bytes": 705644,
+      "sha256": "9dcd96288f2b06b581afa5f2a8307991568a63fcd37022c1ba565fcdcbd29311"
+    },
+    "a": {
+      "name": "Untitled-session-track-Routing-Proof-A.wav",
+      "bytes": 705644,
+      "sha256": "0924faac1c179053c65dc262487037b9db0c96bf7ded1d441d4774a368fb00b1"
+    },
+    "b": {
+      "name": "Untitled-session-track-Routing-Proof-B.wav",
+      "bytes": 705644,
+      "sha256": "894da7ad5bfd77fdeaa18c147d27adbe80123e6435dcf5575ddc2827b8ef9463"
+    }
+  },
+  "projectBytes": 3809,
+  "projectSha256": "944315848fef5435a4b86528862acf06bc59fd6c4e46dbc2384e84ca82d5d1a0",
+  "baselineSha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+  "scope": "Actual authenticated published-studio request, real project/WAV downloads; independent source-sum and pitch measurements. No physical-output or listening-quality assessment.",
+  "release": "0.134.1",
+  "verifiedCommit": "1c9f1fc65ce82af5881d2c885066d8a9a20929e3",
+  "amplifyJob": 105,
+  "backendZipSha256": "4f3736acb236eb76396c4109841c1f5b98cf6574427d06cb4891fa2c28cb4e1c",
+  "authenticatedRequests": 3,
+  "reviewReceipts": 3,
+  "clientRepairs": 0,
+  "compositionEditCount": 11,
+  "sourceExportsProjectBytesUnchanged": true,
+  "singleUndoRestoration": {
+    "bytes": 1725,
+    "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7",
+    "byteIdentical": true
+  },
+  "previousReleaseFailure": {
+    "release": "0.134.0",
+    "result": "Rejected: Unknown synth preset after three client planning attempts; no project changes",
+    "baselineByteIdentical": true
+  }
+}

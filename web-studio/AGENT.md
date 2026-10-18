@@ -160,3 +160,6 @@ Evidence is separated in ROADMAP.md: ten routing units, independent native brows
 
 
 Release 0.134.1 adds a shared synth-preset enum (Init is sine; empty buses omit preset), precise invalid-preset repair guidance and explicit Arrangement track/clip reference checks. New MIDI used in later regions must declare its own ref; region.clipId uses that earlier ref or an existing ID, never a display name. The initial published composition failed without edits; the corrected full operator plan passes with exact named notes, three new tracks, routing and bus export. Production and musical-output evidence remain separate from that planning result.
+
+
+Authenticated 0.134.1 verification is recorded in ROADMAP.md and tests/fixtures/agent-track-routing-production.json. The same previously rejected complete request succeeded with a review receipt and no client repair: two named sustained-note parts, empty unity bus/Utility -6 dB, actual routing/selection and a bus WAV. Two source-only WAV requests added no history or project changes. The real bus samples matched the independently scaled source sum within 3.2825e-9; one Undo restored the byte-identical original set. This verifies one synthetic signal-path workflow, not every prompt, physical output or professional musical quality.
