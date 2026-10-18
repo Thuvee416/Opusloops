@@ -1,7 +1,7 @@
 import {TEMPLATE_MAX_BYTES,createTemplate,templateSet,validateTemplate,templateName,listTemplates,getTemplate,saveTemplate,removeTemplate} from './set-templates.js';
 export function installTemplateDialog({getProject,exclusive,replaceSet,writeDefault,download,setStatus}){
  const dialog=document.createElement('dialog');dialog.id='templates-dialog';dialog.className='studio-dialog';dialog.setAttribute('aria-labelledby','templates-title');
- dialog.innerHTML=`<div class="dialog-heading"><h2 id="templates-title">Set templates</h2><button id="templates-close" aria-label="Close templates">×</button></div>
+ dialog.innerHTML=`<div class="dialog-heading"><h2 id="templates-title">Set templates</h2><button id="templates-close" aria-label="Close templates"><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-close"/></svg></button></div>
  <p class="micro">Reusable tracks, devices, clips and samples. Saved in this browser; download templates to keep a portable copy.</p>
  <div class="template-save"><label for="template-name">Template name</label><input id="template-name" maxlength="80"><button id="template-save">Save current set as template</button></div>
  <label for="template-search">Find a template</label><input id="template-search" type="search" placeholder="Search templates">

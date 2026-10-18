@@ -124,3 +124,10 @@ Evidence: `tests/agent-layout.cjs` checks desktop, tablet and small-phone bounds
 ## 0.125.1 — Global Interface Title Capitalization
 
 A shared typography rule capitalizes every word in interface headings, buttons, menu items, tabs, labels, summaries, dropdown options and project/track headings, including controls created after startup. Stored names, option values, typed prompts and technical output retain their original contents.
+
+
+## 0.125.2 — Mobile Vector Controls
+
+Font-glyph control icons are replaced with a shared, monochrome SVG sprite for transport, clip/scene launch, recording, settings, navigation, menus, close/add/remove/reorder controls and template dialogs. The sprite is installed inside the existing startup gate with no external icon-font or image request. Browser category/result and slot-menu marks use CSS vector shapes. Icons inherit control colors, remain outside accessible names and cannot intercept touch/pointer events. Musical notation, mathematical units and keyboard-shortcut text stay as text.
+
+Validation includes phone-sized layouts and touch Play/Pause/Stop, library clear/close, effect add/remove and export-dialog dismissal; accessible icon labels and symbol references; startup gating; sequenced agent playback/export and Session quantization/output checks.

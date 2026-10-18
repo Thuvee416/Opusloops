@@ -7,6 +7,8 @@ const slow = setTimeout(() => {
   retry.hidden = false;
 }, 20000);
 try {
+  const {installIcons} = await import('./icons.js');
+  installIcons();
   await import('./workspace.js');
   await import('./app.js');
   await import('./welcome.js');

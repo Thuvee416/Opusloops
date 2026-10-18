@@ -17,3 +17,9 @@
 /* Editable content and technical output keep their original spelling and case. */
 .studio-shell :is(input,textarea,code,pre){text-transform:none}
 .studio-shell .project-title input,.studio-shell .track-header input{text-transform:capitalize}
+
+/* Native vectors inherit control colors and never depend on mobile emoji fonts. */
+#opus-icon-definitions{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+.studio-icon{display:inline-block;width:1em;height:1em;vertical-align:-.125em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;flex-shrink:0}
+.studio-shell .transport-button .studio-icon{width:12px;height:12px}
+.studio-shell .agent-collapse .studio-icon{width:12px;height:12px;vertical-align:middle}
