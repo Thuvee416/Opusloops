@@ -1,0 +1,32 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "attempt": 1,
+  "failures": [],
+  "prompt": "Transpose only the C4 notes in Rapid Take up one octave. Preserve every note start, duration, velocity and release velocity exactly, including the very short recorded notes. Leave all other notes and project fields unchanged. Do not play, record, export or change views.",
+  "plan": {
+    "summary": "Transposed C4 notes in Rapid Take up one octave.",
+    "actions": [
+      {
+        "type": "notes",
+        "args": {
+          "clipId": "rapid-take",
+          "action": "transpose",
+          "where": {
+            "pitchMin": 60,
+            "pitchMax": 60
+          },
+          "amount": 12
+        }
+      }
+    ],
+    "reviewed": true,
+    "model": {
+      "id": "tempo",
+      "name": "Tempo",
+      "version": "1.0",
+      "provider": "Amazon Bedrock",
+      "providerModelId": "amazon.nova-pro-v1:0",
+      "providerModelName": "Amazon Nova Pro"
+    }
+  }
+}

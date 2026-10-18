@@ -1,0 +1,28 @@
+{
+  "scope": "Local normal Chrome keyboard input, native recording controls and fresh downloaded project bytes. No injected recording events or physical MIDI permission. Controlled timestamp/sustain/audio evidence is separate.",
+  "notes": [
+    {
+      "pitch": 60,
+      "velocity": 0.75,
+      "start": 0.5194666666189829,
+      "duration": 0.0030000000000001137
+    },
+    {
+      "pitch": 64,
+      "velocity": 0.75,
+      "start": 0.5421999998092653,
+      "duration": 0.0016000001430511723
+    },
+    {
+      "pitch": 67,
+      "velocity": 0.75,
+      "start": 0.5649333332379659,
+      "duration": 0.00040000009536755865
+    }
+  ],
+  "baselineBytes": 578,
+  "baselineSHA256": "eee4fc114e43c69ce8f1fe870246197e7b920d76cefa5c72b739f583c6930d8b",
+  "takeBytes": 1036,
+  "undoExact": true,
+  "redoExact": true
+}

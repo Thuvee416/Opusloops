@@ -1,0 +1,360 @@
+{
+  "status": "passed",
+  "sampleRate": 48000,
+  "reopenTolerance": 1e-7,
+  "developmentFinding": "An initial bit-identical reopen assertion measured 2.2351741790771484e-8 sample drift in native Chromium, also seen against the independent oracle. Reopen rendering uses an explicit 1e-7 float tolerance; exact serialized note timing is checked separately.",
+  "cases": [
+    {
+      "target": "off",
+      "notes": [
+        {
+          "pitch": 60,
+          "velocity": 0.4,
+          "start": 0.20000000000000018,
+          "duration": 0.016000000000000014,
+          "releaseVelocity": 0.1
+        },
+        {
+          "pitch": 60,
+          "velocity": 0.7,
+          "start": 0.2240000000000002,
+          "duration": 0.009999999999999787,
+          "releaseVelocity": 0.3
+        },
+        {
+          "pitch": 67,
+          "velocity": 0.6,
+          "start": 0.39999999999999986,
+          "duration": 0.03000000000000036,
+          "releaseVelocity": 0.4
+        },
+        {
+          "pitch": 64,
+          "velocity": 0.5,
+          "start": 0.39999999999999986,
+          "duration": 0.08400000000000013,
+          "releaseVelocity": 0.2
+        }
+      ],
+      "rawNotes": [
+        {
+          "pitch": 60,
+          "velocity": 0.4,
+          "start": 0.20000000000000018,
+          "duration": 0.016000000000000014,
+          "releaseVelocity": 0.1
+        },
+        {
+          "pitch": 60,
+          "velocity": 0.7,
+          "start": 0.2240000000000002,
+          "duration": 0.009999999999999787,
+          "releaseVelocity": 0.3
+        },
+        {
+          "pitch": 67,
+          "velocity": 0.6,
+          "start": 0.39999999999999986,
+          "duration": 0.03000000000000036,
+          "releaseVelocity": 0.4
+        },
+        {
+          "pitch": 64,
+          "velocity": 0.5,
+          "start": 0.39999999999999986,
+          "duration": 0.08400000000000013,
+          "releaseVelocity": 0.2
+        }
+      ],
+      "frames": 96000,
+      "maxSampleError": 1.4901161193847656e-8,
+      "reopenMaxError": 2.2351741790771484e-8,
+      "oldFloorDifference": 0.018858574330806732,
+      "midiEvents": [
+        {
+          "tick": 192,
+          "type": "noteOn",
+          "pitch": 60,
+          "velocity": 51
+        },
+        {
+          "tick": 207,
+          "type": "noteOff",
+          "pitch": 60,
+          "velocity": 13
+        },
+        {
+          "tick": 215,
+          "type": "noteOn",
+          "pitch": 60,
+          "velocity": 89
+        },
+        {
+          "tick": 225,
+          "type": "noteOff",
+          "pitch": 60,
+          "velocity": 38
+        },
+        {
+          "tick": 384,
+          "type": "noteOn",
+          "pitch": 64,
+          "velocity": 64
+        },
+        {
+          "tick": 384,
+          "type": "noteOn",
+          "pitch": 67,
+          "velocity": 76
+        },
+        {
+          "tick": 413,
+          "type": "noteOff",
+          "pitch": 67,
+          "velocity": 51
+        },
+        {
+          "tick": 465,
+          "type": "noteOff",
+          "pitch": 64,
+          "velocity": 25
+        }
+      ]
+    },
+    {
+      "target": "starts",
+      "notes": [
+        {
+          "pitch": 60,
+          "velocity": 0.4,
+          "start": 0.25,
+          "duration": 0.016000000000000014,
+          "releaseVelocity": 0.1
+        },
+        {
+          "pitch": 60,
+          "velocity": 0.7,
+          "start": 0.25,
+          "duration": 0.009999999999999787,
+          "releaseVelocity": 0.3
+        },
+        {
+          "pitch": 67,
+          "velocity": 0.6,
+          "start": 0.5,
+          "duration": 0.03000000000000036,
+          "releaseVelocity": 0.4
+        },
+        {
+          "pitch": 64,
+          "velocity": 0.5,
+          "start": 0.5,
+          "duration": 0.08400000000000013,
+          "releaseVelocity": 0.2
+        }
+      ],
+      "rawNotes": [
+        {
+          "pitch": 60,
+          "velocity": 0.4,
+          "start": 0.20000000000000018,
+          "duration": 0.016000000000000014,
+          "releaseVelocity": 0.1
+        },
+        {
+          "pitch": 60,
+          "velocity": 0.7,
+          "start": 0.2240000000000002,
+          "duration": 0.009999999999999787,
+          "releaseVelocity": 0.3
+        },
+        {
+          "pitch": 67,
+          "velocity": 0.6,
+          "start": 0.39999999999999986,
+          "duration": 0.03000000000000036,
+          "releaseVelocity": 0.4
+        },
+        {
+          "pitch": 64,
+          "velocity": 0.5,
+          "start": 0.39999999999999986,
+          "duration": 0.08400000000000013,
+          "releaseVelocity": 0.2
+        }
+      ],
+      "frames": 96000,
+      "maxSampleError": 1.4901161193847656e-8,
+      "reopenMaxError": 1.1175870895385742e-8,
+      "oldFloorDifference": null,
+      "midiEvents": [
+        {
+          "tick": 240,
+          "type": "noteOn",
+          "pitch": 60,
+          "velocity": 51
+        },
+        {
+          "tick": 240,
+          "type": "noteOn",
+          "pitch": 60,
+          "velocity": 89
+        },
+        {
+          "tick": 250,
+          "type": "noteOff",
+          "pitch": 60,
+          "velocity": 38
+        },
+        {
+          "tick": 255,
+          "type": "noteOff",
+          "pitch": 60,
+          "velocity": 13
+        },
+        {
+          "tick": 480,
+          "type": "noteOn",
+          "pitch": 64,
+          "velocity": 64
+        },
+        {
+          "tick": 480,
+          "type": "noteOn",
+          "pitch": 67,
+          "velocity": 76
+        },
+        {
+          "tick": 509,
+          "type": "noteOff",
+          "pitch": 67,
+          "velocity": 51
+        },
+        {
+          "tick": 561,
+          "type": "noteOff",
+          "pitch": 64,
+          "velocity": 25
+        }
+      ]
+    },
+    {
+      "target": "both",
+      "notes": [
+        {
+          "pitch": 60,
+          "velocity": 0.4,
+          "start": 0.25,
+          "duration": 0.25,
+          "releaseVelocity": 0.1
+        },
+        {
+          "pitch": 60,
+          "velocity": 0.7,
+          "start": 0.25,
+          "duration": 0.25,
+          "releaseVelocity": 0.3
+        },
+        {
+          "pitch": 67,
+          "velocity": 0.6,
+          "start": 0.5,
+          "duration": 0.25,
+          "releaseVelocity": 0.4
+        },
+        {
+          "pitch": 64,
+          "velocity": 0.5,
+          "start": 0.5,
+          "duration": 0.25,
+          "releaseVelocity": 0.2
+        }
+      ],
+      "rawNotes": [
+        {
+          "pitch": 60,
+          "velocity": 0.4,
+          "start": 0.20000000000000018,
+          "duration": 0.016000000000000014,
+          "releaseVelocity": 0.1
+        },
+        {
+          "pitch": 60,
+          "velocity": 0.7,
+          "start": 0.2240000000000002,
+          "duration": 0.009999999999999787,
+          "releaseVelocity": 0.3
+        },
+        {
+          "pitch": 67,
+          "velocity": 0.6,
+          "start": 0.39999999999999986,
+          "duration": 0.03000000000000036,
+          "releaseVelocity": 0.4
+        },
+        {
+          "pitch": 64,
+          "velocity": 0.5,
+          "start": 0.39999999999999986,
+          "duration": 0.08400000000000013,
+          "releaseVelocity": 0.2
+        }
+      ],
+      "frames": 96000,
+      "maxSampleError": 0,
+      "reopenMaxError": 1.4901161193847656e-8,
+      "oldFloorDifference": null,
+      "midiEvents": [
+        {
+          "tick": 240,
+          "type": "noteOn",
+          "pitch": 60,
+          "velocity": 51
+        },
+        {
+          "tick": 240,
+          "type": "noteOn",
+          "pitch": 60,
+          "velocity": 89
+        },
+        {
+          "tick": 480,
+          "type": "noteOff",
+          "pitch": 60,
+          "velocity": 13
+        },
+        {
+          "tick": 480,
+          "type": "noteOff",
+          "pitch": 60,
+          "velocity": 38
+        },
+        {
+          "tick": 480,
+          "type": "noteOn",
+          "pitch": 64,
+          "velocity": 64
+        },
+        {
+          "tick": 480,
+          "type": "noteOn",
+          "pitch": 67,
+          "velocity": 76
+        },
+        {
+          "tick": 720,
+          "type": "noteOff",
+          "pitch": 64,
+          "velocity": 25
+        },
+        {
+          "tick": 720,
+          "type": "noteOff",
+          "pitch": 67,
+          "velocity": 51
+        }
+      ]
+    }
+  ],
+  "scope": "Controlled timestamped MIDI receipt/sustain events, native Chromium OfflineAudioContext WAVs and actual SMF bytes. No physical device/input latency claim."
+}
