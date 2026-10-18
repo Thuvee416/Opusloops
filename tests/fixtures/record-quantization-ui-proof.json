@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-18",
+  "method": "Normal Chrome, first-party local QA bootstrap and captured real-model plans; actual keyboard events through studio input controls and fresh downloaded project files. Fake QA sign-in is outside web-studio and never deployed.",
+  "checks": [
+    "Edit menu checked Record Quantization presets and Recording panel stay synchronized",
+    "Count-in cancellation creates no take; Record Quantization/target controls and menu choices locked while four count-in beats remained",
+    "Actual A/D/G keyboard events captured pitches 60/64/67; independent triplet endpoint comparison from downloaded performed timing",
+    "First Undo restores exact performed timing; second Undo removes take and restores exact original project",
+    "Preference-only requests and invalid late preset plans preserve exact original project bytes",
+    "A manual quarter-note setting changed during planning remains intact after stale-plan rejection and normal reload",
+    "390x844 iframe executes captured Odesa request and reveals fitting Record Quantization/target controls; no page errors"
+  ],
+  "performedNotes": [
+    {
+      "pitch": 60,
+      "velocity": 0.75,
+      "start": 0.5439999999999969,
+      "duration": 0.0625
+    },
+    {
+      "pitch": 64,
+      "velocity": 0.75,
+      "start": 0.5546666666666624,
+      "duration": 0.0625
+    },
+    {
+      "pitch": 67,
+      "velocity": 0.75,
+      "start": 0.5653333333333279,
+      "duration": 0.0625
+    }
+  ],
+  "quantizedNotes": [
+    {
+      "pitch": 60,
+      "velocity": 0.75,
+      "start": 0.6666666666666666,
+      "duration": 0.33333333333333337
+    },
+    {
+      "pitch": 64,
+      "velocity": 0.75,
+      "start": 0.6666666666666666,
+      "duration": 0.33333333333333337
+    },
+    {
+      "pitch": 67,
+      "velocity": 0.75,
+      "start": 0.6666666666666666,
+      "duration": 0.33333333333333337
+    }
+  ],
+  "artifacts": {
+    "Record-Proof.opusloop": {
+      "bytes": 578,
+      "sha256": "eee4fc114e43c69ce8f1fe870246197e7b920d76cefa5c72b739f583c6930d8b"
+    },
+    "Record-Proof (1).opusloop": {
+      "bytes": 578,
+      "sha256": "eee4fc114e43c69ce8f1fe870246197e7b920d76cefa5c72b739f583c6930d8b"
+    },
+    "Record-Proof (2).opusloop": {
+      "bytes": 1026,
+      "sha256": "b000a6469a167acae9463c2bc79d3c7c4fd6a7ad5d5fd411b02d13f9c2987d58"
+    },
+    "Record-Proof (3).opusloop": {
+      "bytes": 990,
+      "sha256": "b5cadeef7515f73da88e7efe1dbbffe8a5359b8e219ccaa2cc45443cef826953"
+    },
+    "Record-Proof (4).opusloop": {
+      "bytes": 578,
+      "sha256": "eee4fc114e43c69ce8f1fe870246197e7b920d76cefa5c72b739f583c6930d8b"
+    },
+    "Record-Proof (5).opusloop": {
+      "bytes": 578,
+      "sha256": "eee4fc114e43c69ce8f1fe870246197e7b920d76cefa5c72b739f583c6930d8b"
+    },
+    "Record-Proof (6).opusloop": {
+      "bytes": 578,
+      "sha256": "eee4fc114e43c69ce8f1fe870246197e7b920d76cefa5c72b739f583c6930d8b"
+    }
+  },
+  "scope": "Controlled local planner replay is distinct from public signed-in inference. Native timestamps/audio are not physical MIDI-device, microphone or latency evidence. New Session takes only; agent start/finish, overdub and direct Arrangement input recording remain incomplete."
+}

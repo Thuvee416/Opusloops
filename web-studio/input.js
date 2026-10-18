@@ -1,3 +1,4 @@
+import {DEFAULT_RECORD_QUANTIZATION,patchRecordQuantization,quantizeRecordedClip} from './record-quantization.js';
 import {LiveArpeggiator} from './live-arpeggiator.js';
 import {inputChannelSelection,inputChannelsAvailable} from './input-channels.js';
 import {processMidiNotes} from './midi-effects.js';
@@ -8,10 +9,10 @@ import {wav,uid} from './model.js';
 export function encode64(bytes){let text='';const data=new Uint8Array(bytes);for(let i=0;i<data.length;i+=32768)text+=String.fromCharCode(...data.subarray(i,i+32768));return btoa(text);}
 export function decodeMidi(data){if(!data||data.length<3||!Number.isInteger(data[0])||data[0]<128||data[0]>239)return null;const type=data[0]&240,channel=data[0]&15,pitch=data[1],velocity=data[2];if(!Number.isInteger(pitch)||pitch<0||pitch>127||!Number.isInteger(velocity)||velocity<0||velocity>127)return null;if(type===176&&pitch===64)return {type:'sustain',channel,down:velocity>=64};if(type===144&&velocity)return {type:'on',channel,pitch,velocity:velocity/127};if(type===128||(type===144&&!velocity))return {type:'off',channel,pitch,velocity:type===128?velocity/127:0};return null;}
 export class MidiTake {
-  constructor(bpm,start){this.bpm=bpm;this.start=start;this.notes=[];this.held=new Map();}
-  on(key,pitch,velocity,time){if(this.held.has(key))this.off(key,time);this.held.set(key,{pitch,velocity,start:Math.max(0,(time-this.start)*this.bpm/60)});}
+  constructor(bpm,start,{quantization=DEFAULT_RECORD_QUANTIZATION}={}){this.bpm=bpm;this.start=start;this.notes=[];this.held=new Map();this.quantization=Object.freeze(patchRecordQuantization(DEFAULT_RECORD_QUANTIZATION,quantization));}
+  on(key,pitch,velocity,time){if(time<this.start)return false;if((time-this.start)*this.bpm/60>255.9375){this.timeLimitReached=true;return false;}if(this.held.has(key))this.off(key,time);if(this.notes.length+this.held.size>=4096){this.limitReached=true;return false;}this.held.set(key,{pitch,velocity,start:Math.max(0,(time-this.start)*this.bpm/60)});return true;}
   off(key,time,releaseVelocity=0){const n=this.held.get(key);if(!n)return;const end=Math.max(n.start+.0625,(time-this.start)*this.bpm/60);this.notes.push({...n,duration:end-n.start,...(releaseVelocity>0?{releaseVelocity}:{})});this.held.delete(key);}
-  finish(time){for(const key of [...this.held.keys()])this.off(key,time);const notes=this.notes.slice(0,4096).filter(n=>n.start<=255.9375).map(n=>({...n,duration:Math.min(n.duration,256-n.start)}));const end=Math.max(.25,(time-this.start)*this.bpm/60,...notes.map(n=>n.start+n.duration));return {id:uid(),name:'MIDI take',kind:'midi',sourceBpm:this.bpm,beats:Math.min(256,Math.ceil(end*4)/4),notes};}
+  finish(time){for(const key of [...this.held.keys()])this.off(key,time);const notes=this.notes.slice(0,4096).filter(n=>n.start<=255.9375).map(n=>({...n,duration:Math.min(n.duration,256-n.start)}));const end=Math.max(.25,(time-this.start)*this.bpm/60,...notes.map(n=>n.start+n.duration));const raw={id:uid(),name:'MIDI take',kind:'midi',sourceBpm:this.bpm,beats:Math.min(256,Math.ceil(end*4)/4),notes};this.rawClip=structuredClone(raw);const result=quantizeRecordedClip(raw,this.quantization);this.quantizationReport=result.report;return result.clip;}
 }
 const loadedContexts=new WeakSet();
 export class AudioCapture {

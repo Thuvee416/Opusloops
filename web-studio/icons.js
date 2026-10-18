@@ -1,5 +1,6 @@
 // One monochrome vector set for transport, editing and workspace navigation.
 const shapes={
+ check:'<path d="m3 8 3 3 7-7"/>' ,
  play:'<path d="m5 3 8 5-8 5Z" fill="currentColor" stroke="none"/>',
  pause:'<path d="M5 3v10M11 3v10" stroke-width="3"/>',
  stop:'<rect x="4" y="4" width="8" height="8" rx=".5" fill="currentColor" stroke="none"/>',

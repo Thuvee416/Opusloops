@@ -1,0 +1,21 @@
+import {MidiTake} from '/input.js';import {Engine} from '/audio.js';import {prepareMidiDelivery} from '/midi-delivery.js';import parseMidi from '/vendor/midi-parser.js';
+const assert=(ok,message)=>{if(!ok)throw new Error(message);},rate=48000;
+function difference(a,b){assert(a.length===b.length,'Frame count');let max=0;for(let i=0;i<a.length;i++){assert(Number.isFinite(a[i]),'Finite audio');max=Math.max(max,Math.abs(a[i]-b[i]));}assert(max<2e-6,'Endpoint audio mismatch '+max);return max;}
+async function checks(){const base=await(await fetch('/qa-project.json')).json(),before=JSON.stringify(base),results=[];
+ for(const [id,settings] of [['triplet-both',{enabled:true,grid:.5,gridMode:'triplet',target:'both'}],['straight-ends',{enabled:true,grid:.25,gridMode:'straight',target:'ends'}],['mixed-both',{enabled:true,grid:.5,gridMode:'both',target:'both'}],['off',{enabled:false,grid:.25,gridMode:'straight',target:'starts'}]]){
+  const take=new MidiTake(120,0,{quantization:settings});take.on('c',60,.4,.05);take.off('c',.265,.1);take.on('g',67,.7,1.05);take.off('g',1.265,.3);const clip=take.finish(2),project=structuredClone(base),expected=structuredClone(base);project.clips[clip.id]=clip;project.tracks[0].slots[0]=clip.id;
+  const notes=[{pitch:60,start:.1,duration:.43,velocity:.4,releaseVelocity:.1},{pitch:67,start:2.1,duration:.43,velocity:.7,releaseVelocity:.3}];let on,off;
+  if(id==='triplet-both'){notes[0].start=0;notes[0].duration=2/3;notes[1].start=2;notes[1].duration=2/3;on=[0,1920];off=[640,2560];}
+  else if(id==='mixed-both'){notes[0].start=0;notes[0].duration=.5;notes[1].start=2;notes[1].duration=.5;on=[0,1920];off=[480,2400];}
+  else if(id==='straight-ends'){notes.forEach(n=>n.duration=.4);on=[96,2016];off=[480,2400];}
+  else{on=[96,2016];off=[509,2429];}
+  expected.clips[clip.id]={...structuredClone(clip),notes};expected.tracks[0].slots[0]=clip.id;
+  // Put the recorded source on the timeline to verify its actual rendered timing.
+  project.arrangement=[{id:'take-region',trackId:'lead',clipId:clip.id,start:0,length:4,offset:0}];expected.arrangement=structuredClone(project.arrangement);
+  const actual=await renderArrangement(project),oracle=await renderArrangement(expected),error=difference(actual,oracle),reopen=difference(actual,await renderArrangement(JSON.parse(JSON.stringify(project))));assert(actual.some(v=>Math.abs(v)>.003),'Audible captured notes');
+  const midi=parseMidi(prepareMidiDelivery(project,{clipId:clip.id}).data),ons=[],offs=[],release=[];let tick=0;for(const e of midi.tracks[0]){tick+=e.deltaTime;if(e.type==='noteOn'&&e.velocity)ons.push(tick);if(e.type==='noteOff'){offs.push(tick);release.push(e.velocity);}}
+  assert(JSON.stringify(ons)===JSON.stringify(on),'Recorded note-ons '+id);assert(JSON.stringify(offs)===JSON.stringify(off),'Recorded note-offs '+id);assert(JSON.stringify(release)==='[13,38]','Recorded release velocities');results.push({case:id,frames:actual.length,oracleMaxError:error,reopenMaxError:reopen,noteOnTicks:ons,noteOffTicks:offs,report:take.quantizationReport});
+ }
+ assert(JSON.stringify(base)===before,'Source project mutated');return {status:'passed',sampleRate:rate,results,scope:'Native Chromium MidiTake with controlled input timestamps, OfflineAudioContext float WAVs, independent endpoint oracles and actual SMF events. This is not a physical MIDI-device, microphone or latency test.'};}
+async function renderArrangement(project){const engine=new Engine(project,()=>{});try{const b=await engine.render({source:'arrangement',channel:'track:lead',sampleRate:rate,bitDepth:32,normalize:false,dither:'none',includeTail:false});const v=new DataView(b);assert(v.getUint16(20,true)===3&&v.getUint32(24,true)===rate,'Float 48kHz WAV');return Float32Array.from({length:v.getUint32(40,true)/8},(_,i)=>v.getFloat32(44+i*8,true));}finally{await engine.context?.close();}}
+document.querySelector('button').onclick=async event=>{event.target.disabled=true;try{document.querySelector('pre').textContent=JSON.stringify(await checks(),null,2);}catch(error){document.querySelector('pre').textContent=JSON.stringify({status:'failed',error:error.message,stack:error.stack},null,2);}finally{event.target.disabled=false;}};

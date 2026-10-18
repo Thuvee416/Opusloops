@@ -1,0 +1,7 @@
+import {emptyProject} from '../../web-studio/model.js';import {newSynth} from '../../web-studio/instruments.js';import {DEFAULT_RECORD_QUANTIZATION} from '../../web-studio/record-quantization.js';
+export function recordProject(){const p=emptyProject();p.name='Record Proof';p.tracks[0].id='lead';p.tracks[0].name='Lead';p.tracks[0].volume=.4;p.tracks[0].instrument=newSynth('Init');p.sceneNames=['Intro','Lift','Breakdown','Return'];p.returns=[];return p;}
+export const recordCases=[
+ {id:'triplet-both',prompt:'Enable Record Quantization for new MIDI takes at eighth-note triplets. Quantize both note starts and ends. Leave existing clips and project data unchanged. Show the Recording settings; do not start recording, play or export.',before:DEFAULT_RECORD_QUANTIZATION,expected:{enabled:true,grid:.5,gridMode:'triplet',target:'both'}},
+ {id:'straight-ends',prompt:'Set Record Quantization to straight sixteenth notes, adjusting note ends only. Keep existing clips and project data unchanged. Do not record, play or export.',before:{enabled:true,grid:.5,gridMode:'triplet',target:'both'},expected:{enabled:true,grid:.25,gridMode:'straight',target:'ends'}},
+ {id:'off',prompt:'Turn off Record Quantization for future MIDI takes. Preserve its saved grid and note-end preferences, and leave the project unchanged. Do not start recording or playback.',before:{enabled:true,grid:.5,gridMode:'triplet',target:'both'},expected:{enabled:false,grid:.5,gridMode:'triplet',target:'both'}}
+];

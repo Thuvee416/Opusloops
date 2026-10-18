@@ -64,3 +64,5 @@ body.studio-shell{grid-template-rows:49px 32px minmax(0,1fr) 22px}
 }
 
 .note-quantize-options{margin:10px 0;border:1px solid var(--line);padding:8px;background:var(--surface,transparent)}.note-quantize-options summary{cursor:pointer;font-size:11px;font-weight:600}.note-quantize-options .note-tools{margin-top:8px}.note-quantize-options .micro{margin:5px 0 0;max-width:80ch}
+
+.record-quantization-options{margin:12px 0;padding:10px;border:1px solid var(--line);min-width:0}.record-quantization-options legend{padding:0 5px;font-size:11px;font-weight:600}.record-quantization-options .input-controls{display:flex;flex-wrap:wrap;gap:10px}.record-quantization-options label{min-width:0}.record-quantization-options select{max-width:100%}

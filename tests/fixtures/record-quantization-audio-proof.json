@@ -1,0 +1,108 @@
+{
+  "status": "passed",
+  "sampleRate": 48000,
+  "results": [
+    {
+      "case": "triplet-both",
+      "frames": 96000,
+      "oracleMaxError": 0,
+      "reopenMaxError": 0,
+      "noteOnTicks": [
+        0,
+        1920
+      ],
+      "noteOffTicks": [
+        640,
+        2560
+      ],
+      "report": {
+        "enabled": true,
+        "grid": 0.5,
+        "gridMode": "triplet",
+        "target": "both",
+        "changed": true,
+        "noteCount": 2,
+        "boundaryAdjusted": 0,
+        "tailLimited": 0,
+        "beatsBefore": 4,
+        "beatsAfter": 4
+      }
+    },
+    {
+      "case": "straight-ends",
+      "frames": 96000,
+      "oracleMaxError": 0,
+      "reopenMaxError": 0,
+      "noteOnTicks": [
+        96,
+        2016
+      ],
+      "noteOffTicks": [
+        480,
+        2400
+      ],
+      "report": {
+        "enabled": true,
+        "grid": 0.25,
+        "gridMode": "straight",
+        "target": "ends",
+        "changed": true,
+        "noteCount": 2,
+        "boundaryAdjusted": 0,
+        "tailLimited": 0,
+        "beatsBefore": 4,
+        "beatsAfter": 4
+      }
+    },
+    {
+      "case": "mixed-both",
+      "frames": 96000,
+      "oracleMaxError": 0,
+      "reopenMaxError": 0,
+      "noteOnTicks": [
+        0,
+        1920
+      ],
+      "noteOffTicks": [
+        480,
+        2400
+      ],
+      "report": {
+        "enabled": true,
+        "grid": 0.5,
+        "gridMode": "both",
+        "target": "both",
+        "changed": true,
+        "noteCount": 2,
+        "boundaryAdjusted": 0,
+        "tailLimited": 0,
+        "beatsBefore": 4,
+        "beatsAfter": 4
+      }
+    },
+    {
+      "case": "off",
+      "frames": 96000,
+      "oracleMaxError": 0,
+      "reopenMaxError": 0,
+      "noteOnTicks": [
+        96,
+        2016
+      ],
+      "noteOffTicks": [
+        509,
+        2429
+      ],
+      "report": {
+        "enabled": false,
+        "grid": 0.25,
+        "gridMode": "straight",
+        "target": "starts",
+        "changed": false,
+        "noteCount": 2,
+        "boundaryAdjusted": 0
+      }
+    }
+  ],
+  "scope": "Native Chromium MidiTake with controlled input timestamps, OfflineAudioContext float WAVs, independent endpoint oracles and actual SMF events. This is not a physical MIDI-device, microphone or latency test."
+}

@@ -1,0 +1,143 @@
+{
+  "model": "amazon.nova-pro-v1:0",
+  "cases": [
+    {
+      "id": "triplet-both",
+      "prompt": "Enable Record Quantization for new MIDI takes at eighth-note triplets. Quantize both note starts and ends. Leave existing clips and project data unchanged. Show the Recording settings; do not start recording, play or export.",
+      "before": {
+        "enabled": false,
+        "grid": 0.25,
+        "gridMode": "straight",
+        "target": "starts"
+      },
+      "expected": {
+        "enabled": true,
+        "grid": 0.5,
+        "gridMode": "triplet",
+        "target": "both"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Enabled Record Quantization for new MIDI takes at eighth-note triplets, quantizing both note starts and ends. Existing clips and project data remain unchanged. Shown Recording settings.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_quantization",
+              "args": {
+                "enabled": true,
+                "grid": 0.5,
+                "gridMode": "triplet",
+                "target": "both"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "show_panel",
+              "args": {
+                "panel": "recording"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "straight-ends",
+      "prompt": "Set Record Quantization to straight sixteenth notes, adjusting note ends only. Keep existing clips and project data unchanged. Do not record, play or export.",
+      "before": {
+        "enabled": true,
+        "grid": 0.5,
+        "gridMode": "triplet",
+        "target": "both"
+      },
+      "expected": {
+        "enabled": true,
+        "grid": 0.25,
+        "gridMode": "straight",
+        "target": "ends"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Set Record Quantization to straight sixteenth notes, adjusting note ends only.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_quantization",
+              "args": {
+                "enabled": true,
+                "grid": 0.25,
+                "gridMode": "straight",
+                "target": "ends"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "off",
+      "prompt": "Turn off Record Quantization for future MIDI takes. Preserve its saved grid and note-end preferences, and leave the project unchanged. Do not start recording or playback.",
+      "before": {
+        "enabled": true,
+        "grid": 0.5,
+        "gridMode": "triplet",
+        "target": "both"
+      },
+      "expected": {
+        "enabled": false,
+        "grid": 0.5,
+        "gridMode": "triplet",
+        "target": "both"
+      },
+      "attempt": 1,
+      "failures": [],
+      "plan": {
+        "summary": "Turned off Record Quantization for future MIDI takes.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_quantization",
+              "args": {
+                "enabled": false
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}

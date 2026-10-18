@@ -1,3 +1,4 @@
+import {DEFAULT_RECORD_QUANTIZATION,patchRecordQuantization} from './record-quantization.js';
 import {checkQuantizeRequirements} from './note-quantize-requirements.js';
 import {prepareMidiDelivery} from './midi-delivery.js';
 import {applyAgentActions} from './agent-actions.js';
@@ -8,7 +9,7 @@ const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null}={}) {
+export function prepareAgentPlan(project, actions, {deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   const edits = [], before = [], after = [];
   const hasEdits = actions.some(a => a?.type !== 'command');
@@ -32,9 +33,10 @@ export function prepareAgentPlan(project, actions, {deliveryRequirements=null,qu
   if(Array.isArray(command.args?.trackIds))command.args.trackIds=command.args.trackIds.map(id=>aliases.get(id)||id);
   const channel=command.args?.channel;if(typeof channel==='string'&&/^(track|return):/.test(channel)){const split=channel.indexOf(':')+1;command.args.channel=channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));}
  }
-  const prepared=new Map();
+  const prepared=new Map();let recordingPrefs=recordQuantizationState?patchRecordQuantization(DEFAULT_RECORD_QUANTIZATION,recordQuantizationState):null;
   for (const command of [...before, ...after]) {
     applyAgentActions(next, [{type:'command', args:command}]);
+    if(command.name==='record_quantization'&&recordingPrefs){const after=patchRecordQuantization(recordingPrefs,command.args);prepared.set(command,{recordQuantizationBefore:recordingPrefs,recordQuantizationAfter:after});recordingPrefs=after;}
     if(command.name==='export_midi')prepared.set(command,prepareMidiDelivery(next,command.args));
   }
   const deliveryChecks=checkDeliveryRequirements(next,after,deliveryRequirements);
