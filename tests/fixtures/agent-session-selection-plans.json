@@ -12,28 +12,10 @@
         "b:1",
         "b:2"
       ],
-      "attempt": 2,
-      "failures": [
-        {
-          "attempt": 1,
-          "error": "&#x200B;",
-          "result": {
-            "summary": "Selected Session rectangle from Lead scene 1 through Bass scene 3, including empty slots.",
-            "actions": [],
-            "question": "&#x200B;",
-            "model": {
-              "id": "tempo",
-              "name": "Tempo",
-              "version": "1.0",
-              "provider": "Amazon Bedrock",
-              "providerModelId": "amazon.nova-pro-v1:0",
-              "providerModelName": "Amazon Nova Pro"
-            }
-          }
-        }
-      ],
+      "attempt": 1,
+      "failures": [],
       "result": {
-        "summary": "Selected Session rectangle from Lead scene 1 through Bass scene 3, including empty slots.",
+        "summary": "Select the Session rectangle from Lead scene 1 through Bass scene 3, including empty slots.",
         "actions": [
           {
             "type": "command",
@@ -68,44 +50,10 @@
       "id": "deselect",
       "prompt": "Deselect all Session clip slots. Keep the project, current view, panels and playback unchanged. No other action.",
       "expected": [],
-      "attempt": 2,
-      "failures": [
-        {
-          "attempt": 1,
-          "error": "An empty Session selection cannot have a primary.",
-          "result": {
-            "summary": "Deselected all Session clip slots.",
-            "actions": [
-              {
-                "type": "command",
-                "args": {
-                  "name": "select",
-                  "args": {
-                    "target": "session",
-                    "slots": [],
-                    "primary": {
-                      "trackId": "a",
-                      "scene": 0,
-                      "clipId": "x"
-                    }
-                  }
-                }
-              }
-            ],
-            "reviewed": true,
-            "model": {
-              "id": "tempo",
-              "name": "Tempo",
-              "version": "1.0",
-              "provider": "Amazon Bedrock",
-              "providerModelId": "amazon.nova-pro-v1:0",
-              "providerModelName": "Amazon Nova Pro"
-            }
-          }
-        }
-      ],
+      "attempt": 1,
+      "failures": [],
       "result": {
-        "summary": "Deselected all Session clip slots.",
+        "summary": "Deselect all Session clip slots as requested.",
         "actions": [
           {
             "type": "command",

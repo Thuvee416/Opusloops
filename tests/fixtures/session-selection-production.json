@@ -1,0 +1,171 @@
+{
+  "site": "https://opusloops.com",
+  "firstPass": {
+    "version": "0.146.0",
+    "commit": "b29049130629e8dd379f54b2a43c49d01c797de1",
+    "amplifyJob": 139,
+    "hosting": {
+      "commit": "b29049130629e8dd379f54b2a43c49d01c797de1",
+      "checks": [
+        {
+          "host": "opusloops.com",
+          "asset": "agent-actions.js",
+          "sha256": "20b30bb4feba96d0a93fc582424c3588b64aa80ab443cbd8c3c7456cfe68ae52"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-runner.js",
+          "sha256": "365884d2b30abe0d3a704b36b6dbf99a1b9c07d7c4b651e8d0ff19436884e66d"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "agent-schema.js",
+          "sha256": "4129f8fb1d69949da6e0ff36ac0b638c43bce6bdf0f5b2747981c70c9175894c"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "app.js",
+          "sha256": "a87fb6c58fc68eb7987a3159d0cb97aa022b72ca1bedfea988b1ea6ca50a4cf7"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "context-menu.js",
+          "sha256": "e41587bc927c3b95607c031e267be682699fd3936e0d0c8e84206d063491f258"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "interaction-theme.css",
+          "sha256": "73880854a47826d1dfff7e06e19fe23786e698b69dfae46b754cf3079274f958"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "menu-view.js",
+          "sha256": "bf09e18d47bfb5b4e510fff6257d6a09cfb07d59479bdaab42fea241851c1b71"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "release.json",
+          "sha256": "8796583a9258380afe4f79d4f582766d06125355175e0139ee2263ef8fc2f472"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "session-marquee.js",
+          "sha256": "4be43594a6f5c8d89cff86a48737123ee4cf026f4633d1cbbe470ce662783b4b"
+        },
+        {
+          "host": "opusloops.com",
+          "asset": "studio-selection.js",
+          "sha256": "cdc5e5e9142d0a4e79babc097cb593944210e81bc8f3f2dc7c06661867c65b72"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-actions.js",
+          "sha256": "20b30bb4feba96d0a93fc582424c3588b64aa80ab443cbd8c3c7456cfe68ae52"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-runner.js",
+          "sha256": "365884d2b30abe0d3a704b36b6dbf99a1b9c07d7c4b651e8d0ff19436884e66d"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "agent-schema.js",
+          "sha256": "4129f8fb1d69949da6e0ff36ac0b638c43bce6bdf0f5b2747981c70c9175894c"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "app.js",
+          "sha256": "a87fb6c58fc68eb7987a3159d0cb97aa022b72ca1bedfea988b1ea6ca50a4cf7"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "context-menu.js",
+          "sha256": "e41587bc927c3b95607c031e267be682699fd3936e0d0c8e84206d063491f258"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "interaction-theme.css",
+          "sha256": "73880854a47826d1dfff7e06e19fe23786e698b69dfae46b754cf3079274f958"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "menu-view.js",
+          "sha256": "bf09e18d47bfb5b4e510fff6257d6a09cfb07d59479bdaab42fea241851c1b71"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "release.json",
+          "sha256": "8796583a9258380afe4f79d4f582766d06125355175e0139ee2263ef8fc2f472"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "session-marquee.js",
+          "sha256": "4be43594a6f5c8d89cff86a48737123ee4cf026f4633d1cbbe470ce662783b4b"
+        },
+        {
+          "host": "www.opusloops.com",
+          "asset": "studio-selection.js",
+          "sha256": "cdc5e5e9142d0a4e79babc097cb593944210e81bc8f3f2dc7c06661867c65b72"
+        }
+      ],
+      "versions": {
+        "opusloops.com": {
+          "provider": "aws-amplify",
+          "commit": "b29049130629e8dd379f54b2a43c49d01c797de1",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000139",
+          "builtAt": "2026-10-18T16:46:36.914668Z"
+        },
+        "www.opusloops.com": {
+          "provider": "aws-amplify",
+          "commit": "b29049130629e8dd379f54b2a43c49d01c797de1",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000139",
+          "builtAt": "2026-10-18T16:46:36.914668Z"
+        }
+      }
+    },
+    "baseline": {
+      "name": "Untitled-session - 2026-10-18T124446.317.opusloop",
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    "setupMusicalDataAndOriginalFieldsVerified": true,
+    "nativeRubberBand": {
+      "selectedSlots": 6,
+      "occupied": 2,
+      "byteIdentical": true
+    },
+    "failedSelection": {
+      "reviewed": true,
+      "observed": "show_panel devices only; zero selected Session slots. Summary claiming a rectangle was treated as failed.",
+      "fixedBy": "0.146.1 independently bound Session selection contract and actual navigation receipt."
+    },
+    "downloads": [
+      {
+        "name": "Untitled-session - 2026-10-18T124834.556.opusloop",
+        "bytes": 2902,
+        "sha256": "a78a905c5f5afcb545d1f78008d76e42abb1c16ef252920aad83db28af07f1a6"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T124853.695.opusloop",
+        "bytes": 2902,
+        "sha256": "a78a905c5f5afcb545d1f78008d76e42abb1c16ef252920aad83db28af07f1a6"
+      },
+      {
+        "name": "Untitled-session - 2026-10-18T125014.936.opusloop",
+        "bytes": 1725,
+        "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+      }
+    ],
+    "originalRestoredByteIdentically": true
+  },
+  "followUp": {
+    "version": "0.146.1",
+    "status": "pending"
+  }
+}

@@ -136,3 +136,7 @@ The first 0.145 public copy request returned selection without a clipboard recei
 ### 0.146 Session Interaction Candidate
 
 Session pointer selection, context commands and Odesa rectangle/clear navigation now share the canonical placement selector. New range endpoints resolve aliases; clear selection retains the current view/panel/device or Arrangement focus. Context actions reuse existing batch edits and clipboard safeguards. Native local project/Undo checks and nine separate DOM-controller scenarios pass, including stale command rejection, rollback/scrolling, keyboard access, disabled state and narrow-menu bounds. The two reviewed real-provider selection canaries needed one repair each; public verification is pending. Full context-menu/native gesture coverage, batch rename/color and physical touch remain open.
+
+### 0.146.1 Selection Intent Candidate
+
+Production 0.146 native selection was read-only and correct; its model range request incorrectly returned only a Devices panel action. The original project was restored exactly. The follow-up binds unambiguous current named rectangle/all-clear requests, rejects semantically unrelated plans before execution and checks actual selected-slot/panel/focus receipts. 339 checks and fresh first-attempt reviewed operator cases pass. Authenticated public follow-up is pending. General compound language and full feature parity remain open.
