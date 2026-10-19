@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-19",
+  "release": "0.157.0",
+  "environment": "Authenticated production UI; real queued provider planning and execution; normal account allowance",
+  "allowanceBefore": 94,
+  "allowanceAfter": 93,
+  "sourceFile": "Core-Song-Native-Audit (1).opusloop",
+  "resultFile": "Core-Song-Native-Audit (7).opusloop",
+  "resultSha256": "33a33cb1a6f4ee9971c59b5bd4f89a6d4f39eefabfd784097c16d6f71787682e",
+  "reportedAppliedActions": 6,
+  "verdict": "FAILED_MUSICAL_INTENT",
+  "passed": {
+    "tempo128": true,
+    "scene3": true,
+    "clipName": true,
+    "pitches": true,
+    "durationAndVelocity": true,
+    "sameClipInArrangement": true,
+    "keysPan20Right": true,
+    "priorClipsPreserved": true,
+    "priorRegionsPreserved": true
+  },
+  "failures": [
+    {
+      "requirement": "Original tone",
+      "actual": {
+        "type": "poly",
+        "wave": "sine",
+        "attack": 0.008,
+        "decay": 0.18,
+        "sustain": 0.65,
+        "release": 0.25,
+        "cutoff": 8000,
+        "resonance": 0.7,
+        "detune": 0,
+        "transpose": 0,
+        "level": 0.23
+      },
+      "expected": null
+    },
+    {
+      "requirement": "four-bar clip",
+      "actual": 4,
+      "expected": 16
+    },
+    {
+      "requirement": "first beats of four bars",
+      "actual": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected": [
+        0,
+        4,
+        8,
+        12
+      ]
+    },
+    {
+      "requirement": "Arrangement bar 9",
+      "actual": 9,
+      "expected": 32
+    },
+    {
+      "requirement": "four-bar region",
+      "actual": 4,
+      "expected": 16
+    },
+    {
+      "requirement": "Bass -3 dB",
+      "actual": 0.7,
+      "expected": 0.4955620490688965
+    }
+  ],
+  "notes": [
+    "Applied/validated action receipts did not establish musical intent.",
+    "Test used only synthetic audio and MIDI; the microphone take stayed on localhost.",
+    "The original current production project was downloaded before replacing it; exact restoration is checked separately."
+  ],
+  "recovery": {
+    "oneUndoRestoredExactBaseline": true,
+    "baselineSha256": "202330da13b006f900ce8d9af185788ba49276e217410eaffc2c66437fdeb070",
+    "originalProductionRestoredExact": true,
+    "originalProductionBytes": 2247,
+    "originalProductionSha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
+    "originalProductionFile": "Test-Thuvee-1 (9).opusloop"
+  }
+}

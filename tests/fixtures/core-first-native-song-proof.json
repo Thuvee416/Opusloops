@@ -1,0 +1,251 @@
+{
+  "date": "2026-10-19",
+  "release": "0.157.0",
+  "sourceCommit": "5a5710136090b328bf8601b5411680b25a4293f8",
+  "environment": "Normal Chrome; actual UI on isolated localhost:4210; no auth/model stubs; no browser storage injection",
+  "opening": {
+    "openedSavedFile": {
+      "name": "Core-Tempo-Audit-20261019-X (2).opusloop",
+      "bytes": 5615,
+      "sha256": "35b6baf7b8a9713138f7983279a617b8c07d0f6e44d10a62b48532900735cce2"
+    },
+    "restoredDisplacedFile": {
+      "name": "Core-Tempo-Audit-20261019-X-Displaced (1).opusloop",
+      "bytes": 5625,
+      "sha256": "7c6aa5809e4a510797b5474e7ebe991e341a5c2525c757bbdeb5b21d1c805e2c"
+    },
+    "invalidFileKeptCurrent": true,
+    "sameFilenameRetrySucceeded": true
+  },
+  "song": {
+    "beforeClose": {
+      "name": "Core-Song-Native-Audit (4).opusloop",
+      "bytes": 4242828,
+      "sha256": "9d4172cda1ccc1bd9a3f411398e2cde76dcfc79ae770e66c6eb8bb5e5e91ad17"
+    },
+    "afterReopen": {
+      "name": "Core-Song-Native-Audit (5).opusloop",
+      "bytes": 4242828,
+      "sha256": "9d4172cda1ccc1bd9a3f411398e2cde76dcfc79ae770e66c6eb8bb5e5e91ad17"
+    },
+    "continuedEditing": {
+      "name": "Core-Song-Native-Audit (6).opusloop",
+      "bytes": 4243006,
+      "sha256": "3d6bc1d7015d6ed6d8676d6f0b5daa78b5ce416295048f056c0eb7436993b4be"
+    }
+  },
+  "checks": {
+    "tracks": [
+      "Drums",
+      "Bass",
+      "Keys"
+    ],
+    "regionsAfterReopenEdit": 9,
+    "recordedMidiPitches": [
+      60,
+      64,
+      67,
+      71
+    ],
+    "recordedMidiPositiveDurations": true,
+    "recordedAudio": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16,
+      "frames": 441000,
+      "seconds": 10.0,
+      "peak": 0.94140625,
+      "rms": 0.1972327415781463,
+      "clippedSamples": 0
+    },
+    "importedWaveByteIdentical": true,
+    "midiTakeUndoRemovedAndRedoRestored": true,
+    "scenePlaybackMuteSoloObserved": true,
+    "loopPlaybackStayedWithinBar16": true,
+    "keysVolumeEnvelope": {
+      "enabled": true,
+      "points": [
+        {
+          "beat": 0,
+          "value": 0.25,
+          "curve": "linear"
+        },
+        {
+          "beat": 32,
+          "value": 0.4,
+          "curve": "linear"
+        },
+        {
+          "beat": 68,
+          "value": 0,
+          "curve": "linear"
+        }
+      ]
+    },
+    "bassInstrument": {
+      "type": "poly",
+      "wave": "sawtooth",
+      "attack": 0.005,
+      "decay": 0.22,
+      "sustain": 0.35,
+      "release": 0.12,
+      "cutoff": 700,
+      "resonance": 0.7,
+      "detune": 0,
+      "transpose": 0,
+      "level": 0.23
+    },
+    "keysInstrument": {
+      "type": "poly",
+      "wave": "triangle",
+      "attack": 0.6,
+      "decay": 0.5,
+      "sustain": 0.8,
+      "release": 1.5,
+      "cutoff": 2800,
+      "resonance": 0.7,
+      "detune": 0,
+      "transpose": 0,
+      "level": 0.23
+    },
+    "keysDevices": [
+      {
+        "id": "7b1b26ea-386d-462e-88db-0c42d0e6955f",
+        "type": "reverb",
+        "enabled": true,
+        "params": {
+          "decay": 1.8,
+          "mix": 0.2
+        }
+      }
+    ]
+  },
+  "outputs": {
+    "mix": {
+      "name": "Core-Song-Native-Audit.wav",
+      "bytes": 7991848,
+      "sha256": "b679000e3692ea026542ce9b9cf9ab3f793f27cc435602fcb407b934f3062ab5",
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16,
+      "frames": 1997951,
+      "seconds": 45.30501133786848,
+      "peak": 0.583709716796875,
+      "rms": 0.07835664844559828,
+      "clippedSamples": 0
+    },
+    "stemZip": {
+      "name": "Core-Song-Native-Audit-stems.zip",
+      "bytes": 23978167,
+      "sha256": "f8d6af626f90c51e2cc714f3a659ff0a1b5126c5ccdbd9f786203d8cb6d0d516"
+    },
+    "stems": [
+      {
+        "name": "01-track-Drums.wav",
+        "rate": 44100,
+        "channels": 2,
+        "bits": 16,
+        "frames": 1997951,
+        "seconds": 45.30501133786848,
+        "peak": 0.659759521484375,
+        "rms": 0.07181634167130223,
+        "clippedSamples": 0
+      },
+      {
+        "name": "02-track-Bass.wav",
+        "rate": 44100,
+        "channels": 2,
+        "bits": 16,
+        "frames": 1997951,
+        "seconds": 45.30501133786848,
+        "peak": 0.09661865234375,
+        "rms": 0.016908431565052152,
+        "clippedSamples": 0
+      },
+      {
+        "name": "03-track-Keys.wav",
+        "rate": 44100,
+        "channels": 2,
+        "bits": 16,
+        "frames": 1997951,
+        "seconds": 45.30501133786848,
+        "peak": 0.114105224609375,
+        "rms": 0.019737630441269374,
+        "clippedSamples": 0
+      }
+    ],
+    "manifest": {
+      "format": "opus-loops-stems",
+      "version": 1,
+      "project": "Core Song Native Audit",
+      "bpm": 120,
+      "settings": {
+        "sampleRate": 44100,
+        "bitDepth": 16,
+        "normalize": false,
+        "dither": "none",
+        "source": "auto",
+        "includeTail": true
+      },
+      "selection": {
+        "mode": "all",
+        "included": [
+          "track:e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+          "track:b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+          "track:81b78bf3-320e-4ea1-ba3c-536d4c56e0f8"
+        ],
+        "excluded": []
+      },
+      "automationOverrides": [],
+      "notes": "Post-channel audio before master gain/compression. Track files exclude return audio but include incoming routed tracks. Bus files overlap their source files; do not sum both. To reconstruct the pre-master signal, use only tracks whose mainOutput is master, plus returns, without independent normalization/dither. Return files contain all active sends. Current mute/solo and crossfade apply. Shorter tails are padded with zero samples. Normalization/dither apply independently to each channel. Channel selection chooses files only: buses and returns retain all routed inputs and sends. A subset may not reconstruct the complete mix.",
+      "channels": [
+        {
+          "file": "01-track-Drums.wav",
+          "type": "track",
+          "id": "e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+          "name": "Drums",
+          "mute": false,
+          "solo": false,
+          "group": false,
+          "parentId": null,
+          "crossfade": "none",
+          "mainOutput": "master",
+          "receivesTrackOutputs": []
+        },
+        {
+          "file": "02-track-Bass.wav",
+          "type": "track",
+          "id": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+          "name": "Bass",
+          "mute": false,
+          "solo": false,
+          "group": false,
+          "parentId": null,
+          "crossfade": "none",
+          "mainOutput": "master",
+          "receivesTrackOutputs": []
+        },
+        {
+          "file": "03-track-Keys.wav",
+          "type": "track",
+          "id": "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+          "name": "Keys",
+          "mute": false,
+          "solo": false,
+          "group": false,
+          "parentId": null,
+          "crossfade": "none",
+          "mainOutput": "master",
+          "receivesTrackOutputs": []
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Local native workflow does not establish authenticated production Tempo execution.",
+    "Non-silent valid PCM and file alignment are verified; subjective listening and professional mix quality are not.",
+    "Physical MIDI/audio input latency and other browsers/devices remain unverified.",
+    "Microphone media and containing projects remain local; only aggregate technical measurements are recorded here.",
+    "Stems are before master gain/compression; a direct PCM sum is not a post-master reconstruction oracle."
+  ]
+}
