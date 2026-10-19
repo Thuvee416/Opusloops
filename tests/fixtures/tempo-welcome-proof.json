@@ -132,5 +132,11 @@
       "byteIdentical": true
     },
     "repositoryVisibility": "PRIVATE"
+  },
+  "readabilityFollowUp": {
+    "release": "0.153.1",
+    "nativePreviewChecked": true,
+    "change": "Keep landscape transparent through supporting copy; no JavaScript changes.",
+    "welcomeCssSha256": "7a530b5614c517cbf62a8643e08200f11bb594b61cc912842b0434333ae90576"
   }
 }

@@ -742,3 +742,7 @@ Native local Chrome verified desktop composition and canvas rendering, a 390×84
 ### 0.153 Live Welcome Verification
 
 Amplify job 157 succeeded for `77197a5ccf04899e47a7831e1774d5d7714d7cb9`. Apex and www both served 0.153.0 with eleven exact intended assets, including welcome JavaScript/CSS, GradientASCII, icons, model metadata, artwork, logo and license notice. Native signed-in production displayed the new tagline, featured Tempo and secondary collapsed future models, with one active artwork canvas. Choosing the tempo example closed the modal, released the canvas and focused the inline Odesa draft; BPM remained 120, playback stayed stopped and allowance remained 95/day. The draft was cleared without submission. Before/after downloaded projects were byte identical: 1,722 bytes with SHA256 `2e06224d9b6cf8e9a02104b46eed75bac5e9f7a0d10b4b15cbac68c9debbc92d`. New page errors were empty. The repository remains private. Evidence is in `tests/fixtures/tempo-welcome-proof.json`; these interaction checks do not claim improved inference fidelity or DAW parity.
+
+### 0.153.1 — Hero Copy Readability
+
+The static landscape mask stays transparent through the supporting copy, so the supplied artwork and optional animated field frame the tagline without reducing paragraph contrast. Native Chrome preview checked the final composition; JavaScript, draft behavior and the verified project-preservation path are unchanged. Final publication is checked against the exact stylesheet and release metadata.
