@@ -48,7 +48,7 @@ import {installRegionMarquee} from './region-marquee.js';
 import {copyRegionSelection,pasteRegionSelection} from './region-clipboard.js';
 import {planRegionGroup,planRegionTrim,editRegionGroup} from './arrangement.js';
 import {loadSession,recoveryProject} from './session-recovery.js';
-import {readProjectFile,replaceStoredProject} from './project-lifecycle.js';
+import {readProjectFile,replaceStoredProject,largeProjectMessage} from './project-lifecycle.js';
 import {instrumentChoice} from './instrument-choice.js';
 import {installTimeSelection,timeSelectionEdge,scrollTimeSelection} from './time-selection.js';
 import {copyArrangementTime,pasteArrangementTime} from './time-clipboard.js';
@@ -517,7 +517,8 @@ $('restore-previous-set').onclick=lifecycleRun(async()=>{const previous=await re
 const openTemplates=installTemplateDialog({getProject:()=>project,exclusive:withSetLock,replaceSet,writeDefault:p=>writeSets([['default',p]]),download,setStatus});
 $('save-template').onclick=run(()=>openTemplates('save'));$('open-templates').onclick=run(()=>openTemplates());
 $('save').onclick=run(()=>executeStudioCommand({name:'save_project'}));
-$('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const input=e.target,file=input.files[0];try{if(!file)return;await withSetLock(async()=>{const next=await readProjectFile(file,validateProject);await replaceSet(next);setStatus('Project opened. File → Open Live Set Backups → Restore Previous Set can restore the replaced set.');});}finally{input.value='';}});
+function confirmLargeProject(info){return confirm(largeProjectMessage(info));}
+$('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const input=e.target,file=input.files[0];try{if(!file)return;await withSetLock(async()=>{const next=await readProjectFile(file,validateProject,{confirmLarge:confirmLargeProject});await replaceSet(next);setStatus('Project opened. File → Open Live Set Backups → Restore Previous Set can restore the replaced set.');});}catch(error){if(error.name==='AbortError')setStatus('Project Opening Cancelled. Your Current Set Is Unchanged.');else throw error;}finally{input.value='';}});
 $('export').onclick=run(()=>executeStudioCommand({name:'export_wav',args:readDeliveryOptions(true)}));
 $('help').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();
 document.addEventListener('keydown',e=>{
@@ -1410,7 +1411,7 @@ async function exportStudioWav(options,signal){
 }
 async function executeStudioCommand(x,signal,prepared){
  signal?.throwIfAborted();const a=x.args||{};
- if(x.name==='project_io')return runProjectIO(prepared,{getProject:()=>project,getHistory:()=>historyState(history),guard:prepared.assertCurrent,chooseFile:prepared.chooseFile,readDefault:()=>readSet('default'),signal,
+ if(x.name==='project_io')return runProjectIO(prepared,{getProject:()=>project,getHistory:()=>historyState(history),guard:prepared.assertCurrent,chooseFile:prepared.chooseFile,confirmLarge:confirmLargeProject,readDefault:()=>readSet('default'),signal,
   decode:async bytes=>{const context=new AudioContext();try{return await context.decodeAudioData(bytes);}finally{await context.close();}},
   apply:async(next,options)=>withSetLock(async()=>{signal.throwIfAborted();if(options.replacement)await replaceSet(next,options);else{install(next,true);if(options.selection){selection=options.selection;sessionSelection=[{...selection}];sessionAnchor=sessionSelection[0];selectedRegion=null;}if(options.clip&&options.buffer)engine.cacheAudio(options.clip,options.buffer);render();changed();options.committed();}})});
  if(x.name==='history')return moveStudioHistory(a.action,a.steps??1,prepared);

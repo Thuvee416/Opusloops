@@ -58,3 +58,36 @@ test('a real embedded-audio/MIDI project survives opening, restore and another p
  const invalid=structuredClone(song);invalid.arrangement[0].clipId='missing-audio';const before=JSON.stringify([...store]);
  await assert.rejects(()=>replace(invalid));assert.equal(JSON.stringify([...store]),before);assert.equal(JSON.stringify(current),bytes);
 });
+
+
+test('large project approval precedes reading and preserves the complete parsed set',async()=>{
+ const {readProjectFile,LARGE_PROJECT_BYTES,largeProjectMessage}=await api(),{coreSongProject}=await import('./fixtures/core-song-project.mjs'),{validateProject}=await import('../web-studio/model.js');
+ const {project:song}=coreSongProject(),bytes=JSON.stringify(song),order=[];
+ // A file double exercises the former size gate without allocating 150 MB in each test.
+ const file={size:LARGE_PROJECT_BYTES+1,text:async()=>{order.push('read');return bytes;}};
+ const next=await readProjectFile(file,validateProject,{confirmLarge:async info=>{order.push('confirm');assert.equal(info.size,file.size);return true;}});
+ assert.deepEqual(order,['confirm','read']);assert.equal(JSON.stringify(next),bytes);assert.match(largeProjectMessage({size:file.size}),/151 MB/);
+});
+
+test('large file decline, missing approval and abort do not read or validate content',async()=>{
+ const {readProjectFile,LARGE_PROJECT_BYTES}=await api();let reads=0,validations=0;
+ const file={size:LARGE_PROJECT_BYTES+1,text:async()=>{reads++;return '{}';}},validator=p=>{validations++;return p;};
+ for(const value of [false,undefined,'yes'])await assert.rejects(()=>readProjectFile(file,validator,{confirmLarge:async()=>value}),{name:'AbortError'});
+ const controller=new AbortController();await assert.rejects(()=>readProjectFile(file,validator,{signal:controller.signal,confirmLarge:async()=>{controller.abort();return true;}}),{name:'AbortError'});
+ assert.equal(reads,0);assert.equal(validations,0);
+});
+
+test('ordinary file threshold needs no confirmation; approved large input still requires valid content',async()=>{
+ const {readProjectFile,LARGE_PROJECT_BYTES}=await api();let prompts=0;
+ const options={confirmLarge:async()=>{prompts++;return true;}};
+ await readProjectFile({size:LARGE_PROJECT_BYTES,text:async()=>JSON.stringify(incoming())},validate,options);assert.equal(prompts,0);
+ await assert.rejects(()=>readProjectFile({size:LARGE_PROJECT_BYTES+1,text:async()=>'{broken'},validate,options),SyntaxError);
+ await assert.rejects(()=>readProjectFile({size:LARGE_PROJECT_BYTES+1,text:async()=>'{"name":"Invalid"}'},validate,options),/Invalid project/);
+ assert.equal(prompts,2);
+ for(const size of [-1,NaN,Infinity,undefined])await assert.rejects(()=>readProjectFile({size,text:()=>assert.fail('must not read')},validate,options),/Invalid Project File Size/);
+});
+
+test('aborting while file content is loading never validates or replaces a project',async()=>{
+ const {readProjectFile}=await api(),controller=new AbortController();let validations=0;
+ await assert.rejects(()=>readProjectFile({size:10,text:async()=>{controller.abort();return '{}';}},()=>validations++,{signal:controller.signal}),{name:'AbortError'});assert.equal(validations,0);
+});

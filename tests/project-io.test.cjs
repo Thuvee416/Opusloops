@@ -4,7 +4,7 @@ async function setup(){
  const api={...await import('../web-studio/project-io.js'),...await import('../web-studio/model.js'),...await import('../web-studio/history.js'),...await import('../web-studio/history-control.js'),...await import('../web-studio/agent-runner.js')};
  let p=api.normalizeStudioProject(api.emptyProject()),h=new api.History(p),saved=null,playing=false;const original=structuredClone(p),store=new Map();let writes=0;
  const plan=(actions,opts={})=>api.prepareAgentPlan(p,actions,{historyState:api.historyState(h),...opts});
- const execute=async(c,signal,prepared)=>{if(c.name==='stop'){playing=false;return;}if(c.name==='save_project'){saved=structuredClone(p);return {download:'Saved.opusloop'};}return api.runProjectIO(prepared,{getProject:()=>p,getHistory:()=>api.historyState(h),guard:prepared.assertCurrent,chooseFile:options.chooseFile,readDefault:async()=>options.defaultProject,decode:async()=>({duration:2}),signal,apply:async(next,o)=>{if(options.failWrite)throw Error('Storage failed');if(o.replacement){writes++;store.set('previous',structuredClone(p));store.set('current',structuredClone(next));p=next;h=new api.History(p);}else{p=next;h.commit(p);}o.committed();if(options.cancelAfterCommit)options.controller.abort();}});};
+ const execute=async(c,signal,prepared)=>{if(c.name==='stop'){playing=false;return;}if(c.name==='save_project'){saved=structuredClone(p);return {download:'Saved.opusloop'};}return api.runProjectIO(prepared,{getProject:()=>p,getHistory:()=>api.historyState(h),guard:prepared.assertCurrent,chooseFile:options.chooseFile,confirmLarge:options.confirmLarge,readDefault:async()=>options.defaultProject,decode:async()=>({duration:2}),signal,apply:async(next,o)=>{if(options.failWrite)throw Error('Storage failed');if(o.replacement){writes++;store.set('previous',structuredClone(p));store.set('current',structuredClone(next));p=next;h=new api.History(p);}else{p=next;h.commit(p);}o.committed();if(options.cancelAfterCommit)options.controller.abort();}});};
  const options={chooseFile:async()=>null},run=(actions,opts={})=>api.runAgentPlan(plan(actions,opts),{getProject:()=>p,getHistory:()=>api.historyState(h),expected:JSON.stringify(p),locked:mode=>mode==='edit'&&playing,commit:()=>assert.fail('File operations commit through shared I/O'),execute,signal:options.controller?.signal??new AbortController().signal});
  return {...api,original,options,store,plan,run,get:()=>p,history:()=>h,saved:()=>saved,writes:()=>writes,play:()=>playing=true,edit:()=>{p={...p,bpm:132};h.commit(p);}};
 }
@@ -22,3 +22,19 @@ test('import replacement must be explicit and negations cannot authorize it',asy
 test('playback must stop before any file chooser or project replacement',async()=>{const t=await setup();t.play();let choices=0;t.options.chooseFile=async()=>{choices++;return null;};await assert.rejects(()=>t.run([command({action:'open'})]),/Stop playback/);assert.equal(choices,0);await t.run([{type:'command',args:{name:'stop'}},command({action:'new',name:'After Stop'})]);assert.equal(t.get().name,'After Stop');});
 
 test('MIDI file tempo requires explicit intent and cannot override Keep Current Tempo',async()=>{const t=await setup();assert.equal(t.permitsFileTempo('Import MIDI and keep the current tempo'),false);assert.equal(t.permitsFileTempo('Use the MIDI file initial tempo'),true);assert.equal(t.permitsFileTempo("Do not use the file tempo"),false);assert.throws(()=>t.plan([command({action:'import_midi',useTempo:true})]),/Preserve the current tempo/);});
+
+
+test('Odesa large-project confirmation preserves cancellation, stale-history and successful replacement semantics',async()=>{
+ for(const mode of ['approve','decline','stale','abort']){
+  const t=await setup();t.options.controller=new AbortController();let reads=0,confirms=0;
+  const next={...structuredClone(t.original),name:'Large Embedded Set'};
+  t.options.chooseFile=async()=>({name:'Large.opusloop',size:151*1024*1024,text:async()=>{reads++;return JSON.stringify(next);}});
+  t.options.confirmLarge=async info=>{confirms++;assert.equal(info.size,151*1024*1024);if(mode==='stale')t.edit();if(mode==='abort')t.options.controller.abort();return mode!=='decline';};
+  if(mode==='approve'){
+   const result=await t.run([command({action:'open'})]);assert.deepEqual(t.get(),next);assert.deepEqual(t.store.get('previous'),t.original);assert.equal(result.observations[0].result.action,'open');assert.equal(t.writes(),1);assert.equal(reads,1);
+  }else{
+   await assert.rejects(()=>t.run([command({action:'open'})]));assert.equal(reads,0);assert.equal(t.writes(),0);assert.equal(t.get().name,t.original.name);assert.equal(t.get().bpm,mode==='stale'?132:t.original.bpm);
+  }
+  assert.equal(confirms,1);
+ }
+});

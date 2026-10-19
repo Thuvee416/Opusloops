@@ -20,7 +20,7 @@ test('capacity, raw-byte and portable-project limits reject before any reads or 
  const t=await api(),p=t.emptyProject(),before=JSON.stringify(p),file={size:1024};assert.equal(t.stemImportRequest(p,[file],0).count,1);
  for(const files of [[],Array(16).fill(file),[{size:0}],[{size:t.STEM_FILE_BYTES+1}],Array(2).fill({size:60*1024*1024})])assert.throws(()=>t.stemImportRequest(p,files,0));assert.throws(()=>t.stemImportRequest(p,[file],NaN));assert.equal(JSON.stringify(p),before);
  // UTF-8 project size is checked, not only the sum of the newly selected file sizes.
- const oversized={...p,name:'x'.repeat(20*1024*1024)};assert.throws(()=>t.stemImportRequest(oversized,[{size:50*1024*1024},{size:50*1024*1024}],0),/Portable Project/);
+ const oversized={...p,name:'x'.repeat(20*1024*1024)};assert.throws(()=>t.stemImportRequest(oversized,[{size:50*1024*1024},{size:50*1024*1024}],0),/Stem Import Project Budget/);
 });
 test('batch decode is sequential, reports progress and stops on cancellation, stale context or a later unreadable file',async()=>{
  const t=await api(),file=n=>({name:n+'.wav',size:8,arrayBuffer:async()=>new ArrayBuffer(8)}),files=[file('A'),file('B')],progress=[];let reads=0,checks=0;const decoded=await t.readStemFiles(files,async()=>{reads++;return source('',2).buffer;},{check:()=>checks++,onProgress:p=>progress.push(p.name)});assert.equal(decoded.length,2);assert.equal(reads,2);assert.equal(checks,4);assert.deepEqual(progress,['A.wav','B.wav']);

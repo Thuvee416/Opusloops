@@ -18,7 +18,7 @@ export function projectIOIntent(project,args){
  return structuredClone(args);
 }
 export function normalizeStudioProject(project){const p=structuredClone(validateProject(project));p.format='opus-loops';p.returns??=[];p.sceneNames=sceneNames(p);p.transport??=defaultTransport();for(const t of p.tracks)t.devices??=[];return validateProject(p);}
-export async function runProjectIO(prepared,{getProject,getHistory,guard,chooseFile,readDefault,decode,apply,signal}){
+export async function runProjectIO(prepared,{getProject,getHistory,guard,chooseFile,confirmLarge,readDefault,decode,apply,signal}){
  const check=()=>{signal.throwIfAborted();guard();assertHistoryState(prepared.binding,getHistory());};check();
  const intent=projectIOIntent(getProject(),prepared.intent),original=structuredClone(getProject());
  let candidate,file,source;
@@ -26,7 +26,7 @@ export async function runProjectIO(prepared,{getProject,getHistory,guard,chooseF
  else {
   file=await chooseFile(intent.action,{signal,assertCurrent:check});check();
   if(!file)throw new DOMException('File selection cancelled','AbortError');
-  if(intent.action==='open')candidate={next:await readProjectFile(file,validateProject)};
+  if(intent.action==='open')candidate={next:await readProjectFile(file,validateProject,{confirmLarge:confirmLarge?async info=>{check();const approved=await confirmLarge(info);check();return approved;}:undefined,signal})};
   else if(intent.action==='import_audio'){source=await readAudioImport(file,decode,{signal});candidate=prepareAudioImport(original,source,intent);}
   else {source=await readMidiImport(file,{signal});candidate=prepareMidiImport(original,source,intent);}
  }

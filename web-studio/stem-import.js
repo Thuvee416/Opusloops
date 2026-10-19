@@ -8,8 +8,8 @@ export function stemImportRequest(project,files,start){
  if(!Number.isFinite(start)||start<0||start>=16384)throw Error('Choose An Import Start Within The Arrangement.');
  let total=0;for(const file of files){if(!Number.isFinite(file.size)||file.size<=0||file.size>STEM_FILE_BYTES)throw Error('Each Stem Must Be A Nonempty Audio File Up To 64 MB.');total+=file.size;}
  if(total>STEM_TOTAL_BYTES)throw Error('Choose At Most 100 MB Of Audio Per Import.');
- // Retain portable-project reopening within its existing 150 MB boundary.
- if(new Blob([JSON.stringify(project)]).size+Math.ceil(total/3)*4+files.length*2048>PORTABLE_PROJECT_BYTES)throw Error('These Files Would Exceed The 150 MB Portable Project Limit. Choose Fewer Or Smaller Files.');
+ // Keep this batch importer within its conservative portable-project budget.
+ if(new Blob([JSON.stringify(project)]).size+Math.ceil(total/3)*4+files.length*2048>PORTABLE_PROJECT_BYTES)throw Error('These Files Would Exceed The 150 MB Stem Import Project Budget. Choose Fewer Or Smaller Files.');
  return {start,count:files.length,totalBytes:total};
 }
 export async function readStemFiles(files,decode,{signal,check=()=>{},onProgress=()=>{}}={}){
@@ -30,5 +30,5 @@ export function prepareStemImport(project,sources,{start=0}={}){
   const clip={id:uid(),name:String(source.name||'Audio Stem').slice(0,200),kind:'audio',beats:source.duration*next.bpm/60,sourceBpm:next.bpm,data:btoa(binary)};
   const region={id:uid(),clipId:clip.id,trackId:track.id,start,length:clip.beats,offset:0};next.clips[clip.id]=clip;next.arrangement.push(region);imports.push({trackId:track.id,clip,regionId:region.id,buffer:source.buffer});
  }
- validateProject(next);if(new Blob([JSON.stringify(next)]).size>PORTABLE_PROJECT_BYTES)throw Error('The Imported Set Would Exceed The Portable Project Size Limit.');return {next,imports};
+ validateProject(next);if(new Blob([JSON.stringify(next)]).size>PORTABLE_PROJECT_BYTES)throw Error('The Imported Set Would Exceed The Stem Import Project Size Budget.');return {next,imports};
 }
