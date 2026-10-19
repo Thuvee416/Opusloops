@@ -1,5 +1,7 @@
 // One monochrome vector set for transport, editing and workspace navigation.
 const shapes={
+ notes:'<path d="M6 11V3l7-1v8M6 5l7-1"/><ellipse cx="4" cy="12" rx="2" ry="1.5"/><ellipse cx="11" cy="11" rx="2" ry="1.5"/>',
+ download:'<path d="M8 2v8m-3-3 3 3 3-3M3 11v3h10v-3"/>',
  check:'<path d="m3 8 3 3 7-7"/>' ,
  play:'<path d="m5 3 8 5-8 5Z" fill="currentColor" stroke="none"/>',
  pause:'<path d="M5 3v10M11 3v10" stroke-width="3"/>',

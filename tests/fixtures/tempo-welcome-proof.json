@@ -1,0 +1,57 @@
+{
+  "release": "0.153.0",
+  "scope": "Welcome modal design, optional artwork lifecycle and request drafting; not an inference/model change.",
+  "nativeLocal": {
+    "browser": "Chrome",
+    "desktopModal": {
+      "width": 820,
+      "height": 764.390625,
+      "canvas": {
+        "width": 798,
+        "height": 495
+      }
+    },
+    "mobilePreview": {
+      "iframeWidth": 390,
+      "iframeHeight": 844,
+      "taglineAndTempoVisibleInitially": true,
+      "enterStudioClosed": true
+    },
+    "closeX": true,
+    "escape": true,
+    "spaceDidNotStartPlayback": true,
+    "canvasCountAfterClose": 0,
+    "upcomingModelsExpandCollapse": true,
+    "exampleDraft": {
+      "value": "Set the tempo to 124 BPM.",
+      "focusedInlineOdesa": true,
+      "submitted": false,
+      "bpmAfter": 120
+    },
+    "noWebGL": {
+      "controlledFixture": true,
+      "canvasCount": 0,
+      "dialogUsable": true
+    },
+    "reducedMotion": {
+      "controlledPreferenceFixture": true,
+      "canvasCount": 0,
+      "animation": "none",
+      "osSettingChanged": false
+    },
+    "consoleErrors": []
+  },
+  "developmentFindings": [
+    "A local project comparison across normal reload differed in fresh demo UUIDs; it is not used as unchanged-project proof. Persisted production project verification is a separate post-release check.",
+    "Existing welcome browser-test close checks now wait for the deliberate 160ms exit transition."
+  ],
+  "artifactValidation": "passed",
+  "sourceSha256": {
+    "web-studio/welcome.js": "3f89e231a8ef9250fc398fcd349c3a561c369816eb4bbe78ba93372c0b7d0a9d",
+    "web-studio/welcome.css": "9c92d98a6608ab29ac42bda968ba3f542b84576134e6466130b03934c8438372",
+    "web-studio/gradient-ascii.js": "f757cd656fa016b396eb20dd7fa536b787d117aecf81b1afb513a455c14a0bd1",
+    "web-studio/icons.js": "ee196e975576964a63062697c8d53325b688e1dc4f0194087a7c4d1f2e920905",
+    "web-studio/release.json": "cb4d0471e5e8c969f07e0c004e43f8905ff2e80e17018fc939990730f77b1743"
+  },
+  "production": "To be verified after hosting deployment."
+}

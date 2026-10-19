@@ -339,7 +339,12 @@ const link = (gl, fragmentSource) => {
   const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
   const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
   const program = gl.createProgram();
-  if (!vertex || !fragment || !program) return null;
+  if (!vertex || !fragment || !program) {
+    if (vertex) gl.deleteShader(vertex);
+    if (fragment) gl.deleteShader(fragment);
+    if (program) gl.deleteProgram(program);
+    return null;
+  }
   gl.attachShader(program, vertex);
   gl.attachShader(program, fragment);
   gl.linkProgram(program);
@@ -487,13 +492,18 @@ export const mountGradientASCII = (container, {
       depth: false,
       stencil: false
     });
-    if (!container || !canvas || !gl) return undefined;
+    if (!container || !canvas || !gl) { canvas.remove(); return undefined; }
 
     const field = link(gl, FIELD);
     const halo = link(gl, HALO);
     const blur = link(gl, BLUR);
     const composite = link(gl, COMPOSITE);
-    if (!field || !halo || !blur || !composite) return undefined;
+    if (!field || !halo || !blur || !composite) {
+      [field, halo, blur, composite].forEach(item => { if (item) gl.deleteProgram(item.program); });
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      canvas.remove();
+      return undefined;
+    }
     const vao = gl.createVertexArray();
     const fieldTarget = createTarget(gl, 2);
     const haloA = createTarget(gl, 1);
