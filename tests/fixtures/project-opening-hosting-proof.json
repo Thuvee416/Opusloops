@@ -1,0 +1,50 @@
+{
+  "commit": "5a5710136090b328bf8601b5411680b25a4293f8",
+  "job": "164",
+  "hosting": "SUCCEED",
+  "sites": [
+    {
+      "host": "opusloops.com",
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "5a5710136090b328bf8601b5411680b25a4293f8",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000164",
+        "builtAt": "2026-10-19T16:03:24.085929Z"
+      },
+      "release": {
+        "version": "0.157.0",
+        "baseSourceCommit": "46567dbb313ff68ce827784c88efde10f7c87c30"
+      },
+      "assetHashes": {
+        "app.js": "2a7856b93092695e417b027e44e0a850ed49a730417d0516b35deb02c463951e",
+        "project-lifecycle.js": "c128436f9e52cef52dfcf8cb6437fd71ddc49b681796875bf4ef149c8cc2ff47",
+        "release.json": "f3e83cb0f59eafe273cd87cebfa2610bc98475563f2f57368410a49ecdc1de2a"
+      }
+    },
+    {
+      "host": "www.opusloops.com",
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "5a5710136090b328bf8601b5411680b25a4293f8",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000164",
+        "builtAt": "2026-10-19T16:03:24.085929Z"
+      },
+      "release": {
+        "version": "0.157.0",
+        "baseSourceCommit": "46567dbb313ff68ce827784c88efde10f7c87c30"
+      },
+      "assetHashes": {
+        "app.js": "2a7856b93092695e417b027e44e0a850ed49a730417d0516b35deb02c463951e",
+        "project-lifecycle.js": "c128436f9e52cef52dfcf8cb6437fd71ddc49b681796875bf4ef149c8cc2ff47",
+        "release.json": "f3e83cb0f59eafe273cd87cebfa2610bc98475563f2f57368410a49ecdc1de2a"
+      }
+    }
+  ],
+  "nativeBrowserVerified": false
+}
