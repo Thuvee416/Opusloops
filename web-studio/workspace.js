@@ -41,7 +41,7 @@ $('#arrangement-view').insertBefore(tools,$('#timeline'));
 for(const [title,selector] of [['View','#viewport-controls'],['Time edits','#time-edit-controls'],['Locators','#locator-controls'],['MIDI range','#midi-range-controls'],['Automation','.automation-editor']]){const group=document.createElement('details');group.className='arrangement-tool';const summary=document.createElement('summary');summary.textContent=title;group.append(summary,$(selector));tools.append(group);group.addEventListener('toggle',()=>{if(group.open)for(const other of tools.children)if(other!==group)other.open=false;});}
 openPanel('clip');
 // Track labels double as a direct route to the selected device chain.
-$('#mixer').addEventListener('click',e=>{const button=e.target.closest('[data-open-devices]');if(!button)return;const select=$('#device-target');select.value=button.dataset.openDevices;select.dispatchEvent(new Event('change',{bubbles:true}));openPanel('devices');});
+$('#mixer').addEventListener('click',e=>{const button=e.target.closest('[data-open-devices]');if(!button||button.hasAttribute('data-track-select'))return;const select=$('#device-target');select.value=button.dataset.openDevices;select.dispatchEvent(new Event('change',{bubbles:true}));openPanel('devices');});
 
 $('#close-browser').onclick=()=>{document.body.classList.remove('browser-mobile-open');document.body.classList.add('browser-collapsed');$('#toggle-browser').setAttribute('aria-expanded','false');$('#toggle-browser').focus();};
 

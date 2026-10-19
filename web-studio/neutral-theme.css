@@ -100,3 +100,4 @@ body.studio-shell{grid-template-rows:49px 32px minmax(0,1fr) 22px}
 .studio-shell .channel input.mix-value:hover{border-color:#85898d;background:#c8cacc}.studio-shell .channel input.mix-value:focus{outline:1px solid var(--accent);background:#e1e3e4;border-color:transparent}
 .studio-shell #mixer .channel label:has([data-volume]) .mix-value,.studio-shell #mixer .channel label:has(#master) .mix-value{position:relative;left:-12px}.studio-shell #mixer .channel label:has([data-pan]) .mix-value{position:relative;left:-3px}
 .studio-shell .return-channel input.mix-value{display:inline-block;float:right;margin:0}
+.studio-shell .channel-name.track-selected{background:#cdd3d5;box-shadow:inset 0 -2px var(--accent);color:#22292c}
