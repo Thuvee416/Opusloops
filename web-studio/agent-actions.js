@@ -1,5 +1,5 @@
 import {SCENE_ADDRESSING_VERSION,normalizeAgentActions} from './agent-addressing.js';
-import {musicalGain} from './musical-units.js';
+import {MUSICAL_UNITS_VERSION,BEATS_PER_BAR,musicalGain} from './musical-units.js';
 import {instrumentChoice} from './instrument-choice.js';
 import {editClipProperties} from './clip-properties.js';
 import {setSlotActive} from './slot-metadata.js';
@@ -37,11 +37,11 @@ export const agentActions={
  region_fades:'{ids:[existing Arrangement REGION IDs],fadeIn? (beats),fadeOut? (beats)} set audio/generated-loop region edge fades. Durations are independent, 0..each region length; 0 clears an edge. Linear fades cannot overlap each other or cross source-loop boundaries; values outside those bounds reject atomically. Excludes MIDI. Does not change source clips, source offsets, mixer automation or Session playback; one atomic Undo. Split/time-cropped fades retain original gain segments; setting a duration resets that edge to a full 0-to-1 or 1-to-0 fade',
  project:'{name?,bpm?,master?,transport?:{loopEnabled,loopStart,loopEnd,metronome}}',
  track:'{id,changes:{name?,volume?(linear 0..1),pan?(-1..1),mute?,solo?,output?:master|sendsOnly|track:ID (regular destination input after source effects/fader/pan; accepts track:$alias)}} regular buses support Solo; returns support name/volume/pan/mute, but not Solo or redirected main outputs',
- add_track:'{name,ref? (unique $alias for subsequent actions),preset? (Init|Warm bass|Soft pad|Bright pluck),volume? (linear 0..1; use 1 for a unity bus),pan? (-1..1),output?:master|sendsOnly|track:ID} omit preset for an empty audio bus; initial mix values are direct args, not changes',
+ add_track:'{name,ref? (unique $alias for subsequent actions),kind?:original|poly|drums|sampler,preset? (poly only: Init|Warm bass|Soft pad|Bright pluck),volume? (linear 0..1; use 1 for a unity bus),pan? (-1..1),output?:master|sendsOnly|track:ID} omit preset for an empty audio bus; initial mix values are direct args, not changes',
  manage_track:'{id,action:rename|color|move|duplicate|delete,value?} for structural edits; action:changes with {id,action:changes,changes:{name?,volume?,pan?,mute?,solo?,output?}} uses the same validated patch as type track',
  scene:'{index,action:rename|insert|duplicate|delete|move,value?}',
  device:'{trackId,ref? (unique alias for a NEW device only),type? (canonical audio device key),name? (known display name for a new device),deviceId?,remove?,enabled?,params?} create with type OR a known displayed name such as Utility; existing devices use deviceId. Both selectors must agree when provided. Custom device renaming is not implemented. Add/update/remove audio processing on a track, group or return',
- instrument:'{trackId,preset?,kind?:poly|drums|sampler,sampleClipId?,params?} presets for poly; sampler copies audio from an existing clip',
+ instrument:'{trackId,preset?,kind?:original|poly|drums|sampler,sampleClipId?,params?} original selects Original tone, with no preset/params; poly presets are different instruments; sampler copies audio from an existing clip',
  add_return:'{name,ref?,volume? (linear 0..1),pan? (-1..1),mute? (boolean)} create a return with wet reverb. Include explicit requested initial volume/pan/mute; default volume is 0.7',
  midi_effects:'{trackId,effectsJSON:JSON-encoded array of complete MIDI effect objects from session}',
  drum_pad:'{trackId,pitch,changes:{name?,source?,level?,pan?,tune?,decay?,choke?,mute?,solo?}}',
@@ -130,7 +130,7 @@ function withoutMedia(v){if(Array.isArray(v))return v.map(withoutMedia);if(v&&ty
 export function agentContext(p){
  // Never upload encoded media. Bounds keep accidental giant MIDI sessions out of prompts.
  const clips=Object.values(p.clips).map(({data,...c})=>({...c,...(c.kind==='midi'?{noteCount:c.notes?.length??0,notes:(c.notes||[]).slice(0,256).map((note,index)=>({...note,index,pitchName:midiPitchName(note.pitch)})),...(c.notes?.length>256?{notesTruncated:true}:{})}:{}),...(data?{audioBytes:Math.floor(data.length*.75)}:{})}));
- return {stemSelection:{version:1},navigationPreservation:{version:1},planningTransport:{version:1},sceneAddressing:{version:SCENE_ADDRESSING_VERSION},automationTargets:automationChannelsForContext(p),project:{...withoutMedia(p),clips:Object.fromEntries(clips.map(c=>[c.id,withoutMedia(c)]))},capabilities:agentActions,effects:Object.fromEntries(Object.entries(DEVICE_TYPES).map(([k,v])=>[k,{name:v.name,params:v.params}]))};
+ return {musicalUnits:{version:MUSICAL_UNITS_VERSION,beatsPerBar:BEATS_PER_BAR},stemSelection:{version:1},navigationPreservation:{version:1},planningTransport:{version:1},sceneAddressing:{version:SCENE_ADDRESSING_VERSION},automationTargets:automationChannelsForContext(p),project:{...withoutMedia(p),clips:Object.fromEntries(clips.map(c=>[c.id,withoutMedia(c)]))},capabilities:agentActions,effects:Object.fromEntries(Object.entries(DEVICE_TYPES).map(([k,v])=>[k,{name:v.name,params:v.params}]))};
 }
 
 function automationChannelsForContext(p){return [...p.tracks,...(p.returns||[])].map(t=>({trackId:t.id,trackName:t.name,targets:automationTargetContext(t,p.returns)}));}

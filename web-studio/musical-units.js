@@ -1,6 +1,7 @@
 // The DAW currently has a fixed 4/4 meter. Keep conversions at one boundary;
 // model plans can copy musical units instead of doing arithmetic themselves.
 export const BEATS_PER_BAR=4;
+export const MUSICAL_UNITS_VERSION=1;
 const object=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const finite=v=>typeof v==='number'&&Number.isFinite(v);
 const fail=message=>{throw new Error(message);};
@@ -32,22 +33,30 @@ export function musicalGain(current,value){
  return gain;
 }
 const convert=(v,key,fn)=>{if(v&&Object.hasOwn(v,key))v[key]=fn(v[key]);};
-const note=n=>{convert(n,'start',musicalPosition);convert(n,'duration',musicalDuration);return n;};
-export function normalizeMusicalAction(action){
+export function normalizeMusicalAction(action,{requireUnits=false}={}){
+ const typed=fn=>value=>{if(requireUnits&&!object(value))fail('Musical values require explicit units; copy bars, beats or dB into a unit object.');return fn(value);};
+ const position=typed(musicalPosition),duration=typed(musicalDuration),delta=typed(musicalDelta);
+ const note=n=>{convert(n,'start',position);convert(n,'duration',duration);return n;};
+ const gain=value=>{if(requireUnits&&!object(value))fail('Fader values require linear, db or relativeDb units.');if(object(value)){const keys=Object.keys(value);if(keys.length!==1||!['linear','db','relativeDb'].includes(keys[0])||!finite(value[keys[0]]))fail('Use one finite gain unit: linear, db, or relativeDb.');}return value;};
  if(!object(action))return action;
  const out=structuredClone(action),x=typeof out.args==='string'?JSON.parse(out.args):out.args;
  if(!object(x))return out;out.args=x;
- if(out.type==='midi'){convert(x,'beats',musicalDuration);if(Array.isArray(x.notes))x.notes=x.notes.map(note);}
- if(['region','time','region_crossfade'].includes(out.type)){for(const key of ['start','boundary'])convert(x,key,musicalPosition);for(const key of ['length','offset'])convert(x,key,musicalDuration);}
- if(out.type==='region_fades')for(const key of ['fadeIn','fadeOut'])convert(x,key,musicalDuration);
- if(out.type==='region_group')convert(x,'delta',musicalDelta);
- if(out.type==='notes'){if(Array.isArray(x.notes))x.notes=x.notes.map(note);if(object(x.patch))note(x.patch);convert(x,'at',musicalPosition);convert(x,'deltaBeats',musicalDelta);if(object(x.where))for(const key of ['start','end'])convert(x.where,key,musicalPosition);}
- if(out.type==='project')for(const key of ['loopStart','loopEnd'])convert(x.transport,key,musicalPosition);
- if(out.type==='automation'){convert(x,'beat',musicalPosition);if(Array.isArray(x.points))for(const p of x.points)convert(p,'beat',musicalPosition);}
- if(out.type==='locators'&&Array.isArray(x.items))for(const item of x.items)convert(item,'beat',musicalPosition);
+ if(out.type==='project')convert(x,'master',gain);
+ if(['track','manage_track'].includes(out.type))convert(x.changes,'volume',gain);
+ if(['add_track','add_return','track_group'].includes(out.type))convert(x,'volume',gain);
+ if(out.type==='clip')convert(x.changes,'beats',duration);
+ if(out.type==='midi'){convert(x,'beats',duration);if(Array.isArray(x.notes))x.notes=x.notes.map(note);}
+ if(['region','time','region_crossfade'].includes(out.type)){for(const key of ['start','boundary'])convert(x,key,position);for(const key of ['length','offset'])convert(x,key,duration);}
+ if(out.type==='region_fades')for(const key of ['fadeIn','fadeOut'])convert(x,key,duration);
+ if(out.type==='region_group')convert(x,'delta',delta);
+ if(out.type==='notes'){if(Array.isArray(x.notes))x.notes=x.notes.map(note);if(object(x.patch))note(x.patch);convert(x,'at',position);convert(x,'deltaBeats',delta);if(object(x.where))for(const key of ['start','end'])convert(x.where,key,position);}
+ if(out.type==='project')for(const key of ['loopStart','loopEnd'])convert(x.transport,key,position);
+ if(out.type==='automation'){convert(x,'beat',position);if(Array.isArray(x.points))for(const p of x.points)convert(p,'beat',position);}
+ if(out.type==='locators'&&Array.isArray(x.items))for(const item of x.items)convert(item,'beat',position);
  if(out.type==='command'&&object(x.args)){
-  if(x.name==='seek')convert(x.args,'beat',musicalPosition);
-  if(['export_wav','export_stems','export_midi'].includes(x.name)&&object(x.args.range)){convert(x.args.range,'start',musicalPosition);convert(x.args.range,'length',musicalDuration);}
+  if(x.name==='select'&&object(x.args.where))for(const key of ['start','end'])convert(x.args.where,key,position);
+  if(x.name==='seek')convert(x.args,'beat',position);
+  if(['export_wav','export_stems','export_midi'].includes(x.name)&&object(x.args.range)){convert(x.args.range,'start',position);convert(x.args.range,'length',duration);}
  }
  return out;
 }

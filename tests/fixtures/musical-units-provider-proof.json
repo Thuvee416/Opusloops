@@ -1,0 +1,124 @@
+{
+  "scope": "Operator-IAM real provider, not Studio execution",
+  "prompt": "Add a MIDI track named Core Lead using Original tone. Create a four-bar clip named Core Phrase in scene 3. Play C4, E4, G4 and B4 on the first beat of bars 1, 2, 3 and 4 respectively, each half a beat long at velocity 70%. Place that same clip in the Arrangement at bar 9 for four bars. Reduce Bass by 3 dB, pan Keys 20% right and set the project tempo to 128 BPM. Preserve all existing clips, instruments, effects and arrangement regions. Do not start playback or export.",
+  "plan": {
+    "summary": "Add a MIDI track named Core Lead using Original tone. Create a four-bar clip named Core Phrase in scene 3. Play C4, E4, G4 and B4 on the first beat of bars 1, 2, 3 and 4 respectively, each half a beat long at velocity 70%. Place that same clip in the Arrangement at bar 9 for four bars. Reduce Bass by 3 dB, pan Keys 20% right and set the project tempo to 128 BPM.",
+    "actions": [
+      {
+        "type": "add_track",
+        "args": {
+          "name": "Core Lead",
+          "kind": "original",
+          "ref": "$coreLead"
+        }
+      },
+      {
+        "type": "midi",
+        "args": {
+          "trackId": "$coreLead",
+          "ref": "$corePhrase",
+          "name": "Core Phrase",
+          "sceneNumber": 3,
+          "beats": {
+            "bars": 4
+          },
+          "notes": [
+            {
+              "pitch": 60,
+              "start": {
+                "bar": 1,
+                "beat": 1
+              },
+              "duration": {
+                "beats": 0.5
+              },
+              "velocity": 0.7
+            },
+            {
+              "pitch": 64,
+              "start": {
+                "bar": 2,
+                "beat": 1
+              },
+              "duration": {
+                "beats": 0.5
+              },
+              "velocity": 0.7
+            },
+            {
+              "pitch": 67,
+              "start": {
+                "bar": 3,
+                "beat": 1
+              },
+              "duration": {
+                "beats": 0.5
+              },
+              "velocity": 0.7
+            },
+            {
+              "pitch": 71,
+              "start": {
+                "bar": 4,
+                "beat": 1
+              },
+              "duration": {
+                "beats": 0.5
+              },
+              "velocity": 0.7
+            }
+          ]
+        }
+      },
+      {
+        "type": "region",
+        "args": {
+          "trackId": "$coreLead",
+          "clipId": "$corePhrase",
+          "start": {
+            "bar": 9
+          },
+          "length": {
+            "bars": 4
+          }
+        }
+      },
+      {
+        "type": "track",
+        "args": {
+          "id": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+          "changes": {
+            "volume": {
+              "relativeDb": -3
+            }
+          }
+        }
+      },
+      {
+        "type": "track",
+        "args": {
+          "id": "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+          "changes": {
+            "pan": 0.2
+          }
+        }
+      },
+      {
+        "type": "project",
+        "args": {
+          "bpm": 128
+        }
+      }
+    ],
+    "reviewed": true,
+    "model": {
+      "id": "tempo",
+      "name": "Tempo",
+      "version": "1.0",
+      "provider": "Amazon Bedrock",
+      "providerModelId": "amazon.nova-pro-v1:0",
+      "providerModelName": "Amazon Nova Pro"
+    }
+  },
+  "elapsedMs": 13617
+}

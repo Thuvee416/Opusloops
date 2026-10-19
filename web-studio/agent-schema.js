@@ -37,3 +37,26 @@ queuedScenePlanSchema.properties.actions.items.properties.args.properties.launch
 
 // Negotiate the new inner command argument independently of scene addressing.
 export function stemSelectionPlanSchema(base,supported){const schema=structuredClone(base),args=schema.properties.actions.items.properties.args.properties.args.properties;if(supported)args.channels={type:'array',minItems:1,maxItems:20,uniqueItems:true,items:{type:'string',pattern:'^(track|return):.+'},description:'export_stems only. Distinct track:ID or return:ID files, or current-plan aliases. Omit for all tracks/returns. Never master.'};else delete args.channels;return schema;}
+
+// Musical-unit clients copy the user's unit. Conversion happens at the shared
+// application boundary; an old open Studio still receives its numeric schema.
+export function musicalUnitsPlanSchema(base,supported){
+ const schema=structuredClone(base);if(!supported)return schema;
+ const position={type:'object',additionalProperties:false,minProperties:1,properties:{bar:{type:'integer',minimum:1,description:'Displayed bar, starting at 1.'},beat:{type:'number',minimum:1,description:'Beat within bar (1 to below 5), default 1. Without bar, the displayed absolute beat starting at 1.'}},description:'POSITION, never duration. Copy bar/beat labels: bar 9 is {bar:9}, first beat is {bar:1,beat:1}. No zero-based numbers.'};
+ const span=signed=>({type:'object',additionalProperties:false,minProperties:1,maxProperties:1,properties:{bars:{type:'number',...(signed?{}:{minimum:0})},beats:{type:'number',...(signed?{}:{minimum:0})}},description:(signed?'Signed movement':'DURATION')+': exactly one unit. Four bars is {bars:4}; half a beat is {beats:0.5}. Never convert bars to beats yourself.'});
+ const gain={type:'object',additionalProperties:false,minProperties:1,maxProperties:1,properties:{linear:{type:'number',minimum:0,maximum:1},db:{type:'number',maximum:0},relativeDb:{type:'number'}},description:'Exactly one gain unit. Set TO -3 dB: {db:-3}. Reduce BY 3 dB: {relativeDb:-3}. Set linear 70%: {linear:0.7}. Application computes against current fader; do not calculate a replacement linear value for dB requests.'};
+ const a=schema.properties.actions.items.properties.args.properties,c=a.args.properties;
+ for(const key of ['start','boundary','at','beat'])a[key]=structuredClone(position);
+ for(const key of ['beats','length','offset','fadeIn','fadeOut'])a[key]=span(false);
+ for(const key of ['delta','deltaBeats'])a[key]=span(true);
+ a.delta.description+=' Arrangement trim: remove from starts uses positive movement; remove from ends uses negative movement.';
+ for(const key of ['master','volume'])a[key]=structuredClone(gain);
+ a.changes.properties.volume=structuredClone(gain);a.changes.properties.beats=span(false);
+ for(const note of [a.notes.items,a.patch]){note.properties.start=structuredClone(position);note.properties.duration=span(false);}
+ for(const where of [a.where,c.where])for(const key of ['start','end'])where.properties[key]=structuredClone(position);
+ for(const key of ['loopStart','loopEnd'])a.transport.properties[key]=structuredClone(position);
+ a.points.items.properties.beat=structuredClone(position);a.items.items.properties.beat=structuredClone(position);
+ c.beat=structuredClone(position);c.range.properties.start=structuredClone(position);c.range.properties.length=span(false);
+ a.kind={type:'string',enum:['original','poly','drums','sampler'],description:'add_track/instrument: original is the actual Original tone instrument (no preset or params). poly is the separate Poly Synth; Init is its sine preset, NOT Original tone.'};
+ return schema;
+}
