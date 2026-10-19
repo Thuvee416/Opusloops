@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-19",
+  "source": "web-studio/capture-worklet.js",
+  "sourceSha256": "d3f982039a8a6e8b9c7bf8f79d739338e4e2fadc8a219101ae5c94103c6a4122",
+  "scope": "Node VM executes the actual AudioWorklet processor source against deterministic input frames. No browser/device/permission simulation or physical capture claim.",
+  "command": "node --test tests/capture-worklet.test.cjs tests/input-timing.test.cjs tests/recording-control.test.cjs tests/midi-overdub.test.cjs",
+  "passed": 42,
+  "failed": 0,
+  "newCases": [
+    "Count-in starts exactly at sample65, captures200 frames and excludes later input",
+    "4096-frame chunk plus256-frame tail preserve all4352 stereo frames",
+    "Cancel discards pending partial chunk; restart contains only new samples",
+    "Mono input is centered; stereo pair selection maps only chosen inputs",
+    "Count-in cancellation creates no captured audio; disconnect reports zero channels"
+  ],
+  "remaining": "Native authenticated audio lifecycle awaits Mac unlock to reach microphone permission prompt; no take started."
+}
