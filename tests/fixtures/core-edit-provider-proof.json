@@ -1,0 +1,77 @@
+{
+  "scope": "Operator-IAM real provider plus independent compiled-project assertions; not authenticated Studio execution",
+  "prompt": "Split the Core Phrase Arrangement region at bar 11, keeping its timing and notes unchanged. Add a Utility effect to Core Lead with gain -3 dB. Create an enabled Core Lead track volume automation envelope with a linear ramp from 70% at bar 9 to 35% at bar 13. Enable the Arrangement loop from bar 9 to bar 13 and turn the metronome on. Preserve every other clip, track, effect and setting. Do not start playback or export.",
+  "plan": {
+    "summary": "Split the Core Phrase Arrangement region at bar 11, add a Utility effect to Core Lead with gain -3 dB, create an enabled Core Lead track volume automation envelope with a linear ramp from 70% at bar 9 to 35% at bar 13, enable the Arrangement loop from bar 9 to bar 13 and turn the metronome on.",
+    "actions": [
+      {
+        "type": "region_split",
+        "args": {
+          "id": "a84998a9-3d9c-4444-b36e-7ac4f256e7d3",
+          "at": {
+            "bar": 11
+          }
+        }
+      },
+      {
+        "type": "device",
+        "args": {
+          "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "type": "utility",
+          "params": {
+            "gain": -3
+          }
+        }
+      },
+      {
+        "type": "automation",
+        "args": {
+          "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "key": "volume",
+          "action": "replace",
+          "points": [
+            {
+              "beat": {
+                "bar": 9
+              },
+              "value": 0.7
+            },
+            {
+              "beat": {
+                "bar": 13
+              },
+              "value": 0.35
+            }
+          ],
+          "enabled": true
+        }
+      },
+      {
+        "type": "project",
+        "args": {
+          "transport": {
+            "loopEnabled": true,
+            "loopStart": {
+              "bar": 9
+            },
+            "loopEnd": {
+              "bar": 13
+            },
+            "metronome": true
+          }
+        }
+      }
+    ],
+    "reviewed": true,
+    "model": {
+      "id": "tempo",
+      "name": "Tempo",
+      "version": "1.0",
+      "provider": "Amazon Bedrock",
+      "providerModelId": "amazon.nova-pro-v1:0",
+      "providerModelName": "Amazon Nova Pro"
+    }
+  },
+  "elapsedMs": 10176,
+  "passed": true
+}

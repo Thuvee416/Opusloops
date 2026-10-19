@@ -1,0 +1,28 @@
+// Operator-IAM planning proof; authenticated browser execution is separate.
+import {readFile,writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {BedrockRuntimeClient} from '@aws-sdk/client-bedrock-runtime';
+import {assertAccount,awsOptions} from './aws.mjs';
+import {studioAgent} from '../runtime/studio-agent.mjs';
+import {agentContext} from '../../../web-studio/agent-actions.js';
+import {prepareAgentPlan} from '../../../web-studio/agent-runner.js';
+export const prompt='Split the Core Phrase Arrangement region at bar 11, keeping its timing and notes unchanged. Add a Utility effect to Core Lead with gain -3 dB. Create an enabled Core Lead track volume automation envelope with a linear ramp from 70% at bar 9 to 35% at bar 13. Enable the Arrangement loop from bar 9 to bar 13 and turn the metronome on. Preserve every other clip, track, effect and setting. Do not start playback or export.';
+await assertAccount();process.env.STUDIO_AGENT_MODEL_ID='amazon.nova-pro-v1:0';
+if(!process.env.OPUS_MUSICAL_SOURCE)throw new Error('Set OPUS_MUSICAL_SOURCE to the synthetic pre-microphone production song.');
+const project=JSON.parse(await readFile(process.env.OPUS_MUSICAL_SOURCE,'utf8')),client=new BedrockRuntimeClient(awsOptions),start=Date.now();
+const context={...agentContext(project),studio:{view:'session',playing:false,position:0,insertMarker:0}};
+const plan=await studioAgent({prompt,context},{budgetMs:110000,send:(c,o)=>client.send(c,o)});
+const proof={scope:'Operator-IAM real provider plus independent compiled-project assertions; not authenticated Studio execution',prompt,plan,elapsedMs:Date.now()-start};
+if(process.env.OPUS_AGENT_CAPTURE)await writeFile(process.env.OPUS_AGENT_CAPTURE,JSON.stringify(proof,null,2)+'\n');
+assert.equal(plan.question,undefined);const compiled=prepareAgentPlan(project,plan.actions),next=compiled.next;assert.equal(compiled.before.length+compiled.after.length,0);
+const lead=next.tracks.find(t=>t.name==='Core Lead'),old=project.tracks.find(t=>t.id===lead.id),regions=next.arrangement.filter(r=>r.trackId===lead.id),original=project.arrangement.find(r=>r.trackId===lead.id);
+assert.deepEqual(regions.map(r=>[r.start,r.length,r.offset]),[[32,8,0],[40,8,8]]);assert.ok(regions.every(r=>r.clipId===original.clipId));assert.equal(regions[0].id,original.id);assert.notEqual(regions[1].id,original.id);
+assert.deepEqual(next.clips,project.clips);assert.equal(lead.devices.length,old.devices.length+1);assert.deepEqual(lead.devices.slice(0,-1),old.devices);assert.equal(lead.devices.at(-1).type,'utility');assert.equal(lead.devices.at(-1).params.gain,-3);
+assert.deepEqual(lead.automation.volume,{enabled:true,points:[{beat:32,value:.7,curve:'linear'},{beat:48,value:.35,curve:'linear'}]});
+assert.deepEqual(next.transport,{...project.transport,loopEnabled:true,loopStart:32,loopEnd:48,metronome:true});
+for(const t of project.tracks)if(t.id!==lead.id)assert.deepEqual(next.tracks.find(x=>x.id===t.id),t);
+for(const [k,v]of Object.entries(old))if(!['devices','automation'].includes(k))assert.deepEqual(lead[k],v);
+for(const r of project.arrangement)if(r.id!==original.id)assert.deepEqual(next.arrangement.find(x=>x.id===r.id),r);
+assert.equal(next.arrangement.length,project.arrangement.length+1);
+for(const [k,v]of Object.entries(project))if(!['tracks','arrangement','transport'].includes(k))assert.deepEqual(next[k],v);
+proof.passed=true;if(process.env.OPUS_AGENT_CAPTURE)await writeFile(process.env.OPUS_AGENT_CAPTURE,JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify({passed:true,elapsedMs:proof.elapsedMs,actions:plan.actions.length}));

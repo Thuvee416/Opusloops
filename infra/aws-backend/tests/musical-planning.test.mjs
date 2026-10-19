@@ -51,3 +51,11 @@ test('mixed track and clip properties have disjoint schema branches and shared s
   let calls=0;await assert.rejects(()=>studioAgent({prompt:'Reduce Bass by 3 dB and pan Keys 20% right.',context:agentContext(project())},{send:async c=>{const schema=c.input.toolConfig.tools[0].toolSpec.inputSchema.json,branches=schema.properties.actions.items.oneOf,clip=branches.find(b=>b.properties.type.enum.includes('clip_properties')),track=branches.find(b=>b.properties.type.enum.includes('track'));assert.equal(clip.properties.args.properties.changes.additionalProperties,false);assert.equal(clip.properties.args.properties.changes.properties.volume,undefined);assert.ok(track.properties.args.properties.changes.properties.volume.properties.relativeDb);assert.ok(track.properties.args.required.includes('id'));assert.match(c.input.system[0].text,/TRACK MIXER/);calls++;return response({summary:'Bad scope',actions:[{type:'clip_properties',args:{ids:['bass'],changes}}]});}}),e=>e.code==='invalid_agent_plan'&&/Mixer Changes Use type:track/.test(e.message));assert.equal(calls,2);
  }
 });
+
+test('Arrangement splitting is advertised only for capable clients and validates typed positions',async()=>{
+ for(const supported of [true,false]){
+  const context=agentContext(project());if(!supported)delete context.regionSplit;
+  const task=()=>studioAgent({prompt:'Split the region at bar 11',context},{send:async c=>{const types=c.input.toolConfig.tools[0].toolSpec.inputSchema.json.properties.actions.items.properties.type.enum;assert.equal(types.includes('region_split'),supported);assert.match(c.input.system[0].text,/Never emulate|NEVER substitute/);return response({summary:'Split',actions:[{type:'region_split',args:{id:'region',at:{bar:11}}}]});}});
+  if(supported)assert.deepEqual((await task()).actions[0].args.at,{bar:11});else await assert.rejects(task,e=>e.code==='invalid_agent_plan'&&/Reload/.test(e.message));
+ }
+});

@@ -269,14 +269,179 @@
     "secondTrack": "Warm Bass",
     "nativeRestorePreviousSet": true,
     "beforeTestSha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
-    "postFinalRestoreDownloadedComparison": false
+    "postFinalRestoreDownloadedComparison": true,
+    "download": "Test-Thuvee-1 (12).opusloop",
+    "sha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27"
   },
   "limits": [
-    "Stem ZIP and agent save_project are ready links, but no new matching files appeared in Downloads; user action requested.",
     "Chrome internal download page is blocked by browser tool URL policy; no workaround attempted.",
     "Native Undo visibly reversed six edits, but no exact post-Undo download was obtained in this pass.",
     "WAV metrics establish nonzero unclipped PCM and expected duration, not subjective listening quality or physical-device timing.",
     "Full core DAW and Tempo goal remains active; broad workflow, device and safety acceptance not claimed."
   ],
-  "screenshot": "/tmp/opus-tempo-musical-production.png"
+  "screenshot": "/tmp/opus-tempo-musical-production.png",
+  "exportsDownloaded": {
+    "scope": "Actual downloaded production PCM WAV and stem ZIP, no subjective listening claim",
+    "mix": {
+      "channels": 2,
+      "sampleRate": 44100,
+      "sampleWidth": 2,
+      "frames": 330750,
+      "seconds": 7.5,
+      "peak": 0.387542724609375,
+      "rms": 0.0435470988962542,
+      "sha256": "a41f9788cfdd991f83d001f51a57a56634c8f23ff312be189e15d30e6846ef3c"
+    },
+    "stems": [
+      {
+        "channels": 2,
+        "sampleRate": 44100,
+        "sampleWidth": 2,
+        "frames": 330750,
+        "seconds": 7.5,
+        "peak": 0.26776123046875,
+        "rms": 0.00903919025868991,
+        "sha256": "bd80bb404852b2a035efe54c6b75f8c30b8b9581ee3ad419a41d809860aed74f",
+        "name": "01-track-Drums.wav"
+      },
+      {
+        "channels": 2,
+        "sampleRate": 44100,
+        "sampleWidth": 2,
+        "frames": 330750,
+        "seconds": 7.5,
+        "peak": 0.0672607421875,
+        "rms": 0.005211518129210514,
+        "sha256": "a2758d45827ef29ff63fc62d538a129c5abdd0a43a2b7486a0a26819bb90bfb3",
+        "name": "02-track-Bass.wav"
+      },
+      {
+        "channels": 2,
+        "sampleRate": 44100,
+        "sampleWidth": 2,
+        "frames": 330750,
+        "seconds": 7.5,
+        "peak": 0.2965087890625,
+        "rms": 0.028821694966291254,
+        "sha256": "cbb244fcaca98fa1a7318f1525dd56acf8eb0751f24189eeb2106328cf174f56",
+        "name": "03-track-Keys.wav"
+      },
+      {
+        "channels": 2,
+        "sampleRate": 44100,
+        "sampleWidth": 2,
+        "frames": 330750,
+        "seconds": 7.5,
+        "peak": 0.084228515625,
+        "rms": 0.020861322430590176,
+        "sha256": "1adaaa06ea9e92751b094dfe7b766484481d75b83b17e018311f1dacb60748c6",
+        "name": "04-track-Core-Lead.wav",
+        "independentBarOnsetEnergy": [
+          0.05727331901087823,
+          0.057249478855545016,
+          0.05726729869255099,
+          0.05722518644250075
+        ],
+        "betweenNotesEnergy": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ],
+    "zipSha256": "5911acdc16bed1649f91393fc72dcdd372d92294f41dd053783348517657da72",
+    "manifest": {
+      "format": "opus-loops-stems",
+      "version": 1,
+      "project": "Core Song Native Audit",
+      "bpm": 128,
+      "settings": {
+        "sampleRate": 44100,
+        "bitDepth": 16,
+        "normalize": false,
+        "dither": "none",
+        "source": "arrangement",
+        "includeTail": false,
+        "range": {
+          "start": 32,
+          "length": 16
+        }
+      },
+      "selection": {
+        "mode": "all",
+        "included": [
+          "track:e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+          "track:b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+          "track:81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+          "track:5e984553-e26f-4b8c-82a2-ead42f32de63"
+        ],
+        "excluded": []
+      },
+      "automationOverrides": [],
+      "notes": "Post-channel audio before master gain/compression. Track files exclude return audio but include incoming routed tracks. Bus files overlap their source files; do not sum both. To reconstruct the pre-master signal, use only tracks whose mainOutput is master, plus returns, without independent normalization/dither. Return files contain all active sends. Current mute/solo and crossfade apply. Shorter tails are padded with zero samples. Normalization/dither apply independently to each channel. Channel selection chooses files only: buses and returns retain all routed inputs and sends. A subset may not reconstruct the complete mix.",
+      "channels": [
+        {
+          "file": "01-track-Drums.wav",
+          "type": "track",
+          "id": "e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+          "name": "Drums",
+          "mute": false,
+          "solo": false,
+          "group": false,
+          "parentId": null,
+          "crossfade": "none",
+          "mainOutput": "master",
+          "receivesTrackOutputs": []
+        },
+        {
+          "file": "02-track-Bass.wav",
+          "type": "track",
+          "id": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+          "name": "Bass",
+          "mute": false,
+          "solo": false,
+          "group": false,
+          "parentId": null,
+          "crossfade": "none",
+          "mainOutput": "master",
+          "receivesTrackOutputs": []
+        },
+        {
+          "file": "03-track-Keys.wav",
+          "type": "track",
+          "id": "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+          "name": "Keys",
+          "mute": false,
+          "solo": false,
+          "group": false,
+          "parentId": null,
+          "crossfade": "none",
+          "mainOutput": "master",
+          "receivesTrackOutputs": []
+        },
+        {
+          "file": "04-track-Core-Lead.wav",
+          "type": "track",
+          "id": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "name": "Core Lead",
+          "mute": false,
+          "solo": false,
+          "group": false,
+          "parentId": null,
+          "crossfade": "none",
+          "mainOutput": "master",
+          "receivesTrackOutputs": []
+        }
+      ]
+    }
+  },
+  "projectSave": {
+    "file": "Core-Song-Native-Audit (10).opusloop",
+    "bytes": 946768,
+    "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+    "byteIdenticalComposition": true,
+    "duplicateDownloadAlsoIdentical": true
+  },
+  "downloadResolution": "User completed offered downloads. Actual files independently inspected; browser internal page was not accessed."
 }

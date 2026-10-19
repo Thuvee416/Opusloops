@@ -1,0 +1,92 @@
+{
+  "release": "0.159.0",
+  "scope": "Actual signed-in production request and downloaded project",
+  "plan": {
+    "summary": "Split the Core Phrase Arrangement region at bar 11, add a Utility effect to Core Lead, create a volume automation envelope, and enable the Arrangement loop from bar 9 to bar 13 with the metronome on.",
+    "actions": [
+      {
+        "type": "region",
+        "args": {
+          "id": "a84998a9-3d9c-4444-b36e-7ac4f256e7d3",
+          "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "clipId": "63af170e-e245-4a8e-a935-c42db883254b",
+          "start": {
+            "beat": 11
+          },
+          "length": {
+            "beats": 5
+          },
+          "active": true
+        }
+      },
+      {
+        "type": "device",
+        "args": {
+          "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "type": "utility",
+          "name": "Utility",
+          "enabled": true
+        }
+      },
+      {
+        "type": "automation",
+        "args": {
+          "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "key": "volume",
+          "action": "replace",
+          "points": [
+            {
+              "beat": {
+                "bar": 9,
+                "beat": 1
+              },
+              "value": 0.7
+            },
+            {
+              "beat": {
+                "bar": 13,
+                "beat": 1
+              },
+              "value": 0.35
+            }
+          ],
+          "enabled": true
+        }
+      },
+      {
+        "type": "project",
+        "args": {
+          "transport": {
+            "loopEnabled": true,
+            "loopStart": {
+              "beat": 9
+            },
+            "loopEnd": {
+              "beat": 13
+            },
+            "metronome": true
+          }
+        }
+      }
+    ],
+    "reviewed": true,
+    "model": {
+      "id": "tempo",
+      "name": "Tempo",
+      "version": "1.0",
+      "provider": "Amazon Bedrock",
+      "providerModelId": "amazon.nova-pro-v1:0",
+      "providerModelName": "Amazon Nova Pro"
+    }
+  },
+  "failures": [
+    "Region moved to beat 10 and shortened to 5 instead of splitting at beat 40",
+    "Utility gain omitted; remained 0 dB",
+    "Loop at beats 8..12 instead of 32..48"
+  ],
+  "passed": [
+    "Volume automation at beats 32/48 with values .7/.35",
+    "One Undo restored the entire source byte-for-byte"
+  ],
+  "undoSha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+}

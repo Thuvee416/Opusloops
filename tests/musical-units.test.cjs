@@ -66,3 +66,17 @@ test('loop, automation, markers, seek and export ranges share musical coordinate
  assert.deepEqual(actions[0].args.transport,{loopStart:32,loopEnd:48});assert.equal(actions[1].args.points[0].beat,4);assert.equal(actions[2].args.items[0].beat,16);assert.equal(actions[3].args.args.beat,16);assert.deepEqual(actions[4].args.args.range,{start:32,length:16});assert.equal(actions[5].args.args.scene,2);
  assert.deepEqual(normalizeAgentActions(actions),actions); // Multiple validation passes cannot convert twice.
 });
+
+test('Arrangement split keeps source timing and fades, is atomic and shares one Undo with mix edits',async()=>{
+ const {coreSongProject}=await import('./fixtures/core-song-project.mjs'),{prepareAgentPlan}=await import('../web-studio/agent-runner.js'),{History}=await import('../web-studio/history.js'),{editRegionFades,regionGainAt}=await import('../web-studio/region-fades.js');
+ const {project:p}=coreSongProject(),r=p.arrangement.find(r=>r.trackId==='drums'&&r.start===32);
+ p.arrangement=editRegionFades(p,[r.id],{fadeIn:6,fadeOut:6});const source=structuredClone(p),old=p.arrangement.find(x=>x.id===r.id),h=new History(p);
+ const actions=[{type:'region_split',args:{id:r.id,at:{bar:11}}},{type:'device',args:{trackId:'drums',type:'utility',params:{gain:-3}}},{type:'project',args:{transport:{loopEnabled:true,loopStart:{bar:9},loopEnd:{bar:13},metronome:true}}}];
+ const next=prepareAgentPlan(p,actions).next,parts=next.arrangement.filter(x=>x.trackId==='drums'&&x.start>=32&&x.start<48);
+ assert.equal(parts.length,2);assert.deepEqual(parts.map(x=>[x.start,x.length,x.offset]),[[32,8,0],[40,8,8]]);assert.equal(parts[0].id,r.id);assert.notEqual(parts[1].id,r.id);assert.ok(parts.every(x=>x.clipId===r.clipId));
+ for(let t=0;t<16;t+=.125){const piece=t<8?parts[0]:parts[1];assert.ok(Math.abs(regionGainAt(piece,t%8)-regionGainAt(old,t))<1e-12);}
+ assert.deepEqual(next.clips,p.clips);assert.equal(next.tracks[0].devices.at(-1).params.gain,-3);assert.equal(next.transport.loopStart,32);assert.equal(next.transport.loopEnd,48);
+ h.commit(next);assert.deepEqual(h.undo(),source);assert.deepEqual(h.redo(),next);
+ for(const bad of [{id:r.id,at:{bar:9}},{id:r.id,at:{bar:13}},{id:'missing',at:{bar:11}},{id:r.id,at:{bar:11},length:{bars:2}}])assert.throws(()=>prepareAgentPlan(p,[{type:'project',args:{bpm:130}},{type:'region_split',args:bad}]));
+ assert.deepEqual(p,source);
+});
