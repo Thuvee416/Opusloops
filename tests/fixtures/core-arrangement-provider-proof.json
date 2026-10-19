@@ -1,0 +1,130 @@
+{
+  "scope": "Operator-IAM real provider and local preflight; not native authenticated production execution.",
+  "cases": [
+    {
+      "id": "move-trim",
+      "prompt": "Move the Core Phrase Arrangement clip two bars later, then trim one bar off its end. Keep its source notes and Session clip unchanged, and preserve all other tracks, clips and settings. Do not play or export.",
+      "plan": {
+        "summary": "Move the Core Phrase Arrangement clip two bars later, then trim one bar off its end.",
+        "actions": [
+          {
+            "type": "region_group",
+            "args": {
+              "ids": [
+                "a84998a9-3d9c-4444-b36e-7ac4f256e7d3"
+              ],
+              "action": "move",
+              "delta": {
+                "bars": 2
+              }
+            }
+          },
+          {
+            "type": "region_group",
+            "args": {
+              "ids": [
+                "a84998a9-3d9c-4444-b36e-7ac4f256e7d3"
+              ],
+              "action": "trim",
+              "edge": "end",
+              "delta": {
+                "bars": -1
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 10159,
+      "passed": true
+    },
+    {
+      "id": "duplicate-delete",
+      "prompt": "Duplicate the Core Phrase Arrangement clip immediately after itself, then delete only the original Arrangement region. Keep the Session clip and every other track and setting unchanged. Do not play or export.",
+      "plan": {
+        "summary": "Duplicate the Core Phrase Arrangement clip immediately after itself, then delete only the original Arrangement region. Keep the Session clip and every other track and setting unchanged.",
+        "actions": [
+          {
+            "type": "region_group",
+            "args": {
+              "ids": [
+                "a84998a9-3d9c-4444-b36e-7ac4f256e7d3"
+              ],
+              "action": "duplicate"
+            }
+          },
+          {
+            "type": "region_group",
+            "args": {
+              "ids": [
+                "a84998a9-3d9c-4444-b36e-7ac4f256e7d3"
+              ],
+              "action": "delete"
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 9376,
+      "passed": true
+    },
+    {
+      "id": "select",
+      "prompt": "Select the Core Phrase Arrangement clip and show its Clip editor. Do not change any music, track settings or start playback.",
+      "plan": {
+        "summary": "Select the Core Phrase Arrangement clip and show its Clip editor.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "select",
+              "args": {
+                "target": "regions",
+                "ids": [
+                  "a84998a9-3d9c-4444-b36e-7ac4f256e7d3"
+                ]
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "show_panel",
+              "args": {
+                "panel": "clip"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 8662,
+      "passed": true
+    }
+  ],
+  "passed": true
+}
