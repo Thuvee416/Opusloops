@@ -1,0 +1,129 @@
+{
+  "scope": "Real provider drafting/review and local preflight; not browser file choice or authenticated production execution",
+  "cases": [
+    {
+      "prompt": "Start a new empty set called Night Tide and save it.",
+      "plan": {
+        "summary": "Start a new empty set called Night Tide and save it.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "project_io",
+              "args": {
+                "action": "new",
+                "name": "Night Tide",
+                "empty": true
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "save_project"
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "passed": true,
+      "elapsedMs": 5958
+    },
+    {
+      "prompt": "Open a saved OPUS project from my computer.",
+      "plan": {
+        "summary": "Open a saved OPUS project from my computer.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "project_io",
+              "args": {
+                "action": "open"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "passed": true,
+      "elapsedMs": 3165
+    },
+    {
+      "prompt": "Import an audio file into Drums in displayed scene 2, without replacing any clips.",
+      "plan": {
+        "summary": "Import an audio file into Drums in displayed scene 2, without replacing any clips.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "project_io",
+              "args": {
+                "action": "import_audio",
+                "trackId": "e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+                "sceneNumber": 2
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "passed": true,
+      "elapsedMs": 3870
+    },
+    {
+      "prompt": "Import a MIDI file as additional tracks and keep the current tempo.",
+      "plan": {
+        "summary": "Import a MIDI file as additional tracks and keep the current tempo.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "project_io",
+              "args": {
+                "action": "import_midi",
+                "useTempo": false
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "passed": true,
+      "elapsedMs": 3503
+    }
+  ],
+  "passed": true
+}

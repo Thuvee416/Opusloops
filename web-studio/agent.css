@@ -42,3 +42,5 @@
 .agent-allowance{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-top:7px;padding-top:6px;border-top:1px solid var(--line);font-size:9px;color:var(--muted)}
 .agent-allowance>div{min-width:0}.agent-allowance-summary{display:block;font-weight:600;color:var(--text)}.agent-allowance-detail{display:block;font-size:9px;overflow-wrap:anywhere}.agent-allowance-detail:empty{display:none}
 .studio-shell .agent-allowance-refresh{flex-shrink:0;padding:3px 5px;font-size:9px}
+
+.agent-file-choice{grid-template-columns:1fr;gap:6px}.agent-file-choice button{justify-self:start}.agent-file-choice span{font-size:11px;line-height:1.5}

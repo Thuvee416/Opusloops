@@ -30,7 +30,7 @@ export function normalizeAgentAction(action,{displayOnly=false}={}){
  else if(out.type==='session_clips')out.args=nestedPlacements(args,{displayOnly});
  else if(out.type==='command'){
   out.args=normalizeHistoryCommand(args);
-  if(['select','launch_scene','launch_clip','launch_group','record_input','session_clipboard'].includes(args.name))out.args.args=nestedPlacements(args.args,{displayOnly});
+  if(['project_io','select','launch_scene','launch_clip','launch_group','record_input','session_clipboard'].includes(args.name))out.args.args=nestedPlacements(args.args,{displayOnly});
  }else out.args=args;
  return out;
 }
