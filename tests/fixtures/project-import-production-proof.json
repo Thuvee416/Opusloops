@@ -1,0 +1,46 @@
+{
+  "release": "0.163.1",
+  "commit": "a56997671d9d34cbf2aea7357471b5ff7d9f129b",
+  "amplifyJob": 172,
+  "scope": "Native Chrome on actual opusloops.com, manual file choosers/menus and actual saved project files. No model request or microphone media.",
+  "cases": [
+    {
+      "case": "invalid-short-WAV-no-extra-track-no-Undo",
+      "file": "Import-Atomicity-Audit (6).opusloop",
+      "bytes": 609,
+      "sha256": "07c01ac9f56bd8433ecdfeb29428c5484ab97a25d27896bf62a07e1ecb97d573",
+      "passed": true
+    },
+    {
+      "case": "valid-WAV-exact-media-new-track",
+      "file": "Import-Atomicity-Audit (7).opusloop",
+      "bytes": 941835,
+      "sha256": "9fc4ced9d63a90b1928b67b1dc6b4e55cdd666b58ffe495be71b040898b89904",
+      "passed": true
+    },
+    {
+      "case": "one-Undo-exact-baseline",
+      "file": "Import-Atomicity-Audit (8).opusloop",
+      "bytes": 609,
+      "sha256": "07c01ac9f56bd8433ecdfeb29428c5484ab97a25d27896bf62a07e1ecb97d573",
+      "passed": true
+    }
+  ],
+  "restoration": {
+    "file": "Test-Thuvee-1 (21).opusloop",
+    "sha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
+    "byteIdenticalOriginal": true,
+    "project": "Test Thuvee 1",
+    "tracks": [
+      "Audio 1",
+      "Warm Bass"
+    ],
+    "bpm": 120,
+    "playing": false
+  },
+  "limits": [
+    "MIDI append/Undo was native-local verified on this source; this production check focuses on the repaired audio-import atomicity.",
+    "Odesa New/Open/Import commands are not yet implemented.",
+    "No new subjective listening or physical input-device verdict."
+  ]
+}
