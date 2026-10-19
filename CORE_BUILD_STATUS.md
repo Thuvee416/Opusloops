@@ -2,6 +2,15 @@
 
 Updated 2026-10-19. The replacement Codex goal is active. Scope and acceptance: GOAL.md. Preserve existing features, designs and user projects; defer enhancements and advanced production work.
 
+## Current Acceptance Snapshot
+
+The entries below are chronological audit records, not cumulative blockers. The initial “pending” sections are superseded by later evidence.
+
+- Manual desktop song workflow: actual local imports, computer-keyboard MIDI and approved microphone recording, Session capture, Arrangement edits, mix/effects/volume automation, save-close-reopen-edit, WAV and aligned stems verified. Microphone files remain local. See core-first-native-song-proof.json.
+- Signed-in Tempo: the 0.159 composition and delivered project/WAV/four-stem ZIP are independently verified. The whole existing song is preserved outside requested edits; musical timing and relative gain match. The split/loop/device-parameter failure is repaired and passed authenticated 0.160 verification below. Final original-project restoration verification is pending browser recovery.
+- Recovery/safety: source tests and prior authenticated cancellation/stale-state/Undo evidence exist (queued-planning-production.json, recording-control-production.json). New compound-edit Undo is checked against actual downloaded bytes; do not substitute those older checks for a new workflow's result.
+- Still required before goal completion: complete the remaining ordinary Tempo workflow checks against the representative song, verify mobile core controls, and record platform/input/listening limits. No full Ableton parity or professional mix-quality acceptance is claimed.
+
 ## Evidence From The Initial Audit
 
 - 14 existing source-level tests pass: session-start checkpoint/recovery (including invalid data and storage failure), transport Stop/Continue/seek/start cancellation, Session arrow boundaries, atomic agent transport validation, and a serialized 32-bar study with embedded media and actual MIDI-file content checks. Command: `node --test tests/session-recovery.test.cjs tests/transport-controls.test.cjs tests/core-song-roundtrip.test.cjs`.
@@ -79,3 +88,9 @@ The user completed the offered downloads. The actual production stem ZIP contain
 A subsequent signed-in request asked for a Core Phrase split at bar 11, Utility -3 dB, volume automation 70%→35% over bars 9→13 and an enabled loop over that range. On 0.159, automation passed but the model moved/shortened the region, omitted Utility gain and mistook loop bars for beats. One Undo restored the complete source file exactly (fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7); the user's original set was restored normally. See core-edit-live-failure.json.
 
 The 0.160 candidate adds region_split through the manual editor's splitSegment boundary, preserving source timing, offsets and fades. Older clients cannot receive the new action. Planning/review guidance now explicitly distinguishes split from resize, copies bar units to loop positions, and requires requested device parameters. Tests prove source preservation, fade continuity, late-failure atomicity and one Undo/Redo across compound edits. 391 core / 78 backend checks and artifact validation pass. The exact failed request passes a real-provider check with independent complete-project assertions (core-edit-provider-proof.json); authenticated production verification is still required. The core-first goal remains active.
+
+### 2026-10-19 — 0.160.0 Core Edit Passed In Production
+
+Commit bca5bf172ea63c60e6d970c9f1f77703450b7b12 is live on apex/www (Amplify167 SUCCEED; three changed browser assets matched). API ZIP 11c62cf6ef16197b88b4eb39bfc06369295e6d1f8dc7a766e0cfa6eb595cb264 is Active/Successful; worker image/timeout/auth/limits unchanged. The exact failed compound edit passed first attempt in normal signed-in Chrome (allowance87→86). Actual 947346-byte downloaded project proves two Core Phrase regions at 32/40, each length8 with offsets0/8 and the same unchanged source, Utility gain-3, enabled volume points32/.7 and48/.35, loop32→48 and metronomeon. All other content/settings are preserved. One native Undo returns the source byte-for-byte; Redo returns the result byte-for-byte. See core-edit-production-proof.json and core-edit-hosting-proof.json.
+
+After those proofs, Undo ran and Restore Previous Set was invoked to return Test Thuvee1. Browser control began timing out during confirmation; no subsequent UI/save verification was possible. The original2247-byte backup remains safe in Test-Thuvee-1 (13).opusloop, SHA256 d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27. User asked to refresh the open production tab and report its project name. Do not claim final restoration yet or blindly run Restore again (it swaps backups). Both production and isolated local tabs are retained. No microphone data was uploaded. Remaining goal work includes other ordinary Tempo workflows, mobile core controls and explicit platform/audio limits.

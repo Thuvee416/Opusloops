@@ -1,0 +1,147 @@
+{
+  "scope": "Independent comparison of actual signed-in production project downloads",
+  "passed": true,
+  "sourceSha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+  "resultSha256": "fd663d76b317c38f4664fa68dc9a114d2ff792f65b8afe6fe35a2ab31226ca58",
+  "resultFile": "Core-Song-Native-Audit (14).opusloop",
+  "resultBytes": 947346,
+  "regionPieces": [
+    {
+      "id": "a84998a9-3d9c-4444-b36e-7ac4f256e7d3",
+      "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+      "clipId": "63af170e-e245-4a8e-a935-c42db883254b",
+      "start": 32,
+      "length": 8,
+      "offset": 0
+    },
+    {
+      "id": "de1a313f-a1b8-4400-9143-611acf1523a8",
+      "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+      "clipId": "63af170e-e245-4a8e-a935-c42db883254b",
+      "start": 40,
+      "length": 8,
+      "offset": 8
+    }
+  ],
+  "utilityGainDb": -3,
+  "volumeEnvelope": {
+    "enabled": true,
+    "points": [
+      {
+        "beat": 32,
+        "value": 0.7,
+        "curve": "linear"
+      },
+      {
+        "beat": 48,
+        "value": 0.35,
+        "curve": "linear"
+      }
+    ]
+  },
+  "transport": {
+    "loopEnabled": true,
+    "loopStart": 32,
+    "loopEnd": 48,
+    "metronome": true
+  },
+  "otherContentPreserved": true,
+  "release": "0.160.0",
+  "commit": "bca5bf172ea63c60e6d970c9f1f77703450b7b12",
+  "allowanceBefore": 87,
+  "allowanceAfter": 86,
+  "firstAttempt": true,
+  "plan": {
+    "summary": "Split the Core Phrase Arrangement region at bar 11, add a Utility effect to Core Lead with gain -3 dB, create an enabled Core Lead track volume automation envelope with a linear ramp from 70% at bar 9 to 35% at bar 13, enable the Arrangement loop from bar 9 to bar 13 and turn the metronome on.",
+    "actions": [
+      {
+        "type": "region_split",
+        "args": {
+          "id": "a84998a9-3d9c-4444-b36e-7ac4f256e7d3",
+          "at": {
+            "bar": 11
+          }
+        }
+      },
+      {
+        "type": "device",
+        "args": {
+          "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "type": "utility",
+          "params": {
+            "gain": -3
+          }
+        }
+      },
+      {
+        "type": "automation",
+        "args": {
+          "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+          "key": "volume",
+          "action": "replace",
+          "points": [
+            {
+              "beat": {
+                "bar": 9
+              },
+              "value": 0.7
+            },
+            {
+              "beat": {
+                "bar": 13
+              },
+              "value": 0.35
+            }
+          ],
+          "enabled": true
+        }
+      },
+      {
+        "type": "project",
+        "args": {
+          "transport": {
+            "loopEnabled": true,
+            "loopStart": {
+              "bar": 9
+            },
+            "loopEnd": {
+              "bar": 13
+            },
+            "metronome": true
+          }
+        }
+      }
+    ],
+    "reviewed": true,
+    "model": {
+      "id": "tempo",
+      "name": "Tempo",
+      "version": "1.0",
+      "provider": "Amazon Bedrock",
+      "providerModelId": "amazon.nova-pro-v1:0",
+      "providerModelName": "Amazon Nova Pro"
+    }
+  },
+  "undo": {
+    "file": "Core-Song-Native-Audit (15).opusloop",
+    "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+    "byteIdenticalSource": true
+  },
+  "redo": {
+    "file": "Core-Song-Native-Audit (16).opusloop",
+    "sha256": "fd663d76b317c38f4664fa68dc9a114d2ff792f65b8afe6fe35a2ab31226ca58",
+    "byteIdenticalResult": true
+  },
+  "restoration": {
+    "originalBackup": "Test-Thuvee-1 (13).opusloop",
+    "originalSha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
+    "status": "Undo and Restore Previous Set invoked; confirm dialog accepted, then browser control timed out. No final UI or downloaded comparison. User asked to refresh and confirm project name.",
+    "verified": false
+  },
+  "screenshot": "/tmp/opus-tempo-core-edit-production.png",
+  "limits": [
+    "No new rendered-audio or subjective listening proof for this compound edit; saved project content and UI verified.",
+    "Final restoration requires browser verification after tool interruption.",
+    "Overall core-first goal remains active, including remaining core Tempo workflows and mobile controls."
+  ]
+}
