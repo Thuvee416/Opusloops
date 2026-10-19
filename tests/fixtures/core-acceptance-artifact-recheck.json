@@ -1,0 +1,132 @@
+{
+  "date": "2026-10-19",
+  "scope": "Read-only reinspection of actual local downloaded artifacts, not a new browser execution or listening test. No media payloads included.",
+  "files": [
+    {
+      "file": "Test-Thuvee-1 (23).opusloop",
+      "bytes": 2247,
+      "sha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (4).opusloop",
+      "bytes": 4242828,
+      "sha256": "9d4172cda1ccc1bd9a3f411398e2cde76dcfc79ae770e66c6eb8bb5e5e91ad17",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (5).opusloop",
+      "bytes": 4242828,
+      "sha256": "9d4172cda1ccc1bd9a3f411398e2cde76dcfc79ae770e66c6eb8bb5e5e91ad17",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (6).opusloop",
+      "bytes": 4243006,
+      "sha256": "3d6bc1d7015d6ed6d8676d6f0b5daa78b5ce416295048f056c0eb7436993b4be",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (9).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (14).opusloop",
+      "bytes": 947346,
+      "sha256": "fd663d76b317c38f4664fa68dc9a114d2ff792f65b8afe6fe35a2ab31226ca58",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (15).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (16).opusloop",
+      "bytes": 947346,
+      "sha256": "fd663d76b317c38f4664fa68dc9a114d2ff792f65b8afe6fe35a2ab31226ca58",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit.wav",
+      "bytes": 7991848,
+      "sha256": "b679000e3692ea026542ce9b9cf9ab3f793f27cc435602fcb407b934f3062ab5",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit (1).wav",
+      "bytes": 1323044,
+      "sha256": "a41f9788cfdd991f83d001f51a57a56634c8f23ff312be189e15d30e6846ef3c",
+      "matchesRecordedEvidence": true
+    },
+    {
+      "file": "Core-Song-Native-Audit-stems.zip",
+      "bytes": 23978167,
+      "sha256": "f8d6af626f90c51e2cc714f3a659ff0a1b5126c5ccdbd9f786203d8cb6d0d516",
+      "matchesRecordedEvidence": true,
+      "alignedStems": [
+        {
+          "file": "01-track-Drums.wav",
+          "rate": 44100,
+          "frames": 1997951,
+          "channels": 2
+        },
+        {
+          "file": "02-track-Bass.wav",
+          "rate": 44100,
+          "frames": 1997951,
+          "channels": 2
+        },
+        {
+          "file": "03-track-Keys.wav",
+          "rate": 44100,
+          "frames": 1997951,
+          "channels": 2
+        }
+      ]
+    },
+    {
+      "file": "Core-Song-Native-Audit-stems (1).zip",
+      "bytes": 5295372,
+      "sha256": "5911acdc16bed1649f91393fc72dcdd372d92294f41dd053783348517657da72",
+      "matchesRecordedEvidence": true,
+      "alignedStems": [
+        {
+          "file": "01-track-Drums.wav",
+          "rate": 44100,
+          "frames": 330750,
+          "channels": 2
+        },
+        {
+          "file": "02-track-Bass.wav",
+          "rate": 44100,
+          "frames": 330750,
+          "channels": 2
+        },
+        {
+          "file": "03-track-Keys.wav",
+          "rate": 44100,
+          "frames": 330750,
+          "channels": 2
+        },
+        {
+          "file": "04-track-Core-Lead.wav",
+          "rate": 44100,
+          "frames": 330750,
+          "channels": 2
+        }
+      ]
+    }
+  ],
+  "odesaNew": {
+    "file": "Odesa-IO-Audit.opusloop",
+    "name": "Odesa IO Audit",
+    "tracks": 1,
+    "clips": 0,
+    "bytes": 446,
+    "sha256": "9e0201c760ebcb75566808984a4d5cf186c4c908a0ec8f94d88869cbb0f438cf"
+  }
+}
