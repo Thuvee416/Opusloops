@@ -1,7 +1,7 @@
 import {snapClipBeat,clipGrid} from './clip-grid.js';
 import {isGroup} from './track-hierarchy.js';
 import {sliceRegion,fitRegionFades} from './region-fades.js';
-import {uid,canPlace,validateProject,mod,REGION_MIN_BEATS} from './model.js';
+import {uid,canPlace,validateProject,mod,REGION_MIN_BEATS,REGION_MAX_OFFSET} from './model.js';
 export function editRegion(original,action,delta,trackId=original.trackId,grid=.25){
   const next={...original};delta=snapClipBeat(delta,grid);
   if(action==='move'){next.start=Math.max(0,original.start+delta);next.trackId=trackId;}
@@ -93,7 +93,7 @@ export function editRegionFields(project,id,changes){
  const original=project.arrangement.find(r=>r.id===id);
  if(!original||!changes||Object.keys(changes).some(key=>!['start','length','offset'].includes(key))||Object.values(changes).some(value=>!Number.isFinite(value)))throw Error('Choose an existing clip and finite position, length or source offset.');
  const next={...original,...changes};
- if(next.start<0||next.length<REGION_MIN_BEATS||next.start+next.length>16384||next.offset<0||next.offset>1024||!canPlace(project,next))throw Error('Keep regions within the timeline and avoid overlapping another region.');
+ if(next.start<0||next.length<REGION_MIN_BEATS||next.start+next.length>16384||next.offset<0||next.offset>REGION_MAX_OFFSET||!canPlace(project,next))throw Error('Keep regions within the timeline and avoid overlapping another region.');
  const resized=sliceRegion(original,0,next.length),fitted=fitRegionFades({...resized,...next,fades:resized.fades},project.clips[original.clipId]);
  if(!fitted.fades)delete fitted.fades;
  return fitted;
