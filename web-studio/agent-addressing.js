@@ -1,3 +1,4 @@
+import {normalizeHistoryCommand} from './history-control.js';
 import {normalizeMusicalAction} from './musical-units.js';
 // Odesa speaks displayed scene numbers. Only this boundary converts to engine indices.
 export const SCENE_ADDRESSING_VERSION=1;
@@ -28,7 +29,7 @@ export function normalizeAgentAction(action,{displayOnly=false}={}){
  else if(out.type==='scene')out.args=placement(args,{indexKey:'index',displayOnly});
  else if(out.type==='session_clips')out.args=nestedPlacements(args,{displayOnly});
  else if(out.type==='command'){
-  out.args=args;
+  out.args=normalizeHistoryCommand(args);
   if(['select','launch_scene','launch_clip','launch_group','record_input','session_clipboard'].includes(args.name))out.args.args=nestedPlacements(args.args,{displayOnly});
  }else out.args=args;
  return out;

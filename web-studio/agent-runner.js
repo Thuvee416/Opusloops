@@ -1,3 +1,4 @@
+import {prepareHistory,assertHistoryState,checkHistoryReceipt,historyIntent} from './history-control.js';
 import {SESSION_CAPTURE_COMMANDS,prepareSessionRecording,sessionRecordingBinding,assertSessionRecordingBinding,sessionRecordingSignature,checkSessionRecordingReceipt} from './session-recording.js';
 import {checkStemSelectionRequirements,stemSelectionMetadata} from './stem-selection.js';
 import {deliveryOptions} from './delivery-options.js';
@@ -20,7 +21,7 @@ const signature = project => JSON.stringify(project);
 
 // Preflight the whole plan before changing either transport or project state.
 // All musical edits share one candidate and preserve aliases across actions.
-export function prepareAgentPlan(project, actions, {stemSelectionRequirements=null,deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionRecordingState=null,allowArrangementReplacement=false,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null,creationLaunchRequirement=null,navigationPreservation=null}={}) {
+export function prepareAgentPlan(project, actions, {stemSelectionRequirements=null,deliveryRequirements=null,quantizeRequirements=null,recordQuantizationState=null,recordingState=null,sessionRecordingState=null,historyState=null,historyPreview=null,historyRequirement=null,allowArrangementReplacement=false,sessionClipboard=null,sessionClipboardRequirements=null,sessionSelectionRequirements=null,clipPropertyRequirements=null,creationSceneRequirement=null,creationLaunchRequirement=null,navigationPreservation=null}={}) {
   if (!Array.isArray(actions) || actions.length > 80) throw new Error('Use at most 80 actions per request.');
   if(sessionRecordingState?.active)project={...project,arrangement:structuredClone(sessionRecordingState.previousArrangement)};
   actions=normalizeAgentActions(actions);
@@ -40,6 +41,10 @@ export function prepareAgentPlan(project, actions, {stemSelectionRequirements=nu
     }
   }
   if (before.length + after.length > 8) throw new Error('Use at most eight runtime commands per request.');
+  const histories=after.filter(c=>c.name==='history');
+  if(histories.length>1||histories.length&&(hasEdits||before.length||after.slice(0,after.indexOf(histories[0])).some(c=>!['stop','pause'].includes(c.name))))throw new Error('Use one history command before other runtime actions, with only optional Stop/Pause before it and no new project edits. Request new edits separately after Undo/Redo.');
+  if(historyRequirement&&(!histories.length||JSON.stringify(historyIntent(histories[0].args))!==JSON.stringify(historyRequirement)))throw new Error('Use the requested Undo/Redo direction and complete step count.');
+  const historyPrepared=histories.length?prepareHistory(project,histories[0].args,historyState,historyPreview):null;
   const captures=after.filter(c=>c.name==='record_session');
   const captureActive=!!sessionRecordingState?.active;
   if(captures.length>1)throw new Error('Use one Session recording control per request.');
@@ -54,7 +59,7 @@ export function prepareAgentPlan(project, actions, {stemSelectionRequirements=nu
   if(recording.length&&recording[0].args?.action!=='start'&&actions.length!==1)throw new Error('Finish or cancel a take in its own request, then request edits or exports against the saved recording.');
   if(recordingState?.active&&!(actions.length===1&&recording.length===1&&['finish','cancel'].includes(recording[0].args?.action)))throw new Error('An input take is active. Use only record_input finish or cancel; finish it before editing, navigating or exporting.');
   const aliases=new Map(),editObservations=[];
-  const next = applyAgentActions(project, edits,{aliases,observations:editObservations,sessionClipboard});
+  const next = applyAgentActions(historyPrepared?.target??project, edits,{aliases,observations:editObservations,sessionClipboard});
   for(const command of [...before,...after]){
   for(const key of ['trackId','clipId','primaryId','regionId'])if(command.args?.[key])command.args[key]=aliases.get(command.args[key])||command.args[key];
   if(Array.isArray(command.args?.ids))command.args.ids=command.args.ids.map(id=>aliases.get(id)||id);
@@ -62,7 +67,7 @@ export function prepareAgentPlan(project, actions, {stemSelectionRequirements=nu
   if(Array.isArray(command.args?.slots))command.args.slots=command.args.slots.map(s=>({...s,trackId:aliases.get(s.trackId)||s.trackId,...(s.clipId?{clipId:aliases.get(s.clipId)||s.clipId}:{})}));for(const name of ['primary','fromSlot','toSlot'])if(command.args?.[name]){for(const key of ['trackId','clipId'])if(command.args[name][key])command.args[name][key]=aliases.get(command.args[name][key])||command.args[name][key];}
   const resolveChannel=channel=>{if(typeof channel!=='string'||!/^(track|return):/.test(channel))return channel;const split=channel.indexOf(':')+1;return channel.slice(0,split)+(aliases.get(channel.slice(split))||channel.slice(split));};if(command.args?.channel!==undefined)command.args.channel=resolveChannel(command.args.channel);if(Array.isArray(command.args?.channels))command.args.channels=command.args.channels.map(resolveChannel);
  }
-  const prepared=new Map();let recordingPrefs=recordQuantizationState?patchRecordQuantization(DEFAULT_RECORD_QUANTIZATION,recordQuantizationState):null;
+  const prepared=new Map();if(historyPrepared)prepared.set(histories[0],historyPrepared);let recordingPrefs=recordQuantizationState?patchRecordQuantization(DEFAULT_RECORD_QUANTIZATION,recordQuantizationState):null;
   const recordingRuntimeState=recordingState?{...recordingState}:null;
   for (const command of [...before, ...after]) {
     applyAgentActions(next, [{type:'command', args:command}]);
@@ -83,11 +88,12 @@ export function prepareAgentPlan(project, actions, {stemSelectionRequirements=nu
   const clipboardIntent=checkSessionClipboardRequirements(project,{next,prepared,before,after,edits,editCount:edits.length},sessionClipboardRequirements,sessionClipboard);
   const preservation=prepareNavigationPreservation(project,next,actions,navigationPreservation);
   const selectionIntent=checkSessionSelectionRequirements(project,{next,before,after,editCount:edits.length},sessionSelectionRequirements);
-  return {sessionRecordingBinding:sessionRecordingState?sessionRecordingBinding(sessionRecordingState):null,sessionRecording:captures.length>0||captureActive,next, prepared,navigationPreservation:preservation,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  return {history:!!historyPrepared,historyBinding:historyPrepared?.binding??null,sessionRecordingBinding:sessionRecordingState?sessionRecordingBinding(sessionRecordingState):null,sessionRecording:captures.length>0||captureActive,next, prepared,navigationPreservation:preservation,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
-export async function runAgentPlan(plan, {getProject,getRecording,getSessionRecording,getClipboard,getNavigation, expected, locked, commit, execute, signal, onStep = () => {}}) {
-  let fingerprint = expected, editsApplied = false;
+export async function runAgentPlan(plan, {getProject,getHistory,getRecording,getSessionRecording,getClipboard,getNavigation, expected, locked, commit, execute, signal, onStep = () => {}}) {
+  let fingerprint = expected, editsApplied = false, historyApplied=false,historyBinding=plan.historyBinding;
+  if(plan.history&&!getHistory)throw new Error('History control requires a current history-state adapter.');
   let captureBinding=plan.recordingBinding,sessionCaptureBinding=plan.sessionRecordingBinding,recordingApplied=false;
   const projectSignature=()=>sessionRecordingSignature(getProject(),getSessionRecording?.());
   if(plan.sessionRecording&&!getSessionRecording)throw new Error('Session recording requires a current take-state adapter.');
@@ -104,19 +110,21 @@ export async function runAgentPlan(plan, {getProject,getRecording,getSessionReco
     verifyNavigation();
     if(plan.clipboardUsed&&!commitStarted&&getClipboard()?.revision!==plan.clipboardRevision)throw new Error('Session clipboard changed. Remaining actions stopped.');
     if (projectSignature() !== fingerprint || locked('request')) throw new Error('The session changed while executing. Remaining actions stopped.');
+    if(plan.history)assertHistoryState(historyBinding,getHistory());
     if(getRecording)assertRecordingBinding(captureBinding,getRecording());
     if(getSessionRecording)assertSessionRecordingBinding(sessionCaptureBinding,getSessionRecording());
   };
   const run = async command => {
     check();
     const beforeRecording=['record_input','record_session'].includes(command.name)?structuredClone(getProject()):null;
-    let result;try{result=await execute(command,signal,plan.prepared?.get(command));
+    let result;try{if(command.name==='history'&&locked('edit'))throw new Error('Stop playback and finish recording before Undo/Redo.');result=await execute(command,signal,plan.prepared?.get(command));
+      if(command.name==='history'){historyApplied=true;checkHistoryReceipt(plan.prepared.get(command),getProject(),result,getHistory());fingerprint=signature(getProject());historyBinding=getHistory();}
       if(command.name==='record_session'){const observed=checkSessionRecordingReceipt(beforeRecording,getProject(),plan.prepared.get(command),result,getSessionRecording());recordingApplied||=observed.changed;sessionCaptureBinding=sessionRecordingBinding(getSessionRecording());fingerprint=projectSignature();}
       if(command.name==='record_input'){
         const observed=checkRecordingReceipt(beforeRecording,getProject(),plan.prepared.get(command),result,getRecording());
         recordingApplied||=observed.changed;fingerprint=signature(getProject());captureBinding=recordingBinding(getRecording());
       }
-    }catch(error){if(['record_input','record_session'].includes(command.name)&&projectSignature()!==fingerprint)error.agentRecordingApplied=true;error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
+    }catch(error){if(command.name==='history'&&(historyApplied||projectSignature()!==fingerprint))error.agentHistoryApplied=true;if(['record_input','record_session'].includes(command.name)&&projectSignature()!==fingerprint)error.agentRecordingApplied=true;error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
     if(plan.selectionIntent?.command===command)checkSessionSelectionReceipt(plan.selectionIntent,result);
     if(plan.clipboardIntent?.command===command)checkSessionClipboardReceipt(plan.clipboardIntent,result);
     observations.push({name:command.name, result:result ?? null});
@@ -150,12 +158,12 @@ export async function runAgentPlan(plan, {getProject,getRecording,getSessionReco
     for (const command of plan.after) await run(command);
     const preservedNavigation=verifyNavigation();if(preservedNavigation)onStep({type:'verified_navigation',check:preservedNavigation});
     if(plan.quantizeCheck)onStep({type:'verified_notes',check:plan.quantizeCheck});
-    return {editsApplied,recordingApplied,...(preservedNavigation?{preservedNavigation}:{}),...(plan.quantizeCheck?{quantizeVerified:plan.quantizeCheck}:{}),projectUnchanged:plan.editCount>0&&!editsApplied, completedCommands, observations,editObservations:publicEdits};
+    return {historyApplied,editsApplied,recordingApplied,...(preservedNavigation?{preservedNavigation}:{}),...(plan.quantizeCheck?{quantizeVerified:plan.quantizeCheck}:{}),projectUnchanged:plan.editCount>0&&!editsApplied, completedCommands, observations,editObservations:publicEdits};
   } catch (error) {
     // Preserve what actually happened: downloads/transport cannot be undone by
     // restoring a project, and a failed export must not hide committed edits.
     error.agentEditsApplied = editsApplied || (commitStarted && signature(getProject()) !== expected);
-    error.agentRecordingApplied ||= recordingApplied;
+    error.agentRecordingApplied ||= recordingApplied;error.agentHistoryApplied ||= historyApplied;
     error.agentCompletedCommands = completedCommands;
     throw error;
   }

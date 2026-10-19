@@ -1,0 +1,135 @@
+{
+  "scope": "Real provider through operator IAM with exact local history target preflight; not authenticated execution",
+  "cases": [
+    {
+      "prompt": "Undo the last two changes then save the project.",
+      "history": {
+        "id": "bfd90e70-374b-4251-a56d-07d7c5acd099",
+        "revision": 2,
+        "undoCount": 2,
+        "redoCount": 0
+      },
+      "plan": {
+        "summary": "Undo the last two changes and save the project.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "history",
+              "args": {
+                "action": "undo",
+                "steps": 2
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "save_project"
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 5080,
+      "passed": true
+    },
+    {
+      "prompt": "Restore the two edits I just undid, then save the project.",
+      "history": {
+        "id": "bfd90e70-374b-4251-a56d-07d7c5acd099",
+        "revision": 4,
+        "undoCount": 0,
+        "redoCount": 2
+      },
+      "plan": {
+        "summary": "Redo two edits and save the project.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "history",
+              "args": {
+                "action": "redo",
+                "steps": 2
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "save_project"
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 4002,
+      "passed": true
+    },
+    {
+      "prompt": "Stop playback, undo the most recent edit, then save the project.",
+      "history": {
+        "id": "bfd90e70-374b-4251-a56d-07d7c5acd099",
+        "revision": 6,
+        "undoCount": 2,
+        "redoCount": 0
+      },
+      "plan": {
+        "summary": "Stop playback, undo the most recent edit, then save the project.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "stop"
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "history",
+              "args": {
+                "action": "undo",
+                "steps": 1
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "save_project"
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 3970,
+      "passed": true
+    }
+  ],
+  "passed": true
+}
