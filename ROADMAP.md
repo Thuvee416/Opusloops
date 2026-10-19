@@ -1,11 +1,11 @@
 # OPUS LOOPS feature-parity roadmap
 
-Updated 2026-10-19. **Current delivery goal: make the basic Ableton-style DAW workflow reliable and build Odesa Tempo 1.0 around those verified core operations before further enhancements or advanced features. Keep everything already built.** The authoritative work order and first-milestone acceptance are in [GOAL.md](GOAL.md). Full feature parity and application-wide natural-language control remain later roadmap commitments; neither is claimed complete.
+Updated 2026-10-19. **Next product priority: Odesa must handle artistic production briefs, including reference-guided mixing and creating editable music from a verified reference structure.** See [ODESA_PRODUCTION_INTELLIGENCE_PLAN.md](ODESA_PRODUCTION_INTELLIGENCE_PLAN.md) for the audited gaps, proposed refactor, staged implementation and listening-based acceptance gates. This is a plan, not shipped capability. The completed core milestone in [GOAL.md](GOAL.md) established reliable operations underneath that intelligence; it did not establish engineer-quality mixing or reference-song understanding. Preserve that foundation. Full feature parity is not claimed complete.
 
 
-## Priority Override — Basic Functions First
+## Completed Foundation — Basic Functions First
 
-The current order supersedes feature expansion implied by older release notes and investigations below:
+The completed core milestone used this order; its evidence is retained in CORE_BUILD_STATUS.md:
 
 1. Audit the existing published Studio and repair project/transport reliability.
 2. Verify audio import, tracks, playback and basic mixer controls.
