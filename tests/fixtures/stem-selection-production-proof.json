@@ -1,0 +1,224 @@
+{
+  "status": "live-chosen-stem-export-passed",
+  "release": "0.152.0",
+  "hosting": {
+    "commit": "e84f00f37f1f442ca5525447c48bf3b3873973ce",
+    "release": "0.152.0",
+    "hosts": {
+      "opusloops.com": {
+        "version": {
+          "provider": "aws-amplify",
+          "commit": "e84f00f37f1f442ca5525447c48bf3b3873973ce",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000154",
+          "builtAt": "2026-10-19T13:58:05.809892Z"
+        },
+        "assets": {
+          "index.html": "cf77e2771dc17ab328db40d851c9b494a67be55fb4d582c8e912f677ca7566c8",
+          "release.json": "0c190465724e04530e54439adf12528d9257ac371be8571b6f712252ae8b37f5",
+          "app.js": "fa6e905733e90eec066a8232e895882de4905e83c34f1f6b7a796556f5e0dc0e",
+          "stem-selection.js": "cb55a725f98fb445c102bd84467fab10f67cbc5d8a500f9aeabb4785e8d1421f",
+          "stem-export.js": "ee631f802561773bc04536fffb78dd1dc7f37da7feb257a13149c86806e18147",
+          "agent-panel.js": "ee1970772618084efdb19fba7cb56f60e549ce5d99836cecd983cc484952df56",
+          "agent-actions.js": "2d2efe60879b2021723bf5026d75e6d399fe83598b607bc005aa18bbd25bd9b8",
+          "agent-runner.js": "c61fd2398b9a1fa5e1f32f56c6cb925eef278a5b95c892630b50ea78629c7a91",
+          "agent-schema.js": "5b0167cae17701a82527d952042b09279940e2b9ea7ffc98d9edc87d90442ae8",
+          "delivery-options.js": "28e791cc59eee49d05dcb9b19ac42af81b92f6a59f3d72d7a9b3f70e108ff18a",
+          "delivery-requirements.js": "058dcee33fb300b38fbd4e142792293b6c44ebc4ef9f312ff8a184e94c2f593e"
+        }
+      },
+      "www.opusloops.com": {
+        "version": {
+          "provider": "aws-amplify",
+          "commit": "e84f00f37f1f442ca5525447c48bf3b3873973ce",
+          "repository": "Thuvee416/Opusloops",
+          "branch": "main",
+          "appId": "d1zc92wmtmvg23",
+          "jobId": "0000000154",
+          "builtAt": "2026-10-19T13:58:05.809892Z"
+        },
+        "assets": {
+          "index.html": "cf77e2771dc17ab328db40d851c9b494a67be55fb4d582c8e912f677ca7566c8",
+          "release.json": "0c190465724e04530e54439adf12528d9257ac371be8571b6f712252ae8b37f5",
+          "app.js": "fa6e905733e90eec066a8232e895882de4905e83c34f1f6b7a796556f5e0dc0e",
+          "stem-selection.js": "cb55a725f98fb445c102bd84467fab10f67cbc5d8a500f9aeabb4785e8d1421f",
+          "stem-export.js": "ee631f802561773bc04536fffb78dd1dc7f37da7feb257a13149c86806e18147",
+          "agent-panel.js": "ee1970772618084efdb19fba7cb56f60e549ce5d99836cecd983cc484952df56",
+          "agent-actions.js": "2d2efe60879b2021723bf5026d75e6d399fe83598b607bc005aa18bbd25bd9b8",
+          "agent-runner.js": "c61fd2398b9a1fa5e1f32f56c6cb925eef278a5b95c892630b50ea78629c7a91",
+          "agent-schema.js": "5b0167cae17701a82527d952042b09279940e2b9ea7ffc98d9edc87d90442ae8",
+          "delivery-options.js": "28e791cc59eee49d05dcb9b19ac42af81b92f6a59f3d72d7a9b3f70e108ff18a",
+          "delivery-requirements.js": "058dcee33fb300b38fbd4e142792293b6c44ebc4ef9f312ff8a184e94c2f593e"
+        }
+      }
+    }
+  },
+  "apiCodeSha256": "Hx0BUR+bgP/+xolOSvYTltVXlDFhRc8BRmvAPEdceJ0=",
+  "workerUnchanged": true,
+  "limitsUnchanged": {
+    "minute": 6,
+    "day": 100
+  },
+  "projectBeforeAfterExport": {
+    "sha256": "e167e2a52f3394cabe8c8a32b87e599e3509911609da939c171898f41adeb9ed",
+    "bytes": 2302,
+    "equal": true
+  },
+  "exports": [
+    {
+      "file": "Test-Thuvee-1-stems.zip",
+      "sha256": "56de53d6c3e82550f15c0edc61bfaaccc449703ab4c0392d6502ac75f05f15d7",
+      "entries": [
+        "02-track-Stem-Check.wav",
+        "manifest.json"
+      ],
+      "manifest": {
+        "format": "opus-loops-stems",
+        "version": 1,
+        "project": "Test Thuvee 1",
+        "bpm": 120,
+        "settings": {
+          "sampleRate": 44100,
+          "bitDepth": 32,
+          "normalize": false,
+          "dither": "none",
+          "source": "session",
+          "includeTail": false,
+          "channels": [
+            "track:9390f2ab-2b05-4873-9fe8-94f78842064a"
+          ]
+        },
+        "selection": {
+          "mode": "chosen",
+          "included": [
+            "track:9390f2ab-2b05-4873-9fe8-94f78842064a"
+          ],
+          "excluded": [
+            "track:840695ce-0c8b-45be-8b62-bd36b471caea"
+          ]
+        },
+        "automationOverrides": [],
+        "notes": "Post-channel audio before master gain/compression. Track files exclude return audio but include incoming routed tracks. Bus files overlap their source files; do not sum both. To reconstruct the pre-master signal, use only tracks whose mainOutput is master, plus returns, without independent normalization/dither. Return files contain all active sends. Current mute/solo and crossfade apply. Shorter tails are padded with zero samples. Normalization/dither apply independently to each channel. Channel selection chooses files only: buses and returns retain all routed inputs and sends. A subset may not reconstruct the complete mix.",
+        "channels": [
+          {
+            "file": "02-track-Stem-Check.wav",
+            "type": "track",
+            "id": "9390f2ab-2b05-4873-9fe8-94f78842064a",
+            "name": "Stem Check",
+            "mute": false,
+            "solo": false,
+            "group": false,
+            "parentId": null,
+            "crossfade": "none",
+            "mainOutput": "master",
+            "receivesTrackOutputs": []
+          }
+        ]
+      },
+      "waveSha256": "53a39675f226b55c55d255b47ead10f9fc6232fac1c6e5612ec1e6c7b8e33280",
+      "frames": 352800,
+      "sampleRate": 44100,
+      "bitDepth": 32,
+      "peak": 0.10140905529260635,
+      "frequencyHz": 261.62557585920473,
+      "expectedMidi60Hz": 261.6255653005986
+    },
+    {
+      "file": "Test-Thuvee-1-stems (1).zip",
+      "sha256": "56de53d6c3e82550f15c0edc61bfaaccc449703ab4c0392d6502ac75f05f15d7",
+      "entries": [
+        "02-track-Stem-Check.wav",
+        "manifest.json"
+      ],
+      "manifest": {
+        "format": "opus-loops-stems",
+        "version": 1,
+        "project": "Test Thuvee 1",
+        "bpm": 120,
+        "settings": {
+          "sampleRate": 44100,
+          "bitDepth": 32,
+          "normalize": false,
+          "dither": "none",
+          "source": "session",
+          "includeTail": false,
+          "channels": [
+            "track:9390f2ab-2b05-4873-9fe8-94f78842064a"
+          ]
+        },
+        "selection": {
+          "mode": "chosen",
+          "included": [
+            "track:9390f2ab-2b05-4873-9fe8-94f78842064a"
+          ],
+          "excluded": [
+            "track:840695ce-0c8b-45be-8b62-bd36b471caea"
+          ]
+        },
+        "automationOverrides": [],
+        "notes": "Post-channel audio before master gain/compression. Track files exclude return audio but include incoming routed tracks. Bus files overlap their source files; do not sum both. To reconstruct the pre-master signal, use only tracks whose mainOutput is master, plus returns, without independent normalization/dither. Return files contain all active sends. Current mute/solo and crossfade apply. Shorter tails are padded with zero samples. Normalization/dither apply independently to each channel. Channel selection chooses files only: buses and returns retain all routed inputs and sends. A subset may not reconstruct the complete mix.",
+        "channels": [
+          {
+            "file": "02-track-Stem-Check.wav",
+            "type": "track",
+            "id": "9390f2ab-2b05-4873-9fe8-94f78842064a",
+            "name": "Stem Check",
+            "mute": false,
+            "solo": false,
+            "group": false,
+            "parentId": null,
+            "crossfade": "none",
+            "mainOutput": "master",
+            "receivesTrackOutputs": []
+          }
+        ]
+      },
+      "waveSha256": "53a39675f226b55c55d255b47ead10f9fc6232fac1c6e5612ec1e6c7b8e33280",
+      "frames": 352800,
+      "sampleRate": 44100,
+      "bitDepth": 32,
+      "peak": 0.10140905529260635,
+      "frequencyHz": 261.62557585920473,
+      "expectedMidi60Hz": 261.6255653005986
+    }
+  ],
+  "knownSetupFailures": [
+    "Broader two-track Session plus Arrangement setup exhausted repairs with missing region clipId; complete baseline unchanged.",
+    "Simpler setup created triangle poly synth instead of requested Original Tone and note.start=1 instead of expected zero-based first beat. Export scope/audio checks use the actual project, not claimed setup fidelity."
+  ],
+  "manualAndRealOdesaWaveBytesIdentical": true,
+  "restoration": {
+    "method": "One Undo of the isolated live setup, followed by normal reload and save verification",
+    "baselineFile": "Test-Thuvee-1.opusloop",
+    "sha256": "2e06224d9b6cf8e9a02104b46eed75bac5e9f7a0d10b4b15cbac68c9debbc92d",
+    "bytes": 1722,
+    "afterUndoFile": "Test-Thuvee-1 (4).opusloop",
+    "afterUndoEqual": true,
+    "afterReloadVerified": true,
+    "afterReloadFile": "Test-Thuvee-1 (5).opusloop",
+    "afterReloadSha256": "2e06224d9b6cf8e9a02104b46eed75bac5e9f7a0d10b4b15cbac68c9debbc92d",
+    "layout": {
+      "view": "session",
+      "panel": "clip",
+      "panelPercent": 20,
+      "playing": false,
+      "odesaExpanded": true
+    },
+    "newPageErrors": []
+  },
+  "preservedExportUI": {
+    "playing": true,
+    "selectedTracks": [
+      "Audio 1"
+    ],
+    "chosenStemChannels": [
+      "Stem Check"
+    ],
+    "view": "session",
+    "panel": "devices",
+    "panelPercent": 20
+  },
+  "scope": "Real signed-in public Odesa chosen export and native downloaded ZIP/WAV checks. This does not establish general prompt fidelity, listening quality, complete-song workflow, physical audio or full Ableton parity."
+}
