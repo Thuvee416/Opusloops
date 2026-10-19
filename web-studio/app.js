@@ -1,3 +1,4 @@
+import {midiInputChoices} from './midi-inputs.js';
 import {splitRegions,arrangementSplitTarget} from './region-split.js';
 import {arrangementInputDestination,appendArrangementTake,beginArrangementInput,endArrangementInput} from './arrangement-input.js';
 import {AUDIO_MAX_BEATS} from './model.js';
@@ -114,7 +115,7 @@ let audioListGeneration=0;
 const tempoTapper=new TapTempo();let tempoTapGroup=Symbol('tap-tempo');
 function clearCountIn(){engine?.stopInputMetronome();}
 let armedInputTrack=null;
-let inputConnecting=false,audioInput=null,liveNotes=null,midiTake=null,inputTarget=null,inputStarted=0,inputTimer=null,keyboardEnabled=false,midiAccess=null,midiPort=null,inputPending=false,inputCaptureId=null,inputMeta=null,inputCompletion=null,inputOutcome=null,inputAbort=null,inputFinishing=false;
+let inputConnecting=false,audioInput=null,liveNotes=null,midiTake=null,inputTarget=null,inputStarted=0,inputTimer=null,keyboardEnabled=false,midiAccess=null,midiPort=null,midiInputName='MIDI Input',inputPending=false,inputCaptureId=null,inputMeta=null,inputCompletion=null,inputOutcome=null,inputAbort=null,inputFinishing=false;
 let recordQuantization=loadRecordQuantization({getItem:key=>localStorage.getItem(key)});
 const inputActive=()=>!!(inputConnecting||midiTake||audioInput?.active||inputPending||inputFinishing);
 let selectionZoomHistory=[],restoringRegionFocus=false;
@@ -877,8 +878,22 @@ function commitOverdub(clip,meta,source){const base=source?structuredClone(proje
 function renderOverdubPreview(){const box=$('input-overdub-preview');if(!(midiTake instanceof MidiOverdub)){box.textContent='Existing Notes Are Preserved. New Notes Loop As You Play. Finish Saves; Cancel Discards.';return;}const clip=midiTake.clip,old=midiTake.source.notes.length;box.innerHTML=`<strong>${esc(clip.name)} · Overdub Preview</strong><svg viewBox="0 0 1000 90" role="img" aria-label="${old} Existing Notes And ${clip.notes.length-old} New Notes" style="width:100%;height:72px;background:var(--panel,#85888a)">${clip.notes.map((n,i)=>`<rect x="${n.start/clip.beats*1000}" y="${80-n.pitch/127*76}" width="${Math.max(2,Math.min(n.duration,clip.beats-n.start)/clip.beats*1000)}" height="4" fill="${i<old?'#44484a':'#36b8a6'}"/>`).join('')}<line x1="0" x2="0" y1="0" y2="90" stroke="#e5c77d"/></svg><p class="micro">${old} Existing · ${clip.notes.length-old} Added · ${clip.beats} Beat Loop</p>`;}
 function inputNote(type,key,pitch,velocity=type==='on'?.75:0,time){if(!liveNotes||type==='on'&&(inputConnecting||inputFinishing||!inputActive()&&!armedInputTrack))return;time??=engine.context.currentTime;if(type==='on'){liveNotes.on(key,pitch,velocity,inputActive()?inputTarget:armedInputTrack);const take=midiTake;if(time>=inputStarted&&take?.on(key,pitch,velocity,time)===false&&(take.limitReached||take.timeLimitReached))run(async()=>{await finishInput();setStatus(take.limitReached?take instanceof MidiOverdub?'Loop Note Limit Reached. Accepted Notes Were Saved; Existing Notes Preserved.':'MIDI Note Limit Reached. The 4096 Captured Notes Were Saved.':'MIDI Take Length Limit Reached. Captured Notes Were Saved.');})();if(take instanceof MidiOverdub){updateOverdubPlayback(engine,take.clip);renderOverdubPreview();}}else{liveNotes.off(key,velocity);midiTake?.off(key,time,velocity);if(midiTake instanceof MidiOverdub){updateOverdubPlayback(engine,midiTake.clip);renderOverdubPreview();}}}
 function releaseNotes(){liveNotes?.allOff();midiSustain.reset();if(midiTake)for(const key of [...midiTake.held.keys()])midiTake.off(key,engine.context.currentTime);}
-function bindMidi(){if(midiPort)midiPort.onmidimessage=null;releaseNotes();midiPort=midiAccess?.inputs.get($('midi-device').value);if(midiPort)midiPort.onmidimessage=event=>{const n=decodeMidi(event.data);if(n)midiSustain.handle(n,inputEventTime(engine.context,event.timeStamp));};}
-function refreshMidi(){const select=$('midi-device'),old=select.value;select.innerHTML=[...midiAccess.inputs.values()].filter(p=>p.state==='connected').map(p=>`<option value="${esc(p.id)}">${esc(p.name||'MIDI input')}</option>`).join('')||'<option value="">No MIDI input available</option>';if([...select.options].some(o=>o.value===old))select.value=old;bindMidi();}
+function bindMidi(){
+ const selected=midiAccess?.inputs.get($('midi-device').value),next=selected?.state==='connected'?selected:null;
+ if(next===midiPort)return false;
+ const previous=midiPort;if(previous)previous.onmidimessage=null;
+ // Close only MIDI-held notes. Computer-keyboard notes and the ongoing take
+ // remain intact; sustain is reset before the replacement port can emit.
+ midiSustain.reset();midiPort=next;
+ if(next){midiInputName=next.name||'MIDI Input';next.onmidimessage=event=>{if(midiPort!==next||next.state!=='connected')return;const n=decodeMidi(event.data);if(n)midiSustain.handle(n,inputEventTime(engine.context,event.timeStamp));};$('input-status').textContent=`MIDI Input Connected: ${midiInputName}. Sustain Pedal Supported.`;}
+ else if(previous)$('input-status').textContent=inputActive()?'MIDI Input Disconnected. Held MIDI Notes Released. Reconnect This Device, Or Finish The Take To Choose Another.':'MIDI Input Disconnected. Reconnect This Device Or Choose Another Input.';
+ return true;
+}
+function refreshMidi(){
+ if(!midiAccess)return;
+ const select=$('midi-device'),choices=midiInputChoices(midiAccess.inputs,select.value,midiInputName);
+ select.innerHTML=choices.options.map(p=>`<option value="${esc(p.id)}" ${p.missing?'disabled':''}>${esc(p.label)}</option>`).join('');select.value=choices.selectedId;bindMidi();
+}
 async function refreshAudioDevices(){if(!navigator.mediaDevices?.enumerateDevices)throw new Error('Audio device listing is unavailable in this browser.');const generation=++audioListGeneration,devices=await navigator.mediaDevices.enumerateDevices();if(generation!==audioListGeneration)return;const select=$('audio-device'),selected=select.value;select.innerHTML=audioInputChoices(devices,selected).map(d=>`<option value="${esc(d.id)}" ${d.missing?'disabled':''}>${esc(d.label)}</option>`).join('');select.value=selected;}
 $('audio-refresh').onclick=run(refreshAudioDevices);
 $('audio-channels').innerHTML=Array.from({length:16},(_,i)=>`<option value="stereo:${i*2}">Stereo ${i*2+1}/${i*2+2}</option>`).join('')+Array.from({length:32},(_,i)=>`<option value="mono:${i}">Mono ${i+1}</option>`).join('');
