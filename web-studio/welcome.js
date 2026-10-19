@@ -5,12 +5,11 @@ const welcome = document.createElement('dialog');
 welcome.id = 'opus-welcome';
 welcome.setAttribute('aria-labelledby', 'welcome-title');
 welcome.innerHTML = `
-  <div class="welcome-silk" aria-hidden="true"></div>
+  <div class="welcome-scene" aria-hidden="true"></div><div class="welcome-ascii" aria-hidden="true"></div>
   <div class="welcome-top"><div class="welcome-brand"><img class="opus-logo" src="assets/opus-mark.svg" alt="" width="27" height="20"><span>OPUS LOOPS</span></div><button class="welcome-close" aria-label="Close welcome" autofocus>${icon('close')}</button></div>
   <div class="welcome-scroll" tabindex="0" aria-label="About OPUS LOOPS And Odesa">
     <section class="welcome-hero" aria-labelledby="welcome-title">
       <div class="welcome-hero-copy"><p class="welcome-eyebrow">AI NATIVE DAW</p><h1 id="welcome-title">Natural Language.<br><span>Real Control.</span></h1><p class="welcome-description">Your ideas, in your own words.<br>An editable music studio that keeps you in control.</p></div>
-      <span class="welcome-hero-note" aria-hidden="true">YOUR SOUND. YOUR DIRECTION.</span>
     </section>
     <section class="welcome-tempo" aria-labelledby="welcome-tempo-title">
       <div class="welcome-tempo-copy"><div class="welcome-available"><span></span>Available Today <span class="welcome-version">${ODESA_MODEL.version}</span></div><p class="welcome-eyebrow">MEET YOUR EVERYDAY CO-PRODUCER</p><h2 id="welcome-tempo-title">Odesa <span>Tempo</span></h2><p>Move from an idea to the next edit. Ask Tempo to shape clips, arrange sections, adjust your mix, or prepare an export — inside your session.</p><p class="welcome-account-note">Available with an OPUS account. You review the results; project edits support Undo.</p></div>
@@ -22,7 +21,7 @@ welcome.innerHTML = `
   <footer class="welcome-footer"><p>Work With AI. Stay The Artist.<span>Projects save in this browser. Export a copy to keep.</span></p><button class="welcome-enter">Enter Studio ${icon('right')}</button></footer>`;
 document.body.append(welcome);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const field = welcome.querySelector('.welcome-silk');
+const field = welcome.querySelector('.welcome-ascii');
 let previousFocus, disposeField, motionGeneration = 0, closeTimer, artFrame;
 function stopMotion() {
   motionGeneration++;
@@ -35,17 +34,18 @@ async function startMotion() {
   const generation = ++motionGeneration;
   if (!welcome.open) return;
   try {
-    const { mountSilk } = await import('./silk.js');
+    const { mountGradientASCII } = await import('./gradient-ascii.js');
     if (generation !== motionGeneration || !welcome.open) return;
-    disposeField = mountSilk(field, {
-      color:'#aeb9b9', sheenColor:'#ffffff', lightMode:true,
-      speed:2.2, scale:1, rotation:-.18, sheen:.35, depth:.45,
-      glow:.15, noiseIntensity:.4, ripple:.45, wave:.65, dpr:1.25,
-      mouseInteraction:true, interactionStrength:.3, clickRipple:false, eventTarget:welcome,
-      intro:!reduceMotion.matches, paused:reduceMotion.matches
+    disposeField = mountGradientASCII(field, {
+      colors:['#456875','#88bfc7','#c4d1ec','#edf3ff'], shape:'horizon',
+      characters:' =+xX0S8#@', cellSize:18, density:.72, lightMode:true,
+      glyphOpacity:.85, gradientOpacity:.35, glow:.12, depthOfField:.04,
+      flicker:.08, softness:.8, flow:.35, speed:reduceMotion.matches?0:.35,
+      grain:.015, dpr:1.25, mouseInteraction:true, clickEffect:'none',
+      intro:!reduceMotion.matches
     });
   } catch {
-    // The neutral modal surface stays readable if optional WebGL artwork is unavailable.
+    // The text-free landscape and neutral surface remain when optional WebGL artwork is unavailable.
     field.replaceChildren();
   }
 }
