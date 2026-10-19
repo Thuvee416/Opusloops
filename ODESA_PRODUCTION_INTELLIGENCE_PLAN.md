@@ -4,7 +4,9 @@ Status: implementation plan, not shipped capability. Audited 2026-10-19 against 
 
 ## First Build — 2026-10-19
 
-Implemented in the 0.165.0 candidate:
+Published as 0.165.0 on apex and www: Amplify job178 succeeded for `91f4a0174da0efc28ed5486b138f9e9ef2231769`; changed assets match source. Backend update succeeded with ZIP SHA-256 `6bcf7403fe778d3e4240c2b5d6588c65ee0b5b787a9af995d5f45019a762edad`. New welcome prompts were verified in Chrome. The isolated production workspace was signed out, so no fresh signed-in production action is claimed. Evidence: `tests/fixtures/production-intelligence-release-proof.json`.
+
+Implemented:
 
 - A focused musical-brief interpretation pass before the existing draft/review/execution pipeline. The brief carries goals, protected material, reference uncertainty, assumptions and the next step. First mentions of named references require clarification; an unheard reference cannot be promoted to analyzed evidence.
 - Brief continuity within the current visit and set; account changes and New/Open clear it. This is not yet durable project-file storage.

@@ -1,0 +1,126 @@
+{
+  "release": "0.165.0",
+  "frontendCommit": "91f4a0174da0efc28ed5486b138f9e9ef2231769",
+  "amplifyJob": "178",
+  "amplifyStatus": "SUCCEED",
+  "backendZipSha256": "6bcf7403fe778d3e4240c2b5d6588c65ee0b5b787a9af995d5f45019a762edad",
+  "backendState": "Active",
+  "backendUpdate": "Successful",
+  "provider": "bedrock",
+  "model": "amazon.nova-pro-v1:0",
+  "backendTests": 94,
+  "focusedClientTests": 43,
+  "realModelCasesPassed": 4,
+  "realModelCasesTotal": 4,
+  "browserAudio": {
+    "faderDeltaDB": -6.020599913279632,
+    "deviceDeltaDB": -6.0000004881830336,
+    "mutedRmsDB": -120,
+    "sourceUnchanged": true,
+    "noSessionSubstitution": true,
+    "cancelBeforeRender": true
+  },
+  "hosting": [
+    {
+      "host": "opusloops.com",
+      "path": "version.json",
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "91f4a0174da0efc28ed5486b138f9e9ef2231769",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000178",
+        "builtAt": "2026-10-19T20:47:01.800326Z"
+      }
+    },
+    {
+      "host": "opusloops.com",
+      "path": "release.json",
+      "matchesSource": true
+    },
+    {
+      "host": "opusloops.com",
+      "path": "agent-panel.js",
+      "matchesSource": true
+    },
+    {
+      "host": "opusloops.com",
+      "path": "production-observation.js",
+      "matchesSource": true
+    },
+    {
+      "host": "opusloops.com",
+      "path": "production-analysis.js",
+      "matchesSource": true
+    },
+    {
+      "host": "opusloops.com",
+      "path": "production-analysis-worker.js",
+      "matchesSource": true
+    },
+    {
+      "host": "opusloops.com",
+      "path": "production-brief.js",
+      "matchesSource": true
+    },
+    {
+      "host": "opusloops.com",
+      "path": "welcome.js",
+      "matchesSource": true
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "version.json",
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "91f4a0174da0efc28ed5486b138f9e9ef2231769",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000178",
+        "builtAt": "2026-10-19T20:47:01.800326Z"
+      }
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "release.json",
+      "matchesSource": true
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "agent-panel.js",
+      "matchesSource": true
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "production-observation.js",
+      "matchesSource": true
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "production-analysis.js",
+      "matchesSource": true
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "production-analysis-worker.js",
+      "matchesSource": true
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "production-brief.js",
+      "matchesSource": true
+    },
+    {
+      "host": "www.opusloops.com",
+      "path": "welcome.js",
+      "matchesSource": true
+    }
+  ],
+  "limitations": [
+    "No live OpenAI or Gemini evaluation: credential location pending",
+    "No new signed-in production action: isolated www workspace was signed out",
+    "No perceptual quality, reference-audio listening, whole-song analysis or iterative audition acceptance"
+  ]
+}
