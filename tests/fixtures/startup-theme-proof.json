@@ -1,0 +1,42 @@
+{
+  "release": "0.152.1",
+  "scope": "Loading-screen theme only; no startup JavaScript, project, audio or agent behavior changes.",
+  "nativeLocalChecks": {
+    "desktop": {
+      "viewportScreenshot": "opus-loading-theme-desktop.png",
+      "background": "rgb(169, 171, 173)",
+      "foreground": "rgb(36, 38, 41)",
+      "cardWidth": 280,
+      "visibleElementsOutsideStartup": [],
+      "delayedAppModuleThenWelcome": true
+    },
+    "mobile": {
+      "iframeWidth": 390,
+      "iframeHeight": 844,
+      "viewportScreenshot": "opus-loading-theme-mobile.png",
+      "compactCardFits": true
+    },
+    "slowStartup": {
+      "message": "Taking a little longer. Check your connection or reload.",
+      "retryLabel": "Reload Studio"
+    },
+    "failedStartup": {
+      "message": "The studio could not load. Please try again.",
+      "retryVisible": true,
+      "activityDisplay": "none",
+      "visibleElementsOutsideStartup": []
+    }
+  },
+  "accessibility": {
+    "politeStatusRetained": true,
+    "blackVectorLogoAspectRatio": "524/388",
+    "reducedMotion": "CSS disables activity animation under prefers-reduced-motion; no OS preference changed."
+  },
+  "artifactValidation": "passed",
+  "sourceSha256": {
+    "web-studio/index.html": "90373c6430cb1c1c7ea51fc48ba57045d20502899d05265ab48bfe167250aaf3",
+    "web-studio/manifest.webmanifest": "c2fd4345df797e58343059d0a17f063e0b8aa46938da8e293e2bc1de5617c277",
+    "web-studio/release.json": "d50e973ff8e02dde679b52e03e981bf2d1120edb5efb8d220e4e7bb86ba73c36"
+  },
+  "production": "Native candidate checked before publication; final hosted assets checked separately."
+}
