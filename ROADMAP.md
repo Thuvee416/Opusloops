@@ -746,3 +746,9 @@ Amplify job 157 succeeded for `77197a5ccf04899e47a7831e1774d5d7714d7cb9`. Apex a
 ### 0.153.1 — Hero Copy Readability
 
 The static landscape mask stays transparent through the supporting copy, so the supplied artwork and optional animated field frame the tagline without reducing paragraph contrast. Native Chrome preview checked the final composition; JavaScript, draft behavior and the verified project-preservation path are unchanged. Final publication is checked against the exact stylesheet and release metadata.
+
+## 0.154 — Bounded Mobile Session And Mixer
+
+Mobile channel geometry now includes only visible tracks and the Main channel. Desktop drop gutters and empty clip wells are excluded at widths up to 720px, and Session and mixer share the same channel-count layout values. The clip grid ends at the stop controls, the working pane clips its contents, and overscroll effects/chaining are disabled within it. Hiding the mixer gives unused height to the detail editor; small displays retain a reachable working pane. Desktop Session geometry and Arrangement sizing are retained.
+
+Native Chrome previews at 390×844 and 320×568 verified horizontal and vertical end stops at the Main mixer channel, with no gutter or well rows. At 390px, four tracks plus Main use 564px total; adding a track updates both grids to 677px, and Undo restores the four-track layout. Adding a scene updates the compact row count and Undo restores it. Mixer visibility and desktop Session/Arrangement were checked. Source/module validation passed; final hosted artifact identity is checked after the build completes. These are browser preview checks, not a physical iOS device test.
