@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-19",
+  "release": "0.164.4",
+  "environment": "Normal Chrome on macOS, isolated https://www.opusloops.com; real provider for Start and Arrange; ordinary authentication/limits; no injected browser state",
+  "source": "Core-Song-Native-Audit (9).opusloop, SHA256 fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+  "recording": {
+    "permission": "Earlier explicit brief microphone approval; system input connected, raw monitoring off",
+    "start": "Authenticated Odesa new audio take on Drums with zero count-in; Ready receipt and active capture observed",
+    "finish": "Standalone natural-language Finish this take; appended only one Session source in Drums scene2",
+    "pcm": {
+      "channels": 2,
+      "rate": 44100,
+      "bits": 16,
+      "frames": 299743,
+      "seconds": 6.7968934240362815,
+      "peak": 0.020294189453125,
+      "rms": 0.002254681551348133,
+      "clippedSamples": 0
+    },
+    "undo": "Odesa Undo followed by actual saved (60) exactly matched entire source (9); independently compared before Downloads cleanup",
+    "redo": "Odesa Redo restored take; next saved (61) contained same take and exact source outside it plus one requested region",
+    "disconnected": true,
+    "mediaSentToProvider": false
+  },
+  "songRoundTrip": {
+    "arrange": "Odesa added full14.5beat recorded source at bar13/start48, offset0; actual (61) preserved every other field against (59)",
+    "freshTab": "Closed www tab, reopened same origin, saved (62), byte-identical to (61)",
+    "continueEdit": "Native Drums volume0.69 to0.68; entire other project and embedded audio identical",
+    "authBoundary": "Closing the tab ended its app session. Subsequent native mix/stem exports require no account; prior authenticated Tempo export proof remains musical-units-production-proof.json",
+    "allowance": "61 to60 for Start; Finish/Undo/Redo local authenticated controls; Arrange+Save60 to59; no repair observed on these two provider requests"
+  },
+  "delivery": {
+    "settings": {
+      "sampleRate": 44100,
+      "bitDepth": 16,
+      "normalize": false,
+      "dither": "none",
+      "source": "arrangement",
+      "includeTail": false,
+      "range": {
+        "start": 0,
+        "length": 64
+      }
+    },
+    "mix": {
+      "channels": 2,
+      "rate": 44100,
+      "bits": 16,
+      "frames": 1323000,
+      "seconds": 30.0,
+      "peak": 0.498779296875,
+      "rms": 0.0633705384014507,
+      "clippedSamples": 0
+    },
+    "stems": {
+      "01-track-Drums.wav": {
+        "channels": 2,
+        "rate": 44100,
+        "bits": 16,
+        "frames": 1323000,
+        "seconds": 30.0,
+        "peak": 0.412841796875,
+        "rms": 0.026957936611837315,
+        "clippedSamples": 0
+      },
+      "02-track-Bass.wav": {
+        "channels": 2,
+        "rate": 44100,
+        "bits": 16,
+        "frames": 1323000,
+        "seconds": 30.0,
+        "peak": 0.068389892578125,
+        "rms": 0.010630067962809263,
+        "clippedSamples": 0
+      },
+      "03-track-Keys.wav": {
+        "channels": 2,
+        "rate": 44100,
+        "bits": 16,
+        "frames": 1323000,
+        "seconds": 30.0,
+        "peak": 0.2965087890625,
+        "rms": 0.04664143356842559,
+        "clippedSamples": 0
+      },
+      "04-track-Core-Lead.wav": {
+        "channels": 2,
+        "rate": 44100,
+        "bits": 16,
+        "frames": 1323000,
+        "seconds": 30.0,
+        "peak": 0.084228515625,
+        "rms": 0.010430661215295088,
+        "clippedSamples": 0
+      }
+    },
+    "microphoneStemCorrelationAtBar13": 0.9999655632590707
+  },
+  "artifacts": [
+    {
+      "path": "/tmp/opus-core-final-acceptance/continued.opusloop",
+      "bytes": 2545828,
+      "sha256": "36e4df615ac4df490f3a2d78f3c7ec27fa52190536520adb26690afabc803cfe"
+    },
+    {
+      "path": "/tmp/opus-core-final-acceptance/mix.wav",
+      "bytes": 5292044,
+      "sha256": "f3921ae1003ea853bd90ee89f26f5330fa2e0cb76893225f86ca0b59a36b9f47"
+    },
+    {
+      "path": "/tmp/opus-core-final-acceptance/reopened.opusloop",
+      "bytes": 2545828,
+      "sha256": "f1a02447fd5d033dbebdb726c600159e4430bbdeba6eeba3c6b12e8d58af9312"
+    },
+    {
+      "path": "/tmp/opus-core-final-acceptance/stems.zip",
+      "bytes": 21171371,
+      "sha256": "3db5a2625094351c4b627f8fb3bb39316c808502009b6488aeef20174c12d416"
+    }
+  ],
+  "limits": [
+    "No microphone or project media uploaded; artifacts remain local and are not committed",
+    "Physical controller latency, roundtrip input/output compensation, physical mobile/touch audio and cross-browser support are unverified",
+    "PCM decoding, timing/content correlation and nonclipping do not prove subjective professional mix quality",
+    "Earlier Downloads filenames may have been cleaned up externally; retained local artifacts listed above preserve final song/reopen/mix/stems"
+  ]
+}
