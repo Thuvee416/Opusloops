@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-19",
+  "environment": "Normal authenticated Chrome, https://www.opusloops.com/, real provider and ordinary limits, native controls/file downloads; no injected state",
+  "source": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (9).opusloop",
+  "originalApexProject": "Test Thuvee 1 untouched",
+  "limits": [
+    "No microphone media sent",
+    "No physical audio-device latency or subjective listening claim",
+    "Only the listed actual production requests are covered"
+  ],
+  "cases": [
+    {
+      "id": "mixer-rename",
+      "prompt": "Mute Drums, solo Bass, and rename Keys to Pad Keys. Keep every other setting and all clips unchanged. Do not start playback or export.",
+      "verification": "Exactly the requested three fields; all others identical; one Odesa Undo exact original"
+    },
+    {
+      "id": "remove-track",
+      "prompt": "Remove only the Core Lead track and its Arrangement regions. Keep all other tracks, clips, regions and settings unchanged. Do not start playback or export.",
+      "verification": "Removed only the owned track/region and unreferenced source; all other content exact; one Odesa Undo exact original"
+    },
+    {
+      "id": "seek-play-stop",
+      "verification": "Odesa Show Arrangement/seek bar9/play executed; separate Odesa Stop completed; no project changes. Later on 0.164.4: stopped seek shows 009:1:1 and Play From Beat33 with aria-pressed=false; separate Play request yields aria-pressed=true and moving display013:1:3; native Stop returns1:1:1. Exact whole saved project after every transport case."
+    }
+  ],
+  "files": [
+    {
+      "case": "mixer-rename",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (45).opusloop",
+      "bytes": 946770,
+      "sha256": "8ada3a7f101a10c9213a41a049c2d53915c077b41015bbd3df6069f0080a16a5"
+    },
+    {
+      "case": "undo-mixer-rename",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (46).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "remove-track",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (47).opusloop",
+      "bytes": 946014,
+      "sha256": "8bd1ec8797f3374d6d12e0b1ba4fdad92d3b51f0dd3f4b3e806b8f25d48a502b"
+    },
+    {
+      "case": "undo-remove-track",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (48).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "first-transport-roundtrip",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (49).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "stopped-seek-exact-bar9",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (57).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "play-stop-roundtrip",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (58).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    }
+  ],
+  "allowance": {
+    "mixerRename": 71,
+    "removeTrack": 70,
+    "firstSeekPlay": 69,
+    "agentStop": 68,
+    "stoppedSeekRetest": 63,
+    "playRetest": 62
+  },
+  "passed": true
+}

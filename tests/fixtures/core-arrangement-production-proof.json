@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-19",
+  "environment": "Normal authenticated Chrome, https://www.opusloops.com/, real provider and ordinary limits, native controls/file downloads; no injected state",
+  "source": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (9).opusloop",
+  "originalApexProject": "Test Thuvee 1 untouched",
+  "limits": [
+    "No microphone media sent",
+    "No physical audio-device latency or subjective listening claim",
+    "Only the listed actual production requests are covered"
+  ],
+  "cases": [
+    {
+      "id": "move-trim",
+      "verification": "Core Phrase moved start32 to40 (+2 bars) and length16 to12 (-1 bar); offset0, source notes/Session/other fields exact; one Odesa Undo restores source"
+    },
+    {
+      "id": "duplicate-delete",
+      "verification": "Independent copied source with identical notes/settings at start48/length16/offset0. Original Arrangement placement removed; original Session source and every other field exact. One Odesa Undo restores source."
+    },
+    {
+      "id": "select-editor",
+      "verification": "Agent selected Core Phrase region at displayed beat33; selected checkbox and Core Phrase Clip editor visible; saved project exact source. Native post-release selection also shows corrected current context header."
+    }
+  ],
+  "files": [
+    {
+      "case": "move-trim",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (50).opusloop",
+      "bytes": 946768,
+      "sha256": "fed937508e903d8b5f011f32bacb7be30e20183ffea5ef00cd3e40f7e2a3e4f8"
+    },
+    {
+      "case": "undo-move-trim",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (51).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "duplicate-delete",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (52).opusloop",
+      "bytes": 947143,
+      "sha256": "a1f1238fc0f6ba1602aa58379f8527da09ce8ff32e293be701580ef5ad128634"
+    },
+    {
+      "case": "undo-duplicate-delete",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (53).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "selection-only",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (54).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    }
+  ],
+  "allowance": {
+    "before": 68,
+    "after": 65
+  },
+  "screenshot": "/tmp/opus-core-production-verified.png",
+  "passed": true
+}

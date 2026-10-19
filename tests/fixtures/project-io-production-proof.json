@@ -64,7 +64,7 @@
     "Changed BPM to 129 while Open waited; Choose Project File rejected before picker; only manual tempo change remains",
     "Undo manual change exact source"
   ],
-  "reportingFailure": "Stale chooser correctly rejected operation, but error incorrectly claimed project operation completed because runner attributed unrelated manual change to project_io. Regression repaired in 0.164.4 candidate; production recheck pending.",
+  "reportingFailure": "Stale chooser correctly rejected operation, but error incorrectly claimed project operation completed because runner attributed unrelated manual change to project_io. Regression repaired in 0.164.4 candidate; production recheck pending. Fixed and verified after reloading production 0.164.4; see receiptFix.",
   "allowance": {
     "before": 77,
     "after": 72,
@@ -75,5 +75,28 @@
     "No microphone media transmitted",
     "Does not close remaining core controls, Arrangement or recording production gates"
   ],
-  "originalUserProject": "Test Thuvee 1 at apex untouched"
+  "originalUserProject": "Test Thuvee 1 at apex untouched",
+  "receiptFix": {
+    "release": "0.164.4",
+    "commit": "0cc1d0d7c009743bce1c121d748f41a1571fea4b",
+    "refreshedProductionRetest": true,
+    "message": "The session changed while executing. Remaining actions stopped. Interrupted command: project_io.",
+    "noFalseCompletedClaim": true,
+    "beforePickerRejected": true,
+    "files": [
+      {
+        "case": "only-manual-tempo-change",
+        "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (55).opusloop",
+        "bytes": 946768,
+        "sha256": "521047f71c624eecc9ee9f66f2e8997901242e04d957af9e921f78bcacc0aef3"
+      },
+      {
+        "case": "one-undo-exact-source",
+        "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (56).opusloop",
+        "bytes": 946768,
+        "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+      }
+    ],
+    "allowanceAfter": 64
+  }
 }
