@@ -135,13 +135,14 @@
   "restoration": {
     "originalBackup": "Test-Thuvee-1 (13).opusloop",
     "originalSha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
-    "status": "Undo and Restore Previous Set invoked; confirm dialog accepted, then browser control timed out. No final UI or downloaded comparison. User asked to refresh and confirm project name.",
-    "verified": false
+    "status": "Recovered through File Open of the verified original backup after browser control returned. A fresh save matches the original bytes exactly.",
+    "verified": true,
+    "finalDownload": "Test-Thuvee-1 (14).opusloop",
+    "finalSha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27"
   },
   "screenshot": "/tmp/opus-tempo-core-edit-production.png",
   "limits": [
     "No new rendered-audio or subjective listening proof for this compound edit; saved project content and UI verified.",
-    "Final restoration requires browser verification after tool interruption.",
     "Overall core-first goal remains active, including remaining core Tempo workflows and mobile controls."
   ]
 }

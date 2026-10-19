@@ -1,0 +1,38 @@
+{
+  "scope": "Normal isolated localhost Chrome with real audio engine and synthetic pre-microphone source; no model stubs",
+  "baselineSha256": "ccb39b0f25538a70a775d24fce53a35523b8f795c1a005dc7e68ee16733b9159",
+  "captureSha256": "5664bb26c63953bc78637ba0e93d208ce8b4d458920e45d4a9c40239b96e9dca",
+  "regions": [
+    {
+      "id": "a706cafc-c73b-4b81-b32b-1af37b13d3f6",
+      "trackId": "e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+      "clipId": "a04caffa-9d26-4b9b-a26d-8fdbb1111ef9",
+      "start": 12,
+      "length": 20.931700680272108,
+      "offset": 0
+    },
+    {
+      "id": "de07a212-fe86-41fb-9522-8f09a7b5769a",
+      "trackId": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+      "clipId": "56383108-14cf-44df-a176-ef633b483151",
+      "start": 12,
+      "length": 20.931700680272108,
+      "offset": 0
+    },
+    {
+      "id": "26f39d47-64bf-47f5-9043-686d0f5ea008",
+      "trackId": "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+      "clipId": "e0fa8ea0-45b2-46e0-b015-0feacf2ebfff",
+      "start": 12,
+      "length": 20.931700680272108,
+      "offset": 0
+    }
+  ],
+  "oneUndoByteIdentical": true,
+  "otherProjectDataPreserved": true,
+  "consoleErrors": [],
+  "limits": [
+    "Audio-start error and cancellation paths covered with controlled source tests, not forced real-device failures.",
+    "No microphone used, no subjective listening or hardware latency claim."
+  ]
+}
