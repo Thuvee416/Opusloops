@@ -5,8 +5,11 @@ const tags = [{ Key: 'Application', Value: 'Opusloops' }];
 const stages = ['inspect', 'analyze', 'propose', 'render'];
 const title = value => value[0].toUpperCase() + value.slice(1);
 
-export function applicationTemplate({ outputs, account, region, codeKey, image, executionRole, taskRole }) {
+export function applicationTemplate({ outputs, account, region, codeKey, image, executionRole, taskRole, planner={provider:'bedrock',model:'amazon.nova-pro-v1:0',secretArn:''} }) {
   if (account !== '368310207026' || region !== 'us-east-1' || !new RegExp(`^${account}\\.dkr\\.ecr\\.${region}\\.amazonaws\\.com/opusloops/stem-worker@sha256:[a-f0-9]{64}$`).test(image)) throw new Error('Unexpected AWS application target');
+  if(!['bedrock','openai','gemini'].includes(planner.provider)||typeof planner.model!=='string'||!planner.model||planner.model.length>120)throw new Error('Invalid planning configuration');
+  if(planner.provider==='bedrock'&&planner.model!=='amazon.nova-pro-v1:0')throw new Error('Bedrock model requires an explicit IAM policy update');
+  if(planner.provider!=='bedrock'&&!new RegExp(`^arn:aws:secretsmanager:${region}:${account}:secret:opusloops/ai/[A-Za-z0-9/_-]+$`).test(planner.secretArn||''))throw new Error('External planners require a dedicated OPUS AI secret');
   const queue = `arn:aws:batch:${region}:${account}:job-queue/opusloops-stem-worker`;
   const buckets = [outputs.UploadsBucket, outputs.SourcesBucket, outputs.ArtifactsBucket];
   const objects = buckets.map(bucket => `arn:aws:s3:::${bucket}/*`);
@@ -22,7 +25,7 @@ export function applicationTemplate({ outputs, account, region, codeKey, image, 
       AssumeRolePolicyDocument: policy([{ Effect: 'Allow', Principal: { Service: 'lambda.amazonaws.com' }, Action: 'sts:AssumeRole' }]),
       ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
       Policies: [{ PolicyName: 'ApplicationServices', PolicyDocument: policy([
-        { Effect: 'Allow', Action: 'bedrock:InvokeModel', Resource: 'arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-pro-v1:0' },
+        ...(planner.provider==='bedrock'?[{ Effect: 'Allow', Action: 'bedrock:InvokeModel', Resource: 'arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-pro-v1:0' }]:[{Effect:'Allow',Action:'secretsmanager:GetSecretValue',Resource:planner.secretArn}]),
         { Effect: 'Allow', Action: ['dynamodb:UpdateItem','dynamodb:GetItem'], Resource: attr('AgentUsage','Arn') },
         { Effect: 'Allow', Action: ['dynamodb:GetItem','dynamodb:PutItem','dynamodb:UpdateItem'], Resource: attr('AgentPlans','Arn') },
         { Effect: 'Allow', Action: 'lambda:InvokeFunction', Resource: `arn:aws:lambda:${region}:${account}:function:opusloops-aws-database` },
@@ -45,7 +48,7 @@ export function applicationTemplate({ outputs, account, region, codeKey, image, 
       FunctionName: 'opusloops-aws-api', Description: 'Cognito-verified Opusloops application API; database access uses private IAM bridge',
       Runtime: 'nodejs22.x', Architectures: ['arm64'], Handler: 'api.handler', Role: attr('ApiRole', 'Arn'),
       Code: { S3Bucket: outputs.MigrationBucket, S3Key: codeKey }, MemorySize: 512, Timeout: 120, Tags: tags,
-      Environment: { Variables: { API_URL: apiUrl, AWS_ACCOUNT_ID: account, STUDIO_AGENT_MODEL_ID:'amazon.nova-pro-v1:0', STUDIO_AGENT_USAGE_TABLE:ref('AgentUsage'), STUDIO_AGENT_PLANS_TABLE:ref('AgentPlans'), STUDIO_AGENT_PLANNER_FUNCTION:'opusloops-aws-api', DATABASE_FUNCTION: 'opusloops-aws-database',
+      Environment: { Variables: { API_URL: apiUrl, AWS_ACCOUNT_ID: account, STUDIO_AGENT_PROVIDER:planner.provider,STUDIO_AGENT_MODEL_ID:planner.model,...(planner.provider!=='bedrock'?{STUDIO_AGENT_API_SECRET_ARN:planner.secretArn}:{}), STUDIO_AGENT_USAGE_TABLE:ref('AgentUsage'), STUDIO_AGENT_PLANS_TABLE:ref('AgentPlans'), STUDIO_AGENT_PLANNER_FUNCTION:'opusloops-aws-api', DATABASE_FUNCTION: 'opusloops-aws-database',
         USER_POOL_ID: outputs.UserPoolId, USER_POOL_CLIENT_ID: outputs.UserPoolClientId, CALLBACK_SECRET_ARN: outputs.CallbackSecretArn,
         UPLOADS_BUCKET: outputs.UploadsBucket, SOURCES_BUCKET: outputs.SourcesBucket, ARTIFACTS_BUCKET: outputs.ArtifactsBucket,
         WORKER_STORAGE_ROLE: workerArn, BATCH_JOB_QUEUE: queue,

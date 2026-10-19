@@ -2,6 +2,40 @@
 
 Status: implementation plan, not shipped capability. Audited 2026-10-19 against commit f3cf9e1 and the active AWS API configuration. The earlier core milestone establishes reliable DAW operations; it does not establish reference-guided production or engineer-quality mixing.
 
+## First Build — 2026-10-19
+
+Implemented in the 0.165.0 candidate:
+
+- A focused musical-brief interpretation pass before the existing draft/review/execution pipeline. The brief carries goals, protected material, reference uncertainty, assumptions and the next step. First mentions of named references require clarification; an unheard reference cannot be promoted to analyzed evidence.
+- Brief continuity within the current visit and set; account changes and New/Open clear it. This is not yet durable project-file storage.
+- Local, post-master Arrangement rendering and worker-based measurements: sample peak, RMS, crest factor, clipped samples, stereo correlation, side energy, approximate band energy and short-window RMS. Bounded to the opening 32 beats or 60 seconds, whichever is shorter. No user audio is uploaded. Offline rendering cannot be interrupted midway; cancellation discards its result and stops subsequent work.
+- OpenAI Responses and Google Gemini provider adapters, dedicated AWS secret references, explicit provider selection and no automatic fallback. Anthropic is excluded. Active production selection remains Nova until an external model wins actual acceptance tests.
+- Artistic starter prompts and inline brief/measurement details. Existing atomic editing, grouped Undo, account binding, quotas and preflight remain the execution authority.
+
+Verification: 94 backend tests, 43 focused client tests, static artifact checks, and a real Chrome audio test passed. The latter independently observed a -6.0206 dB fader change, a -6 dB Utility change, silence when muted, no source mutation, no Session substitution and cancellation before rendering. Nova passed four synthetic musical-intent/tool cases after separating brief interpretation from action planning; the first combined-schema attempt failed all four. One final sample per case is not a reliability estimate or proof of musical quality. Captured final results are in `tests/fixtures/production-intelligence-baseline.json`.
+
+Still required: reference audio ingestion and semantic sections, persistent briefs, full-song/track observations, loudness-matched audition, candidate revisions, listening evaluation, richer editable composition and production model comparisons. This build does not fulfill the promise of an engineer-quality reference mix or exact named-song structure.
+
+### Model Shortlist And Decision
+
+| Candidate | Why Evaluate It | Current Evidence |
+| --- | --- | --- |
+| OpenAI `gpt-6.1-sol` | First planning candidate: tool use and complex multi-step reasoning with a lower-cost positioning than Astra | Official capability documentation; adapter contract tests only, no live OPUS result |
+| OpenAI `gpt-6-astra` | Quality ceiling comparison for difficult production decisions | Official capability documentation; no live OPUS result |
+| Google `gemini-4-argon` | Audio-input candidate for reference descriptions plus planning | Audio input and function calling documented; music-specific judgments still require listening evaluation |
+| Google `gemini-3.8-flash` | Lower-latency comparison for brief interpretation and audio descriptions | Official capability documentation; no live OPUS result |
+| Amazon Nova Pro | Existing operational baseline | Four final synthetic cases passed; not a perceptual-quality assessment |
+
+Recommendation is provisional: evaluate Sol for planning and Argon for audio understanding, rather than choosing a single provider by reputation. Current adapters send text/session measurements only; audio input is future work requiring explicit upload UX. The previously shared OpenAI/Google keys were not found in this chat's saved user messages, local project configuration or shell profiles. External comparisons are pending the credential location. Never paste keys into reports or commit them.
+
+Primary sources checked on 2026-10-19: [OpenAI model guidance](https://developers.openai.com/api/docs/guides/latest-model), [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling), [Gemini 4 Argon](https://ai.google.dev/gemini-api/docs/models/gemini-4-argon), [Gemini 3.8 Flash](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash), [Gemini audio](https://ai.google.dev/gemini-api/docs/audio), and [Gemini generateContent/tool schema](https://ai.google.dev/api/generate-content).
+
+### Reproducible Provider Evaluation
+
+From `infra/aws-backend`, run `node operator/evaluate-production.mjs PROVIDER MODEL_ID`. The provider must be `bedrock`, `openai` or `gemini`. External keys come from the process environment or an explicit `OPUS_PROVIDER_KEYS_FILE` pointing to private JSON (0600). This runs four bounded paid synthetic cases, no real project/audio. It saves results under ignored `.operator/`. Use the same cases and independent protected-material checks for every candidate; follow with repeated cases and blinded listening before ranking production quality.
+
+For a tested external deployment, store the selected key in a dedicated `opusloops/ai/...` Secrets Manager secret and pass its ARN as `OPUS_PLANNER_SECRET_ARN`, with `OPUS_PLANNER_PROVIDER` and `OPUS_PLANNER_MODEL` to the normal deployment command. The template grants access to that one secret, removes unused Bedrock inference permission, and keeps secret values out of Lambda environment configuration. Later code deployments preserve the selected provider. No external provider is enabled by this build alone.
+
 ## Product Outcome
 
 Odesa should accept an artistic brief, investigate the current music and any reference, make production decisions, execute them in an editable DAW, and evaluate the result. The artist should not need to translate “make the chorus lift” into individual fader, device and automation commands.

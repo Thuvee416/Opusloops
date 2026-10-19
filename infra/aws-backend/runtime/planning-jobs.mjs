@@ -69,7 +69,7 @@ export function createPlanningJobs({store=planningStore,allowance=agentAllowance
   const timer=setInterval(tick,checkIntervalMs);
   try{
    const budgetMs=Math.max(1000,Math.min(PLAN_MODEL_BUDGET_MS,row.deadlineAt-now()-5000));
-   const result=await planner(JSON.parse(claimed.payloadJson),{budgetMs,signal:controller.signal,onPhase:async phase=>{if(!['drafting','reviewing'].includes(phase))return;const changed=await store.patch(id,{nonce,status:'running'},{phase});if(!changed){controller.abort();throw new ApiError(409,'agent_cancelled','Planning Was Canceled.');}}});
+   const result=await planner(JSON.parse(claimed.payloadJson),{budgetMs,signal:controller.signal,onPhase:async phase=>{if(!['understanding','drafting','reviewing'].includes(phase))return;const changed=await store.patch(id,{nonce,status:'running'},{phase});if(!changed){controller.abort();throw new ApiError(409,'agent_cancelled','Planning Was Canceled.');}}});
    if(controller.signal.aborted||now()>=row.deadlineAt)throw new ApiError(504,'agent_timeout','Planning Took Too Long. No Project Changes Were Applied.');
    if(!result||typeof result.summary!=='string'||!Array.isArray(result.actions)||(result.question!==undefined&&(typeof result.question!=='string'||!result.question.trim()||result.actions.length))||(!result.question&&result.reviewed!==true))throw new ApiError(502,'invalid_agent_plan','Planning Did Not Return A Reviewed Plan. No Project Changes Were Applied.');
    const resultJson=JSON.stringify(result);if(Buffer.byteLength(resultJson)>180000)throw new ApiError(502,'invalid_agent_plan','The Plan Is Too Large. Request Fewer Changes At Once.');

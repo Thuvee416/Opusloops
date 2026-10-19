@@ -28,7 +28,11 @@ try {
   if(!String(error.stderr||'').includes('does not exist'))throw error;
 }
 const image = process.env.OPUSLOOPS_WORKER_IMAGE || deployedImage || source.containers[0].image;
-const template = applicationTemplate({ outputs, account, region, codeKey, image, executionRole: source.executionRoleArn, taskRole: source.taskRoleArn });
+// Preserve the selected provider across code releases. Never copy credential values.
+let live={};try{live=await awsCli('lambda','get-function-configuration','--function-name','opusloops-aws-api');}catch(error){if(!String(error.stderr||'').includes('ResourceNotFoundException'))throw error;}
+const liveEnv=live.Environment?.Variables||{};
+const planner={provider:process.env.OPUS_PLANNER_PROVIDER||liveEnv.STUDIO_AGENT_PROVIDER||'bedrock',model:process.env.OPUS_PLANNER_MODEL||liveEnv.STUDIO_AGENT_MODEL_ID||'amazon.nova-pro-v1:0',secretArn:process.env.OPUS_PLANNER_SECRET_ARN||liveEnv.STUDIO_AGENT_API_SECRET_ARN||''};
+const template = applicationTemplate({ outputs, account, region, codeKey, image, executionRole: source.executionRoleArn, taskRole: source.taskRoleArn,planner });
 const file = new URL('application-template.json', dir);
 await writeFile(file, JSON.stringify(template), { mode: 0o600 });
 await awsCli('cloudformation', 'deploy', '--stack-name', 'opusloops-aws-application', '--template-file', file.pathname, '--capabilities', 'CAPABILITY_NAMED_IAM', '--no-fail-on-empty-changeset');

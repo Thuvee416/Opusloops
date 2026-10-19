@@ -44,3 +44,4 @@
 .studio-shell .agent-allowance-refresh{flex-shrink:0;padding:3px 5px;font-size:9px}
 
 .agent-file-choice{grid-template-columns:1fr;gap:6px}.agent-file-choice button{justify-self:start}.agent-file-choice span{font-size:11px;line-height:1.5}
+.agent-analysis-settings{font-size:10px;color:var(--muted);margin-top:7px}.agent-analysis-settings summary{cursor:pointer}.agent-analysis-settings label{display:flex;align-items:center;gap:5px;margin-top:7px}.agent-analysis-settings input{width:auto;margin:0}.agent-analysis-settings p{line-height:1.5;margin:6px 0}

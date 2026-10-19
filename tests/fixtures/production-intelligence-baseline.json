@@ -1,0 +1,233 @@
+{
+  "at": "2026-10-19T20:41:19.587Z",
+  "provider": "bedrock",
+  "model": "amazon.nova-pro-v1:0",
+  "scope": "Four synthetic text/tool cases, one sample each; not perceptual music quality or a latency percentile.",
+  "results": [
+    {
+      "id": "engineer-reference",
+      "milliseconds": 2841,
+      "passed": true,
+      "issues": [],
+      "result": {
+        "summary": "Adjust the mix to sound like a Dave Pensado mix.",
+        "question": "Which recording/version of Dave Pensado mix should guide us, and which sound qualities or song sections matter most to you?",
+        "actions": [],
+        "brief": {
+          "intent": "mix",
+          "goal": "Adjust the mix to sound like a Dave Pensado mix.",
+          "reference": "Dave Pensado mix",
+          "referenceState": "requested",
+          "constraints": [],
+          "assumptions": [
+            "Reference audio has not been supplied or analyzed."
+          ],
+          "nextStep": "Clarify the reference and desired qualities before planning edits."
+        },
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "song-reference",
+      "milliseconds": 2174,
+      "passed": true,
+      "issues": [],
+      "result": {
+        "summary": "Create a house song with a structure similar to 'Don\u2019t You Worry Child' by Swedish House Mafia.",
+        "question": "Which recording/version of Don\u2019t You Worry Child by Swedish House Mafia should guide us, and which sound qualities or song sections matter most to you?",
+        "actions": [],
+        "brief": {
+          "intent": "compose",
+          "goal": "Create a house song with a structure similar to 'Don\u2019t You Worry Child' by Swedish House Mafia.",
+          "reference": "Don\u2019t You Worry Child by Swedish House Mafia",
+          "referenceState": "requested",
+          "constraints": [],
+          "assumptions": [
+            "Reference audio has not been supplied or analyzed."
+          ],
+          "nextStep": "Clarify the reference and desired qualities before planning edits."
+        },
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "described-mix",
+      "milliseconds": 5213,
+      "passed": true,
+      "issues": [],
+      "result": {
+        "summary": "Apply a gentle EQ to the bass track to make it warmer and less bright.",
+        "actions": [
+          {
+            "type": "device",
+            "args": {
+              "trackId": "5f571359-2cb9-4da9-9ea6-3d705d480b29",
+              "type": "eq",
+              "params": {
+                "low": 1,
+                "mid": -1,
+                "high": -1
+              }
+            }
+          }
+        ],
+        "brief": {
+          "intent": "mix",
+          "goal": "Make the bass warmer and less bright with gentle EQ. Keep the vocal, tempo, notes and arrangement unchanged.",
+          "reference": "",
+          "referenceState": "none",
+          "constraints": [
+            "Keep the vocal unchanged",
+            "Keep the tempo unchanged",
+            "Keep the notes unchanged",
+            "Keep the arrangement unchanged"
+          ],
+          "assumptions": [
+            "The bass track is the one to be modified",
+            "The user wants a subtle EQ adjustment"
+          ],
+          "nextStep": "Apply a gentle EQ to the bass track to make it warmer and less bright."
+        },
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "id": "original-composition",
+      "milliseconds": 8446,
+      "passed": true,
+      "issues": [],
+      "result": {
+        "summary": "Add an original four-bar house bass idea on a new track with the Warm bass preset in Arrangement.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "House Bass",
+              "kind": "poly",
+              "preset": "Warm bass",
+              "ref": "$houseBass"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "trackId": "$houseBass",
+              "ref": "$bassIdea",
+              "name": "House Bass Idea",
+              "beats": {
+                "bars": 4
+              },
+              "notes": [
+                {
+                  "pitch": 36,
+                  "start": {
+                    "bar": 1,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 1
+                  },
+                  "velocity": 0.7
+                },
+                {
+                  "pitch": 39,
+                  "start": {
+                    "bar": 2,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 1
+                  },
+                  "velocity": 0.7
+                },
+                {
+                  "pitch": 40,
+                  "start": {
+                    "bar": 3,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 1
+                  },
+                  "velocity": 0.7
+                },
+                {
+                  "pitch": 43,
+                  "start": {
+                    "bar": 4,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 1
+                  },
+                  "velocity": 0.7
+                }
+              ]
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "trackId": "$houseBass",
+              "clipId": "$bassIdea",
+              "start": {
+                "bar": 1
+              },
+              "length": {
+                "bars": 4
+              }
+            }
+          }
+        ],
+        "brief": {
+          "intent": "compose",
+          "goal": "Create a four-bar house bass line in C minor using the Warm bass preset on a new track, keeping existing tracks and tempo unchanged. The bass line should be sparse and editable.",
+          "reference": "",
+          "referenceState": "none",
+          "constraints": [
+            "Use C minor key",
+            "Keep existing tracks and tempo unchanged",
+            "Use Warm bass preset",
+            "Bass line should be sparse and editable"
+          ],
+          "assumptions": [
+            "The user wants a new bass line that complements the existing arrangement without altering other tracks or tempo.",
+            "The Warm bass preset is suitable for a house bass line in C minor."
+          ],
+          "nextStep": "Compose the four-bar house bass line."
+        },
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ]
+}
