@@ -1,0 +1,288 @@
+{
+  "status": "native-candidate-gates-passed-not-deployed",
+  "candidateSourceCommit": "eca17722b6ad94e9f963543050af00e11934d1f7",
+  "nativeAudio": {
+    "status": "passed",
+    "sampleRate": 44100,
+    "frames": 88200,
+    "chosenFiles": [
+      "03-track-Bus.wav",
+      "06-return-Room.wav",
+      "manifest.json"
+    ],
+    "selectedAudioMatchesAllExports": true,
+    "comparisons": {
+      "repeatAll": {
+        "bus": {
+          "maxDifference": 5.820766091346741e-11,
+          "peak": 0.00048279331531375647,
+          "differingSamples": 47634,
+          "maxAtFrame": 15,
+          "headerIdentical": true,
+          "tolerance": 2.312137924736769e-10
+        },
+        "room": {
+          "maxDifference": 1.4551915228366852e-11,
+          "peak": 0.00010527071572141722,
+          "differingSamples": 24834,
+          "maxAtFrame": 5886,
+          "headerIdentical": true,
+          "tolerance": 5.1196988926609623e-11
+        }
+      },
+      "chosen": {
+        "bus": {
+          "maxDifference": 8.731149137020111e-11,
+          "peak": 0.00048279331531375647,
+          "differingSamples": 44252,
+          "maxAtFrame": 826,
+          "headerIdentical": true,
+          "tolerance": 2.312137924736769e-10
+        },
+        "room": {
+          "maxDifference": 1.4551915228366852e-11,
+          "peak": 0.00010527071572141722,
+          "differingSamples": 24834,
+          "maxAtFrame": 5886,
+          "headerIdentical": true,
+          "tolerance": 5.1196988926609623e-11
+        }
+      },
+      "returnOnly": {
+        "maxDifference": 1.4551915228366852e-11,
+        "peak": 0.00010527071572141722,
+        "differingSamples": 23612,
+        "maxAtFrame": 5894,
+        "headerIdentical": true,
+        "tolerance": 5.1196988926609623e-11
+      }
+    },
+    "roundingPolicy": "Identical headers; at most four Float32 epsilon units relative to peak plus 1e-12. Repeated full renders are measured separately.",
+    "returnOnlyPreservesUnselectedSends": true,
+    "mutedChosenTrackSilent": true,
+    "invalidSelectionStartsNoRender": true,
+    "cancelPublishesNoPartialArchive": true,
+    "sourceUnchanged": true,
+    "spectralAmplitudes": {
+      "bus": {
+        "110": 0.00017541521223680514,
+        "220": 0.00016838968581201283,
+        "440": 0.0002805900584248765,
+        "880": 3.7435448877455045e-13,
+        "1760": 5.57625692245824e-13
+      },
+      "room": {
+        "110": 9.253855220066031e-05,
+        "220": 1.683690082030055e-05,
+        "440": 2.8045223815955153e-05,
+        "880": 5.86288444092896e-14,
+        "1760": 8.957441683234325e-14
+      }
+    },
+    "scope": "Native Web Audio fixture and actual ZIP/WAV bytes. Excludes normal app file-save UI, signed-in model execution, physical output and listening quality."
+  },
+  "nativeUI": {
+    "scope": "Native local UI and controlled planning; not production inference",
+    "unchanged": true,
+    "projects": [
+      "Routing-proof (15).opusloop",
+      "Routing-proof (16).opusloop"
+    ],
+    "exports": [
+      {
+        "file": "Routing-proof-stems.zip",
+        "sha256": "0929701cd1042e96988599f3ba61aaacf1b34e5f1fe9967d9dd65815b76b3443",
+        "entries": [
+          "03-track-Bus.wav",
+          "manifest.json"
+        ],
+        "selection": {
+          "mode": "chosen",
+          "included": [
+            "track:bus"
+          ],
+          "excluded": [
+            "track:a",
+            "track:b",
+            "track:main",
+            "track:other",
+            "return:room"
+          ]
+        },
+        "waves": [
+          {
+            "name": "03-track-Bus.wav",
+            "bytes": 705644,
+            "frames": 88200,
+            "rate": 44100,
+            "bitDepth": 32
+          }
+        ]
+      },
+      {
+        "file": "Routing-proof-stems (1).zip",
+        "sha256": "1846c50c64ccdbd74050df6e8243eeb6d5ca455f58baeb6baad5637417b062c5",
+        "entries": [
+          "03-track-Bus.wav",
+          "06-return-Room.wav",
+          "manifest.json"
+        ],
+        "selection": {
+          "mode": "chosen",
+          "included": [
+            "track:bus",
+            "return:room"
+          ],
+          "excluded": [
+            "track:a",
+            "track:b",
+            "track:main",
+            "track:other"
+          ]
+        },
+        "waves": [
+          {
+            "name": "03-track-Bus.wav",
+            "bytes": 705644,
+            "frames": 88200,
+            "rate": 44100,
+            "bitDepth": 32
+          },
+          {
+            "name": "06-return-Room.wav",
+            "bytes": 705644,
+            "frames": 88200,
+            "rate": 44100,
+            "bitDepth": 32
+          }
+        ]
+      },
+      {
+        "file": "Routing-proof-stems (2).zip",
+        "sha256": "68d32b8126baeea4a7b795b0652593e2f006c5480109f91e9cb81b175627e016",
+        "entries": [
+          "03-track-Bus.wav",
+          "06-return-Room.wav",
+          "manifest.json"
+        ],
+        "selection": {
+          "mode": "chosen",
+          "included": [
+            "track:bus",
+            "return:room"
+          ],
+          "excluded": [
+            "track:a",
+            "track:b",
+            "track:main",
+            "track:other"
+          ]
+        },
+        "waves": [
+          {
+            "name": "03-track-Bus.wav",
+            "bytes": 705644,
+            "frames": 88200,
+            "rate": 44100,
+            "bitDepth": 32
+          },
+          {
+            "name": "06-return-Room.wav",
+            "bytes": 705644,
+            "frames": 88200,
+            "rate": 44100,
+            "bitDepth": 32
+          }
+        ]
+      }
+    ],
+    "selectedTrackScope": [
+      "track:bus"
+    ],
+    "chosenChannelScope": [
+      "track:bus",
+      "return:room"
+    ],
+    "emptyChosenDisablesExport": true,
+    "wavChannelStayedMaster": true,
+    "midiScopeStayedAll": true,
+    "overExportRejectedAfterRepairs": true,
+    "noExtraDownloadFromRejectedPlan": true,
+    "mobileIframeWidth": 390,
+    "mobileDialogScrollsToDeliveryButtons": true,
+    "reload": {
+      "file": "Routing-proof (17).opusloop",
+      "bytes": 4707079,
+      "sha256": "ee85fdfe57c07d503ac8c27e77c54fedf3b4b30c72d939ac8c077e3468ae84d4",
+      "matchesBaseline": true
+    }
+  },
+  "controlledPlanning": {
+    "plans": [
+      {
+        "prompt": "Export the chosen stem channels as a ZIP from the arrangement, start beat 1, length 4 beats, 44.1 kHz, 32-bit float, no normalization, no dither, and no effect tails. Keep the project unchanged.",
+        "stemRequirement": {
+          "mode": "chosen",
+          "channels": [
+            "track:bus",
+            "return:room"
+          ]
+        },
+        "selectedTracks": [
+          "bus"
+        ]
+      },
+      {
+        "prompt": "Export the selected tracks as a stem ZIP; invalid over-export. Keep the project unchanged.",
+        "stemRequirement": {
+          "mode": "chosen",
+          "channels": [
+            "track:bus"
+          ]
+        },
+        "selectedTracks": [
+          "bus"
+        ]
+      },
+      {
+        "prompt": "Export the selected tracks as a stem ZIP; invalid over-export. Keep the project unchanged.",
+        "stemRequirement": {
+          "mode": "chosen",
+          "channels": [
+            "track:bus"
+          ]
+        },
+        "selectedTracks": [
+          "bus"
+        ]
+      },
+      {
+        "prompt": "Export the selected tracks as a stem ZIP; invalid over-export. Keep the project unchanged.",
+        "stemRequirement": {
+          "mode": "chosen",
+          "channels": [
+            "track:bus"
+          ]
+        },
+        "selectedTracks": [
+          "bus"
+        ]
+      }
+    ],
+    "allowanceReads": 9
+  },
+  "sourceSha256": {
+    "tests/stem-selection-audio.mjs": "fcee404ba114b215ec008ced84509b6f2aaf7b0def9f1fd80cdc40c5cd276dd4",
+    "tests/stem-selection-preview.mjs": "4c0db4cacb3a5f0d07760d4087a6dfad8547d55cdfc0771d265681040afa2c9b"
+  },
+  "production": {
+    "version": "0.151.0",
+    "changed": false,
+    "releaseBlockedBy": "AWS session expired; normal sign-in opened, user credentials/MFA pending."
+  },
+  "stillPending": [
+    "Signed-in public Odesa chosen-stem export and complete project preservation",
+    "Full representative-song native recording, listening and delivery audit",
+    "Full Ableton feature and behavior parity"
+  ]
+}
