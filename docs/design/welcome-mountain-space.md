@@ -1,0 +1,7 @@
+# Mountain And Space Welcome Artwork
+
+Generated with the built-in imagegen tool on 2026-10-19, using the earlier OPUS landscape as a mood reference. The published image is `web-studio/assets/opus-mountain-space-v3.jpg`; the original is retained under the Codex generated-images directory. The generated image contains no interface text or ASCII pattern; the popup supplies both as independent live layers.
+
+## Final Generation Prompt
+
+Use case: stylized-concept. Asset type: a text-free panoramic background artwork for the OPUS LOOPS music studio welcome dialog. Image 1 is a style and mood reference only, not a layout to reproduce literally. Recreate its cinematic low dark sculptural mountain terrain and distant violet glow, combined with a quiet space-like atmosphere. Wide landscape composition: dark graphite mineral ridges along the bottom third, subtle cool silver reflections, a restrained violet and muted teal atmospheric light near the right-hand horizon; large calm pale silver-gray negative space across the upper half and especially the left half for interface text. The right side can have a very subtle celestial haze and a few tiny distant star points, never a busy galaxy. Premium minimal photographic 3D landscape, soft depth of field, clean tonal transitions. IMPORTANT: no words, no typography, no logos, no UI, no posters, no baked-in ASCII characters, no grids or dot patterns; those will be added as live interface layers. Deliver one cohesive 3:2 or wide landscape image, with continuous natural scenery and no separate panels.
