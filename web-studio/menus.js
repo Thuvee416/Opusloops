@@ -26,7 +26,7 @@ export function installMenus(){
  const unsupported=names=>names.map(missing);
  const menus=[
  ['File',[
- item('New Live Set','new-set'),item('New Live Set from Template...','open-templates'),item('Open Live Set...','open','Opens an OPUS project; Ableton .als files are not supported.'),group('Open Recent Set',unsupported(['No recent-set history'])),missing('Close Window'),sep,
+ item('New Live Set','new-set'),item('New Live Set from Template...','open-templates'),item('Open Live Set...','open','Opens an OPUS project; Ableton .als files are not supported.'),item('Open Recent Set...','open-recents','Recent browser-local sets with their latest edits; up to five sets within 64 MB.'),missing('Close Window'),sep,
  ...unsupported(['Install Pack...','Add Folder to Browser...','Manage Files']),group('Open Live Set Backups',[item('Restore Session Start...','restore-session-start','The valid project loaded when this page opened; preserved while you edit.'),item('Restore Previous Set...','restore-previous-set','One browser-local backup, swapped when restored.')]),sep,
  item('Save Live Set','save','Downloads an .opusloop project with embedded samples.'),item('Save Live Set As...','save','Downloads a copy using the project name.'),item('Save a Copy...','save','Downloads an .opusloop copy.'),missing('Collect All and Save'),item('Save Live Set As Template...','save-template'),item('Save Live Set As Default Set...','save-default-set'),item('Reset Default Set...','reset-default-set'),sep,
  item('Export Audio/Video...','export-options','OPUS supports audio export only.'),item('Export MIDI Clip...','midi-export','Requires a selected MIDI clip.')]],

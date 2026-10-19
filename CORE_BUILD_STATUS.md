@@ -267,3 +267,12 @@ Closing the tab ended its app sign-in session, so the subsequent native edits/ex
 - Apex Test Thuvee1 was not changed in this acceptance run. The separate local microphone song, synthetic local workspace and www audit song are preserved. No credentials, auth rules, account quotas, user media or production data were changed to bypass a check.
 
 The final bounded requirement audit has no remaining reproduced blocker in the supported core workflow. Advanced production, Forte/Prelude, broader application-wide parity and unverified device/browser expansion stay deferred for a future user-directed goal.
+
+
+## Continued Core Application Build — Recent Sets (Candidate 0.166.0)
+
+At the user's direction, further music-model work is on hold. File → Open Recent Set now opens a compact native-themed chooser for departed projects, newest first. Switching saves the current edits and embedded media before installing the selected set. Its identity persists across recent-set round trips, including renaming; distinct sets with the same name remain separate. All project replacements (New/Open/template/restore and existing Odesa project I/O) share the archive boundary. No new model command or provider behavior is added.
+
+Current, Previous Set, recent snapshots and the metadata list commit in one IndexedDB transaction. A failed transaction leaves the current application set installed. The list reads metadata only; full media loads on selection. It retains up to five sets and 64 MiB of serialized project content, evicting the oldest; larger departing projects remain available only in Previous Set. Browser overhead is outside that content budget. Portable project downloads remain the permanent backup. History is browser/origin-local and starts with replacements after this release; it cannot recover sets already discarded by older builds.
+
+Five new model/storage regression cases cover complete synthetic audio/MIDI content, latest edits, same-name identity, renamed revisits, eviction, quota failure, invalid input/index and stale selection. The existing lifecycle/recovery/I/O/song suites also pass (28 focused tests total); the full core suite passes all 448 tests, and the web artifact/module validator passes. Actual menu/empty-state/Save/New confirmation are observed on an isolated localhost origin; the Mac locked during confirmation, so the real reopen/reload UI check is still pending. No production data was modified. This candidate is not yet published.

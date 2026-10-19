@@ -2,6 +2,10 @@
 
 Updated 2026-10-19 at the user's direction. This is the current delivery priority; read it before choosing work from the larger roadmap.
 
+## Current Work Direction — 2026-10-19
+
+The bounded core milestone below is complete. The user has now asked to continue the rest of the application build and leave the music-model build for later. Continue practical manual DAW/project workflows, preserving the existing Odesa integration. No further provider evaluation, credential changes or music-model work is part of this increment. Historical acceptance records below remain intact.
+
 ## Working Goal
 
 Make the basic Ableton-style music-production functions in the published OPUS LOOPS Studio work reliably, together, and build Odesa Tempo 1.0 to control those same core operations accurately. Both are included in the current goal, before further enhancements or advanced features. Keep everything already built. Fix and verify the existing foundations rather than expanding feature breadth or redesigning the interface.

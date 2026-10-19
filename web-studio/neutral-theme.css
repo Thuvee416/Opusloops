@@ -76,3 +76,9 @@ body.studio-shell{grid-template-rows:49px 32px minmax(0,1fr) 22px}
 @media(max-width:720px){.studio-shell #input-overdub-preview{padding:4px;margin:4px 0}.studio-shell #input-overdub-preview svg{height:44px!important}.studio-shell .input-record-actions{gap:6px;padding:5px 0}}
 
 .studio-shell #input-overdub-preview .micro{color:#34373b}
+
+/* Recent projects share the existing compact studio dialog. */
+#recent-sets-dialog{width:min(520px,94vw)}
+#recent-list{display:block;width:100%;margin:10px 0;min-height:140px;background:var(--panel);color:var(--text);border:1px solid var(--line)}
+#recent-list option{padding:9px 10px}
+#recent-summary,#recent-status{min-height:1.5em;overflow-wrap:anywhere}
