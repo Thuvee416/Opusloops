@@ -1,3 +1,4 @@
+import {snapClipBeat,clipGrid} from './clip-grid.js';
 import {isGroup} from './track-hierarchy.js';
 import {uid,validateProject,canPlace} from './model.js';
 
@@ -10,9 +11,10 @@ export function copyRegionSelection(project,ids){
  return {format:'opus-region-clipboard',version:1,length:Math.max(...regions.map(r=>r.start+r.length))-start,regions:regions.map(r=>({...structuredClone(r),start:r.start-start,trackOffset:project.tracks.filter(t=>!isGroup(t)).findIndex(t=>t.id===r.trackId)-base})),clips};
 }
 
-export function pasteRegionSelection(project,clipboard,start,trackId){
+export function pasteRegionSelection(project,clipboard,start,trackId,grid=.25){
+ clipGrid(grid);
  if(!clipboard||clipboard.format!=='opus-region-clipboard'||clipboard.version!==1||!Array.isArray(clipboard.regions)||!clipboard.regions.length||!clipboard.clips||!Number.isFinite(clipboard.length)||clipboard.length<=0)throw new Error('Copy or cut Arrangement clips first.');
- if(!Number.isFinite(start)||start<0||start*4%1!==0||start+clipboard.length>16384)throw new Error('Choose a paste position on the quarter-beat grid within the timeline.');
+ if(!Number.isFinite(start)||start<0||Math.abs(snapClipBeat(start,grid)-start)>1e-7||start+clipboard.length>16384)throw new Error('Choose a paste position on the selected clip grid within the timeline.');
  const base=project.tracks.filter(t=>!isGroup(t)).findIndex(t=>t.id===trackId);if(base<0)throw new Error('Select a destination track.');
  if(Object.keys(project.clips).length+clipboard.regions.length>512)throw new Error('Pasting would exceed the 512-clip project limit.');
  const clips={...project.clips},regions=clipboard.regions.map(r=>{
@@ -26,5 +28,5 @@ export function pasteRegionSelection(project,clipboard,start,trackId){
   return region;
  });
  const arrangement=[...project.arrangement,...regions];validateProject({...project,clips,arrangement});
- return {clips,arrangement,selectedIds:regions.map(r=>r.id),end:Math.ceil((start+clipboard.length)*4)/4};
+ return {clips,arrangement,selectedIds:regions.map(r=>r.id),end:snapClipBeat(start+clipboard.length,grid,{ceil:true})};
 }

@@ -1,8 +1,9 @@
+import {snapClipBeat,clipGrid} from './clip-grid.js';
 import {isGroup} from './track-hierarchy.js';
 import {sliceRegion,fitRegionFades} from './region-fades.js';
 import {uid,canPlace,validateProject,mod,REGION_MIN_BEATS} from './model.js';
-export function editRegion(original,action,delta,trackId=original.trackId){
-  const next={...original};delta=Math.round(delta*4)/4;
+export function editRegion(original,action,delta,trackId=original.trackId,grid=.25){
+  const next={...original};delta=snapClipBeat(delta,grid);
   if(action==='move'){next.start=Math.max(0,original.start+delta);next.trackId=trackId;}
   if(action==='end')next.length=Math.max(REGION_MIN_BEATS,original.length+delta);
   if(action==='start'){
@@ -14,10 +15,11 @@ export function editRegion(original,action,delta,trackId=original.trackId){
   return action==='move'?next:sliceRegion(original,next.start-original.start,next.length,{offset:next.offset});
 }
 
-export function copyRegion(project,sourceId,start,trackId){
+export function copyRegion(project,sourceId,start,trackId,grid=.25){
+ clipGrid(grid);
  const source=project.arrangement.find(r=>r.id===sourceId);
  if(!source)throw new Error('Select an existing region to duplicate.');
- if(!Number.isFinite(start)||start<0||start*4%1!==0||start+source.length>16384)throw new Error('Choose a valid destination within the timeline.');
+ if(!Number.isFinite(start)||start<0||Math.abs(snapClipBeat(start,grid)-start)>1e-7||start+source.length>16384)throw new Error('Choose a valid destination within the timeline.');
  if(!project.tracks.some(t=>t.id===trackId))throw new Error('Choose an existing destination track.');
  const region={...structuredClone(source),id:uid(),start,trackId};
  if(!canPlace(project,region))throw new Error('The duplicated region would overlap another clip.');
@@ -44,13 +46,13 @@ function selectedGroup(project,ids){
  if(regions.length!==selected.size)throw new Error('Select existing Arrangement clips.');
  return {selected,regions};
 }
-export function planRegionTrim(project,ids,edge,delta){
+export function planRegionTrim(project,ids,edge,delta,grid=.25){
  const {selected,regions}=selectedGroup(project,ids);
  if(!['start','end'].includes(edge)||!Number.isFinite(delta))throw new Error('Choose a start/end edge and a finite trim amount.');
  const minimum=REGION_MIN_BEATS;
  const lower=edge==='start'?-Math.min(...regions.map(r=>r.start)):Math.max(...regions.map(r=>minimum-r.length));
  const upper=edge==='start'?Math.min(...regions.map(r=>r.length-minimum)):16384-Math.max(...regions.map(r=>r.start+r.length));
- const shift=Math.max(lower,Math.min(upper,Math.round(delta*4)/4));
+ const shift=Math.max(lower,Math.min(upper,snapClipBeat(delta,grid)));
  const next=regions.map(r=>fitRegionFades(edge==='start'?sliceRegion(r,shift,r.length-shift,{offset:shift===0?r.offset:mod(r.offset+shift,project.clips[r.clipId].beats)}):sliceRegion(r,0,r.length+shift),project.clips[r.clipId]));
  if(next.some(r=>r.start<0||r.length<minimum||r.start+r.length>16384))throw new Error('Keep every trimmed clip within the timeline.');
  // Resizing can make selected clips collide with one another as well as neighbors.
@@ -59,24 +61,24 @@ export function planRegionTrim(project,ids,edge,delta){
  return next;
 }
 
-export function planRegionGroup(project,ids,delta=0,trackOffset=0,copy=false){
+export function planRegionGroup(project,ids,delta=0,trackOffset=0,copy=false,grid=.25){
  const {selected,regions}=selectedGroup(project,ids);
  if(!Number.isFinite(delta)||!Number.isInteger(trackOffset))throw new Error('Choose a valid group destination.');
- delta=Math.max(-Math.min(...regions.map(r=>r.start)),Math.round(delta*4)/4);
+ delta=Math.max(-Math.min(...regions.map(r=>r.start)),snapClipBeat(delta,grid));
  const tracks=project.tracks.filter(t=>!isGroup(t));const next=regions.map(r=>{const index=tracks.findIndex(t=>t.id===r.trackId)+trackOffset;if(index<0||index>=tracks.length)throw new Error('Keep every selected clip within the available tracks.');const n={...r,start:r.start+delta,trackId:tracks[index].id};if(n.start+n.length>16384)throw new Error('The group exceeds the timeline limit.');return n;});
  const others=copy?project.arrangement:project.arrangement.filter(r=>!selected.has(r.id));
  for(const r of next)if(!canPlace({...project,arrangement:[...others,...next.filter(n=>n!==r)]},r,copy?'copy:'+r.id:r.id))throw new Error('Selected clips would overlap another clip without a complementary crossfade.');
  return next;
 }
-export function editRegionGroup(project,ids,action,{delta,trackOffset=0,edge}={}){
+export function editRegionGroup(project,ids,action,{delta,trackOffset=0,edge,grid=.25}={}){
  const {selected,regions}=selectedGroup(project,ids);
  let next,trim,clips={...project.clips},selectedIds=[...selected];
- if(action==='trim'){const plan=planRegionTrim(project,ids,edge,delta),updates=new Map(plan.map(r=>[r.id,r]));next=project.arrangement.map(r=>updates.get(r.id)||r);const original=regions[0],changed=updates.get(original.id),appliedDelta=edge==='start'?changed.start-original.start:changed.length-original.length;trim={edge,requestedDelta:delta,appliedDelta,clamped:Math.abs(appliedDelta-Math.round(delta*4)/4)>1e-7};}
+ if(action==='trim'){const plan=planRegionTrim(project,ids,edge,delta,grid),updates=new Map(plan.map(r=>[r.id,r]));next=project.arrangement.map(r=>updates.get(r.id)||r);const original=regions[0],changed=updates.get(original.id),appliedDelta=edge==='start'?changed.start-original.start:changed.length-original.length;trim={edge,requestedDelta:delta,appliedDelta,clamped:Math.abs(appliedDelta-snapClipBeat(delta,grid))>1e-7};}
  else if(action==='delete') {next=project.arrangement.filter(r=>!selected.has(r.id));selectedIds=[];}
  else if(action==='active'){const active=regions.some(r=>r.active===false);next=project.arrangement.map(r=>selected.has(r.id)?{...r,active}:r);}
  else if(action==='move'||action==='duplicate'){
   const span=Math.max(...regions.map(r=>r.start+r.length))-Math.min(...regions.map(r=>r.start));
-  const plan=planRegionGroup(project,ids,delta??(action==='duplicate'?Math.ceil(span*4)/4:0),trackOffset,action==='duplicate');
+  const plan=planRegionGroup(project,ids,delta??(action==='duplicate'?snapClipBeat(span,grid,{ceil:true}):0),trackOffset,action==='duplicate',grid);
   if(action==='duplicate'){
    for(const r of plan){if(r.fades)r.fades=structuredClone(r.fades);const clip=structuredClone(project.clips[r.clipId]);clip.id=uid();clip.name=clip.name.slice(0,195)+' copy';clips[clip.id]=clip;r.id=uid();r.clipId=clip.id;}
    next=[...project.arrangement,...plan];selectedIds=plan.map(r=>r.id);
@@ -84,4 +86,15 @@ export function editRegionGroup(project,ids,action,{delta,trackOffset=0,edge}={}
  }else throw new Error('Choose a supported group edit.');
  validateProject({...project,clips,arrangement:next});
  return {arrangement:next,clips,selectedIds,...(trim?{trim}:{})};
+}
+
+// Numeric clip fields are exact; pointer grid preferences must not rewrite them.
+export function editRegionFields(project,id,changes){
+ const original=project.arrangement.find(r=>r.id===id);
+ if(!original||!changes||Object.keys(changes).some(key=>!['start','length','offset'].includes(key))||Object.values(changes).some(value=>!Number.isFinite(value)))throw Error('Choose an existing clip and finite position, length or source offset.');
+ const next={...original,...changes};
+ if(next.start<0||next.length<REGION_MIN_BEATS||next.start+next.length>16384||next.offset<0||next.offset>1024||!canPlace(project,next))throw Error('Keep regions within the timeline and avoid overlapping another region.');
+ const resized=sliceRegion(original,0,next.length),fitted=fitRegionFades({...resized,...next,fades:resized.fades},project.clips[original.clipId]);
+ if(!fitted.fades)delete fitted.fades;
+ return fitted;
 }

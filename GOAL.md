@@ -10,7 +10,7 @@ The bounded core milestone below is complete. The user has now asked to continue
 
 The user resumed the core-first goal after release 0.166.0. Continue closing practical manual project/editing/transport/recording/mixing/delivery gaps and publish bounded increments. Preserve the existing Odesa integration; further music-model work remains deferred. The remaining native browser verification was waived by the user and must be reported as unverified rather than blocking these releases. Keep source-level safety checks and the deployment result distinct from workflow proof.
 
-Current increments: Recent Sets shipped in 0.166.0; shared Undo History is the next release. Prioritize existing menu/workflow gaps over new model capabilities or visual redesigns.
+Current increments: Recent Sets shipped in 0.166.0 and shared Undo History in 0.167.0; precise Arrangement clip editing is the 0.168.0 increment. Prioritize existing menu/workflow gaps over new model capabilities or visual redesigns.
 
 ## Working Goal
 
