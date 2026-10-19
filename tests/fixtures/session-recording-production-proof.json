@@ -1,0 +1,94 @@
+{
+  "release": "0.162.0",
+  "commit": "ed649df2be1ef177c3ffe750e9bc6be431a02278",
+  "scope": "Normal signed-in production Chrome; real model start and later scene launch, authenticated local finish intent",
+  "requests": [
+    "Replace the existing Arrangement with a new Session performance recording and launch scene 1. I will perform the next scenes manually. Leave recording running.",
+    "While the Session recording continues, launch scene 3. Leave recording running.",
+    "Finish the Session recording."
+  ],
+  "allowance": {
+    "before": 86,
+    "afterStart": 85,
+    "afterScene": 84,
+    "afterFinish": 84
+  },
+  "captureFile": "Core-Song-Native-Audit (18).opusloop",
+  "captureSha256": "745b7d8776d4c5719bf0ea2ec9e39c11943634b144dac1249255e980430c7062",
+  "regions": [
+    {
+      "id": "e40c9c82-f824-4435-82f4-d9bf4bdea595",
+      "trackId": "e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+      "clipId": "a04caffa-9d26-4b9b-a26d-8fdbb1111ef9",
+      "start": 4,
+      "length": 32,
+      "offset": 0
+    },
+    {
+      "id": "89eb9993-80d6-4215-bd0c-66147845e626",
+      "trackId": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+      "clipId": "56383108-14cf-44df-a176-ef633b483151",
+      "start": 4,
+      "length": 32,
+      "offset": 0
+    },
+    {
+      "id": "89ac5b1b-d5f5-4a12-97f3-cb1baf2cb946",
+      "trackId": "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+      "clipId": "e0fa8ea0-45b2-46e0-b015-0feacf2ebfff",
+      "start": 4,
+      "length": 32,
+      "offset": 0
+    },
+    {
+      "id": "8d43c773-8fb7-4763-8892-77afb9f12751",
+      "trackId": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+      "clipId": "63af170e-e245-4a8e-a935-c42db883254b",
+      "start": 36,
+      "length": 18.81418594104308,
+      "offset": 0
+    }
+  ],
+  "otherProjectDataPreserved": true,
+  "oneUndoByteIdentical": true,
+  "undoFile": "Core-Song-Native-Audit (19).opusloop",
+  "baselineSha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+  "cancelVerification": {
+    "release": "0.162.1",
+    "commit": "c5fbc4ec28e33c2825d18a58ea59d37c47f6f398",
+    "startRequest": "Replace the existing Arrangement and start a new Session recording. Launch scene 1, keep recording running and preserve all source clips.",
+    "cancelRequest": "Cancel this Session recording.",
+    "allowanceBefore": 83,
+    "allowanceAfterStart": 82,
+    "allowanceAfterCancel": 82,
+    "file": "Core-Song-Native-Audit (21).opusloop",
+    "byteIdenticalToBaseline": true,
+    "undoAndRedoDisabledAfterCancel": true,
+    "stopped": true,
+    "consoleWarningsAndErrors": []
+  },
+  "originalRestoration": {
+    "file": "Test-Thuvee-1 (17).opusloop",
+    "bytes": 2247,
+    "sha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
+    "byteIdentical": true,
+    "name": "Test Thuvee 1",
+    "tracks": [
+      "Audio 1",
+      "Warm Bass"
+    ],
+    "stopped": true
+  },
+  "limits": [
+    "No microphone used or uploaded.",
+    "This records Session clip performance, not Arrangement microphone/MIDI input or audio overdub.",
+    "No new listening or physical device timing assessment."
+  ],
+  "replacementProtection": {
+    "request": "Start recording my Session performance into the Arrangement and launch scene 1.",
+    "result": "No-action replacement explanation",
+    "file": "Core-Song-Native-Audit (20).opusloop",
+    "byteIdentical": true,
+    "dailyRemaining": 83
+  }
+}

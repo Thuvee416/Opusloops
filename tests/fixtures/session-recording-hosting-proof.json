@@ -1,0 +1,52 @@
+{
+  "release": "0.162.1",
+  "commit": "c5fbc4ec28e33c2825d18a58ea59d37c47f6f398",
+  "job": 170,
+  "status": "SUCCEED",
+  "apiCodeSha256": "696a4850fb2f8a0f18339047f7a9db4004d9bdfc44e2510c786fbda879a02466",
+  "workerDigestUnchanged": "ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4",
+  "hosts": {
+    "https://opusloops.com": {
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "c5fbc4ec28e33c2825d18a58ea59d37c47f6f398",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000170",
+        "builtAt": "2026-10-19T17:38:54.102347Z"
+      },
+      "assets": {
+        "agent-actions.js": "9453d311ef0a62c81d1dfed0c3d00befb8dc68f4ad4057991973122a442f643e",
+        "agent-panel.js": "1c223df6f1128ec1d9beedbf99a95a6b7c3b1ebf8d4cdd439dd08b8fe18989e9",
+        "agent-runner.js": "270dcadb130b25666b28ca7fff0cbdd90119c03221b7b543111acfb9218895bf",
+        "agent-schema.js": "7ebd7d7aac855ad22aff38ebb0d278bd3670595c158295ae0af255b83219e046",
+        "app.js": "b7519b8a95c83b7f8a957e494dc2976b41f1e8509a1166f4ea56472085c5b46b",
+        "audio.js": "800b0abd3328216bba17c4089ec09a91090f2dc392647ffceee6b7eb857a87e2",
+        "session-recording.js": "7f9d7041e5159bfd653e5361bae5cf6aabf0641cdf3d342d8a40fa24c75a6ae0",
+        "release.json": "e72607a2f62c5a7c176ddc3e3ba2bf484b71b67ec9e1c2ca28aeb885426f705d"
+      }
+    },
+    "https://www.opusloops.com": {
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "c5fbc4ec28e33c2825d18a58ea59d37c47f6f398",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000170",
+        "builtAt": "2026-10-19T17:38:54.102347Z"
+      },
+      "assets": {
+        "agent-actions.js": "9453d311ef0a62c81d1dfed0c3d00befb8dc68f4ad4057991973122a442f643e",
+        "agent-panel.js": "1c223df6f1128ec1d9beedbf99a95a6b7c3b1ebf8d4cdd439dd08b8fe18989e9",
+        "agent-runner.js": "270dcadb130b25666b28ca7fff0cbdd90119c03221b7b543111acfb9218895bf",
+        "agent-schema.js": "7ebd7d7aac855ad22aff38ebb0d278bd3670595c158295ae0af255b83219e046",
+        "app.js": "b7519b8a95c83b7f8a957e494dc2976b41f1e8509a1166f4ea56472085c5b46b",
+        "audio.js": "800b0abd3328216bba17c4089ec09a91090f2dc392647ffceee6b7eb857a87e2",
+        "session-recording.js": "7f9d7041e5159bfd653e5361bae5cf6aabf0641cdf3d342d8a40fa24c75a6ae0",
+        "release.json": "e72607a2f62c5a7c176ddc3e3ba2bf484b71b67ec9e1c2ca28aeb885426f705d"
+      }
+    }
+  }
+}
