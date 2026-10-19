@@ -1,3 +1,4 @@
+import {CLIP_PROPERTY_FIELDS} from './clip-properties.js';
 import {displaySceneContractText} from './agent-addressing.js';
 import {agentActions} from './agent-actions.js';
 import {DEVICE_TYPES} from './devices.js';
@@ -58,5 +59,15 @@ export function musicalUnitsPlanSchema(base,supported){
  a.points.items.properties.beat=structuredClone(position);a.items.items.properties.beat=structuredClone(position);
  c.beat=structuredClone(position);c.range.properties.start=structuredClone(position);c.range.properties.length=span(false);
  a.kind={type:'string',enum:['original','poly','drums','sampler'],description:'add_track/instrument: original is the actual Original tone instrument (no preset or params). poly is the separate Poly Synth; Init is its sine preset, NOT Original tone.'};
+ // Keep mixer and source-property shapes distinct. The old all-purpose changes
+ // object let the model put track faders under clip_properties, even in review.
+ const action=schema.properties.actions.items,pick=(properties,keys)=>Object.fromEntries(keys.map(k=>[k,structuredClone(properties[k])]));
+ const branch=(type,fields,changeFields,description)=>({type:'object',properties:{type:{type:'string',enum:[type]},args:{type:'object',additionalProperties:false,properties:{...pick(a,fields),changes:{type:'object',additionalProperties:false,minProperties:1,properties:pick(a.changes.properties,changeFields)}},required:fields,description}},required:['type','args']});
+ action.oneOf=[
+  branch('track',['id','changes'],['name','volume','pan','mute','solo','output'],'Mixer edit on an EXISTING TRACK or RETURN. id is its track ID, never a clip ID. Volume and pan belong here.'),
+  branch('clip_properties',['ids','changes'],CLIP_PROPERTY_FIELDS,'Source name/color/info/launch only. ids are CLIP SOURCE IDs. Never volume, pan, mute, solo or output; these require a track action.'),
+  {type:'object',properties:{type:{type:'string',enum:Object.keys(agentActions).filter(t=>!['track','clip_properties'].includes(t))}},required:['type','args']}
+ ];
+
  return schema;
 }

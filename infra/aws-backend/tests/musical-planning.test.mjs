@@ -46,3 +46,8 @@ test('typed note filters and patches validate through the same editor before ret
  const result=await studioAgent({prompt:'Move the first-bar notes to bar 2 and make them half a beat.',context:agentContext(p)},{send:async()=>response({summary:'Move notes',actions})});
  const next=prepareAgentPlan(p,result.actions).next;assert.equal(next.clips.x.notes[0].start,4);assert.equal(next.clips.x.notes[0].duration,.5);assert.deepEqual(result.actions,actions);
 });
+test('mixed track and clip properties have disjoint schema branches and shared scope validation',async()=>{
+ for(const changes of [{volume:{relativeDb:-3}},{pan:.2}]){
+  let calls=0;await assert.rejects(()=>studioAgent({prompt:'Reduce Bass by 3 dB and pan Keys 20% right.',context:agentContext(project())},{send:async c=>{const schema=c.input.toolConfig.tools[0].toolSpec.inputSchema.json,branches=schema.properties.actions.items.oneOf,clip=branches.find(b=>b.properties.type.enum.includes('clip_properties')),track=branches.find(b=>b.properties.type.enum.includes('track'));assert.equal(clip.properties.args.properties.changes.additionalProperties,false);assert.equal(clip.properties.args.properties.changes.properties.volume,undefined);assert.ok(track.properties.args.properties.changes.properties.volume.properties.relativeDb);assert.ok(track.properties.args.required.includes('id'));assert.match(c.input.system[0].text,/TRACK MIXER/);calls++;return response({summary:'Bad scope',actions:[{type:'clip_properties',args:{ids:['bass'],changes}}]});}}),e=>e.code==='invalid_agent_plan'&&/Mixer Changes Use type:track/.test(e.message));assert.equal(calls,2);
+ }
+});
