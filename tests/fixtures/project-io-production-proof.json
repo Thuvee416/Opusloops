@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-19",
+  "environment": "Normal signed-in Chrome at https://www.opusloops.com/, ordinary account and limits, real inline native file choices, no browser state injection",
+  "scope": "Production I/O modules unchanged from 0.164.2 through 0.164.3; successful actual file flows, one stale-choice reporting defect discovered",
+  "source": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (9).opusloop",
+  "displacedBackup": "/Users/thuveem4/Downloads/After-hours (4).opusloop",
+  "files": [
+    {
+      "case": "open_save",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (37).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "audio_import",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (38).opusloop",
+      "bytes": 1887825,
+      "sha256": "c2612e9d2a22f8f60e1a8214d64a7d0899514242d8ea785cbfcff4f99d069768"
+    },
+    {
+      "case": "audio_undo",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (39).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "midi_import",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (40).opusloop",
+      "bytes": 948478,
+      "sha256": "caff9ccadb7e7fd028f8c2276843b58cf218f08eb10072c154aab26e2eb06dbf"
+    },
+    {
+      "case": "midi_undo",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (41).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "chooser_cancel",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (42).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    },
+    {
+      "case": "stale_chooser_manual_edit_only",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (43).opusloop",
+      "bytes": 946768,
+      "sha256": "521047f71c624eecc9ee9f66f2e8997901242e04d957af9e921f78bcacc0aef3"
+    },
+    {
+      "case": "undo_manual_edit",
+      "file": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (44).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+    }
+  ],
+  "checks": [
+    "Open + Save exact source bytes",
+    "Audio imported only to Drums displayed Scene 2; embedded audio bytes equal Original-Drums.wav; all other project fields exact",
+    "Audio Undo exact source",
+    "MIDI append adds one track with all 16 notes identical to retained original Bass.mid import, preserves 128 BPM and every original field",
+    "MIDI Undo exact source",
+    "Inline Cancel File Selection exact source",
+    "Changed BPM to 129 while Open waited; Choose Project File rejected before picker; only manual tempo change remains",
+    "Undo manual change exact source"
+  ],
+  "reportingFailure": "Stale chooser correctly rejected operation, but error incorrectly claimed project operation completed because runner attributed unrelated manual change to project_io. Regression repaired in 0.164.4 candidate; production recheck pending.",
+  "allowance": {
+    "before": 77,
+    "after": 72,
+    "reviewedRequests": 5,
+    "undoLocalCommands": 3
+  },
+  "limits": [
+    "No microphone media transmitted",
+    "Does not close remaining core controls, Arrangement or recording production gates"
+  ],
+  "originalUserProject": "Test Thuvee 1 at apex untouched"
+}

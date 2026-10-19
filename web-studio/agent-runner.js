@@ -131,7 +131,7 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
         const observed=checkRecordingReceipt(beforeRecording,getProject(),plan.prepared.get(command),result,getRecording());
         recordingApplied||=observed.changed;fingerprint=signature(getProject());captureBinding=recordingBinding(getRecording());
       }
-    }catch(error){if(command.name==='project_io'&&(plan.prepared.get(command)?.applied||projectSignature()!==fingerprint))error.agentProjectIOApplied=true;if(command.name==='history'&&(historyApplied||projectSignature()!==fingerprint))error.agentHistoryApplied=true;if(['record_input','record_session'].includes(command.name)&&projectSignature()!==fingerprint)error.agentRecordingApplied=true;error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
+    }catch(error){if(command.name==='project_io'&&plan.prepared.get(command)?.applied)error.agentProjectIOApplied=true;if(command.name==='history'&&(historyApplied||projectSignature()!==fingerprint))error.agentHistoryApplied=true;if(['record_input','record_session'].includes(command.name)&&projectSignature()!==fingerprint)error.agentRecordingApplied=true;error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
     if(plan.selectionIntent?.command===command)checkSessionSelectionReceipt(plan.selectionIntent,result);
     if(plan.clipboardIntent?.command===command)checkSessionClipboardReceipt(plan.clipboardIntent,result);
     observations.push({name:command.name, result:result ?? null});

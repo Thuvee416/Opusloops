@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-19",
+  "scope": "Independent recheck of actual recorded production MIDI files; historical execution evidence, not a fresh browser recording",
+  "artifacts": [
+    {
+      "kind": "baseline",
+      "path": "/Users/thuveem4/Downloads/Untitled-session (93).opusloop",
+      "bytes": 1725,
+      "sha256": "c05897b3e53b3a994d9196f610d049a4d597991d364ae793c8b6b483cb7ecdb7"
+    },
+    {
+      "kind": "setup",
+      "path": "/Users/thuveem4/Downloads/Untitled-session (94).opusloop",
+      "bytes": 2542,
+      "sha256": "ff5e83a55b4bad79ca033138a5bea412538d84b54e6cccb5df469b6df92a80af"
+    },
+    {
+      "kind": "capture",
+      "path": "/Users/thuveem4/Downloads/Untitled-session (95).opusloop",
+      "bytes": 2803,
+      "sha256": "35ef7904967de68859297e2c40bc4a07a08f77caa2e6c518b659fa62e2612da5"
+    },
+    {
+      "kind": "cancel",
+      "path": "/Users/thuveem4/Downloads/Untitled-session (96).opusloop",
+      "bytes": 2803,
+      "sha256": "35ef7904967de68859297e2c40bc4a07a08f77caa2e6c518b659fa62e2612da5"
+    }
+  ],
+  "checks": [
+    "MIDI capture retained three additional notes alongside the two setup notes",
+    "Cancel file is byte-identical to capture",
+    "Original source and setup saved artifacts match recorded hashes"
+  ],
+  "limits": [
+    "No new microphone capture or media transmission",
+    "Physical controller/audio input latency and subjective listening remain unverified",
+    "Authenticated physical audio lifecycle is still distinct from local microphone proof"
+  ]
+}
