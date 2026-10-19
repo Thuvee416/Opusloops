@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-19",
+  "scope": "Native Chrome desktop on isolated localhost:4210; no authenticated production execution or audio-quality claim",
+  "regression": "Selected Arrangement region and populated editor displayed generic Select A Clip To Edit header",
+  "checks": [
+    "Single region displays count, source name and owner track",
+    "Meta-click second region displays two and current primary",
+    "Native end trim 16 to 12 beats retains context",
+    "Edit Undo restores 16 beats with context intact",
+    "Session and Arrangement view switches show the appropriate selection context",
+    "Saved complete project after Undo matches the source exactly"
+  ],
+  "source": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (9).opusloop",
+  "saved": "/Users/thuveem4/Downloads/Core-Song-Native-Audit (36).opusloop",
+  "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+  "bytes": 946768,
+  "exactRestoration": true,
+  "screenshot": "/tmp/opus-selection-context-fixed.png",
+  "tests": "17 existing selection tests pass; artifact/module validation passes",
+  "originalUserProject": "Apex Test Thuvee 1 untouched"
+}

@@ -191,9 +191,18 @@ function chooseSessionSlot(slot,event={}){
  if(slots.length)applyStudioSelection({target:'session',slots,primary},{open:false});else{sessionSelection=[];selection={trackId:slot.trackId,scene:slot.scene,clipId:null};renderGrid();renderEditor();}
  if(event.shiftKey)sessionAnchor=anchor;else sessionAnchor=slot;focusSessionPlacement(slot);updateSessionEditControls();
 }
+function updateDetailContext(){
+ const hint=document.querySelector('.detail-context');if(!hint||!project)return;
+ const regionIds=view==='arrangement'?new Set(selectedRegionIds()):new Set(),regions=project.arrangement.filter(r=>regionIds.has(r.id)),slots=view==='session'?selectedSessionSlots():[];
+ const primary=regions.find(r=>r.id===selectedRegion)??regions[0],clip=project.clips[primary?.clipId??selection?.clipId],track=project.tracks.find(t=>t.id===(primary?.trackId??selection?.trackId));
+ if(regions.length)hint.textContent=regions.length+' Arrangement '+(regions.length===1?'Clip':'Clips')+' Selected'+(clip?' · '+clip.name:'')+(track?' · '+track.name:'');
+ else if(slots.length){const clips=slots.filter(s=>s.clipId).length;hint.textContent=slots.length+' Session '+(slots.length===1?'Slot':'Slots')+' Selected · '+clips+' '+(clips===1?'Clip':'Clips');}
+ else if(clip&&track)hint.textContent=clip.name+' · '+track.name+' · Source Clip';
+ else hint.textContent='Select A Clip To Edit · Select A Track For Devices';
+}
 function updateSessionEditControls(){
  if(!project||!engine)return;const chosen=selectedSessionSlots(),gesturing=!!sessionMarquee?.dragging,occupied=chosen.some(s=>s.clipId),structural=busy||inputActive()||engine.playing||engine.recording||!!engine.automationTake,live=busy||inputActive()||engine.recording||!!engine.automationTake||!!engine.startPromise;
- const hint=document.querySelector('.detail-context');if(hint)hint.textContent=view==='session'&&chosen.length?chosen.length+' Session '+(chosen.length===1?'Slot':'Slots')+' Selected · '+chosen.filter(s=>s.clipId).length+' '+(chosen.filter(s=>s.clipId).length===1?'Clip':'Clips'):'Select A Clip To Edit · Select A Track For Devices';
+ updateDetailContext();
  for(const name of ['copy','cut','delete','duplicate','active','paste','select-all','deselect-all']){const button=$('session-batch-'+name);if(!button)continue;button.disabled=gesturing||(name==='paste'?structural||!sessionClipboard:name==='select-all'?busy||inputActive():name==='deselect-all'?busy||inputActive()||!chosen.length:name==='copy'?busy||inputActive()||!occupied:name==='active'?live||!occupied:structural||!occupied);}
  for(const id of ['rename-selected-clips','edit-clip-info'])if($(id))$(id).disabled=!editableClipIds().length||clipPropertiesLocked();
  sessionContextMenu?.refresh();
@@ -247,7 +256,7 @@ function applyManualRegionFades(ids,patch){
  project.arrangement=next;render();changed();setStatus('Arrangement fades updated. Undo restores the previous fades.');
 }
 function renderTimeline(){
-  const selectedIds=new Set(selectedRegionIds());updateRegionClipboardControls();
+  updateDetailContext();const selectedIds=new Set(selectedRegionIds());updateRegionClipboardControls();
   const focusedRegion=document.activeElement?.closest('[data-region]')?.dataset.region;
   renderLocators();const rangeTrack=$('midi-range-track'),previous=rangeTrack.value;
   rangeTrack.innerHTML=project.tracks.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');rangeTrack.value=project.tracks.some(t=>t.id===previous)?previous:project.tracks[0].id;
@@ -278,7 +287,7 @@ $('clip-editor').addEventListener('keydown',run(e=>{if(e.target.id!=='clip-name'
 const renameClips=document.createElement('button');renameClips.id='rename-selected-clips';renameClips.hidden=true;document.body.append(renameClips);renameClips.onclick=()=>showClipProperty('name');
 const editClipInfo=document.createElement('button');editClipInfo.id='edit-clip-info';editClipInfo.hidden=true;document.body.append(editClipInfo);editClipInfo.onclick=()=>showClipProperty('info');
 document.addEventListener('keydown',run(e=>{if(!(e.metaKey||e.ctrlKey)||e.altKey||e.shiftKey||e.code!=='KeyR'||e.target.closest('input,textarea,select,[contenteditable=true]')||document.querySelector('dialog[open]')||document.body.classList.contains('menu-open')||!e.target.closest('#session-grid,#timeline,#clip-editor')||!editableClipIds().length)return;e.preventDefault();e.stopImmediatePropagation();showClipProperty('name');}),true);
-function renderEditor(){const quantizeOpen=$('note-quantize-options')?.open||false,scrollLeft=noteClip===selection?.clipId?(document.querySelector('.piano-scroll')?.scrollLeft||0):0;const scrollTop=noteClip===selection?.clipId?(document.querySelector('.piano-scroll')?.scrollTop||0):0;const c=project.clips[selection?.clipId],t=project.tracks.find(t=>t.id===selection?.trackId);const propertyIds=editableClipIds();renameClips.disabled=editClipInfo.disabled=!propertyIds.length||clipPropertiesLocked();if(!c){$('clip-title').textContent=propertyIds.length?propertyIds.length+' Clips Selected':'Select A Clip';$('clip-badge').textContent='';$('clip-editor').innerHTML=propertyIds.length?'<div class="clip-fields">'+clipPropertiesMarkup(project,propertyIds)+'</div>':'<p class="muted">Select A Clip To Inspect Its Loop, Or Import Your Own Audio.</p>';if(clipPropertiesLocked())$('clip-editor').querySelectorAll('input,textarea,select,button').forEach(el=>el.disabled=true);return;}
+function renderEditor(){updateDetailContext();const quantizeOpen=$('note-quantize-options')?.open||false,scrollLeft=noteClip===selection?.clipId?(document.querySelector('.piano-scroll')?.scrollLeft||0):0;const scrollTop=noteClip===selection?.clipId?(document.querySelector('.piano-scroll')?.scrollTop||0):0;const c=project.clips[selection?.clipId],t=project.tracks.find(t=>t.id===selection?.trackId);const propertyIds=editableClipIds();renameClips.disabled=editClipInfo.disabled=!propertyIds.length||clipPropertiesLocked();if(!c){$('clip-title').textContent=propertyIds.length?propertyIds.length+' Clips Selected':'Select A Clip';$('clip-badge').textContent='';$('clip-editor').innerHTML=propertyIds.length?'<div class="clip-fields">'+clipPropertiesMarkup(project,propertyIds)+'</div>':'<p class="muted">Select A Clip To Inspect Its Loop, Or Import Your Own Audio.</p>';if(clipPropertiesLocked())$('clip-editor').querySelectorAll('input,textarea,select,button').forEach(el=>el.disabled=true);return;}
   const region=project.arrangement.find(s=>s.id===selectedRegion);$('clip-title').textContent=c.name;$('clip-badge').textContent=region?(selectedRegionIds().length>1?selectedRegionIds().length+' CLIPS SELECTED':'ARRANGEMENT REGION'):c.kind==='audio'?(c.warp?.mode==='stretch'?'AUDIO / STRETCH':'AUDIO / REPITCH'):c.kind==='midi'?'MIDI / SINE SYNTH':'GENERATED DRUM LOOP';
   let visual='<canvas id="waveform" class="waveform" width="900" height="160" aria-label="Clip waveform"></canvas>';
   if(c.kind==='midi')visual=renderNotes(c,t);
