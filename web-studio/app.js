@@ -1,3 +1,5 @@
+import {projectSaveName,projectSaveFile,saveProjectVariant} from './project-save.js';
+import {installProjectSaveDialog} from './project-save-dialog.js';
 import {midiInputChoices} from './midi-inputs.js';
 import {splitRegions,arrangementSplitTarget} from './region-split.js';
 import {arrangementInputDestination,appendArrangementTake,beginArrangementInput,endArrangementInput} from './arrangement-input.js';
@@ -519,6 +521,14 @@ $('restore-previous-set').onclick=lifecycleRun(async()=>{const previous=await re
 const openTemplates=installTemplateDialog({getProject:()=>project,exclusive:withSetLock,replaceSet,writeDefault:p=>writeSets([['default',p]]),download,setStatus});
 $('save-template').onclick=run(()=>openTemplates('save'));$('open-templates').onclick=run(()=>openTemplates());
 $('save').onclick=run(()=>executeStudioCommand({name:'save_project'}));
+const openProjectSave=installProjectSaveDialog({getName:()=>project.name,bind:()=>({owner:project,revision:sessionProjectRevision}),isLocked:()=>clipPropertiesLocked(),preview:name=>({name:projectSaveName(name)}),
+ execute:(mode,name,binding)=>withSetLock(async()=>{
+  if(binding.owner!==project||binding.revision!==sessionProjectRevision)throw Error('The Project Changed While This Dialog Was Open. Close It And Try Again.');
+  const file=projectSaveFile(project,name);
+  return saveProjectVariant(file,mode,{write:async next=>{const index=await readSet(RECENT_INDEX),recent=prepareRecentSwitch({index,current:project,createId:uid});await writeSets([['previous',structuredClone(project)],['current',next],...recent.writes]);},commit:next=>{project.name=next.name;$('project-name').value=next.name;changed();},download});
+ }),setStatus});
+for(const [id,mode]of [['save-as','as'],['save-copy','copy']]){const button=document.createElement('button');button.id=id;button.hidden=true;document.body.append(button);button.onclick=run(()=>openProjectSave(mode));}
+
 function confirmLargeProject(info){return confirm(largeProjectMessage(info));}
 $('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const input=e.target,file=input.files[0];try{if(!file)return;await withSetLock(async()=>{const next=await readProjectFile(file,validateProject,{confirmLarge:confirmLargeProject});await replaceSet(next);setStatus('Project opened. File → Open Live Set Backups → Restore Previous Set can restore the replaced set.');});}catch(error){if(error.name==='AbortError')setStatus('Project Opening Cancelled. Your Current Set Is Unchanged.');else throw error;}finally{input.value='';}});
 $('export').onclick=run(()=>executeStudioCommand({name:'export_wav',args:readDeliveryOptions(true)}));
@@ -1495,7 +1505,7 @@ async function executeStudioCommand(x,signal,prepared){
  if(x.name==='show_panel')return showStudioPanel(detailPanelIntent(a));
  if(x.name==='save_project'){
   if(engine.recording||engine.automationTake)throw new Error('Stop recording before saving.');
-  validateProject(project);const name=filename()+'.opusloop';download(JSON.stringify(project),name,'application/json');setStatus('Project downloaded with embedded audio.');return {download:name};
+  const file=projectSaveFile(project);download(file.data,file.name,'application/json');setStatus('Project downloaded with embedded audio.');return {download:file.name};
  }
  if(x.name==='export_midi')return exportStudioMidi(a,signal,prepared);
  if(x.name==='export_wav')return exportStudioWav(a,signal);
