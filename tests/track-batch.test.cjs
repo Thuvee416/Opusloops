@@ -1,0 +1,42 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const api=async()=>({...await import('../web-studio/track-batch.js'),...await import('../web-studio/model.js'),...await import('../web-studio/track-groups.js'),...await import('../web-studio/track-hierarchy.js'),...await import('../web-studio/management.js'),...await import('../web-studio/history.js')});
+function fixture(t){const p=t.emptyProject();p.tracks=['a','b','c','d'].map(id=>({...t.makeTrack(id),id}));p.clips.x={id:'x',name:'Phrase',kind:'midi',sourceBpm:120,beats:4,notes:[{pitch:60,start:0,duration:1,velocity:.6}]};p.tracks[0].slots[0]=p.tracks[1].slots[0]='x';p.tracks[0].output='track:b';p.tracks[1].output='track:d';p.arrangement=[{id:'r',trackId:'a',clipId:'x',start:3,length:2,offset:1,active:false}];return p;}
+test('batch copy remaps cross-root routing, preserves shared sources within copies and isolates originals',async()=>{
+ const t=await api(),p=fixture(t),before=structuredClone(p),r=t.editTracks(p,['b','a'],'duplicate'),[a,b]=r.selectedIds.map(id=>r.project.tracks.find(t=>t.id===id));
+ assert.deepEqual(p,before);assert.deepEqual(r.project.tracks.map(t=>t.name),['a','a copy','b','b copy','c','d']);assert.equal(a.output,'track:'+b.id);assert.equal(b.output,'track:d');assert.equal(a.slots[0],b.slots[0]);assert.notEqual(a.slots[0],'x');assert.deepEqual(r.project.arrangement[1],{...p.arrangement[0],id:r.project.arrangement[1].id,trackId:a.id,clipId:a.slots[0]});assert.notEqual(r.project.arrangement[1].id,'r');r.project.clips[a.slots[0]].notes[0].pitch=72;assert.equal(r.project.clips.x.notes[0].pitch,60);t.validateProject(r.project);
+});
+test('group plus descendant selection copies each subtree once with valid nested order and downstream routes',async()=>{
+ const t=await api(),p=t.editTrackGroup(fixture(t),{action:'create',ids:['a','b'],name:'Band'}).project,g=p.tracks[0],r=t.editTracks(p,[g.id,'a','c'],'duplicate'),copy=r.project.tracks.find(t=>t.id===r.selectedIds[0]),family=t.trackFamily(r.project,copy.id);
+ assert.equal(r.count,4);assert.equal(r.project.tracks.length,9);assert.equal(r.selectedIds.length,2);assert.equal(family.length,3);assert.ok(family.slice(1).every(t=>t.parentId===copy.id));assert.equal(family[1].output,'track:'+family[2].id);t.validateProject(r.project);
+ const deleted=t.editTracks(p,[g.id,'a','c'],'delete');assert.deepEqual(deleted.project.tracks.map(t=>t.id),['d']);assert.equal(deleted.count,4);assert.equal(deleted.project.arrangement.length,0);assert.deepEqual(deleted.project.clips,{});
+});
+test('deletion reconnects surviving routes through all removed tracks and only removes orphan sources',async()=>{
+ const t=await api(),p=fixture(t);p.tracks[2].output='track:a';p.tracks[3].slots[0]='x';const before=structuredClone(p),r=t.editTracks(p,['a','b'],'delete');assert.deepEqual(p,before);assert.deepEqual(r.project.tracks.map(t=>t.id),['c','d']);assert.equal(r.project.tracks[0].output,'track:d');assert.deepEqual(r.project.clips.x,p.clips.x);assert.equal(r.project.arrangement.length,0);
+ const removed=t.editTracks(r.project,['d'],'delete');assert.deepEqual(removed.project.clips,{});assert.equal(removed.project.tracks[0].output,'master');t.validateProject(removed.project);
+});
+test('invalid, all-track deletion and combined capacity failures are atomic',async()=>{
+ const t=await api(),p=fixture(t),before=JSON.stringify(p);for(const [ids,action]of [[[],'duplicate'],[['a','a'],'duplicate'],[['a','missing'],'delete'],[['a','b','c','d'],'delete'],[['a'],'invalid']]){assert.throws(()=>t.editTracks(p,ids,action));assert.equal(JSON.stringify(p),before);}
+ while(p.tracks.length<15)p.tracks.push(t.makeTrack('Spare'));const full=structuredClone(p);assert.throws(()=>t.editTracks(p,['a','b'],'duplicate'),/16/);assert.deepEqual(p,full);
+ const sources=fixture(t);for(let n=0;n<511;n++)sources.clips['unused'+n]={...structuredClone(sources.clips.x),id:'unused'+n};const sourceBefore=JSON.stringify(sources);assert.throws(()=>t.editTracks(sources,['a'],'duplicate'),/512/);assert.equal(JSON.stringify(sources),sourceBefore);
+});
+test('complete song copies retain media, devices, automation, sends and one-step Undo/Redo',async()=>{
+ const t=await api(),{coreSongProject}=await import('./fixtures/core-song-project.mjs'),p=coreSongProject().project,before=structuredClone(p),r=t.editTracks(p,['drums','keys'],'duplicate'),h=new t.History(p);const keys=r.project.tracks.find(t=>t.id===r.selectedIds[1]);assert.deepEqual(keys.automation,p.tracks.find(t=>t.id==='keys').automation);assert.deepEqual(keys.sends,p.tracks.find(t=>t.id==='keys').sends);assert.notEqual(keys.devices[0].id,p.tracks.find(t=>t.id==='keys').devices[0].id);assert.equal(r.project.clips[r.project.tracks.find(t=>t.id===r.selectedIds[0]).slots[0]].data,p.clips.drums.data);assert.deepEqual(r.project.returns,p.returns);assert.deepEqual(r.project.locators,p.locators);assert.deepEqual(p,before);h.commit(r.project);assert.deepEqual(h.undo(),before);assert.deepEqual(h.redo(),r.project);t.validateProject(JSON.parse(JSON.stringify(r.project)));
+ const deletion=t.editTracks(r.project,r.selectedIds,'delete');assert.deepEqual(deletion.project,p);
+});
+test('single-track/Odesa management continues to use the same family-preserving operations',async()=>{
+ const t=await api(),p=fixture(t),r=t.editTrack(p,'a','duplicate');assert.equal(r.project.tracks.find(t=>t.id===r.trackId).output,'track:b');assert.equal(r.count,1);const deleted=t.editTrack(r.project,r.trackId,'delete');assert.deepEqual(deleted.project,p);assert.equal(t.editTrack(p,'a','rename','New Name').project.tracks[0].name,'New Name');
+});
+test('track edit shortcuts require header focus and leave text, dialogs, menus and modified keys alone',async()=>{
+ const t=await api(),state={trackFocus:true};assert.equal(t.trackEditShortcut({ctrlKey:true,code:'KeyD'},state),'duplicate');assert.equal(t.trackEditShortcut({metaKey:true,code:'KeyR'},state),'rename');assert.equal(t.trackEditShortcut({metaKey:true,code:'KeyA'},state),'select-all');assert.equal(t.trackEditShortcut({key:'Backspace'},state),'delete');assert.equal(t.trackEditShortcut({key:'Delete'}),null);
+ for(const guard of ['typing','dialog','menu'])assert.equal(t.trackEditShortcut({key:'Delete'},{...state,[guard]:true}),null);
+ for(const guard of ['defaultPrevented','altKey','shiftKey','repeat'])assert.equal(t.trackEditShortcut({key:'Delete',[guard]:true},state),null);assert.equal(t.trackEditShortcut({ctrlKey:true,key:'Delete'},state),null);
+});
+test('actual Edit menu routes header operations to tracks and disables stale clip clipboard actions',async()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),{TRACK_EDIT_CONTEXT}=await api(),buttons=new Map(),calls=[];let mounted;const button=id=>{if(!buttons.has(id))buttons.set(id,{disabled:false,canRun:()=>true,click(){calls.push({id,context:this.editContext});}});return buttons.get(id);};
+ const sandbox={document:{getElementById:button,querySelector:()=>({}),body:{classList:{contains:()=>false}}},navigator:{platform:'Mac'},CLIP_GRIDS:[],RECORD_QUANTIZATION_PRESETS:[],TRACK_EDIT_CONTEXT,mountMenubar:args=>mounted=args};
+ const source=fs.readFileSync(require.resolve('../web-studio/menus.js'),'utf8').replace(/^import .*;\n/gm,'').replace('export function installMenus','function installMenus');vm.runInNewContext(source+'\ninstallMenus();',sandbox);
+ const edit=mounted.menus.find(m=>m[0]==='Edit')[1],entry=label=>edit.find(e=>e?.label===label),header={closest:s=>s===TRACK_EDIT_CONTEXT||s==='#session-grid'?header:null};mounted.rememberContext(header);
+ for(const [label,action]of [['Duplicate','duplicate'],['Delete','delete'],['Rename','rename'],['Select All','select-all']]){assert.equal(mounted.enabled(entry(label)),true);mounted.invoke(entry(label));assert.equal(calls.at(-1).id,'selected-tracks-'+action);assert.equal(calls.at(-1).context,header);button('selected-tracks-'+action).canRun=()=>false;assert.equal(mounted.enabled(entry(label)),false);}
+ for(const label of ['Cut','Copy','Paste','Activate/Deactivate Clip','Edit Info Text'])assert.equal(mounted.enabled(entry(label)),false,label);
+ const slot={closest:s=>s==='#session-grid'?slot:null};mounted.rememberContext(slot);mounted.invoke(entry('Duplicate'));assert.equal(calls.at(-1).id,'session-batch-duplicate');mounted.invoke(entry('Rename'));assert.equal(calls.at(-1).id,'rename-selected-clips');assert.equal(mounted.enabled(entry('Copy')),true);
+});

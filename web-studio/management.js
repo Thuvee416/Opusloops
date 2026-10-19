@@ -1,23 +1,18 @@
 import {remapSlotMetadata,insertSlotMetadata} from './slot-metadata.js';
 import {trackFamily,parentOf} from './track-hierarchy.js';
+import {editTracks} from './track-batch.js';
 import {uid,validateProject} from './model.js';
 const initialNames=['Intro','Lift','Breakdown','Return'];
 export function sceneNames(project){return Array.from({length:project.scenes},(_,i)=>project.sceneNames?.[i]??initialNames[i]??`Scene ${i+1}`);}
 function cleanClips(p,candidates){const used=new Set([...p.tracks.flatMap(t=>t.slots),...p.arrangement.map(s=>s.clipId)]);for(const id of candidates)if(!used.has(id))delete p.clips[id];}
 function copyClip(p,id){if(!id)return null;const clip=structuredClone(p.clips[id]);clip.id=uid();p.clips[clip.id]=clip;return clip.id;}
 export function editTrack(project,id,action,value){
+  if(action==='duplicate'||action==='delete')return editTracks(project,[id],action);
   const p=structuredClone(project),index=p.tracks.findIndex(t=>t.id===id),track=p.tracks[index];if(!track)throw new Error('Choose a track.');let selected=id;
   if(action==='rename'){const name=String(value).trim();if(!name||name.length>40)throw new Error('Track names must contain 1–40 characters.');track.name=name;}
   else if(action==='color'){if(!/^#[0-9a-f]{6}$/i.test(value))throw new Error('Choose a valid track color.');track.color=value;}
   else if(action==='move'){
     const siblings=p.tracks.filter(t=>parentOf(t)===parentOf(track)),at=siblings.indexOf(track),target=siblings[at+value];if(![-1,1].includes(value)||!target)throw new Error('The track is already at that folder edge.');const family=trackFamily(p,id),ids=new Set(family.map(t=>t.id));p.tracks=p.tracks.filter(t=>!ids.has(t.id));const to=p.tracks.findIndex(t=>t.id===target.id)+(value>0?trackFamily(p,target.id).length:0);p.tracks.splice(to,0,...family);
-  }else if(action==='duplicate'){
-    const family=trackFamily(p,id);if(p.tracks.length+family.length>16)throw new Error('The complete group copy would exceed 16 tracks.');const trackIds=new Map(family.map(t=>[t.id,uid()])),clips=new Map();
-    const clone=clipId=>{if(!clipId)return null;if(!clips.has(clipId))clips.set(clipId,copyClip(p,clipId));return clips.get(clipId);};
-    const copies=family.map(original=>{const copy=structuredClone(original);copy.id=trackIds.get(original.id);if(original===track)copy.name=track.name.slice(0,35)+' copy';copy.devices=(copy.devices||[]).map(d=>({...d,id:uid()}));if(trackIds.has(copy.parentId))copy.parentId=trackIds.get(copy.parentId);if(copy.output?.startsWith('track:')&&trackIds.has(copy.output.slice(6)))copy.output='track:'+trackIds.get(copy.output.slice(6));copy.slots=copy.slots.map(clone);return copy;});
-    const regions=p.arrangement.filter(r=>trackIds.has(r.trackId)).map(r=>({...structuredClone(r),id:uid(),trackId:trackIds.get(r.trackId),clipId:clone(r.clipId)}));p.arrangement.push(...regions);p.tracks.splice(index+family.length,0,...copies);selected=copies[0].id;
-  }else if(action==='delete'){
-    const ids=new Set(trackFamily(p,id).map(t=>t.id));if(p.tracks.length===ids.size)throw new Error('Keep at least one track outside this group before deleting it.');const candidates=new Set([...p.tracks.filter(t=>ids.has(t.id)).flatMap(t=>t.slots),...p.arrangement.filter(r=>ids.has(r.trackId)).map(r=>r.clipId)].filter(Boolean)),old=new Map(p.tracks.map(t=>[t.id,t]));p.tracks=p.tracks.filter(t=>!ids.has(t.id));for(const source of p.tracks){let output=source.output;while(output?.startsWith('track:')&&ids.has(output.slice(6)))output=old.get(output.slice(6)).output??'master';if(output!==undefined)source.output=output;}p.arrangement=p.arrangement.filter(r=>!ids.has(r.trackId));cleanClips(p,candidates);selected=p.tracks[Math.min(index,p.tracks.length-1)].id;
   }
   else throw new Error('Unsupported track operation: '+String(action).slice(0,60)+'. Use rename, color, move, duplicate or delete. Create tracks with add_track; set volume, pan or output with a track changes action.');validateProject(p);return {project:p,trackId:selected};
 }
