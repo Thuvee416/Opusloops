@@ -6,9 +6,25 @@ export const CLIP_PROPERTY_FIELDS=['name','color','infoText','launch'];
 export const CLIP_COLORS=[['Coral','#ed795e'],['Amber','#e3b75b'],['Lime','#b4c775'],['Teal','#62b5a5'],['Blue','#81a8cf'],['Violet','#ae91cf'],['Rose','#ce94af'],['Graphite','#939b99']];
 const own=(value,key)=>Object.hasOwn(value,key);
 const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+function assertClipSourceScope(ids,trackIds,regionIds){
+ if(!Array.isArray(ids))return;
+ if(ids.some(id=>trackIds.has(id)))throw new Error('Track Name Changes Use type:track With args:{id:TRACK_ID,changes:{name:NEW_NAME}}. clip_properties Requires Clip Source IDs, Never Track Or Return IDs.');
+ if(ids.some(id=>regionIds.has(id)))throw new Error('clip_properties Requires Clip Source IDs, Never Arrangement Region IDs. Use The Region clipId Only When A Source Clip Edit Was Requested.');
+}
+// The provider sees a media-free project; check identity scope without executing edits.
+// New aliases retain their declared entity type and are never silently reinterpreted.
+export function checkClipPropertyPlanScopes(project,actions){
+ const trackIds=new Set([...(project.tracks??[]),...(project.returns??[])].map(t=>t.id)),regionIds=new Set((project.arrangement??[]).map(r=>r.id));
+ for(const action of actions){const args=typeof action.args==='string'?JSON.parse(action.args):action.args;
+  if(['add_track','add_return','track_group'].includes(action.type)&&args?.ref)trackIds.add(args.ref);
+  if(action.type==='region'&&args?.ref)regionIds.add(args.ref);
+  if(action.type==='clip_properties'){validateClipPropertyPatch(args?.changes);assertClipSourceScope(args?.ids,trackIds,regionIds);}
+ }
+}
 export const clipLaunchValues=clip=>({mode:clip.launch?.mode??'trigger',quantization:clip.launch?.quantization??'global',legato:clip.launch?.legato??false});
 export const clipColor=(clip,track)=>clip?.color??track?.color??'#939b99';
 export function clipPropertyIds(project,ids){
+ assertClipSourceScope(ids,new Set([...(project.tracks??[]),...(project.returns??[])].map(t=>t.id)),new Set((project.arrangement??[]).map(r=>r.id)));
  if(!Array.isArray(ids)||!ids.length||ids.length>512||ids.some(id=>typeof id!=='string'||!own(project.clips,id)))throw new Error('Choose Existing Clip Source IDs.');
  return [...new Set(ids)];
 }

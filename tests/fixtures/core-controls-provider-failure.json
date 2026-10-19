@@ -1,0 +1,186 @@
+{
+  "scope": "Operator-IAM real provider drafting/review and independent local preflight assertions. Not authenticated browser execution.",
+  "cases": [
+    {
+      "id": "mixer-rename",
+      "prompt": "Mute Drums, solo Bass, and rename Keys to Pad Keys. Keep every other setting and all clips unchanged. Do not start playback or export.",
+      "plan": {
+        "summary": "Mute Drums, solo Bass, and rename Keys to Pad Keys.",
+        "actions": [
+          {
+            "type": "track",
+            "args": {
+              "id": "e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+              "changes": {
+                "mute": true
+              }
+            }
+          },
+          {
+            "type": "track",
+            "args": {
+              "id": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+              "changes": {
+                "solo": true
+              }
+            }
+          },
+          {
+            "type": "clip_properties",
+            "args": {
+              "ids": [
+                "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8"
+              ],
+              "changes": {
+                "name": "Pad Keys"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 8044,
+      "passed": false,
+      "error": "Choose Existing Clip Source IDs."
+    },
+    {
+      "id": "remove-track",
+      "prompt": "Remove only the Core Lead track and its Arrangement regions. Keep all other tracks, clips, regions and settings unchanged. Do not start playback or export.",
+      "plan": {
+        "summary": "Remove Core Lead track and its Arrangement regions",
+        "actions": [
+          {
+            "type": "track",
+            "args": {
+              "id": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+              "changes": {
+                "mute": true
+              }
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "id": "a84998a9-3d9c-4444-b36e-7ac4f256e7d3",
+              "remove": true
+            }
+          },
+          {
+            "type": "track",
+            "args": {
+              "id": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+              "changes": {
+                "mute": false
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 5244,
+      "passed": false,
+      "error": "Reviewed plan retained Core Lead and only removed its region; expected complete track removal."
+    },
+    {
+      "id": "seek-play",
+      "prompt": "Show Arrangement, move the insert marker to bar 9, and play from that marker. Do not edit the song or change any mixer settings.",
+      "plan": {
+        "summary": "Show Arrangement, move the insert marker to bar 9, and play from that marker.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "show_panel",
+              "args": {
+                "panel": "clip"
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "seek",
+              "args": {
+                "beat": {
+                  "bar": 9
+                }
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "play",
+              "args": {
+                "from": "marker"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 4184,
+      "passed": false,
+      "error": "Reviewed plan opened Clip details instead of the requested Arrangement workspace; seek and marker playback were correct."
+    },
+    {
+      "id": "remove-track",
+      "prompt": "Remove only the Core Lead track and its Arrangement regions. Keep all other tracks, clips, regions and settings unchanged. Do not start playback or export.",
+      "plan": {
+        "summary": "Remove Core Lead track and its Arrangement regions",
+        "actions": [
+          {
+            "type": "manage_track",
+            "args": {
+              "id": "5e984553-e26f-4b8c-82a2-ead42f32de63",
+              "action": "delete"
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "id": "a84998a9-3d9c-4444-b36e-7ac4f256e7d3",
+              "remove": true
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 5804,
+      "passed": false,
+      "error": "Reviewed plan deleted the track, then redundantly deleted a region already removed by the shared track deletion; full preflight rejected without edits."
+    }
+  ]
+}
