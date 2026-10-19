@@ -53,5 +53,84 @@
     "web-studio/icons.js": "ee196e975576964a63062697c8d53325b688e1dc4f0194087a7c4d1f2e920905",
     "web-studio/release.json": "cb4d0471e5e8c969f07e0c004e43f8905ff2e80e17018fc939990730f77b1743"
   },
-  "production": "To be verified after hosting deployment."
+  "production": {
+    "hosting": {
+      "release": "0.153.0",
+      "commit": "77197a5ccf04899e47a7831e1774d5d7714d7cb9",
+      "hosts": {
+        "opusloops.com": {
+          "version": {
+            "provider": "aws-amplify",
+            "commit": "77197a5ccf04899e47a7831e1774d5d7714d7cb9",
+            "repository": "Thuvee416/Opusloops",
+            "branch": "main",
+            "appId": "d1zc92wmtmvg23",
+            "jobId": "0000000157",
+            "builtAt": "2026-10-19T14:37:10.632466Z"
+          },
+          "assets": {
+            "index.html": "90373c6430cb1c1c7ea51fc48ba57045d20502899d05265ab48bfe167250aaf3",
+            "release.json": "cb4d0471e5e8c969f07e0c004e43f8905ff2e80e17018fc939990730f77b1743",
+            "welcome.js": "3f89e231a8ef9250fc398fcd349c3a561c369816eb4bbe78ba93372c0b7d0a9d",
+            "welcome.css": "9c92d98a6608ab29ac42bda968ba3f542b84576134e6466130b03934c8438372",
+            "gradient-ascii.js": "f757cd656fa016b396eb20dd7fa536b787d117aecf81b1afb513a455c14a0bd1",
+            "icons.js": "ee196e975576964a63062697c8d53325b688e1dc4f0194087a7c4d1f2e920905",
+            "odesa.js": "25f2f9c7b48dcd7297834be6e0303099274c29b72b90e9085df953ab675fc553",
+            "REACT_BITS_LICENSE.md": "689e2fc4f3989f5602e651af28c08e87c01d3e1685f5c1677da088206ed9dfbe",
+            "third-party-notices.html": "c8e8c4a3dbe13b5155507e6bbceec3a1a647b4b6214e60cdd3deb633752eb117",
+            "assets/opus-mark.svg": "23d75970867b01e555577a6e876245d1511bc1b4939a8f7b34985aed138770a8",
+            "assets/opus-brand-landscape-v2.jpg": "10af63ff8cbbca30e1e50ec16207a828a240755a673caad10dfef444e3fda7ed"
+          }
+        },
+        "www.opusloops.com": {
+          "version": {
+            "provider": "aws-amplify",
+            "commit": "77197a5ccf04899e47a7831e1774d5d7714d7cb9",
+            "repository": "Thuvee416/Opusloops",
+            "branch": "main",
+            "appId": "d1zc92wmtmvg23",
+            "jobId": "0000000157",
+            "builtAt": "2026-10-19T14:37:10.632466Z"
+          },
+          "assets": {
+            "index.html": "90373c6430cb1c1c7ea51fc48ba57045d20502899d05265ab48bfe167250aaf3",
+            "release.json": "cb4d0471e5e8c969f07e0c004e43f8905ff2e80e17018fc939990730f77b1743",
+            "welcome.js": "3f89e231a8ef9250fc398fcd349c3a561c369816eb4bbe78ba93372c0b7d0a9d",
+            "welcome.css": "9c92d98a6608ab29ac42bda968ba3f542b84576134e6466130b03934c8438372",
+            "gradient-ascii.js": "f757cd656fa016b396eb20dd7fa536b787d117aecf81b1afb513a455c14a0bd1",
+            "icons.js": "ee196e975576964a63062697c8d53325b688e1dc4f0194087a7c4d1f2e920905",
+            "odesa.js": "25f2f9c7b48dcd7297834be6e0303099274c29b72b90e9085df953ab675fc553",
+            "REACT_BITS_LICENSE.md": "689e2fc4f3989f5602e651af28c08e87c01d3e1685f5c1677da088206ed9dfbe",
+            "third-party-notices.html": "c8e8c4a3dbe13b5155507e6bbceec3a1a647b4b6214e60cdd3deb633752eb117",
+            "assets/opus-mark.svg": "23d75970867b01e555577a6e876245d1511bc1b4939a8f7b34985aed138770a8",
+            "assets/opus-brand-landscape-v2.jpg": "10af63ff8cbbca30e1e50ec16207a828a240755a673caad10dfef444e3fda7ed"
+          }
+        }
+      }
+    },
+    "native": {
+      "tagline": "Natural Language. Real Control.",
+      "featuredModel": "Odesa Tempo",
+      "dialogWidth": 820,
+      "canvasWhileOpen": 1,
+      "futureModelsCollapsed": true,
+      "exampleDraft": "Set the tempo to 124 BPM.",
+      "promptFocused": true,
+      "bpmAfterDraft": 120,
+      "playingAfterDraft": false,
+      "canvasAfterDraft": 0,
+      "dailyRemaining": 95,
+      "requestsConsumedByDraft": 0,
+      "draftClearedAfterVerification": true,
+      "pageErrors": []
+    },
+    "project": {
+      "beforeFile": "Test-Thuvee-1 (6).opusloop",
+      "afterFile": "Test-Thuvee-1 (7).opusloop",
+      "bytes": 1722,
+      "sha256": "2e06224d9b6cf8e9a02104b46eed75bac5e9f7a0d10b4b15cbac68c9debbc92d",
+      "byteIdentical": true
+    },
+    "repositoryVisibility": "PRIVATE"
+  }
 }
