@@ -1,0 +1,44 @@
+{
+  "release": "0.164.1",
+  "commit": "a7a5cdac85f254eca767831abe18fb4e303b6a9f",
+  "job": 174,
+  "status": "SUCCEED",
+  "apiCodeSha256": "af391b2f6a2a0efbbe61e06019f68deac2ba6f2baa28963dc481c31acfaa9c2a",
+  "apiState": "Active",
+  "apiLastUpdateStatus": "Successful",
+  "workerDigestUnchanged": "ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4",
+  "hosts": {
+    "https://opusloops.com": {
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "a7a5cdac85f254eca767831abe18fb4e303b6a9f",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000174",
+        "builtAt": "2026-10-19T18:36:40.617232Z"
+      },
+      "assets": {
+        "clip-properties.js": "57b28091d28c8cea17ca7e292ac5b256bb0927d84e07bd1aed918338e190a2d7",
+        "agent-schema.js": "8c7fc553961d393d68408acde9bc0bf04ace283edfe38853ba5b7cf59119082d",
+        "release.json": "b5a9d10135681d898fc093f9b33e9d90f6dca8d1fbf6819685b9fd3fad127a0e"
+      }
+    },
+    "https://www.opusloops.com": {
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "a7a5cdac85f254eca767831abe18fb4e303b6a9f",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000174",
+        "builtAt": "2026-10-19T18:36:40.617232Z"
+      },
+      "assets": {
+        "clip-properties.js": "57b28091d28c8cea17ca7e292ac5b256bb0927d84e07bd1aed918338e190a2d7",
+        "agent-schema.js": "8c7fc553961d393d68408acde9bc0bf04ace283edfe38853ba5b7cf59119082d",
+        "release.json": "b5a9d10135681d898fc093f9b33e9d90f6dca8d1fbf6819685b9fd3fad127a0e"
+      }
+    }
+  }
+}
