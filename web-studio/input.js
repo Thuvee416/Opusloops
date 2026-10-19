@@ -40,7 +40,7 @@ export class MidiTake {
 }
 const loadedContexts=new WeakSet();
 export class AudioCapture {
-  constructor(context,onFinish){this.context=context;this.onFinish=onFinish;this.active=false;this.chunks=[];this.connected=false;this.generation=0;}
+  constructor(context,onFinish,{setTimer=setTimeout,clearTimer=clearTimeout}={}){this.context=context;this.onFinish=onFinish;this.active=false;this.chunks=[];this.connected=false;this.generation=0;this.setTimer=setTimer;this.clearTimer=clearTimer;}
   async connect(deviceId='',channels='stereo:0'){
     const selection=inputChannelSelection(channels);
     await this.disconnect();const generation=++this.generation;
@@ -52,9 +52,23 @@ export class AudioCapture {
       this.source=this.context.createMediaStreamSource(stream);this.processor=new AudioWorkletNode(this.context,'opus-capture',{outputChannelCount:[2],channelCountMode:'max',processorOptions:{channels}});this.silent=this.context.createGain();this.silent.gain.value=0;this.monitor=this.context.createGain();this.monitor.gain.value=0;
       this.source.connect(this.processor);this.processor.connect(this.silent);this.silent.connect(this.context.destination);this.processor.connect(this.monitor);this.monitorTarget=null;
       let readyResolve,readyReject;const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;}),timer=setTimeout(()=>readyReject(new Error('Audio input did not provide channels. Reconnect the input.')),3000);
-      this.processor.port.onmessage=({data})=>{if(data.type==='channels'&&data.count>0){this.inputChannels=data.count;if(inputChannelsAvailable(data.count,selection))readyResolve();else{const error=new Error('Selected input channels are unavailable; the browser provides '+data.count+' channel(s).');readyReject(error);if(this.connected){const endedGeneration=this.generation;this.connected=false;this.onDisconnected?.();this.stop().finally(()=>{if(endedGeneration===this.generation)return this.disconnect();}).catch(()=>{});}}}if(data.type==='started')this.startedFrame=data.frame;if(data.type==='cancelled'){this.active=false;this.chunks=[];this.reject?.(new DOMException('Count-in cancelled.','AbortError'));}if(data.type==='chunk')this.chunks.push(data.channels);if(data.type==='finished'){this.active=false;this.complete(data.frames);}};try{await ready;}finally{clearTimeout(timer);}if(generation!==this.generation)return;this.connected=true;
-      this.processor.onprocessorerror=()=>{this.connected=false;this.onDisconnected?.();this.active=false;this.reject?.(new Error('Audio input processing stopped unexpectedly. Reconnect the input and try again.'));this.disconnect().catch(()=>{});};
-      for(const track of stream.getTracks())track.onended=()=>{const endedGeneration=this.generation;this.connected=false;this.onDisconnected?.();this.stop().finally(()=>{if(endedGeneration===this.generation)return this.disconnect();}).catch(()=>{});};
+      const processor=this.processor;
+      this.processor.port.onmessage=({data})=>{
+       if(this.processor!==processor)return;
+       if(data.type==='channels'){
+        this.inputChannels=data.count;
+        if(data.count>0&&inputChannelsAvailable(data.count,selection))readyResolve();
+        else if(data.count>0||this.connected){const error=new Error('Selected input channels are unavailable; the browser provides '+data.count+' channel(s).');readyReject(error);if(this.connected)this.inputEnded();}
+       }
+       if(!this.active)return;
+       if(data.type==='started')this.startedFrame=data.frame;
+       if(data.type==='cancelled')this.cancelled();
+       if(data.type==='chunk'&&this.finishRequest!=='cancel')this.chunks.push(data.channels);
+       if(data.type==='finished'){if(this.finishRequest==='cancel')this.cancelled();else this.complete(data.frames);}
+      };
+      try{await ready;}finally{clearTimeout(timer);}if(generation!==this.generation)return;this.connected=true;
+      this.processor.onprocessorerror=()=>{if(this.processor===processor)this.interrupted('Audio Input Processing Stopped Unexpectedly.');};
+      for(const track of stream.getTracks())track.onended=()=>{if(this.processor===processor)this.inputEnded();};
     }catch(error){if(generation===this.generation)await this.disconnect();else stream.getTracks().forEach(t=>t.stop());throw error;}
   }
   setMonitor(enabled,target=this.context.destination,level=.5){
@@ -64,11 +78,58 @@ export class AudioCapture {
     if(active&&target!==this.monitorTarget){this.monitor.gain.cancelScheduledValues(now);this.monitor.gain.setValueAtTime(0,now);this.monitor.disconnect();this.monitorTarget=null;this.monitor.connect(target);this.monitorTarget=target;}
     this.monitor.gain.setTargetAtTime(active?level:0,now,.01);
   }
-  start(bpm,startTime=this.context.currentTime,{maxBeats=256}={}){if(!Number.isFinite(maxBeats)||maxBeats<.25||maxBeats>256)throw Error('Invalid Recording Length Limit.');if(!Number.isFinite(startTime)||startTime<0)throw new Error('Invalid recording start time.');if(!this.connected)throw new Error('Connect an audio input first.');if(this.active)throw new Error('A take is already recording.');this.bpm=bpm;this.chunks=[];this.active=true;this.completion=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.completion.catch(()=>{});this.processor.port.postMessage({type:'start',startFrame:Math.round(startTime*this.context.sampleRate),limit:Math.floor(Math.min(300,maxBeats*60/bpm,12000000/this.context.sampleRate)*this.context.sampleRate)});}
-  async cancel(){if(!this.active)return;this.processor.port.postMessage({type:'cancel'});try{await this.completion;}catch(error){if(error.name!=='AbortError')throw error;}}
-  async stop(){if(!this.active)return this.completion;this.processor.port.postMessage({type:'stop'});return this.completion;}
-  complete(frames){try{if(frames<128)throw new Error('The take was too short. Record a little longer.');const sr=this.context.sampleRate,beats=Math.min(256,Math.ceil(frames/sr*this.bpm/60*4)/4),length=Math.max(frames,Math.ceil(beats*60/this.bpm*sr)),buffer=this.context.createBuffer(2,length,sr);let at=0;for(const chunk of this.chunks){for(let c=0;c<2;c++)buffer.copyToChannel(chunk[c],c,at);at+=chunk[0].length;}this.chunks=[];const clip={id:uid(),name:'Audio take',kind:'audio',beats,sourceBpm:this.bpm,data:encode64(wav(buffer))};this.onFinish?.(clip,buffer);this.resolve?.({clip,buffer});}catch(error){this.reject?.(error);}finally{this.active=false;}}
-  async disconnect(){this.generation++;try{if(this.active)await this.stop();}finally{this.stream?.getTracks().forEach(t=>{t.onended=null;t.stop();});for(const n of [this.source,this.processor,this.silent,this.monitor])n?.disconnect();this.active=false;this.chunks=[];this.connected=false;this.stream=null;this.monitorTarget=null;}}
+  start(bpm,startTime=this.context.currentTime,{maxBeats=256}={}){
+    if(!Number.isFinite(bpm)||bpm<=0)throw Error('Invalid Recording Tempo.');
+    if(!Number.isFinite(maxBeats)||maxBeats<.25||maxBeats>256)throw Error('Invalid Recording Length Limit.');if(!Number.isFinite(startTime)||startTime<0)throw new Error('Invalid recording start time.');if(!this.connected)throw new Error('Connect an audio input first.');if(this.active)throw new Error('A take is already recording.');
+    this.clearFinishTimer();this.finishRequest=null;this.interruption=null;this.bpm=bpm;this.chunks=[];this.active=true;this.completion=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.completion.catch(()=>{});
+    try{this.processor.port.postMessage({type:'start',startFrame:Math.round(startTime*this.context.sampleRate),limit:Math.floor(Math.min(300,maxBeats*60/bpm,12000000/this.context.sampleRate)*this.context.sampleRate)});}catch(error){this.interrupted('Audio Input Could Not Start.');throw error;}
+  }
+  clearFinishTimer(){if(this.finishTimer!==undefined)this.clearTimer(this.finishTimer);this.finishTimer=undefined;}
+  requestFinish(type){
+    if(!this.active)return;
+    if(this.finishRequest==='cancel'||this.finishRequest===type)return;
+    this.finishRequest=type;this.clearFinishTimer();
+    this.finishTimer=this.setTimer(()=>this.interrupted('Audio Input Did Not Finish Responding.'),5000);
+    try{this.processor.port.postMessage({type});}catch{this.interrupted('Audio Input Connection Was Lost.');}
+  }
+  async cancel(){if(!this.active)return;this.requestFinish('cancel');try{await this.completion;}catch(error){if(error.name!=='AbortError')throw error;}}
+  async stop(){if(this.active)this.requestFinish('stop');return this.completion;}
+  cancelled(){this.clearFinishTimer();this.active=false;this.chunks=[];this.reject?.(new DOMException('Recording Cancelled.','AbortError'));}
+  inputEnded(){
+    const processor=this.processor;this.interruption='Audio Input Disconnected.';this.connected=false;this.setMonitor(false);this.onDisconnected?.();
+    this.stop().finally(()=>{if(this.processor===processor)this.teardown();}).catch(()=>{});
+  }
+  interrupted(message){
+    const wasActive=this.active;this.connected=false;this.clearFinishTimer();
+    if(wasActive){
+      if(this.finishRequest==='cancel')this.cancelled();
+      else{const frames=this.chunks.reduce((sum,chunk)=>sum+chunk[0].length,0);
+        if(frames>=128)this.complete(frames,{interrupted:true,warning:message+' Only Audio Already Received Was Recovered. The End Of The Take May Be Missing. Reconnect The Input.'});
+        else{this.active=false;this.chunks=[];this.reject?.(new Error(message+' No Recoverable Audio Was Received. Reconnect The Input.'));}
+      }
+    }
+    this.teardown();this.onDisconnected?.();
+  }
+  complete(frames,recovery={}){
+    this.clearFinishTimer();this.active=false;
+    try{
+      if(this.interruption&&!recovery.interrupted)recovery={interrupted:true,warning:this.interruption+' Audio Received Before Disconnection Was Recovered. Reconnect The Input.'};
+      const received=this.chunks.reduce((sum,chunk)=>sum+chunk[0].length,0);
+      if(!Number.isSafeInteger(frames)||frames!==received)throw new Error('Recorded Audio Is Incomplete. Reconnect The Input.');
+      if(frames<128)throw new Error('The take was too short. Record a little longer.');
+      const sr=this.context.sampleRate,beats=Math.min(256,Math.ceil(frames/sr*this.bpm/60*4)/4),length=Math.max(frames,Math.ceil(beats*60/this.bpm*sr)),buffer=this.context.createBuffer(2,length,sr);let at=0;
+      for(const chunk of this.chunks){for(let c=0;c<2;c++)buffer.copyToChannel(chunk[c],c,at);at+=chunk[0].length;}
+      this.chunks=[];const clip={id:uid(),name:recovery.interrupted?'Recovered Audio Take':'Audio take',kind:'audio',beats,sourceBpm:this.bpm,data:encode64(wav(buffer))};this.onFinish?.(clip,buffer);this.resolve?.({clip,buffer,...recovery});
+    }catch(error){this.chunks=[];this.reject?.(error);}
+  }
+  teardown(){
+    this.clearFinishTimer();this.stream?.getTracks().forEach(t=>{t.onended=null;t.stop();});
+    if(this.processor){this.processor.port.onmessage=null;this.processor.onprocessorerror=null;}
+    for(const n of [this.source,this.processor,this.silent,this.monitor])n?.disconnect();
+    this.active=false;this.connected=false;this.stream=null;this.processor=null;this.monitorTarget=null;
+  }
+  async disconnect(){this.generation++;try{if(this.active)await this.stop();}finally{this.teardown();this.chunks=[];}}
+
 }
 export class LiveNotes {
   constructor(engine,onError=()=>{}){this.engine=engine;this.onError=onError;this.voices=new Map();this.sounding=new Set();this.pending=new Map();this.arps=new Map();this.arpKeys=new Map();}

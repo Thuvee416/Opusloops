@@ -34,7 +34,7 @@ test('mono selection is centered and stereo selection uses exactly the requested
 });
 test('cancel during count-in emits no audio and disconnected input reports its channel count',async()=>{
  const t=await capture();t.send({type:'start',startFrame:1024,limit:128});t.block(0,[channel(0)]);t.block(128,[]);t.send({type:'cancel'});
- assert.deepEqual(t.messages.filter(m=>m.type==='channels').map(m=>m.count),[1,0]);assert.equal(t.messages.some(m=>['started','chunk','finished'].includes(m.type)),false);
+ assert.deepEqual(t.messages.filter(m=>m.type==='channels').map(m=>m.count),[1,0]);assert.equal(t.messages.some(m=>['started','chunk'].includes(m.type)),false);assert.deepEqual(t.messages.filter(m=>m.type==='finished'),[{type:'finished',frames:0}]);
 });
 
 
@@ -44,4 +44,14 @@ test('monitor output processing cannot change the dry samples accumulated by the
  first[0].fill(0);first[1].fill(1); // A downstream monitor consumer has independent output arrays.
  t.block(128,[new Float32Array(128).fill(.75),new Float32Array(128).fill(-.25)]);
  assert.deepEqual(recorded(t),[Array(128).fill(.25).concat(Array(128).fill(.75)),Array(128).fill(-.5).concat(Array(128).fill(-.25))]);
+});
+
+
+test('loss of selected input channels finishes at the last valid frame instead of recording missing-channel silence',async()=>{
+ const t=await capture('stereo:2');t.send({type:'start',startFrame:0,limit:10000});
+ t.block(0,[1,2,3,4].map(v=>new Float32Array(128).fill(v/8)));
+ t.block(128,[1,2].map(v=>new Float32Array(128).fill(v/8)));
+ t.block(256,[]);t.send({type:'stop'});
+ assert.deepEqual(t.messages.filter(m=>m.type==='finished'),[{type:'finished',frames:128}]);
+ assert.deepEqual(recorded(t),[Array(128).fill(3/8),Array(128).fill(4/8)]);
 });

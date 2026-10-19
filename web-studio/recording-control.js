@@ -81,6 +81,7 @@ export function checkRecordingReceipt(before,after,prepared,result,state){
  return {changed:true};
 }
 export function describeInputRecording(result){
+ if(result.status==='saved'&&result.interrupted)return `Recovered A Partial Audio Take${result.mode==='arrangement'?` In Arrangement At Beat ${result.start+1}`:` In Scene ${result.scene+1}`}. ${result.warning||'The End Of The Take May Be Missing. Reconnect The Input.'} Undo Removes The Recovered Take.`;
  if(result.status==='saved'&&result.mode==='arrangement')return `Saved ${result.source==='midi'?'MIDI':'Audio'} Take To Arrangement At Beat ${result.start+1}.${result.quantized?' Undo Restores Performed Timing; Undo Again Removes The Take.':' Undo Removes The Take.'}`;
  if(result.status==='saved'&&result.mode==='overdub')return `Added ${result.addedNotes} MIDI Notes To The Existing Loop.${result.quantized?' Undo Restores Performed Timing; Undo Again Removes This Overdub.':' Undo Removes This Overdub.'}${result.boundarySplits?' Notes Crossing Loop Boundaries Were Split.':''}${result.tailLimited?' Note Capacity Limited The Captured Tail.':''} Playback Continues.`;
  if(result.status==='saved')return `Saved ${result.source==='midi'?'MIDI':'Audio'} Take To Scene ${result.scene+1}.${result.quantized?' Undo Restores Performed Timing; Undo Again Removes The Take.':' Undo Removes The Take.'}`;
