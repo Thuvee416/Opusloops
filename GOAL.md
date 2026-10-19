@@ -6,6 +6,12 @@ Updated 2026-10-19 at the user's direction. This is the current delivery priorit
 
 The bounded core milestone below is complete. The user has now asked to continue the rest of the application build and leave the music-model build for later. Continue practical manual DAW/project workflows, preserving the existing Odesa integration. No further provider evaluation, credential changes or music-model work is part of this increment. Historical acceptance records below remain intact.
 
+## Active Continuation
+
+The user resumed the core-first goal after release 0.166.0. Continue closing practical manual project/editing/transport/recording/mixing/delivery gaps and publish bounded increments. Preserve the existing Odesa integration; further music-model work remains deferred. The remaining native browser verification was waived by the user and must be reported as unverified rather than blocking these releases. Keep source-level safety checks and the deployment result distinct from workflow proof.
+
+Current increments: Recent Sets shipped in 0.166.0; shared Undo History is the next release. Prioritize existing menu/workflow gaps over new model capabilities or visual redesigns.
+
 ## Working Goal
 
 Make the basic Ableton-style music-production functions in the published OPUS LOOPS Studio work reliably, together, and build Odesa Tempo 1.0 to control those same core operations accurately. Both are included in the current goal, before further enhancements or advanced features. Keep everything already built. Fix and verify the existing foundations rather than expanding feature breadth or redesigning the interface.

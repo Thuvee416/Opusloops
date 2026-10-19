@@ -1,3 +1,4 @@
+import {installHistoryView} from './history-view.js';
 import {RECENT_INDEX,prepareRecentSwitch} from './recent-sets.js';
 import {installRecentSetsDialog} from './recent-sets-dialog.js';
 import {runProjectIO} from './project-io.js';
@@ -131,6 +132,7 @@ function applyRegionGroup(action,options){
  const primary=project.arrangement.find(r=>r.id===selectedRegion);if(primary){selection={trackId:primary.trackId,clipId:primary.clipId};regionPasteTrack=primary.trackId;}
  return result;
 }
+let historyView=null;
 let suppressRegionClick=false,history,project,engine,selection=null,selectedRegion=null,view='session',importTarget=null,saveTimer,busy=false;
 let selectedTracks=new Set(),trackAnchor=null,foldedGroups=new Set();
 try{foldedGroups=new Set(JSON.parse(localStorage.getItem('opus.group-folds')||'[]').filter(id=>typeof id==='string'));}catch{}
@@ -392,6 +394,9 @@ async function replaceSet(next,{signal,committed=()=>{},recentId}={}){
  const recent=prepareRecentSwitch({index,current:project,nextId:recentId,createId:uid});
  await replaceStoredProject({current:project,next,validate:validateProject,write:entries=>writeSets([...entries,...recent.writes],{signal}),install:p=>{install(p);committed();}});changed();return recent;
 }
+const historyButton=document.createElement('button');historyButton.id='open-history';historyButton.hidden=true;document.body.append(historyButton);
+historyView=installHistoryView({getHistory:()=>history,isLocked:()=>!engine||engine.playing||!!engine.startPromise||engine.recording||!!engine.automationTake||inputActive()||busy,move:intent=>moveStudioHistory(intent.action,intent.steps,{binding:intent.binding}),setStatus});
+historyButton.onclick=run(()=>historyView.open());
 const openRecents=installRecentSetsDialog({read:readSet,exclusive:withSetLock,replaceSet,setStatus});
 $('open-recents').onclick=run(()=>{stopToEdit();if(busy)throw new Error('Finish the current operation first.');return openRecents();});
 $('new-set').onclick=lifecycleRun(async()=>{if(!confirm('Start a new set? Your current set will be kept as the previous set in this browser.'))return;const next=newProjectCandidate(await readSet('default'));await replaceSet(next);setStatus('New set created. File → Open Live Set Backups can restore the previous set.');});
@@ -444,7 +449,7 @@ try{
  else if(saved.project)setStatus('Restored your browser-local session. A session-start backup is available in File.');
 }catch(error){install(demo());$('save-state').textContent='Recovery unavailable · import a downloaded project';setStatus(error.message,true);}animate();
 
-function updateHistory(){if(!history||!engine)return;$('undo').disabled=!history.past.length||engine.playing||inputActive()||busy;$('redo').disabled=!history.future.length||engine.playing||inputActive()||busy;}
+function updateHistory(){if(!history||!engine)return;$('undo').disabled=!history.past.length||engine.playing||inputActive()||busy;$('redo').disabled=!history.future.length||engine.playing||inputActive()||busy;historyView?.refresh();}
 function moveStudioHistory(action,steps=1,prepared=null){
  if(engine.playing||engine.startPromise||engine.recording||engine.automationTake||inputActive()||busy)throw new Error('Stop playback and finish recording before Undo/Redo.');
  if(prepared)assertHistoryState(prepared.binding,historyState(history));
