@@ -1,0 +1,48 @@
+{
+  "release": "0.161.0",
+  "scope": "Normal signed-in production Chrome; native Record, Scene 1, Stop, File Save and Edit Undo",
+  "captureFile": "Recording-Recovery-Native (4).opusloop",
+  "captureSha256": "380911df580738c446745bd035090c39ee9da6c52a360213ea0b4f9ebabb98a7",
+  "regions": [
+    {
+      "id": "6e106fa6-e951-48b1-a582-363ac44e81d5",
+      "trackId": "e59cfff2-b4f3-4d0d-bc37-13c942534a26",
+      "clipId": "a04caffa-9d26-4b9b-a26d-8fdbb1111ef9",
+      "start": 8,
+      "length": 18.52918518518518,
+      "offset": 0
+    },
+    {
+      "id": "5c0f9eee-fc65-4a9c-9837-defab1045789",
+      "trackId": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+      "clipId": "56383108-14cf-44df-a176-ef633b483151",
+      "start": 8,
+      "length": 18.52918518518518,
+      "offset": 0
+    },
+    {
+      "id": "5110c08d-e0e5-40fe-9655-9e944ee4411d",
+      "trackId": "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+      "clipId": "e0fa8ea0-45b2-46e0-b015-0feacf2ebfff",
+      "start": 8,
+      "length": 18.52918518518518,
+      "offset": 0
+    }
+  ],
+  "otherProjectDataPreserved": true,
+  "oneUndoByteIdentical": true,
+  "undoFile": "Recording-Recovery-Native (5).opusloop",
+  "baselineSha256": "ccb39b0f25538a70a775d24fce53a35523b8f795c1a005dc7e68ee16733b9159",
+  "originalRestoration": {
+    "file": "Test-Thuvee-1 (15).opusloop",
+    "byteIdentical": true,
+    "bytes": 2247,
+    "sha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27"
+  },
+  "consoleWarningsAndErrors": [],
+  "limits": [
+    "No microphone used.",
+    "Startup error/cancellation verified with controlled source tests; no physical device failure forced.",
+    "No new listening-quality or latency claim."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "scope": "390x844 desktop iframe preview on isolated localhost; not physical phone/touch proof",
+  "verified": [
+    "Play and Stop",
+    "Mute and Solo toggled on and off",
+    "Mixer horizontal boundary stays at last channel",
+    "File menu Save"
+  ],
+  "savedProjectByteIdentical": true,
+  "file": "Recording-Recovery-Native (3).opusloop",
+  "sha256": "ccb39b0f25538a70a775d24fce53a35523b8f795c1a005dc7e68ee16733b9159",
+  "limits": [
+    "Physical mobile/touch and audio-device tests remain.",
+    "Outer gray area in screenshot is test wrapper outside iframe, not application overscroll."
+  ]
+}

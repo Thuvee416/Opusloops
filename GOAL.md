@@ -33,3 +33,7 @@ Only then resume enhancements and advanced production work: deeper warping/time 
 ## Execution Rule
 
 Choose the next task by the earliest failing core workflow step. Report what actually works, the failure repaired, the relevant verification and remaining limits. No broad parity or professional-quality claims without matching evidence. Preserve normal authentication, permissions and usage limits. Do not mark this goal complete until the representative manual song round trip and corresponding Odesa Tempo workflows pass. See CORE_BUILD_STATUS.md for the current evidence and next audit step.
+
+## Latest Verified Progress — 2026-10-19
+
+See CORE_BUILD_STATUS.md and the production proof fixtures for exact scope. Release 0.161.0 is live and verified: Session recording startup now preserves the existing Arrangement on preparation failure/cancellation, and native production capture plus one Undo passed with actual downloaded-project comparison. The original Test Thuvee 1 project is restored byte-for-byte. Compact desktop preview controls passed; physical mobile/device acceptance remains separate. Next: core Odesa Session-performance recording coverage through shared capture logic. The goal remains active and its acceptance gates are unchanged.
