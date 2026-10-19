@@ -86,16 +86,33 @@ export class Engine {
   beat(){return this.playing?timelineBeat(this.rawBeat(),this.playbackTransport(),this.mode):this.position;}
   async play(mode=this.mode,{onReady,delayBeats=0}={}){
     if(!Number.isFinite(delayBeats)||delayBeats<0||delayBeats>16)throw Error('Invalid Playback Count-In.');
-    if(this.playing)return;if(this.startPromise)return this.startPromise;
-    const generation=this.playGeneration;
-    this.startPromise=(async()=>{await this.prepare();if(generation!==this.playGeneration)return;onReady?.();
+    if(this.playing)return;
+    const generation=this.playGeneration;this.playRequestGeneration=generation;
+    // A cancelled preparation still owns its audio resources until it settles.
+    // Queue a fresh request behind it, but never let a later Stop revive playback.
+    while(this.startPromise){
+      if(this.startGeneration===generation)return this.startPromise;
+      try{await this.startPromise;}catch{}
+      if(generation!==this.playGeneration)return;
+    }
+    this.startGeneration=generation;
+    const pending=(async()=>{await this.prepare();if(generation!==this.playGeneration)return;onReady?.();if(generation!==this.playGeneration)return;
       this.mode=mode;if(mode==='arrangement'&&!this.overrides.size)this.cancelSceneFollow();this.clockStart=this.position;this.nextBeat=this.position;
       for(const [id,a] of this.active){a.activationBeat=this.position;const track=this.project.tracks.find(t=>t.id===id);if(track?.slots[a.slot]!==a.clipId)a.slot=track?.slots.indexOf(a.clipId);if(this.position===0){a.start=0;this.armFollow(id,a,0,0);}else if(a.followSignature!==this.followSignature(a))this.armFollow(id,a,this.position);}
       if(this.activeScene!==null)this.sceneActivationBeat=this.position;
       if(this.activeScene!==null&&(this.position===0||this.sceneFollowSignature!==JSON.stringify(this.project.sceneFollows?.[this.activeScene])))this.armSceneFollow(this.activeScene,this.position);
       this.origin=this.context.currentTime+(this.inputArrangement?.15:.08)+(delayBeats-this.position)*60/this.project.bpm;
       this.playing=true;this.updateMix();this.timer=setInterval(()=>this.tick(),25);this.tick();this.changed();
-    })();try{await this.startPromise;}finally{this.startPromise=null;}
+    })();this.startPromise=pending;
+    try{await pending;}catch(error){
+      if(generation===this.playGeneration&&this.playing){
+        clearInterval(this.timer);for(const node of this.nodes){try{node.stop();}catch{}}this.nodes.clear();
+        this.playing=false;this.position=this.clockStart;this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();
+        // Recording startup owns its rollback and history; do not finalize a take here.
+        try{if(this.context)this.resetMixers();}catch{}
+      }
+      throw error;
+    }finally{if(this.startPromise===pending)this.startPromise=null;if(this.playRequestGeneration===generation)this.playRequestGeneration=null;}
   }
   halt(reset){
     for(const h of this.gateHolds.values())if(!h.repeat&&this.active.get(h.trackId)?.clipId===h.clipId)this.active.set(h.trackId,{clipId:null,start:this.position});this.gateHolds.clear();this.playGeneration++;const raw=this.rawBeat(),position=this.beat();
@@ -112,7 +129,7 @@ export class Engine {
   async seek(position,{moveMarker=true,snap=true}={}){
     if(this.recording||this.inputArrangement)throw new Error('Finish recording before seeking.');
     if(!Number.isFinite(position)||position<0||position>16384)throw new Error('Choose a position within the timeline.');
-    const resume=this.playing;this.pause();
+    const resume=this.playing||!!this.startPromise&&this.playRequestGeneration===this.playGeneration;this.pause();
     const next=snap?Math.round(position*4)/4:position;if(moveMarker)this.insertMarker=next;
     for(const a of this.active.values())a.start+=next-this.position;
     for(const f of this.follows.values())f.beat+=next-this.position;if(this.sceneFollow)this.sceneFollow.beat+=next-this.position;this.position=next;this.changed();if(resume)await this.play(this.mode);

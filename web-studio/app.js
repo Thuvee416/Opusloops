@@ -474,11 +474,12 @@ function openSessionContext(cell,x,y){if(navigationLocked()||!cell)return;const 
 $('session-grid').addEventListener('contextmenu',run(e=>{const cell=e.target.closest('.slot');if(!cell||e.target.closest('input,textarea'))return;e.preventDefault();openSessionContext(cell,e.clientX,e.clientY);}));
 $('session-grid').addEventListener('keydown',run(e=>{if(e.key!=='ContextMenu'&&!(e.shiftKey&&e.key==='F10'))return;const cell=e.target.closest('.slot');if(!cell)return;e.preventDefault();e.stopImmediatePropagation();const r=cell.getBoundingClientRect();openSessionContext(cell,r.left+Math.min(35,r.width/2),r.bottom);}),true);
 
-$('play').onclick=run(()=>engine.playing?undefined:executeStudioCommand({name:'play'}));
+async function playFromControls(args={}){try{return await executeStudioCommand({name:'play',args});}catch(error){if(error.code!=='PLAYBACK_CANCELLED')throw error;}}
+$('play').onclick=run(()=>engine.playing?undefined:playFromControls());
 $('pause').onclick=run(()=>executeStudioCommand({name:'pause'}));
 $('stop').onclick=run(()=>executeStudioCommand({name:'stop'}));
 const returnStart=document.createElement('button');returnStart.id='return-start';returnStart.hidden=true;document.body.append(returnStart);returnStart.onclick=run(()=>executeStudioCommand({name:'stop',args:{reset:true}}));
-const continuePlay=document.createElement('button');continuePlay.id='continue-play';continuePlay.hidden=true;document.body.append(continuePlay);continuePlay.onclick=run(()=>executeStudioCommand({name:'play',args:{from:'continue'}}));
+const continuePlay=document.createElement('button');continuePlay.id='continue-play';continuePlay.hidden=true;document.body.append(continuePlay);continuePlay.onclick=run(()=>playFromControls({from:'continue'}));
 $('record').onclick=run(async()=>{const finishing=engine.recording;if(!finishing&&project.arrangement.length&&!confirm('Replace the existing Arrangement with a new recording? Save a project copy first if you want to keep it.'))return;const pending=engine.startRecording();renderTransport();try{await pending;setStatus(engine.recording?'Recording Session performance. Launch clips or scenes; press Stop to finish.':finishing?'Recording finished.':'Recording start cancelled. Your Arrangement is unchanged.');}finally{renderTransport();}});
 $('back').onclick=()=>{if(inputActive())return setStatus('Finish or cancel the input take first.',true);engine.mode='arrangement';engine.back();setStatus(engine.playing?'Arrangement resumes at the global launch quantization.':'Arrangement playback restored.');};
 function setManualTempo(bpm,group=null){stopToEdit();if(busy)throw new Error('Finish the current operation before changing tempo.');if(!Number.isFinite(bpm)||bpm<40||bpm>240){$('bpm').value=project.bpm;throw new Error('Tempo must be 40–240 BPM.');}project.bpm=bpm;$('bpm').value=bpm;changed(group);renderEditor();}
@@ -547,8 +548,8 @@ document.addEventListener('keydown',e=>{
  if(!command)return;e.preventDefault();
  if(command==='toggle_view')switchView(view==='session'?'arrangement':'session');
  else if(['session','arrangement'].includes(command))switchView(command);
- else if(command==='toggle_play')$(engine.playing?'stop':'play').click();
- else if(command==='continue_play')$(engine.playing?'stop':'continue-play').click();
+ else if(command==='toggle_play')$(transportSnapshot(engine).running?'stop':'play').click();
+ else if(command==='continue_play')$(transportSnapshot(engine).running?'stop':'continue-play').click();
  else if(command==='return_start')$('return-start').click();
  else $(command).click();
 });
@@ -1496,12 +1497,17 @@ async function executeStudioCommand(x,signal,prepared){
  if(x.name==='history')return moveStudioHistory(a.action,a.steps??1,prepared);
  if(x.name==='session_clipboard'){sessionClipboard=prepared?.clipboard??copySessionClips(project,a.slots);updateSessionEditControls();return {clipboard:sessionClipboardSummary(sessionClipboard)};}
  if(x.name==='play'){
-  const start=await preparePlayback(engine,a);if(start.alreadyPlaying)return {playing:true,mode:engine.mode,position:engine.beat(),insertMarker:engine.insertMarker??0,from:start.from};
-  if(view==='arrangement'){engine.overrides.clear();await engine.play('arrangement');}
-  else if(![...engine.active.values()].some(a=>a.clipId)){engine.mode='session';await engine.scene(0);}
-  else await engine.play('session');drawWave();
-  if(!engine.playing)throw new Error('Playback did not start. Check the audio output and try again.');
-  return {playing:engine.playing,mode:engine.mode,position:engine.beat(),insertMarker:engine.insertMarker??0,from:start.from};
+  const player=engine,start=await preparePlayback(player,a),generation=start.generation;
+  const assertCurrent=()=>{signal?.throwIfAborted();if(engine!==player||player.playGeneration!==generation){const error=new Error('Playback Startup Was Cancelled.');error.name='AbortError';error.code='PLAYBACK_CANCELLED';throw error;}};
+  assertCurrent();if(start.alreadyPlaying)return {playing:true,mode:player.mode,position:player.beat(),insertMarker:player.insertMarker??0,from:start.from};
+  const abort=()=>{if(engine===player&&player.playGeneration===generation)player.pause();};signal?.addEventListener('abort',abort,{once:true});
+  try{
+   if(view==='arrangement'){player.overrides.clear();await player.play('arrangement');}
+   else if(![...player.active.values()].some(a=>a.clipId)){player.mode='session';await player.scene(0,{signal});}
+   else await player.play('session');assertCurrent();drawWave();
+   if(!player.playing)throw new Error('Playback did not start. Check the audio output and try again.');
+   return {playing:player.playing,mode:player.mode,position:player.beat(),insertMarker:player.insertMarker??0,from:start.from};
+  }finally{signal?.removeEventListener('abort',abort);}
  }
  if(x.name==='pause'){if(['overdub','arrangement'].includes(inputMeta?.mode))await finishInput();engine.pause();setStatus('Paused. Press Play to resume.');return {playing:engine.playing};}
  if(x.name==='stop'){const snapshot=transportSnapshot(engine);await finishInput();releaseNotes();const result=await stopPlayback(engine,a,snapshot);followSuspended=false;followWasPlaying=false;renderFollow();renderEditor();setStatus(result.reset?'Stopped · Returned To 1.1.1.':'Stopped · Shift+Space Continues From Here.');return result;}

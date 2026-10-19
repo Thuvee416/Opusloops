@@ -1,5 +1,5 @@
 const stoppedStarts=new WeakMap();
-export function transportSnapshot(engine){return {running:engine.playing||!!engine.startPromise&&stoppedStarts.get(engine)!==engine.startPromise,position:engine.beat()};}
+export function transportSnapshot(engine){return {running:engine.playing||!!engine.startPromise&&(Number.isInteger(engine.playRequestGeneration)?engine.playRequestGeneration===engine.playGeneration:stoppedStarts.get(engine)!==engine.startPromise),position:engine.beat()};}
 export function playbackIntent(args={}){
  if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).some(k=>k!=='from')||args.from!==undefined&&!['marker','continue'].includes(args.from))throw new Error('Play accepts from: marker or continue.');
  return {from:args.from??'marker'};
@@ -9,9 +9,10 @@ export function stopIntent(args={}){
  return {reset:args.reset??false};
 }
 export async function preparePlayback(engine,args={}){
- const intent=playbackIntent(args);if(engine.playing)return {alreadyPlaying:true,...intent};
- if(intent.from==='marker'&&engine.position!==(engine.insertMarker??0))await engine.seek(engine.insertMarker??0,{moveMarker:false,snap:false});
- return {alreadyPlaying:false,...intent};
+ const intent=playbackIntent(args);if(engine.playing)return {alreadyPlaying:true,...intent,generation:engine.playGeneration};
+ let generation=engine.playGeneration;
+ if(intent.from==='marker'&&engine.position!==(engine.insertMarker??0)){const pending=engine.seek(engine.insertMarker??0,{moveMarker:false,snap:false});generation=engine.playGeneration;await pending;}
+ return {alreadyPlaying:false,...intent,generation};
 }
 export async function stopPlayback(engine,args={},snapshot=transportSnapshot(engine)){
  const {reset}=stopIntent(args),rewind=reset||!snapshot.running;if(engine.startPromise)stoppedStarts.set(engine,engine.startPromise);
