@@ -1,6 +1,20 @@
 # OPUS LOOPS feature-parity roadmap
 
-Updated 2026-10-18. The active goal is OPUS LOOPS: a browser DAW covering Ableton Live's workflows and feature categories, with natural-language agent control built into every aspect of the application. Full parity is **not achieved**. Build the core music-making workflow first; do not treat a feature label, menu entry, or narrow passing test as proof of a complete workflow.
+Updated 2026-10-19. **Current delivery goal: make the basic Ableton-style DAW workflow reliable before further enhancements or advanced features. Keep everything already built.** The authoritative work order and first-milestone acceptance are in [GOAL.md](GOAL.md). Full feature parity and application-wide natural-language control remain later roadmap commitments; neither is claimed complete.
+
+
+## Priority Override — Basic Functions First
+
+The current order supersedes feature expansion implied by older release notes and investigations below:
+
+1. Audit the existing published Studio and repair project/transport reliability.
+2. Verify audio import, tracks, playback and basic mixer controls.
+3. Verify basic MIDI, clip/Arrangement editing, selections and Undo/Redo.
+4. Verify Session launching/capture and basic audio/MIDI recording.
+5. Finish the save-close-reopen-edit-export song round trip, including playable WAV and aligned stems.
+6. Make Odesa reliably control the accepted core operations, then resume enhancements and advanced features.
+
+Preserve existing features and designs. Do not spend the core milestone adding new device families, advanced production features, expanded agent capabilities or visual polish. Existing-feature fixes that prevent project loss or unblock the basic workflow are in scope. Historical implementation/test claims below are audit inputs, not proof that a core gate has passed.
 
 ## Current production source
 
@@ -10,7 +24,7 @@ The **0.151.0 line is deployed**: feature source `aa0daa7562b22a862db72c271b88e7
 
 ## Application-wide natural-language control requirement
 
-Natural-language control is a requirement of the overall goal and of every existing and future feature. It is not confined to the Studio agent panel or to a separate mixing feature. Every core-first gate and every feature-parity category below includes its agent interface and verification work. A working manual UI alone does not complete a feature for this goal.
+Natural-language control is a requirement of the overall goal and of every existing and future feature. It is not confined to the Studio agent panel or to a separate mixing feature. Every core-first gate and every feature-parity category below includes its agent interface and verification work. Basic manual DAW reliability is the first milestone. Reliable Odesa control of those same operations follows that acceptance; broader natural-language coverage is retained for the later goal, rather than blocking repairs to the basic workflow.
 
 Coverage must include:
 
@@ -31,7 +45,7 @@ Implementation and completion requirements:
 6. Maintain a coverage matrix for each feature (current audit: `AGENT_COVERAGE.md`): manual operation, agent command/state access, multi-step workflow evidence, Undo/recovery behavior, and browser/platform limitations. Missing agent access or verification keeps that feature incomplete.
 7. Verify authenticated production workflows and representative musical outcomes, including stem mixing and reference-guided restructuring. Include audible/rendered-output review where quality is part of the request; parameter edits alone do not establish professional mix quality.
 
-Goal completion requires both the requested DAW feature scope and application-wide natural-language control to be implemented and verified. The first agent release is partial and does not satisfy this completion condition.
+The later full-parity goal still requires the requested feature scope and application-wide natural-language control to be implemented and verified. The current basic-workflow milestone has its own acceptance in GOAL.md; it does not require the deferred advanced feature scope. The first agent release remains partial.
 
 ## Agentic control as a core workflow
 
@@ -47,7 +61,7 @@ Release 0.122 introduces a real model-backed studio agent, not a keyword command
 | Finish the sound and mix | Synth, sampler, drums, serial effects, sends/returns and automation exist as subsets. Release 0.135.2 includes acyclic submix routing, nested Group Tracks, bus-aware Solo, agent access and bounded native-browser/production audio checks. Linked group controls, broader input/monitor routing/device families and representative audible musical comparisons remain unfinished. |
 | Deliver and recover | WAV, MIDI and stem exports and project downloads exist as subsets. Session-start checkpoints and corrupt-autosave fallback have current browser evidence. A fresh-session complete-song round trip, aligned audible exports and device/browser reliability matrix remain required. |
 
-Core completion requires creating a representative multitrack song from an empty set using imported and recorded audio, MIDI, Session-to-Arrangement work, edits, instruments, effects and automation; saving, closing, reopening, continuing edits and exporting a mix plus aligned stems. Record project size, timing/content preservation, audible results, keyboard/menu behavior and browser/device limits.
+Acceptance of the first basic-workflow milestone requires creating a representative multitrack song from an empty set using imported and recorded audio, MIDI, Session-to-Arrangement work, edits, instruments, effects and automation; saving, closing, reopening, continuing edits and exporting a mix plus aligned stems. Record project size, timing/content preservation, audible results, keyboard/menu behavior and browser/device limits.
 
 ## Full feature scope after the core gates
 
