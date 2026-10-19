@@ -57,6 +57,7 @@ export function normalizeMusicalAction(action,{requireUnits=false}={}){
  if(out.type==='command'&&object(x.args)){
   if(x.name==='select'&&object(x.args.where))for(const key of ['start','end'])convert(x.args.where,key,position);
   if(x.name==='seek')convert(x.args,'beat',position);
+  if(x.name==='record_input'&&x.args.mode==='arrangement')convert(x.args,'start',position);
   if(['export_wav','export_stems','export_midi'].includes(x.name)&&object(x.args.range)){convert(x.args.range,'start',position);convert(x.args.range,'length',duration);}
  }
  return out;

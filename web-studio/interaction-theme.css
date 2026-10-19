@@ -79,3 +79,5 @@
 .studio-shell .empty-slot-controls .slot-record{width:20px;min-width:20px;padding:2px;flex:none;color:#98443e;display:inline-flex;align-items:center;justify-content:center}
 .studio-shell .empty-slot-controls .slot-record[hidden],.studio-shell .empty-slot-controls [data-slot-stop][hidden]{display:none!important}
 .studio-shell .empty-slot-controls .slot-record.recording{color:#fff}
+
+.studio-shell .arrangement-take-preview{position:absolute;top:3px;bottom:3px;min-width:2px;overflow:hidden;pointer-events:none;box-sizing:border-box;background:#c46560b3;border:1px solid #8c4340;color:#fff;padding:4px;font-size:10px;white-space:nowrap;z-index:4}

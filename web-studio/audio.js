@@ -54,7 +54,7 @@ export class Engine {
   setSendPre(trackId,returnId,pre){const t=this.project.tracks.find(t=>t.id===trackId);if(!t||!this.project.returns?.some(r=>r.id===returnId)||typeof pre!=='boolean')throw new Error('Invalid send.');t.sends??={};t.sends[returnId]??={amount:0,pre:false};t.sends[returnId].pre=pre;this.restoreAutomation(false);}
   setDeviceParameter(trackId,deviceId,key,value){const t=this.channels().find(t=>t.id===trackId),d=t?.devices.find(d=>d.id===deviceId);if(!d)return;d.params[key]=value;this.overrideAutomation(trackId,deviceKey(deviceId,key));this.mixer(trackId)?.chain.update(deviceId,key,value);if(d.type==='autopan'&&['mode','division'].includes(key))this.restoreAutomation(false);}
   scheduleAutomation(track,start,length,time){const m=this.mixer(track.id);if(!m)return;m.chain.sync(start,length,time,60/this.project.bpm);for(const target of automationTargets(track,this.project.returns))if(this.targetActive(track,target))scheduleTarget(m,target,start,length,time,60/this.project.bpm,this.context.sampleRate);}
-  restoreAutomation(clear=true){if(clear)this.automationOverrides.clear();if(this.playing){const raw=this.rawBeat(),spb=60/this.project.bpm,now=this.context.currentTime;for(const t of this.channels()){const m=this.mixer(t.id);m.gain.gain.cancelScheduledValues(now);m.pan.pan.cancelScheduledValues(now);m.chain.cancelAutomation(now);for(const send of m.sends?.values()||[])for(const name of ['pre','post'])send[name].gain.cancelScheduledValues(now);}let beat=raw;while(beat<this.nextBeat-1e-7){const step=Math.min(this.nextBeat-beat,quantumLength(beat,this.project.transport,this.mode));for(const t of this.channels())this.scheduleAutomation(t,timelineBeat(beat,this.project.transport,this.mode),step,Math.max(now,this.origin+raw*spb)+(beat-raw)*spb);beat+=step;}}this.updateMix();this.changed();}
+  restoreAutomation(clear=true){if(clear)this.automationOverrides.clear();if(this.playing){const raw=this.rawBeat(),spb=60/this.project.bpm,now=this.context.currentTime;for(const t of this.channels()){const m=this.mixer(t.id);m.gain.gain.cancelScheduledValues(now);m.pan.pan.cancelScheduledValues(now);m.chain.cancelAutomation(now);for(const send of m.sends?.values()||[])for(const name of ['pre','post'])send[name].gain.cancelScheduledValues(now);}let beat=raw;while(beat<this.nextBeat-1e-7){const step=Math.min(this.nextBeat-beat,quantumLength(beat,this.playbackTransport(),this.mode));for(const t of this.channels())this.scheduleAutomation(t,timelineBeat(beat,this.playbackTransport(),this.mode),step,Math.max(now,this.origin+raw*spb)+(beat-raw)*spb);beat+=step;}}this.updateMix();this.changed();}
   startAutomationRecording(mode='latch'){if(!this.playing||this.mode!=='arrangement'||this.recording)throw new Error('Play Arrangement before recording automation.');if(this.automationTake)return;this.changed();this.automationError='';this.automationTake=new AutomationTake(this.project,this.rawBeat(),mode);this.changed();}
   releaseAutomationControl(trackId,key){if(!this.automationTake)return;try{if(this.automationTake.release(trackId,key,this.rawBeat())){this.automationOverrides.delete(trackId+':'+key);this.restoreAutomation(false);}}catch(error){this.automationError='Automation recording stopped: '+error.message;this.finishAutomationRecording(false);}}
   advanceAutomationRecording(){if(!this.automationTake)return;try{this.automationTake.advance(this.rawBeat());if(this.rawBeat()>=16384)this.finishAutomationRecording();}catch(error){this.automationError='Automation recording stopped: '+error.message;this.finishAutomationRecording(false);}}
@@ -81,9 +81,11 @@ export class Engine {
   }
   async prepareClip(clip){if(clip.kind==='audio')return this.prepareAudioClip(clip);const key=`${clip.id}:${this.project.bpm}:${JSON.stringify(clip.notes||clip.pattern)}`,old=this.buffers.get(clip.id);if(old?.key===key)return old.buffer;const buffer=synthesize(this.context,clip,this.project.bpm);this.buffers.set(clip.id,{key,buffer});return buffer;}
   async prepare(){await this.prepareSamples();this.instrumentTail=voiceTail(this.project,(id,pitch)=>this.sampleBuffer(id,pitch));const legacyMidi=new Set(this.project.tracks.filter(t=>!t.instrument).flatMap(t=>[...t.slots,...this.project.arrangement.filter(r=>r.trackId===t.id).map(r=>r.clipId)]));for(const clip of Object.values(this.project.clips)){if(clip.kind==='midi'&&!legacyMidi.has(clip.id)){this.buffers.delete(clip.id);continue;}await this.prepareClip(clip);}const used=new Set();for(const t of this.project.tracks){if(!t.midiEffects?.length)continue;const ids=new Set([...t.slots,...this.project.arrangement.filter(r=>r.trackId===t.id).map(r=>r.clipId)]);for(const id of ids){const clip=this.project.clips[id];if(clip?.kind!=='midi')continue;const effective=processMidiClip(clip,t.midiEffects,this.project.bpm);if(t.instrument)continue;const key=JSON.stringify([t.id,id]),version=JSON.stringify([this.project.bpm,effective]);used.add(key);if(this.midiBuffers.get(key)?.version!==version)this.midiBuffers.set(key,{version,buffer:synthesize(this.context,effective,this.project.bpm)});}}for(const key of this.midiBuffers.keys())if(!used.has(key))this.midiBuffers.delete(key);}
-  rawBeat(){return this.playing?Math.max(this.clockStart,(this.context.currentTime-this.origin)/(60/this.project.bpm)):this.position;}
-  beat(){return timelineBeat(this.rawBeat(),this.project.transport,this.mode);}
-  async play(mode=this.mode,{onReady}={}){
+  rawBeat(){if(!this.playing)return this.position;const raw=Math.max(this.clockStart,(this.context.currentTime-this.origin)/(60/this.project.bpm));return this.inputArrangement?Math.min(raw,this.inputArrangement.start+this.inputArrangement.maxBeats):raw;}
+  playbackTransport(){return this.inputArrangement?{...this.project.transport,loopEnabled:false}:this.project.transport;}
+  beat(){return this.playing?timelineBeat(this.rawBeat(),this.playbackTransport(),this.mode):this.position;}
+  async play(mode=this.mode,{onReady,delayBeats=0}={}){
+    if(!Number.isFinite(delayBeats)||delayBeats<0||delayBeats>16)throw Error('Invalid Playback Count-In.');
     if(this.playing)return;if(this.startPromise)return this.startPromise;
     const generation=this.playGeneration;
     this.startPromise=(async()=>{await this.prepare();if(generation!==this.playGeneration)return;onReady?.();
@@ -91,7 +93,7 @@ export class Engine {
       for(const [id,a] of this.active){a.activationBeat=this.position;const track=this.project.tracks.find(t=>t.id===id);if(track?.slots[a.slot]!==a.clipId)a.slot=track?.slots.indexOf(a.clipId);if(this.position===0){a.start=0;this.armFollow(id,a,0,0);}else if(a.followSignature!==this.followSignature(a))this.armFollow(id,a,this.position);}
       if(this.activeScene!==null)this.sceneActivationBeat=this.position;
       if(this.activeScene!==null&&(this.position===0||this.sceneFollowSignature!==JSON.stringify(this.project.sceneFollows?.[this.activeScene])))this.armSceneFollow(this.activeScene,this.position);
-      this.origin=this.context.currentTime+.08-this.position*60/this.project.bpm;
+      this.origin=this.context.currentTime+(this.inputArrangement?.15:.08)+(delayBeats-this.position)*60/this.project.bpm;
       this.playing=true;this.updateMix();this.timer=setInterval(()=>this.tick(),25);this.tick();this.changed();
     })();try{await this.startPromise;}finally{this.startPromise=null;}
   }
@@ -108,7 +110,7 @@ export class Engine {
   stop(){this.halt(true);}
   pause(){this.halt(false);}
   async seek(position,{moveMarker=true,snap=true}={}){
-    if(this.recording)throw new Error('Finish recording before seeking.');
+    if(this.recording||this.inputArrangement)throw new Error('Finish recording before seeking.');
     if(!Number.isFinite(position)||position<0||position>16384)throw new Error('Choose a position within the timeline.');
     const resume=this.playing;this.pause();
     const next=snap?Math.round(position*4)/4:position;if(moveMarker)this.insertMarker=next;
@@ -135,7 +137,7 @@ export class Engine {
   launchBoundary(clipId,earliest=Math.max(this.rawBeat()+.02,this.nextBeat)){return nextLaunchBeat(earliest,this.project.transport.launchQuantization??4,this.project.clips[clipId]?.launch?.quantization??'global');}
   sourcePhase(trackId,beat){
     if(this.mode==='session'||this.overrides.has(trackId)){const old=this.active.get(trackId),clip=this.project.clips[old?.clipId];return clip?mod(beat-old.start,clip.beats):0;}
-    const pos=timelineBeat(beat,this.project.transport,this.mode),region=segmentAt(this.project,trackId,pos),clip=this.project.clips[region?.clipId];return clip?mod(region.offset+pos-region.start,clip.beats):0;
+    const pos=timelineBeat(beat,this.playbackTransport(),this.mode),region=segmentAt(this.project,trackId,pos),clip=this.project.clips[region?.clipId];return clip?mod(region.offset+pos-region.start,clip.beats):0;
   }
   activateClip(trackId,clipId,beat,legato=false,slot){const clip=this.project.clips[clipId],offset=clip&&legato?mod(this.sourcePhase(trackId,beat),clip.beats):0;const a={clipId,start:beat-offset,activationBeat:beat,slot:slot??this.project.tracks.find(t=>t.id===trackId)?.slots.indexOf(clipId)};this.active.set(trackId,a);this.armFollow(trackId,a,beat,offset);this.overrides.add(trackId);if(this.recording&&clipId)this.openRecord(trackId,clipId,beat,offset);}
   async launch(trackId,clipId,slot,{signal}={}){if(isGroup(this.project.tracks.find(t=>t.id===trackId))){if(!clipId)return this.stopGroup(trackId);throw new Error('Group tracks launch their contained clips with a group scene, not an owned clip.');}const generation=this.playGeneration;this.gateHolds.delete(trackId);await this.prepare();signal?.throwIfAborted();if(generation!==this.playGeneration)return {events:[],interrupted:true};return this.launchPrepared(trackId,clipId,slot);}
@@ -279,9 +281,9 @@ export class Engine {
       if(f.beat<=beat+1e-7){this.gateHolds.delete(id);this.pending.set(id,{...f.event,beat});this.follows.delete(id);}
     }
   }
-  tick(){this.advanceAutomationRecording();let launchChanged=false;const spb=60/this.project.bpm,horizon=this.context.currentTime+.12;
+  tick(){this.advanceAutomationRecording();let launchChanged=false;const spb=60/this.project.bpm,horizon=this.context.currentTime+.12,captureEnd=this.inputArrangement?this.inputArrangement.start+this.inputArrangement.maxBeats:Infinity;
     // Audio-clock scheduling; UI animation never determines playback time.
-    while(this.origin+this.nextBeat*spb<horizon){const beat=this.nextBeat,time=this.origin+beat*spb,pos=timelineBeat(beat,this.project.transport,this.mode);let step=pendingQuantum(beat,quantumLength(beat,this.project.transport,this.mode),this.pending);
+    while(this.origin+this.nextBeat*spb<horizon&&this.nextBeat<captureEnd-1e-9){const beat=this.nextBeat,time=this.origin+beat*spb,pos=timelineBeat(beat,this.playbackTransport(),this.mode);let step=Math.min(captureEnd-beat,pendingQuantum(beat,quantumLength(beat,this.playbackTransport(),this.mode),this.pending));
       if(metronomeAudible(this.project.transport,{recording:!!(this.recording||this.automationTake||this.inputOverdub&&beat>=(this.inputOverdub.countInEndBeat??-Infinity)||this.inputClickClock&&time>=this.inputClickClock.start),countingIn:!!(this.inputClickClock&&time<this.inputClickClock.start||this.inputOverdub?.countInEndBeat!==undefined&&beat<this.inputOverdub.countInEndBeat)})&&Math.abs(pos-Math.round(pos))<1e-6&&time>=this.context.currentTime)this.click(time,Math.round(pos)%4===0);
       if(this.processSceneFollow(beat))launchChanged=true;
       this.processFollows(beat);
@@ -294,13 +296,14 @@ export class Engine {
         if(this.mode==='session'||this.overrides.has(track.id)){
           const a=this.active.get(track.id);if(a?.clipId&&slotActive(track,a.slot??track.slots.indexOf(a.clipId)))this.schedule(this.context,target,this.inputOverdub?.trackId===track.id&&this.inputOverdub.clipId===a.clipId?this.inputOverdub.clip:this.project.clips[a.clipId],time,beat-a.start,step,track.id,`session:${a.start}`,Infinity,a.bufferIdentity);
         }else for(const slice of arrangementSlices(this.project,track.id,pos,step)){
-          const region=this.project.arrangement.find(r=>r.id===slice.regionId),limit=time+(region.start+region.length-pos)*spb;
+          const region=this.project.arrangement.find(r=>r.id===slice.regionId),limit=Math.min(time+(region.start+region.length-pos)*spb,this.origin+captureEnd*spb);
           this.schedule(this.context,target,this.project.clips[slice.clipId],time+slice.delay*spb,slice.offset,slice.length,track.id,region.id,limit,undefined,{region,beat:pos+slice.delay-region.start});
         }
       }this.nextBeat+=step;
     }
     if(launchChanged)this.changed();
-    if(this.mode==='arrangement'&&!this.project.transport.loopEnabled&&!this.recording&&!this.automationTake&&!this.inputOverdub&&this.overrides.size===0&&this.project.arrangement.length&&this.beat()>Math.max(...this.project.arrangement.map(s=>s.start+s.length))+this.tailSeconds()/spb)this.pause();
+    if(this.inputArrangement&&this.context.currentTime>=this.origin+captureEnd*spb){this.stopInputMetronome();this.pause();return;}
+    if(this.mode==='arrangement'&&!this.project.transport.loopEnabled&&!this.recording&&!this.automationTake&&!this.inputOverdub&&!this.inputArrangement&&this.overrides.size===0&&this.project.arrangement.length&&this.beat()>Math.max(...this.project.arrangement.map(s=>s.start+s.length))+this.tailSeconds()/spb)this.pause();
   }
   syncSessionActivation(previous){
     if(!this.context||!this.playing)return;

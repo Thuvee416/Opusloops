@@ -9,30 +9,33 @@ import {wav,uid} from './model.js';
 export function encode64(bytes){let text='';const data=new Uint8Array(bytes);for(let i=0;i<data.length;i+=32768)text+=String.fromCharCode(...data.subarray(i,i+32768));return btoa(text);}
 export function decodeMidi(data){if(!data||data.length<3||!Number.isInteger(data[0])||data[0]<128||data[0]>239)return null;const type=data[0]&240,channel=data[0]&15,pitch=data[1],velocity=data[2];if(!Number.isInteger(pitch)||pitch<0||pitch>127||!Number.isInteger(velocity)||velocity<0||velocity>127)return null;if(type===176&&pitch===64)return {type:'sustain',channel,down:velocity>=64};if(type===144&&velocity)return {type:'on',channel,pitch,velocity:velocity/127};if(type===128||(type===144&&!velocity))return {type:'off',channel,pitch,velocity:type===128?velocity/127:0};return null;}
 export class MidiTake {
-  constructor(bpm,start,{quantization=DEFAULT_RECORD_QUANTIZATION,sampleRate=48000}={}){
+  constructor(bpm,start,{quantization=DEFAULT_RECORD_QUANTIZATION,sampleRate=48000,maxBeats=256}={}){
     if(!Number.isFinite(bpm)||bpm<40||bpm>240||!Number.isFinite(start)||start<0||!Number.isFinite(sampleRate)||sampleRate<8000||sampleRate>384000)throw new Error('Invalid MIDI recording clock.');
+    if(!Number.isFinite(maxBeats)||maxBeats<.25||maxBeats>256)throw Error('Invalid Recording Length Limit.');this.maxBeats=maxBeats;
     this.bpm=bpm;this.start=start;this.minDuration=bpm/(60*sampleRate);this.notes=[];this.held=new Map();this.quantization=Object.freeze(patchRecordQuantization(DEFAULT_RECORD_QUANTIZATION,quantization));
   }
   on(key,pitch,velocity,time){
     if(this.closed||!Number.isFinite(time)||time<this.start)return false;
     const start=(time-this.start)*this.bpm/60;
-    if(start>256-this.minDuration){this.timeLimitReached=true;return false;}
+    if(start>this.maxBeats-this.minDuration){this.timeLimitReached=true;return false;}
     if(this.held.has(key))this.off(key,time);
     if(this.notes.length+this.held.size>=4096){this.limitReached=true;return false;}
     this.held.set(key,{pitch,velocity,start});return true;
   }
   off(key,time,releaseVelocity=0){
     const n=this.held.get(key);if(this.closed||!n||!Number.isFinite(time))return;
-    const duration=Math.min(256-n.start,Math.max(this.minDuration,(time-this.start)*this.bpm/60-n.start));
+    const duration=Math.min(this.maxBeats-n.start,Math.max(this.minDuration,(time-this.start)*this.bpm/60-n.start));
     this.notes.push({...n,duration,...(releaseVelocity>0?{releaseVelocity}:{})});this.held.delete(key);
   }
   finish(time){
     if(this.closed)return structuredClone(this.clip);
     if(!Number.isFinite(time))throw new Error('Invalid MIDI recording finish time.');
     for(const key of [...this.held.keys()])this.off(key,time);
-    const notes=structuredClone(this.notes),end=Math.max(.25,(time-this.start)*this.bpm/60,...notes.map(n=>n.start+n.duration));
+    const notes=structuredClone(this.notes),end=Math.max(.25,Math.min(this.maxBeats,(time-this.start)*this.bpm/60),...notes.map(n=>n.start+n.duration));
     const raw={id:uid(),name:'MIDI take',kind:'midi',sourceBpm:this.bpm,beats:Math.min(256,Math.ceil(end*4)/4),notes};
-    this.rawClip=structuredClone(raw);const result=quantizeRecordedClip(raw,this.quantization);this.quantizationReport=result.report;this.clip=result.clip;this.closed=true;return structuredClone(this.clip);
+    this.rawClip=structuredClone(raw);const result=quantizeRecordedClip(raw,this.quantization);
+    if(this.maxBeats<256){let bounded=0;result.clip.notes=result.clip.notes.map(n=>{const start=Math.min(n.start,this.maxBeats-this.minDuration),duration=Math.min(n.duration,this.maxBeats-start);if(start!==n.start||duration!==n.duration)bounded++;return {...n,start,duration};});result.report.tailLimited=(result.report.tailLimited??0)+bounded;result.report.changed=JSON.stringify(result.clip)!==JSON.stringify(raw);}
+    this.quantizationReport=result.report;this.clip=result.clip;this.closed=true;return structuredClone(this.clip);
   }
 }
 const loadedContexts=new WeakSet();
@@ -55,7 +58,7 @@ export class AudioCapture {
     }catch(error){if(generation===this.generation)await this.disconnect();else stream.getTracks().forEach(t=>t.stop());throw error;}
   }
   setMonitor(enabled){if(this.monitor)this.monitor.gain.setTargetAtTime(enabled?.5:0,this.context.currentTime,.01);}
-  start(bpm,startTime=this.context.currentTime){if(!Number.isFinite(startTime)||startTime<0)throw new Error('Invalid recording start time.');if(!this.connected)throw new Error('Connect an audio input first.');if(this.active)throw new Error('A take is already recording.');this.bpm=bpm;this.chunks=[];this.active=true;this.completion=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.completion.catch(()=>{});this.processor.port.postMessage({type:'start',startFrame:Math.round(startTime*this.context.sampleRate),limit:Math.floor(Math.min(300,256*60/bpm,12000000/this.context.sampleRate)*this.context.sampleRate)});}
+  start(bpm,startTime=this.context.currentTime,{maxBeats=256}={}){if(!Number.isFinite(maxBeats)||maxBeats<.25||maxBeats>256)throw Error('Invalid Recording Length Limit.');if(!Number.isFinite(startTime)||startTime<0)throw new Error('Invalid recording start time.');if(!this.connected)throw new Error('Connect an audio input first.');if(this.active)throw new Error('A take is already recording.');this.bpm=bpm;this.chunks=[];this.active=true;this.completion=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.completion.catch(()=>{});this.processor.port.postMessage({type:'start',startFrame:Math.round(startTime*this.context.sampleRate),limit:Math.floor(Math.min(300,maxBeats*60/bpm,12000000/this.context.sampleRate)*this.context.sampleRate)});}
   async cancel(){if(!this.active)return;this.processor.port.postMessage({type:'cancel'});try{await this.completion;}catch(error){if(error.name!=='AbortError')throw error;}}
   async stop(){if(!this.active)return this.completion;this.processor.port.postMessage({type:'stop'});return this.completion;}
   complete(frames){try{if(frames<128)throw new Error('The take was too short. Record a little longer.');const sr=this.context.sampleRate,beats=Math.min(256,Math.ceil(frames/sr*this.bpm/60*4)/4),length=Math.max(frames,Math.ceil(beats*60/this.bpm*sr)),buffer=this.context.createBuffer(2,length,sr);let at=0;for(const chunk of this.chunks){for(let c=0;c<2;c++)buffer.copyToChannel(chunk[c],c,at);at+=chunk[0].length;}this.chunks=[];const clip={id:uid(),name:'Audio take',kind:'audio',beats,sourceBpm:this.bpm,data:encode64(wav(buffer))};this.onFinish?.(clip,buffer);this.resolve?.({clip,buffer});}catch(error){this.reject?.(error);}finally{this.active=false;}}
