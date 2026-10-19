@@ -33,6 +33,7 @@ import {copyRegionSelection,pasteRegionSelection} from './region-clipboard.js';
 import {planRegionGroup,planRegionTrim,editRegionGroup} from './arrangement.js';
 import {loadSession,recoveryProject} from './session-recovery.js';
 import {readProjectFile,replaceStoredProject} from './project-lifecycle.js';
+import {instrumentChoice} from './instrument-choice.js';
 import {installTimeSelection,timeSelectionEdge,scrollTimeSelection} from './time-selection.js';
 import {copyArrangementTime,pasteArrangementTime} from './time-clipboard.js';
 import {installTemplateDialog} from './template-dialog.js';
@@ -828,7 +829,7 @@ function renderInstrument(t){if(isGroup(t)){$('midi-effects').innerHTML='';$('in
  rack.querySelectorAll('[data-instrument-edit]').forEach(el=>el.disabled=el.hasAttribute('data-crop-unavailable')||engine.playing||inputActive()||busy||(el.id==='sample-audition'&&!s?.data));
 }
 $('instrument').addEventListener('change',run(async e=>{stopToEdit();const t=deviceTrack($('device-chain').dataset.track);releaseNotes();let next=t.instrument?structuredClone(t.instrument):undefined;
- if(e.target.id==='instrument-type')next=e.target.value==='poly'?newSynth():e.target.value==='sampler'?newSampler():e.target.value==='drums'?newDrumRack():undefined;
+ if(e.target.id==='instrument-type')next=instrumentChoice(e.target.value==='legacy'?'original':e.target.value);
  else if(e.target.dataset.drumParam)next.pads[drumPad-36][e.target.dataset.drumParam]=Number(e.target.value);
  else if(e.target.id==='drum-source'){const p=next.pads[drumPad-36];p.source=e.target.value;if(p.source==='sample')p.sample??=padSample();}
  else if(e.target.id==='drum-name')next.pads[drumPad-36].name=e.target.value.trim()||'Pad';

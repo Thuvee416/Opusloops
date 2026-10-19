@@ -1,3 +1,4 @@
+import {normalizeMusicalAction} from './musical-units.js';
 // Odesa speaks displayed scene numbers. Only this boundary converts to engine indices.
 export const SCENE_ADDRESSING_VERSION=1;
 const owns=(v,k)=>!!v&&Object.hasOwn(v,k);
@@ -21,7 +22,7 @@ function nestedPlacements(v,options){
 }
 export function normalizeAgentAction(action,{displayOnly=false}={}){
  if(!object(action))return action;
- const out=structuredClone(action),args=typeof out.args==='string'?JSON.parse(out.args):out.args;
+ const out=normalizeMusicalAction(action),args=typeof out.args==='string'?JSON.parse(out.args):out.args;
  if(!object(args))return out;
  if(out.type==='midi')out.args=placement(args,{displayOnly});
  else if(out.type==='scene')out.args=placement(args,{indexKey:'index',displayOnly});
