@@ -72,3 +72,10 @@
 @media(max-width:480px){.studio-shell .clip-source-properties{gap:7px;padding:6px}.clip-color-palette{gap:5px}}
 
 .studio-shell .group-slot{background:color-mix(in srgb,var(--group-clip,#7b8986) 22%,transparent)}
+
+/* Recording controls share the compact mixer and Session grid geometry. */
+.studio-shell .toggles .arm-input{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:3px;color:#562c2c}
+.studio-shell .toggles .arm-input.armed,.studio-shell .slot-record.recording{background:#c46560;color:#fff;border-color:#8c4340}
+.studio-shell .empty-slot-controls .slot-record{width:20px;min-width:20px;padding:2px;flex:none;color:#98443e;display:inline-flex;align-items:center;justify-content:center}
+.studio-shell .empty-slot-controls .slot-record[hidden],.studio-shell .empty-slot-controls [data-slot-stop][hidden]{display:none!important}
+.studio-shell .empty-slot-controls .slot-record.recording{color:#fff}
