@@ -1,0 +1,30 @@
+{
+  "scope": "Initial source and isolated native project-name/save/reload audit only; core and Tempo goal remains active and incomplete.",
+  "sourceTests": {
+    "passed": 14,
+    "files": [
+      "tests/session-recovery.test.cjs",
+      "tests/transport-controls.test.cjs",
+      "tests/core-song-roundtrip.test.cjs"
+    ]
+  },
+  "native": {
+    "origin": "http://127.0.0.1:4210",
+    "name": "Core Tempo Audit 20261019 X",
+    "bytes": 5615,
+    "sha256": "35b6baf7b8a9713138f7983279a617b8c07d0f6e44d10a62b48532900735cce2",
+    "tracks": 4,
+    "clips": 14,
+    "arrangementRegions": 0,
+    "bpm": 120,
+    "saveReloadSaveEqual": true,
+    "pageErrors": []
+  },
+  "limitations": [
+    "Initial generated-loop demo, not a song built manually from empty",
+    "Portable-file opening still pending",
+    "Imported/recorded audio and physical devices not covered",
+    "Full manual song and authenticated Tempo workflows not yet accepted"
+  ],
+  "modelRequests": 0
+}

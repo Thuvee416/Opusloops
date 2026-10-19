@@ -1,6 +1,6 @@
 # OPUS LOOPS feature-parity roadmap
 
-Updated 2026-10-19. **Current delivery goal: make the basic Ableton-style DAW workflow reliable before further enhancements or advanced features. Keep everything already built.** The authoritative work order and first-milestone acceptance are in [GOAL.md](GOAL.md). Full feature parity and application-wide natural-language control remain later roadmap commitments; neither is claimed complete.
+Updated 2026-10-19. **Current delivery goal: make the basic Ableton-style DAW workflow reliable and build Odesa Tempo 1.0 around those verified core operations before further enhancements or advanced features. Keep everything already built.** The authoritative work order and first-milestone acceptance are in [GOAL.md](GOAL.md). Full feature parity and application-wide natural-language control remain later roadmap commitments; neither is claimed complete.
 
 
 ## Priority Override — Basic Functions First
@@ -12,7 +12,7 @@ The current order supersedes feature expansion implied by older release notes an
 3. Verify basic MIDI, clip/Arrangement editing, selections and Undo/Redo.
 4. Verify Session launching/capture and basic audio/MIDI recording.
 5. Finish the save-close-reopen-edit-export song round trip, including playable WAV and aligned stems.
-6. Make Odesa reliably control the accepted core operations, then resume enhancements and advanced features.
+6. As manual core operations pass, build and verify their Odesa Tempo counterparts. Accept the new goal only when both core DAW and Tempo workflows pass; then resume enhancements and advanced features.
 
 Preserve existing features and designs. Do not spend the core milestone adding new device families, advanced production features, expanded agent capabilities or visual polish. Existing-feature fixes that prevent project loss or unblock the basic workflow are in scope. Historical implementation/test claims below are audit inputs, not proof that a core gate has passed.
 
@@ -24,7 +24,7 @@ The **0.151.0 line is deployed**: feature source `aa0daa7562b22a862db72c271b88e7
 
 ## Application-wide natural-language control requirement
 
-Natural-language control is a requirement of the overall goal and of every existing and future feature. It is not confined to the Studio agent panel or to a separate mixing feature. Every core-first gate and every feature-parity category below includes its agent interface and verification work. Basic manual DAW reliability is the first milestone. Reliable Odesa control of those same operations follows that acceptance; broader natural-language coverage is retained for the later goal, rather than blocking repairs to the basic workflow.
+Natural-language control is a requirement of the overall goal and of every existing and future feature. It is not confined to the Studio agent panel or to a separate mixing feature. Every core-first gate and every feature-parity category below includes its agent interface and verification work. Basic manual DAW reliability and reliable Odesa Tempo control of those same operations are the two gates of the current goal. Verify each manual operation before its Tempo counterpart. Broader natural-language coverage is retained for later expansion rather than blocking basic workflow repairs.
 
 Coverage must include:
 
