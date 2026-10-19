@@ -13,6 +13,7 @@ import {validateRouting} from './routing.js';
 import {validateAutomation} from './automation.js';
 import {defaultTransport,validateTransport} from './transport.js';
 import {validateDevices} from './devices.js';
+export const AUDIO_MAX_BEATS=1200;
 export const REGION_MIN_BEATS = .0625;
 export const uid = () => globalThis.crypto.randomUUID();
 export const palette = ['#d9a359','#8faed6','#b4a1d5','#91b5a3','#cf8f99','#aebd77','#8cbcc7','#c89a7e'];
@@ -47,7 +48,7 @@ export function validateProject(p) {
   for(const t of p.tracks){if(typeof t.id!=='string'||ids.has(t.id)||typeof t.name!=='string'||!/^#[0-9a-f]{6}$/i.test(t.color)||!num(t.volume,0,1)||!num(t.pan,-1,1)||typeof t.mute!=='boolean'||typeof t.solo!=='boolean'||!Array.isArray(t.slots)||t.slots.length!==p.scenes)fail();validateSlotMetadata(t,p.scenes);ids.add(t.id);validateInstrument(t.instrument);validateMidiEffects(t.midiEffects);validateAutomation(t.automation);if(t.devices!==undefined)validateDevices(t.devices);}
   validateHierarchy(p);validateRouting(p);
   if(Object.keys(p.clips).length>512)fail();
-  for(const [id,c] of Object.entries(p.clips)){if(c.id!==id||typeof c.name!=='string'||c.name.length>200||!num(c.beats,.25,256)||!num(c.sourceBpm,40,240)||!['audio','midi','drums'].includes(c.kind))fail();
+  for(const [id,c] of Object.entries(p.clips)){if(c.id!==id||typeof c.name!=='string'||c.name.length>200||!num(c.beats,.25,c.kind==='audio'?AUDIO_MAX_BEATS:256)||!num(c.sourceBpm,40,240)||!['audio','midi','drums'].includes(c.kind))fail();
     if(c.color!==undefined&&(typeof c.color!=='string'||!/^#[0-9a-f]{6}$/i.test(c.color)))fail();if(c.infoText!==undefined&&(typeof c.infoText!=='string'||c.infoText.length>4000))fail();
     validateClipLaunch(c.launch);validateFollow(c.follow);if(c.kind==='audio'){validateAudioEdit(c.audioEdit,c.beats);validateWarp(c.warp);}else if(c.audioEdit!==undefined||c.warp!==undefined)fail();
     if(c.midiChannel!==undefined&&(!Number.isInteger(c.midiChannel)||c.midiChannel<0||c.midiChannel>15))fail();

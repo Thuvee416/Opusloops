@@ -1,4 +1,4 @@
-import {emptyProject,makeTrack,uid,validateProject} from './model.js';
+import {emptyProject,makeTrack,uid,validateProject,AUDIO_MAX_BEATS} from './model.js';
 import {isGroup} from './track-hierarchy.js';
 import {setSlotActive} from './slot-metadata.js';
 import {inspectMidi,importMidiProject} from './midi-file.js';
@@ -12,10 +12,11 @@ export function importBinding(project,revision){return {project:JSON.stringify(p
 export function assertImportCurrent(binding,project,revision){
  if(binding.project!==JSON.stringify(project)||binding.revision!==revision)throw new Error('The project changed while preparing the import. Nothing imported; choose the file again.');
 }
-export async function readAudioImport(file,decode,{signal}={}){
+export async function readAudioImport(file,decode,{signal,maxBytes=30*1024*1024}={}){
  if(!file)return null;signal?.throwIfAborted();
- if(file.size>30*1024*1024)throw new Error('Choose an audio file smaller than 30 MB.');
- const bytes=await file.arrayBuffer();signal?.throwIfAborted();
+ if(!Number.isFinite(maxBytes)||maxBytes<=0||maxBytes>64*1024*1024)throw new Error('Invalid audio import size limit.');
+ if(file.size>maxBytes)throw new Error(`Choose an audio file smaller than ${maxBytes/1024/1024} MB.`);
+ const bytes=await file.arrayBuffer();signal?.throwIfAborted();if(bytes.byteLength>maxBytes)throw new Error('Audio file exceeds the import size limit.');
  const buffer=await decode(bytes.slice(0));signal?.throwIfAborted();
  if(!Number.isFinite(buffer.duration)||buffer.duration<=0||buffer.duration>300)throw new Error('Choose a nonempty audio clip shorter than five minutes.');
  return {name:file.name.replace(/\.[^.]+$/,'').slice(0,200)||'Audio Import',bytes,duration:buffer.duration,buffer};
@@ -32,8 +33,8 @@ export function prepareAudioImport(project,source,{trackId,scene,replace=false}=
  scene??=track.slots.indexOf(null);
  if(scene<0)throw new Error('Choose an empty clip slot first.');
  if(track.slots[scene]&&!replace)throw new Error('The destination slot is occupied. Choose an empty slot or explicitly replace it.');
- const beats=Math.max(.25,Math.min(256,Math.round(source.duration*p.bpm/60*4)/4)),sourceBpm=60*beats/source.duration;
- if(sourceBpm<40||sourceBpm>240)throw new Error('This audio is too short or long for a loop at this tempo.');
+ const beats=Math.max(.25,source.duration*p.bpm/60),sourceBpm=p.bpm;
+ if(source.duration<.0625||beats>AUDIO_MAX_BEATS)throw new Error('This audio is too short or long for a loop at this tempo.');
  let binary='';const bytes=new Uint8Array(source.bytes);for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
  const clip={id:uid(),name:source.name,kind:'audio',beats,sourceBpm,data:btoa(binary)};p.clips[clip.id]=clip;track.slots[scene]=clip.id;setSlotActive(track,scene,true);validateProject(p);
  return {next:p,selection:{trackId:track.id,clipId:clip.id,scene},clip};
