@@ -74,7 +74,19 @@
     "firstSeekPlay": 69,
     "agentStop": 68,
     "stoppedSeekRetest": 63,
-    "playRetest": 62
+    "playRetest": 61
   },
-  "passed": true
+  "passed": true,
+  "playRetestPlanning": {
+    "initialRequestAllowance": 62,
+    "finalAllowance": 61,
+    "automaticClientRepairObserved": true,
+    "finalCommands": [
+      "view",
+      "seek",
+      "play"
+    ],
+    "originalRejectionReason": "Not exposed in the visible conversation; no claim of first-attempt success",
+    "result": "Actual playback and project preservation verified after repair"
+  }
 }
