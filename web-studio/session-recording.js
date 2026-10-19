@@ -12,7 +12,7 @@ export function sessionRecordingIntent(args){
  if(!args||!['start','finish','cancel'].includes(args.action)||Object.keys(args).some(k=>!['action',...(args.action==='start'?['replace']:[])].includes(k))||args.replace!==undefined&&typeof args.replace!=='boolean')throw new Error('record_session accepts action start with optional replace boolean, or action finish/cancel alone.');
  return {...args};
 }
-export function permitsArrangementReplacement(prompt){return !/\b(?:not|never|without|don[’']?t|preserve|keep)\b/i.test(prompt)&&/\breplace\s+(?:(?:the|my|our)\s+)?(?:(?:existing|current|old)\s+)?arrangement\b/i.test(prompt);}
+export function permitsArrangementReplacement(prompt){const target='(?:(?:the|my|our)\\s+)?(?:(?:existing|current|old)\\s+)?arrangement\\b';return !new RegExp('\\b(?:(?:do\\s+not|don[’\']?t|never|not)\\s+replace|keep|preserve|without\\s+(?:replacing|changing))\\s+'+target,'i').test(prompt)&&new RegExp('\\breplace\\s+'+target,'i').test(prompt);}
 export function prepareSessionRecording(project,args,state,{allowReplace=false,inputActive=false}={}){
  const intent=sessionRecordingIntent(args);
  if(!state||typeof state.active!=='boolean'||inputActive)throw new Error('Finish the input take and refresh the Session recording state first.');
