@@ -1,0 +1,88 @@
+{
+  "release": "0.163.0",
+  "commit": "3f68adc7b326da91b673b66dae354de7256077ec",
+  "amplifyJob": 171,
+  "scope": "Normal authenticated Chrome on opusloops.com; synthetic pre-microphone audit song; native controls, actual model planning and actual downloaded project bytes. No injected browser state.",
+  "baseline": {
+    "file": "Core-Song-Native-Audit (9).opusloop",
+    "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7"
+  },
+  "cases": [
+    {
+      "case": "undo-two-save",
+      "file": "Core-Song-Native-Audit (23).opusloop",
+      "bytes": 946768,
+      "sha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+      "wholeProjectMatchesExpected": true
+    },
+    {
+      "case": "redo-two-save",
+      "file": "Core-Song-Native-Audit (24).opusloop",
+      "bytes": 946767,
+      "sha256": "746a8ddf4d86ef1f3c6533c19b10a99d5e0695a0f9cf3942bdc239287e200e08",
+      "wholeProjectMatchesExpected": true
+    },
+    {
+      "case": "stop-undo-one-save",
+      "file": "Core-Song-Native-Audit (25).opusloop",
+      "bytes": 946768,
+      "sha256": "89ff430227f37f392bd1320ce69d5e0f8f706f9af6109fa15e5ddc11227c9892",
+      "wholeProjectMatchesExpected": true
+    },
+    {
+      "case": "manual-redo-direct-undo-redo",
+      "file": "Core-Song-Native-Audit (26).opusloop",
+      "bytes": 946767,
+      "sha256": "746a8ddf4d86ef1f3c6533c19b10a99d5e0695a0f9cf3942bdc239287e200e08",
+      "wholeProjectMatchesExpected": true
+    },
+    {
+      "case": "stale-history-rejected",
+      "file": "Core-Song-Native-Audit (27).opusloop",
+      "bytes": 946767,
+      "sha256": "746a8ddf4d86ef1f3c6533c19b10a99d5e0695a0f9cf3942bdc239287e200e08",
+      "wholeProjectMatchesExpected": true
+    }
+  ],
+  "manualEdits": {
+    "bpm": 132,
+    "metronome": true,
+    "otherFieldsExact": true
+  },
+  "modelRequests": 4,
+  "allowance": {
+    "before": 82,
+    "after": 78,
+    "repairs": 0,
+    "directUndoRedoNoModelRequest": true
+  },
+  "unavailableSteps": {
+    "requested": 3,
+    "available": 2,
+    "message": "Only 2 Undo steps are available. Nothing changed."
+  },
+  "staleCase": "Submit Undo two and Save, then native Edit Undo and Edit Redo before planning finishes. Current bytes identical but history revision changed. Plan rejected with no movement or agent download. Manual save (27) matches edited state.",
+  "playbackStoppedBeforeUndo": true,
+  "consoleErrorsOrWarnings": [],
+  "restoration": {
+    "file": "Test-Thuvee-1 (19).opusloop",
+    "sha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
+    "byteIdenticalOriginal": true,
+    "project": "Test Thuvee 1",
+    "tracks": [
+      "Audio 1",
+      "Warm Bass"
+    ],
+    "bpm": 120,
+    "playing": false
+  },
+  "screenshots": [
+    "/tmp/opus-history-live-verified.png",
+    "/tmp/opus-history-original-restored.png"
+  ],
+  "limits": [
+    "History persistence across a page reload is not promised: reopening starts a fresh edit history.",
+    "Undo/Redo restores project edits; it cannot undo delivered files or already-heard audio.",
+    "No new physical device, mobile touch or subjective listening verdict is inferred."
+  ]
+}

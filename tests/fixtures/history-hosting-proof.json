@@ -1,0 +1,56 @@
+{
+  "release": "0.163.0",
+  "commit": "3f68adc7b326da91b673b66dae354de7256077ec",
+  "job": 171,
+  "status": "SUCCEED",
+  "apiCodeSha256": "7e50f74689b4b9183714639e2022ec798205bf1ce63ae13374d11b5ec7ea97d0",
+  "workerDigestUnchanged": "ee68aed8bc55d3220d3837701a3220828a275a5a5e7791662f32d1d1fc40bcc4",
+  "hosts": {
+    "https://opusloops.com": {
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "3f68adc7b326da91b673b66dae354de7256077ec",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000171",
+        "builtAt": "2026-10-19T17:54:47.033865Z"
+      },
+      "assets": {
+        "agent-actions.js": "47e659d465f6ae2b5618c01ed223cf1e6802f3d4b076b3f72d6cfe9f57635ed6",
+        "agent-addressing.js": "37ee98cca3d97856db0ac4b49a61f5efdaf848de8dbf824a886cc3ee6b5b3bcf",
+        "agent-panel.js": "c0ee49ddc81a37f5926c790cda7e50884db54c3b000e16a080af152899090251",
+        "agent-runner.js": "f5a7923cf73ad5ea4f436a65778ffecb0251ad299ce5a5895cf2b10584b4bb16",
+        "agent-schema.js": "a2d103e2ad88ce3c0f6c8566017cc7ed00e76f0566e0651b0e6d614e0d6bc256",
+        "app.js": "d15c71af6c6680a3b4a931120a1cb4f1842b8a260ff9c236de2c39f6e5b607d0",
+        "history-control.js": "d14e86a6ec56033585e7c43e5a15b3ca854d5c8026bebc69a409c51374e19fef",
+        "history.js": "d93d857c330047d512b876055d792e5dfa06592efecf5ae846d04fee0dfe55da",
+        "queued-planning.js": "1ef9ec541174767d0f143f1e7c3b43c6b9a4fc5482bfa2b5552c79bff74d5889",
+        "release.json": "bb6d62bfbc64830f286f7b544b97d05de70be256f3e7ec8209cecd3b7990c9ba"
+      }
+    },
+    "https://www.opusloops.com": {
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "3f68adc7b326da91b673b66dae354de7256077ec",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000171",
+        "builtAt": "2026-10-19T17:54:47.033865Z"
+      },
+      "assets": {
+        "agent-actions.js": "47e659d465f6ae2b5618c01ed223cf1e6802f3d4b076b3f72d6cfe9f57635ed6",
+        "agent-addressing.js": "37ee98cca3d97856db0ac4b49a61f5efdaf848de8dbf824a886cc3ee6b5b3bcf",
+        "agent-panel.js": "c0ee49ddc81a37f5926c790cda7e50884db54c3b000e16a080af152899090251",
+        "agent-runner.js": "f5a7923cf73ad5ea4f436a65778ffecb0251ad299ce5a5895cf2b10584b4bb16",
+        "agent-schema.js": "a2d103e2ad88ce3c0f6c8566017cc7ed00e76f0566e0651b0e6d614e0d6bc256",
+        "app.js": "d15c71af6c6680a3b4a931120a1cb4f1842b8a260ff9c236de2c39f6e5b607d0",
+        "history-control.js": "d14e86a6ec56033585e7c43e5a15b3ca854d5c8026bebc69a409c51374e19fef",
+        "history.js": "d93d857c330047d512b876055d792e5dfa06592efecf5ae846d04fee0dfe55da",
+        "queued-planning.js": "1ef9ec541174767d0f143f1e7c3b43c6b9a4fc5482bfa2b5552c79bff74d5889",
+        "release.json": "bb6d62bfbc64830f286f7b544b97d05de70be256f3e7ec8209cecd3b7990c9ba"
+      }
+    }
+  }
+}
