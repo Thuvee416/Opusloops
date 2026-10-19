@@ -32,6 +32,7 @@ import {installRegionMarquee} from './region-marquee.js';
 import {copyRegionSelection,pasteRegionSelection} from './region-clipboard.js';
 import {planRegionGroup,planRegionTrim,editRegionGroup} from './arrangement.js';
 import {loadSession,recoveryProject} from './session-recovery.js';
+import {readProjectFile,replaceStoredProject} from './project-lifecycle.js';
 import {installTimeSelection,timeSelectionEdge,scrollTimeSelection} from './time-selection.js';
 import {copyArrangementTime,pasteArrangementTime} from './time-clipboard.js';
 import {installTemplateDialog} from './template-dialog.js';
@@ -360,7 +361,7 @@ async function readSet(key){const db=await dbPromise;return new Promise((resolve
 async function writeSets(entries){const db=await dbPromise;await new Promise((resolve,reject)=>{const tx=db.transaction('projects','readwrite'),store=tx.objectStore('projects');try{for(const [key,value] of entries)value===null?store.delete(key):store.put(value,key);}catch(error){tx.abort();reject(error);return;}tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error||new Error('Could not save this set.'));tx.onerror=()=>reject(tx.error);});}
 async function withSetLock(fn){if(busy)throw new Error('Wait for the current operation to finish.');stopToEdit();if(engine.recording||engine.automationTake)throw new Error('Stop recording first.');busy=true;renderTransport();clearTimeout(saveTimer);try{return await fn();}finally{busy=false;renderTransport();clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(()=>{$('save-state').textContent='Autosave unavailable · download a project';}),600);}}
 const lifecycleRun=fn=>run(()=>withSetLock(fn));
-async function replaceSet(next){next=validateProject(next);await writeSets([['previous',structuredClone(project)],['current',next]]);install(next);changed();}
+async function replaceSet(next){await replaceStoredProject({current:project,next,validate:validateProject,write:writeSets,install});changed();}
 $('new-set').onclick=lifecycleRun(async()=>{if(!confirm('Start a new set? Your current set will be kept as the previous set in this browser.'))return;const preset=await readSet('default');const next=preset?validateProject(preset):emptyProject();next.name='Untitled session';await replaceSet(next);setStatus('New set created. File → Open Live Set Backups can restore the previous set.');});
 $('save-default-set').onclick=lifecycleRun(async()=>{if(!confirm('Use this entire set, including clips and samples, as the default for New Live Set in this browser?'))return;await writeSets([['default',validateProject(structuredClone(project))]]);setStatus('Default set saved in this browser.');});
 $('reset-default-set').onclick=lifecycleRun(async()=>{if(!confirm('Reset the default to an empty set? Your current set will stay open.'))return;await writeSets([['default',null]]);setStatus('New Live Set will now start empty.');});
@@ -375,7 +376,7 @@ $('restore-previous-set').onclick=lifecycleRun(async()=>{const previous=await re
 const openTemplates=installTemplateDialog({getProject:()=>project,exclusive:withSetLock,replaceSet,writeDefault:p=>writeSets([['default',p]]),download,setStatus});
 $('save-template').onclick=run(()=>openTemplates('save'));$('open-templates').onclick=run(()=>openTemplates());
 $('save').onclick=run(()=>executeStudioCommand({name:'save_project'}));
-$('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const file=e.target.files[0];if(!file)return;if(file.size>150*1024*1024)throw new Error('Project files must be smaller than 150 MB.');const p=validateProject(JSON.parse(await file.text()));install(p);changed();e.target.value='';setStatus('Project opened. Press Play to hear it.');});
+$('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const input=e.target,file=input.files[0];try{if(!file)return;await withSetLock(async()=>{const next=await readProjectFile(file,validateProject);await replaceSet(next);setStatus('Project opened. File → Open Live Set Backups → Restore Previous Set can restore the replaced set.');});}finally{input.value='';}});
 $('export').onclick=run(()=>executeStudioCommand({name:'export_wav',args:readDeliveryOptions(true)}));
 $('help').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();
 document.addEventListener('keydown',e=>{

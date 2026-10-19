@@ -17,3 +17,11 @@ Updated 2026-10-19. The replacement Codex goal is active. Scope and acceptance: 
 4. Verify Tempo against each accepted core operation. Retained known model-fidelity gaps include missing region clipId in a compound setup, wrong preset/instrument choice and a first-beat onset mismatch (ROADMAP.md, 0.152 signed-in verification). Fix these as core Tempo correctness work after the corresponding manual behavior is established. Use actual saved projects and output files; keep model requests within existing limits.
 
 No core gate is accepted yet. No model request was consumed in this initial audit, and no product implementation or visual change was made.
+
+## Project Opening Recovery Repair — 0.157.0
+
+Source audit found that File → Open Live Set installed the incoming project directly, bypassing the previous-set transaction already used by New and Restore. Opening now uses that shared durable replacement boundary: validate the incoming file, commit the displaced and incoming projects together, then install the incoming project. The file input resets after success or failure so the same file can be selected again. Parsing and replacement share the existing project-operation lock.
+
+Six focused source tests pass, including storage failure with no installation, malformed/invalid/oversized/unreadable input, cancellation, backup swaps, and a real 32-bar project containing embedded WAV, MIDI, regions, devices, sends and automation. The real project remains byte-identical through opening/restoring/another portable serialization; broken region references are rejected without replacing stored data. Existing recovery and song tests also pass. These tests use a controlled storage adapter; they do not prove a real browser IndexedDB transaction or file-picker workflow.
+
+Native verification is pending: Chrome upload reported that the ChatGPT extension needs Allow access to file URLs. The user said they would enable it; browser control subsequently became unavailable. Do not treat that reply as a verified permission change or claim the actual file opened. The isolated audit project was saved before testing, and the production user project was untouched. Continue the actual Open → save equality → Restore Previous Set check once browser access returns. This repair does not accept the project gate or any Tempo gate.
