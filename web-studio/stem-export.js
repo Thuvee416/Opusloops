@@ -1,5 +1,5 @@
 import {trackOutput,routingInputs} from './track-routing.js';
-import {Engine} from './audio.js';
+import {createRenderSnapshot,closeRenderSnapshot} from './render-snapshot.js';
 import {exportOptions} from './wav-export.js';
 import {deliveryOptions} from './delivery-options.js';
 import {selectedStemChannels,stemSelectionMetadata} from './stem-selection.js';
@@ -15,9 +15,9 @@ export function buildStemArchive(project,options,files,automationOverrides=[]){
 }
 export async function renderStemArchive(source,options={}, {signal,onProgress=()=>{},onManifest=()=>{}}={}){
  const check=()=>{if(signal?.aborted)throw new DOMException('Stem export canceled.','AbortError');};check();
- const project=structuredClone(source.project),settings=deliveryOptions(project,exportOptions(options),'stems'),channels=stemChannels(project,settings.channels),engine=new Engine(project,()=>{});engine.active=structuredClone(source.active);engine.automationOverrides=new Set(source.automationOverrides);engine.masterVolume=source.masterVolume;
+ const settings=deliveryOptions(source.project,exportOptions(options),'stems'),engine=createRenderSnapshot(source),project=engine.project,channels=stemChannels(project,settings.channels);
  const files=[];let bytes=0;const {channels:ignored,...renderSettings}=settings;
- try{for(let i=0;i<channels.length;i++){check();onProgress({index:i,total:channels.length,name:channels[i].name});check();const data=new Uint8Array(await engine.render({...renderSettings,channel:channels[i].value}));check();bytes+=data.length;if(bytes>STEM_BYTES)throw new Error('Stem files exceed 128 MiB. Choose a shorter range or lower sample rate/bit depth.');files.push({name:channels[i].file,data});}
+ try{for(let i=0;i<channels.length;i++){check();onProgress({index:i,total:channels.length,name:channels[i].name});check();const data=new Uint8Array(await engine.render({...renderSettings,channel:channels[i].value},{signal}));check();bytes+=data.length;if(bytes>STEM_BYTES)throw new Error('Stem files exceed 128 MiB. Choose a shorter range or lower sample rate/bit depth.');files.push({name:channels[i].file,data});}
  const archive=buildStemArchive(project,settings,files,engine.automationOverrides);check();onManifest(structuredClone(archive.manifest));return archive.data;
- }finally{if(engine.context)await engine.context.close().catch(()=>{});}
+ }finally{await closeRenderSnapshot(engine);}
 }

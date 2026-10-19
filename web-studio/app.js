@@ -1,3 +1,4 @@
+import {renderWavSnapshot} from './wav-delivery.js';
 import {inputMonitorRoute} from './input-monitor.js';
 import {projectSaveName,projectSaveFile,saveProjectVariant} from './project-save.js';
 import {installProjectSaveDialog} from './project-save-dialog.js';
@@ -97,7 +98,7 @@ import {History} from './history.js';
 import {Engine} from './audio.js';
 import {REGION_MIN_BEATS,REGION_MAX_OFFSET,uid,makeTrack,emptyProject,validateProject,canPlace,mod} from './model.js';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let stemAbort=null;
+let deliveryAbort=null;
 let timeClipboard=null;
 let timeSelection=null;
 let gesture=null,regionFrame=0,clipMarquee=null,sessionMarquee=null,sessionContextMenu=null;
@@ -532,7 +533,7 @@ for(const [id,mode]of [['save-as','as'],['save-copy','copy']]){const button=docu
 
 function confirmLargeProject(info){return confirm(largeProjectMessage(info));}
 $('open').onclick=run(()=>{stopToEdit();$('project-file').click();});$('project-file').onchange=run(async e=>{const input=e.target,file=input.files[0];try{if(!file)return;await withSetLock(async()=>{const next=await readProjectFile(file,validateProject,{confirmLarge:confirmLargeProject});await replaceSet(next);setStatus('Project opened. File → Open Live Set Backups → Restore Previous Set can restore the replaced set.');});}catch(error){if(error.name==='AbortError')setStatus('Project Opening Cancelled. Your Current Set Is Unchanged.');else throw error;}finally{input.value='';}});
-$('export').onclick=run(()=>executeStudioCommand({name:'export_wav',args:readDeliveryOptions(true)}));
+$('export').onclick=run(async()=>{try{await executeStudioCommand({name:'export_wav',args:readDeliveryOptions(true)});}catch(error){if(error.name==='AbortError')setStatus('WAV Export Cancelled. No File Downloaded.');else throw error;}});
 $('help').onclick=()=>$('help-dialog').showModal();$('close-help').onclick=()=>$('help-dialog').close();
 document.addEventListener('keydown',e=>{
  if(sessionMarquee?.dragging)return;
@@ -1298,7 +1299,7 @@ $('export-stem-selection').onclick=run(()=>{$('export-stem-scope').value='select
 function renderExportChannels(){const select=$('export-channel');if(!select)return;const previous=select.value;select.innerHTML='<option value="master">Master mix</option>'+project.tracks.map(t=>`<option value="${esc('track:'+t.id)}">Track · ${esc(t.name)}</option>`).join('')+(project.returns||[]).map(t=>`<option value="${esc('return:'+t.id)}">Return · ${esc(t.name)}</option>`).join('');if([...select.options].some(o=>o.value===previous))select.value=previous;const midi=$('export-midi-tracks'),chosen=new Set([...midi.selectedOptions].map(o=>o.value));midi.innerHTML=project.tracks.map(t=>`<option value="${esc(t.id)}" ${chosen.has(t.id)?'selected':''}>${esc(t.name)}</option>`).join('');renderMidiScope();const stems=$('export-stem-channels'),old=new Set([...stems.selectedOptions].map(o=>o.value));stems.innerHTML=availableStemChannels(project).map(c=>`<option value="${esc(c.value)}" ${old.has(c.value)?'selected':''}>${c.type==='return'?'Return':'Track'} · ${esc(c.name)}</option>`).join('');renderStemScope();}
 
 $('export-stems').onclick=run(async()=>{try{await executeStudioCommand({name:'export_stems',args:readDeliveryOptions()});}catch(error){if(error.name==='AbortError')setStatus('Stem export canceled.');else throw error;}});
-$('cancel-stems').onclick=()=>{stemAbort?.abort();setStatus('Canceling after the current channel render…');$('cancel-stems').disabled=true;};
+$('cancel-stems').onclick=()=>{deliveryAbort?.abort();setStatus('Cancelling Export After The Current Render…');$('cancel-stems').disabled=true;};
 
 function chordEffectControls(d,i,count){return `<div class="midi-effect" data-midi-effect="${esc(d.id)}"><div class="instrument-heading"><strong>${i+1}. Chord</strong><label><input type="checkbox" data-midi-param="enabled" data-instrument-edit aria-label="Chord ${i+1} enabled" ${d.enabled?'checked':''}> On</label><button data-midi-action="up" data-instrument-edit aria-label="Move Chord ${i+1} up" ${i===0?'disabled data-midi-bound':''}><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-up"/></svg></button><button data-midi-action="down" data-instrument-edit aria-label="Move Chord ${i+1} down" ${i===count-1?'disabled data-midi-bound':''}><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-down"/></svg></button><button data-midi-action="remove" data-instrument-edit aria-label="Remove Chord ${i+1}"><svg class="studio-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#opus-icon-close"/></svg></button></div><div class="synth-controls">${d.shifts.map((shift,j)=>`<label>Voice ${j+1} shift<input data-instrument-edit data-midi-param="shifts:${j}" aria-label="Chord ${i+1} voice ${j+1} shift" type="number" min="-36" max="36" step="1" value="${shift}"></label><label>Velocity %<input data-instrument-edit data-midi-param="velocities:${j}" aria-label="Chord ${i+1} voice ${j+1} velocity" type="number" min="0" max="200" step="1" value="${Math.round(d.velocities[j]*100)}"></label>`).join('')}${[["strumMs","Strum ms",-400,400],["tension","Tension %",-100,100],["crescendo","Crescendo %",-100,100]].map(([key,label,min,max])=>`<label>${label}<input data-instrument-edit data-midi-param="${key}" aria-label="Chord ${i+1} ${label}" type="number" min="${min}" max="${max}" step="1" value="${d[key]??0}"></label>`).join('')}</div><p class="micro">Original note plus six shifted voices. A shift of 0 disables that extra voice.</p></div>`;}
 
@@ -1454,25 +1455,26 @@ async function exportStudioStems(options,signal){
  if(busy||engine.recording||engine.automationTake||inputActive())throw new Error('Finish recording or the current operation before exporting stems.');
  signal?.throwIfAborted();options=deliveryOptions(project,options,'stems');
  const controller=new AbortController(),abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
- const source=effectiveDeliverySource(options),name=filename()+'-stems.zip';stemAbort=controller;busy=true;$('cancel-stems').disabled=false;renderTransport();
+ const source=effectiveDeliverySource(options),name=filename()+'-stems.zip';deliveryAbort=controller;busy=true;$('cancel-stems').disabled=false;renderTransport();
  try{
   let manifest;const data=await renderStemArchive(engine,options,{signal:controller.signal,onManifest:value=>{manifest=value;},onProgress:({index,total,name})=>setStatus(`Rendering stem ${index+1}/${total}: ${name}…`)});
   controller.signal.throwIfAborted();download(data,name,'application/zip');setStatus(`Stem ZIP Exported: ${manifest.channels.length} Aligned Channel Files And A Manifest.`);
   return {download:name,bytes:data.byteLength,delivery:{format:'stems',settings:options,source,selection:manifest.selection},description:deliveryDescription(options,source,manifest.channels.map(c=>c.name).join(', ')+', before master gain/compression')};
- }finally{signal?.removeEventListener('abort',abort);stemAbort=null;busy=false;$('cancel-stems').disabled=true;renderTransport();}
+ }finally{signal?.removeEventListener('abort',abort);deliveryAbort=null;busy=false;$('cancel-stems').disabled=true;renderTransport();}
 }
 async function exportStudioWav(options,signal){
  if(busy||engine.recording||engine.automationTake||inputActive())throw new Error('Stop recording or finish the current operation before exporting.');
- signal?.throwIfAborted();options=deliveryOptions(project,options);const source=effectiveDeliverySource(options);
- busy=true;renderTransport();setStatus('Rendering stereo WAV…');
+ signal?.throwIfAborted();options=deliveryOptions(project,options);
+ const controller=new AbortController(),abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
+ deliveryAbort=controller;busy=true;$('cancel-stems').disabled=false;renderTransport();setStatus('Rendering Stereo WAV From A Project Snapshot…');
  try{
-  signal?.throwIfAborted();const output=exportChannel(project,options.channel||'master');
-  const data=await engine.render(options);signal?.throwIfAborted();
-  const name=filename()+(output.type==='master'?'':'-'+output.type+'-'+output.name.replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,50))+'.wav';
-  download(data,name,'audio/wav');setStatus('Stereo WAV exported.');
-  return {download:name,bytes:data.byteLength,delivery:{format:'wav',settings:options,source,channel:output.name},description:deliveryDescription(options,source,output.name)};
- }finally{busy=false;renderTransport();clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(()=>{$('save-state').textContent='Autosave unavailable · download a project';}),600);}
+  const artifact=await renderWavSnapshot(engine,options,{signal:controller.signal});controller.signal.throwIfAborted();
+  download(artifact.data,artifact.filename,'audio/wav');setStatus('Stereo WAV Exported.');
+  return {download:artifact.filename,bytes:artifact.data.byteLength,delivery:artifact.delivery,description:artifact.description};
+ }catch(error){if(error.name==='AbortError')setStatus('WAV Export Cancelled. No File Downloaded.');throw error;}
+ finally{signal?.removeEventListener('abort',abort);deliveryAbort=null;busy=false;$('cancel-stems').disabled=true;renderTransport();clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(()=>{$('save-state').textContent='Autosave unavailable · download a project';}),600);}
 }
+
 async function executeStudioCommand(x,signal,prepared){
  signal?.throwIfAborted();const a=x.args||{};
  if(x.name==='project_io')return runProjectIO(prepared,{getProject:()=>project,getHistory:()=>historyState(history),guard:prepared.assertCurrent,chooseFile:prepared.chooseFile,confirmLarge:confirmLargeProject,readDefault:()=>readSet('default'),signal,
