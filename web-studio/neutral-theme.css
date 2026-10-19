@@ -94,3 +94,9 @@ body.studio-shell{grid-template-rows:49px 32px minmax(0,1fr) 22px}
 #metronome-dialog>label{display:flex;align-items:center;gap:9px;margin:16px 0}
 #metronome-volume{flex:1;min-width:70px}
 #tap-tempo{padding:3px 6px;min-height:24px}
+
+/* Inline mixer values share the DAW's compact numeric control treatment. */
+.studio-shell .channel input.mix-value{appearance:none;display:block;box-sizing:border-box;width:52px;max-width:none;height:18px;min-height:0;margin:0 auto 3px;padding:1px 2px;border:1px solid transparent;border-radius:0;background:transparent;color:#30363b;font:9px/14px ui-monospace,monospace;text-align:center;letter-spacing:-.3px;cursor:text}
+.studio-shell .channel input.mix-value:hover{border-color:#85898d;background:#c8cacc}.studio-shell .channel input.mix-value:focus{outline:1px solid var(--accent);background:#e1e3e4;border-color:transparent}
+.studio-shell #mixer .channel label:has([data-volume]) .mix-value,.studio-shell #mixer .channel label:has(#master) .mix-value{position:relative;left:-12px}.studio-shell #mixer .channel label:has([data-pan]) .mix-value{position:relative;left:-3px}
+.studio-shell .return-channel input.mix-value{display:inline-block;float:right;margin:0}
