@@ -36,3 +36,12 @@ test('cancel during count-in emits no audio and disconnected input reports its c
  const t=await capture();t.send({type:'start',startFrame:1024,limit:128});t.block(0,[channel(0)]);t.block(128,[]);t.send({type:'cancel'});
  assert.deepEqual(t.messages.filter(m=>m.type==='channels').map(m=>m.count),[1,0]);assert.equal(t.messages.some(m=>['started','chunk','finished'].includes(m.type)),false);
 });
+
+
+test('monitor output processing cannot change the dry samples accumulated by the recorder',async()=>{
+ const t=await capture('stereo:0');t.send({type:'start',startFrame:0,limit:256});
+ const first=t.block(0,[new Float32Array(128).fill(.25),new Float32Array(128).fill(-.5)]);
+ first[0].fill(0);first[1].fill(1); // A downstream monitor consumer has independent output arrays.
+ t.block(128,[new Float32Array(128).fill(.75),new Float32Array(128).fill(-.25)]);
+ assert.deepEqual(recorded(t),[Array(128).fill(.25).concat(Array(128).fill(.75)),Array(128).fill(-.5).concat(Array(128).fill(-.25))]);
+});
