@@ -98,7 +98,7 @@ export class Engine {
     for(const h of this.gateHolds.values())if(!h.repeat&&this.active.get(h.trackId)?.clipId===h.clipId)this.active.set(h.trackId,{clipId:null,start:this.position});this.gateHolds.clear();this.playGeneration++;const raw=this.rawBeat(),position=this.beat();
     this.finishAutomationRecording();this.finishRecords(raw);
     if(this.recording){for(const s of this.project.arrangement)s.length=Math.min(s.length,Math.max(0,raw-s.start));this.project.arrangement=this.project.arrangement.filter(s=>s.length>=.0625);}
-    this.recording=false;this.playing=false;this.position=reset?0:position;
+    this.recording=false;this.recordingTake=null;this.playing=false;this.position=reset?0:position;
     // Preserve clip phase when the displayed timeline wrapped before pausing.
     if(!reset){for(const a of this.active.values())a.start-=raw-position;for(const f of this.follows.values())f.beat-=raw-position;if(this.sceneFollow)this.sceneFollow.beat-=raw-position;}else{this.follows.clear();this.sceneFollow=null;}this.pendingScene=null;
     clearInterval(this.timer);for(const n of this.nodes){try{n.stop();}catch{}}this.nodes.clear();this.pending.clear();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();
@@ -188,10 +188,11 @@ export class Engine {
     if(!this.playing){this.active.clear();this.pending.clear();this.follows.clear();this.changed();return receipt;}
     const beat=this.launchBoundary(null);for(const t of this.project.tracks){const event={clipId:null,beat};this.pending.set(t.id,event);receipt.events.push({trackId:t.id,event});}this.changed();return receipt;
   }
-  async startRecording(){
+  async startRecording({signal}={}){
+    signal?.throwIfAborted();
     if(this.recordingStartPromise)return this.recordingStartPromise;
     this.recordingError=null;
-    if(this.recording){this.finishRecords(this.rawBeat());this.recording=false;this.changed();return;}
+    if(this.recording){this.finishRecords(this.rawBeat());this.recording=false;this.recordingTake=null;this.changed();return;}
     if(this.startPromise)throw new Error('Wait for playback preparation to finish before recording.');
     this.stop();
     const project=this.project,previous=project.arrangement,signature=JSON.stringify(project);let installed=false;
@@ -199,19 +200,25 @@ export class Engine {
     // playback generation is still current. Stop during preparation cancels it.
     const pending=this.play('session',{onReady:()=>{
       if(this.project!==project||JSON.stringify(project)!==signature)throw new Error('The project changed while preparing recording. Start again with the current set.');
-      installed=true;project.arrangement=[];this.recording=true;
+      installed=true;this.recordingTake={id:uid(),previous:structuredClone(previous)};project.arrangement=[];this.recording=true;
       for(const [id,a]of this.active)if(a.clipId){a.start=0;this.openRecord(id,a.clipId,0);}
     }});
     this.recordingStartPromise=pending;
-    try{await pending;this.changed();}
+    const abort=()=>{if(this.recording)this.finishSessionRecording({cancel:true});else this.stop();};signal?.addEventListener('abort',abort,{once:true});
+    try{await pending;signal?.throwIfAborted();this.changed();}
     catch(error){
       // A graph/scheduler error after preparation must not leave a partial take
       // or add an empty replacement to Undo/autosave history.
-      if(installed&&this.project===project){this.recording=false;this.records.clear();project.arrangement=previous;this.stop();}
+      if(installed&&this.project===project){this.recording=false;this.recordingTake=null;this.records.clear();project.arrangement=previous;this.stop();}
       this.recordingError=error.message;throw error;
-    }finally{this.recordingStartPromise=null;}
+    }finally{signal?.removeEventListener('abort',abort);this.recordingStartPromise=null;}
   }
-  openRecord(trackId,clipId,beat,offset=0){if(this.project.arrangement.length>=10000){this.finishRecords(beat);this.recording=false;this.recordingError='Session recording stopped at the 10,000-region limit. Save or edit this take before recording again.';return;}const track=this.project.tracks.find(t=>t.id===trackId),slot=this.active.get(trackId)?.slot??track.slots.indexOf(clipId),s={id:uid(),trackId,clipId,start:beat,length:0,offset,...(!slotActive(track,slot)?{active:false}:{})};this.records.set(trackId,s);this.project.arrangement.push(s);}
+  finishSessionRecording({cancel=false}={}){
+    const take=this.recordingTake;if(!this.recording||!take)throw new Error('No active Session recording.');
+    if(cancel){this.records.clear();this.project.arrangement=take.previous;this.recording=false;this.recordingTake=null;}
+    this.stop();return {sessionRecording:true,action:cancel?'cancel':'finish',captureId:take.id,status:cancel?'cancelled':this.project.arrangement.length?'saved':'empty',regionCount:this.project.arrangement.length};
+  }
+  openRecord(trackId,clipId,beat,offset=0){if(this.project.arrangement.length>=10000){this.finishRecords(beat);this.recording=false;this.recordingTake=null;this.recordingError='Session recording stopped at the 10,000-region limit. Save or edit this take before recording again.';return;}const track=this.project.tracks.find(t=>t.id===trackId),slot=this.active.get(trackId)?.slot??track.slots.indexOf(clipId),s={id:uid(),trackId,clipId,start:beat,length:0,offset,...(!slotActive(track,slot)?{active:false}:{})};this.records.set(trackId,s);this.project.arrangement.push(s);}
   closeRecord(trackId,beat){const s=this.records.get(trackId);if(s){s.length=Math.max(0,beat-s.start);if(s.length<.0625)this.project.arrangement=this.project.arrangement.filter(x=>x!==s);this.records.delete(trackId);}}
   finishRecords(beat){for(const id of [...this.records.keys()])this.closeRecord(id,beat);}
   back(){this.cancelSceneFollow();this.gateHolds.clear();if(!this.playing){this.overrides.clear();this.active.clear();this.follows.clear();this.changed();return;}const beat=this.launchBoundary(null);for(const t of this.project.tracks)this.pending.set(t.id,{back:true,beat});this.changed();}

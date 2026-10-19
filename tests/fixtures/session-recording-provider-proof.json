@@ -1,0 +1,102 @@
+{
+  "scope": "Real provider through operator IAM; not authenticated Studio execution",
+  "cases": [
+    {
+      "prompt": "Replace the existing Arrangement with a new Session performance recording and launch scene 1. I will perform the next scenes manually. Leave recording running.",
+      "active": false,
+      "expected": [
+        "record_session",
+        "launch_scene"
+      ],
+      "plan": {
+        "summary": "Replace the existing Arrangement with a new Session performance recording and launch scene 1.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_session",
+              "args": {
+                "action": "start",
+                "replace": true
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "launch_scene",
+              "args": {
+                "sceneNumber": 1
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 3180,
+      "passed": true
+    },
+    {
+      "prompt": "Start recording my Session performance into the Arrangement and launch scene 1.",
+      "active": false,
+      "question": true,
+      "plan": {
+        "summary": "Session Recording Requires Arrangement Replacement",
+        "question": "Starting a Session recording replaces your existing Arrangement. Would you like to replace the Arrangement? Undo can restore it after recording.",
+        "actions": [],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 3120,
+      "passed": true
+    },
+    {
+      "prompt": "Finish the active Session performance recording, saving the captured Arrangement. Do not export anything.",
+      "active": true,
+      "expected": [
+        "record_session"
+      ],
+      "plan": {
+        "summary": "Finish the active Session performance recording, saving the captured Arrangement.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "record_session",
+              "args": {
+                "action": "finish"
+              }
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      },
+      "elapsedMs": 3189,
+      "passed": true
+    }
+  ],
+  "passed": true
+}
