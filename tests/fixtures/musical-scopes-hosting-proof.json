@@ -1,0 +1,54 @@
+{
+  "release": "0.159.0",
+  "commit": "e0799b4388bbcb27fe55732b3943b3a825bf1da2",
+  "job": "166",
+  "hosting": "SUCCEED",
+  "backendZipSha256": "a7a0f240da813127adcdacda82a930f98b0abb4c1bf3e0a169aee8db5000b608",
+  "backendStatus": "Active / Successful",
+  "sites": [
+    {
+      "host": "opusloops.com",
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "e0799b4388bbcb27fe55732b3943b3a825bf1da2",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000166",
+        "builtAt": "2026-10-19T16:53:26.050694Z"
+      },
+      "assetHashes": {
+        "app.js": "0c2405a1b478730817a0ccf9a664272dca9ef042d229618a5f301037141f28a0",
+        "agent-actions.js": "045f4cd69515292822a915abebb41fb1829c8797b7009b287b919ecf6befc30a",
+        "agent-addressing.js": "18f6b0e6f0e232da26c09c64ae4178cca31fbd36716ccbec9a0f04ec3fe5b80c",
+        "agent-schema.js": "f5662591bee2721265c76b2d80f3320f971d66539d56f2f23d6964332d15fe29",
+        "musical-units.js": "f5e0a303d29b263c9568a91378a104a559b1e6b9a472d0c79607cb8693d9e1f3",
+        "instrument-choice.js": "140918f965ca77d317007a1b0648b11e2440738eac5c9601d4e846a6221bb132",
+        "clip-properties.js": "58dadda447717c4a0816e293b26bed076f15ba8d6e948e716d838495a5076546",
+        "release.json": "a6da118192fa488a4db42e3d2758771ec1de8443e518e12e5e5c353f39404656"
+      }
+    },
+    {
+      "host": "www.opusloops.com",
+      "version": {
+        "provider": "aws-amplify",
+        "commit": "e0799b4388bbcb27fe55732b3943b3a825bf1da2",
+        "repository": "Thuvee416/Opusloops",
+        "branch": "main",
+        "appId": "d1zc92wmtmvg23",
+        "jobId": "0000000166",
+        "builtAt": "2026-10-19T16:53:26.050694Z"
+      },
+      "assetHashes": {
+        "app.js": "0c2405a1b478730817a0ccf9a664272dca9ef042d229618a5f301037141f28a0",
+        "agent-actions.js": "045f4cd69515292822a915abebb41fb1829c8797b7009b287b919ecf6befc30a",
+        "agent-addressing.js": "18f6b0e6f0e232da26c09c64ae4178cca31fbd36716ccbec9a0f04ec3fe5b80c",
+        "agent-schema.js": "f5662591bee2721265c76b2d80f3320f971d66539d56f2f23d6964332d15fe29",
+        "musical-units.js": "f5e0a303d29b263c9568a91378a104a559b1e6b9a472d0c79607cb8693d9e1f3",
+        "instrument-choice.js": "140918f965ca77d317007a1b0648b11e2440738eac5c9601d4e846a6221bb132",
+        "clip-properties.js": "58dadda447717c4a0816e293b26bed076f15ba8d6e948e716d838495a5076546",
+        "release.json": "a6da118192fa488a4db42e3d2758771ec1de8443e518e12e5e5c353f39404656"
+      }
+    }
+  ]
+}

@@ -1,0 +1,282 @@
+{
+  "date": "2026-10-19",
+  "release": "0.159.0",
+  "commit": "e0799b4388bbcb27fe55732b3943b3a825bf1da2",
+  "environment": "Signed-in production native Chrome; real queued provider and actual local project/WAV downloads; normal account limits",
+  "allowanceBefore": 90,
+  "allowanceAfterComposition": 89,
+  "allowanceAfterExports": 88,
+  "composition": {
+    "scope": "Independent assertions on actual native production download",
+    "sourceSha256": "202330da13b006f900ce8d9af185788ba49276e217410eaffc2c66437fdeb070",
+    "resultSha256": "fcaf16b0b2dbec188f79e76a1fd54431c9f352c767c2a648e8aced9aa71970b7",
+    "bytes": 946768,
+    "trackCount": 4,
+    "tempo": 128,
+    "originalTone": true,
+    "clipName": "Core Phrase",
+    "sceneNumber": 3,
+    "clipBeats": 16,
+    "notes": [
+      {
+        "pitch": 60,
+        "start": 0,
+        "duration": 0.5,
+        "velocity": 0.7
+      },
+      {
+        "pitch": 64,
+        "start": 4,
+        "duration": 0.5,
+        "velocity": 0.7
+      },
+      {
+        "pitch": 67,
+        "start": 8,
+        "duration": 0.5,
+        "velocity": 0.7
+      },
+      {
+        "pitch": 71,
+        "start": 12,
+        "duration": 0.5,
+        "velocity": 0.7
+      }
+    ],
+    "region": {
+      "start": 32,
+      "length": 16,
+      "sharesClip": true
+    },
+    "bassVolume": 0.4955620490688965,
+    "keysPan": 0.2,
+    "allExistingContentAndUnmentionedSettingsPreserved": true
+  },
+  "wav": {
+    "channels": 2,
+    "sampleRate": 44100,
+    "sampleWidth": 2,
+    "frames": 330750,
+    "durationSeconds": 7.5,
+    "peak": 0.387542724609375,
+    "rms": 0.0435470988962542,
+    "clippedSamples": 0,
+    "sha256": "a41f9788cfdd991f83d001f51a57a56634c8f23ff312be189e15d30e6846ef3c",
+    "bytes": 1323044
+  },
+  "plans": [
+    {
+      "createdAt": 1792428871963,
+      "plan": {
+        "summary": "Add a MIDI track named Core Lead using Original tone. Create a four-bar clip named Core Phrase in scene 3. Play C4, E4, G4 and B4 on the first beat of bars 1, 2, 3 and 4 respectively, each half a beat long at velocity 70%. Place that same clip in the Arrangement at bar 9 for four bars. Reduce Bass by 3 dB, pan Keys 20% right and set the project tempo to 128 BPM. Preserve all existing clips, instruments, effects and arrangement regions. Do not start playback or export.",
+        "actions": [
+          {
+            "type": "add_track",
+            "args": {
+              "name": "Core Lead",
+              "kind": "original",
+              "ref": "$coreLead"
+            }
+          },
+          {
+            "type": "midi",
+            "args": {
+              "ref": "$corePhrase",
+              "trackId": "$coreLead",
+              "sceneNumber": 3,
+              "name": "Core Phrase",
+              "beats": {
+                "bars": 4
+              },
+              "notes": [
+                {
+                  "pitch": 60,
+                  "start": {
+                    "bar": 1,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 0.5
+                  },
+                  "velocity": 0.7
+                },
+                {
+                  "pitch": 64,
+                  "start": {
+                    "bar": 2,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 0.5
+                  },
+                  "velocity": 0.7
+                },
+                {
+                  "pitch": 67,
+                  "start": {
+                    "bar": 3,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 0.5
+                  },
+                  "velocity": 0.7
+                },
+                {
+                  "pitch": 71,
+                  "start": {
+                    "bar": 4,
+                    "beat": 1
+                  },
+                  "duration": {
+                    "beats": 0.5
+                  },
+                  "velocity": 0.7
+                }
+              ]
+            }
+          },
+          {
+            "type": "region",
+            "args": {
+              "ref": "$corePhraseRegion",
+              "trackId": "$coreLead",
+              "clipId": "$corePhrase",
+              "start": {
+                "bar": 9
+              },
+              "length": {
+                "bars": 4
+              }
+            }
+          },
+          {
+            "type": "track",
+            "args": {
+              "id": "b83ed7bc-5c7d-48a9-b439-0d579dbb42a7",
+              "changes": {
+                "volume": {
+                  "relativeDb": -3
+                }
+              }
+            }
+          },
+          {
+            "type": "track",
+            "args": {
+              "id": "81b78bf3-320e-4ea1-ba3c-536d4c56e0f8",
+              "changes": {
+                "pan": 0.2
+              }
+            }
+          },
+          {
+            "type": "project",
+            "args": {
+              "bpm": 128
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    },
+    {
+      "createdAt": 1792428921772,
+      "plan": {
+        "summary": "Export the Arrangement starting at bar 9 for four bars as one stereo WAV and one aligned stem ZIP containing all tracks and returns. Use 44.1 kHz, 16-bit PCM, no normalization, no dither and no effect tails for both exports. Also save the project. Do not change any music or mixer settings, and do not start playback.",
+        "actions": [
+          {
+            "type": "command",
+            "args": {
+              "name": "export_wav",
+              "args": {
+                "range": {
+                  "start": {
+                    "bar": 9
+                  },
+                  "length": {
+                    "bars": 4
+                  }
+                },
+                "sampleRate": 44100,
+                "bitDepth": 16,
+                "normalize": false,
+                "dither": "none",
+                "includeTail": false
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "export_stems",
+              "args": {
+                "range": {
+                  "start": {
+                    "bar": 9
+                  },
+                  "length": {
+                    "bars": 4
+                  }
+                },
+                "sampleRate": 44100,
+                "bitDepth": 16,
+                "normalize": false,
+                "dither": "none",
+                "includeTail": false
+              }
+            }
+          },
+          {
+            "type": "command",
+            "args": {
+              "name": "save_project"
+            }
+          }
+        ],
+        "reviewed": true,
+        "model": {
+          "id": "tempo",
+          "name": "Tempo",
+          "version": "1.0",
+          "provider": "Amazon Bedrock",
+          "providerModelId": "amazon.nova-pro-v1:0",
+          "providerModelName": "Amazon Nova Pro"
+        }
+      }
+    }
+  ],
+  "undo": {
+    "nativeOneUndo": true,
+    "observed": {
+      "tempo": 120,
+      "coreLeadTrackAbsent": true,
+      "bassVolume": 0.7,
+      "keysPan": 0
+    },
+    "downloadedExactProjectComparison": false
+  },
+  "restoration": {
+    "projectName": "Test Thuvee 1",
+    "secondTrack": "Warm Bass",
+    "nativeRestorePreviousSet": true,
+    "beforeTestSha256": "d9eec505beea547c9744b732baf6f8ceba2dc3cd8fd75b28cb199c2a28685f27",
+    "postFinalRestoreDownloadedComparison": false
+  },
+  "limits": [
+    "Stem ZIP and agent save_project are ready links, but no new matching files appeared in Downloads; user action requested.",
+    "Chrome internal download page is blocked by browser tool URL policy; no workaround attempted.",
+    "Native Undo visibly reversed six edits, but no exact post-Undo download was obtained in this pass.",
+    "WAV metrics establish nonzero unclipped PCM and expected duration, not subjective listening quality or physical-device timing.",
+    "Full core DAW and Tempo goal remains active; broad workflow, device and safety acceptance not claimed."
+  ],
+  "screenshot": "/tmp/opus-tempo-musical-production.png"
+}
