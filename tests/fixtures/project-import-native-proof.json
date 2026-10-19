@@ -1,0 +1,52 @@
+{
+  "scope": "Native Chrome on isolated localhost:4210 using actual file chooser, menus, downloaded files and playback state; not authenticated Odesa or production execution.",
+  "checks": [
+    "Short valid WAV rejected with full slots and no spare track creation",
+    "Failed import saved bytes match baseline; Undo and Redo both disabled",
+    "Valid WAV adds one track and one clip; embedded WAV matches input bytes",
+    "One Undo removes both track and clip and restores exact baseline",
+    "Redo restores whole audio import",
+    "MIDI preview shows 16 notes, append mode, file-tempo disabled",
+    "MIDI import adds independent third track preserving existing tracks and clips",
+    "Play enters Session playback and Stop exits",
+    "One MIDI Undo restores exact audio-import saved bytes"
+  ],
+  "files": [
+    {
+      "name": "Import-Atomicity-Audit (1).opusloop",
+      "bytes": 609,
+      "sha256": "07c01ac9f56bd8433ecdfeb29428c5484ab97a25d27896bf62a07e1ecb97d573"
+    },
+    {
+      "name": "Import-Atomicity-Audit (2).opusloop",
+      "bytes": 941835,
+      "sha256": "386e38aad9518a44e261f8a5dd979aee2bce43811452b86f9fb8af66be083c75"
+    },
+    {
+      "name": "Import-Atomicity-Audit (3).opusloop",
+      "bytes": 609,
+      "sha256": "07c01ac9f56bd8433ecdfeb29428c5484ab97a25d27896bf62a07e1ecb97d573"
+    },
+    {
+      "name": "Import-Atomicity-Audit (4).opusloop",
+      "bytes": 943545,
+      "sha256": "6e04c73deb417aa3492ba4019763b49bd8da499862df4229e86452fc77300778"
+    },
+    {
+      "name": "Import-Atomicity-Audit (5).opusloop",
+      "bytes": 941835,
+      "sha256": "386e38aad9518a44e261f8a5dd979aee2bce43811452b86f9fb8af66be083c75"
+    },
+    {
+      "name": "Import-Atomicity-Audit.opusloop",
+      "bytes": 609,
+      "sha256": "07c01ac9f56bd8433ecdfeb29428c5484ab97a25d27896bf62a07e1ecb97d573"
+    }
+  ],
+  "console": "One expected validation error from deliberately too-short WAV; no other errors or warnings.",
+  "userProject": "Production Test Thuvee 1 and microphone-containing 127.0.0.1 project were not modified.",
+  "limits": [
+    "Playback state is observed; no new listening-quality or audio-device timing claim.",
+    "Odesa project/file commands remain to be implemented using these shared candidates."
+  ]
+}
