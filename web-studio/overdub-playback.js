@@ -11,7 +11,7 @@ export async function beginOverdubPlayback(engine,destination,{countInBars=0,sig
   const current=engine.active.get(trackId);
   if(running&&current?.clipId===clipId&&(engine.mode==='session'||engine.overrides.has(trackId))){start=engine.context.currentTime;phase=mod(engine.rawBeat()-current.start,source.beats);}
   else if(running){const beat=engine.launchBoundary(clipId);stage.event={clipId,slot:scene,beat,legato:false};engine.pending.set(trackId,stage.event);start=engine.origin+beat*60/engine.project.bpm;}
-  else{const beat=engine.position+countInBars*4;engine.active.delete(trackId);stage.event={clipId,slot:scene,beat,legato:false};engine.pending.set(trackId,stage.event);await engine.play('session');signal?.throwIfAborted();start=engine.origin+beat*60/engine.project.bpm;}
+  else{const beat=engine.position+countInBars*4;stage.countInEndBeat=beat;engine.active.delete(trackId);stage.event={clipId,slot:scene,beat,legato:false};engine.pending.set(trackId,stage.event);await engine.play('session');signal?.throwIfAborted();start=engine.origin+beat*60/engine.project.bpm;}
   const spb=60/engine.project.bpm,clicks=Array.from({length:countInBars*4},(_,i)=>({time:start-(countInBars*4-i)*spb,accent:i%4===0}));return {start,phase,stage,clicks};
  }catch(error){if(engine.inputOverdub===stage)engine.inputOverdub=null;throw error;}
 }

@@ -1,3 +1,4 @@
+import {InputClickClock,metronomeAudible,metronomeLevel} from './metronome.js';
 import {slotActive} from './slot-metadata.js';
 import {isGroup,groupLeaves} from './track-hierarchy.js';
 import {setTrackOutput} from './track-routing.js';
@@ -39,7 +40,7 @@ export function synthesize(context,clip,bpm){
   return buffer;
 }
 export class Engine {
-  constructor(project,changed){this.project=project;this.project.transport??=defaultTransport();this.changed=changed;this.context=null;this.buffers=new Map();this.midiBuffers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();this.sampleBuffers=new Map();this.active=new Map();this.pending=new Map();this.follows=new Map();this.activeScene=null;this.pendingScene=null;this.sceneFollow=null;this.gateHolds=new Map();this.overrides=new Set();this.automationOverrides=new Set();this.nodes=new Set();this.records=new Map();this.playing=false;this.recording=false;this.mode='session';this.nextBeat=0;this.position=0;this.insertMarker=0;this.playGeneration=0;this.masterVolume=project.master??.8;}
+  constructor(project,changed){this.project=project;this.project.transport??=defaultTransport();this.changed=changed;this.context=null;this.buffers=new Map();this.midiBuffers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();this.sampleBuffers=new Map();this.active=new Map();this.pending=new Map();this.follows=new Map();this.activeScene=null;this.pendingScene=null;this.sceneFollow=null;this.gateHolds=new Map();this.overrides=new Set();this.automationOverrides=new Set();this.nodes=new Set();this.clickNodes=new Set();this.records=new Map();this.playing=false;this.recording=false;this.mode='session';this.nextBeat=0;this.position=0;this.insertMarker=0;this.playGeneration=0;this.masterVolume=project.master??.8;}
   async init(resume=true){if(!this.context){this.context=new AudioContext();this.master=this.context.createGain();this.master.gain.value=this.masterVolume;this.compressor=this.context.createDynamicsCompressor();this.master.connect(this.compressor);this.compressor.connect(this.context.destination);this.mixers=new Map();this.resetMixers();}if(resume)await this.context.resume();}
   channels(){return automationChannels(this.project);}
   mixer(id){return this.mixers?.get(id)||this.returnMixers?.get(id);}
@@ -116,9 +117,20 @@ export class Engine {
   }
   click(time,accent=false){
     const osc=this.context.createOscillator(),gain=this.context.createGain();osc.frequency.value=accent?1500:1000;
-    gain.gain.setValueAtTime(.08,time);gain.gain.exponentialRampToValueAtTime(.0001,time+.035);
-    osc.connect(gain);gain.connect(this.master);osc.start(time);osc.stop(time+.04);
-    this.nodes.add(osc);osc.onended=()=>{this.nodes.delete(osc);osc.disconnect();gain.disconnect();};return osc;
+    gain.gain.setValueAtTime(Math.max(.0001,.128*metronomeLevel(this.project.transport)),time);gain.gain.exponentialRampToValueAtTime(.0001,time+.035);
+    osc.connect(gain);gain.connect(this.context.destination);osc.start(time);osc.stop(time+.04);
+    this.nodes.add(osc);this.clickNodes.add(osc);osc.onended=()=>{this.nodes.delete(osc);this.clickNodes.delete(osc);osc.disconnect();gain.disconnect();};return osc;
+  }
+  clearMetronomeClicks(preserveCountIn=false){for(const node of this.clickNodes){if(preserveCountIn&&this.inputCountInNodes?.has(node))continue;try{node.stop();}catch{}this.clickNodes.delete(node);}}
+  startInputMetronome(plan){
+    this.stopInputMetronome();this.inputClickClock=new InputClickClock({...plan,bpm:this.project.bpm});this.inputClickNodes=new Set();this.inputCountInNodes=new Set();
+    const tick=()=>{const clock=this.inputClickClock;if(!clock)return;const now=this.context.currentTime;for(const event of clock.events(now,{playing:this.playing,enabled:metronomeAudible(this.project.transport,{recording:true})})){if(metronomeLevel(this.project.transport)===0)continue;const node=this.click(event.time,event.accent);this.inputClickNodes.add(node);if(event.time<clock.start)this.inputCountInNodes.add(node);const end=node.onended;node.onended=()=>{this.inputClickNodes?.delete(node);this.inputCountInNodes?.delete(node);end?.();};}};
+    tick();this.inputClickTimer=setInterval(tick,25);
+  }
+  stopInputMetronome(){
+    const hadClock=!!this.inputClickClock;this.inputClickClock?.stop();this.inputClickClock=null;clearInterval(this.inputClickTimer);
+    for(const node of this.inputClickNodes||[]){try{node.stop();}catch{}}this.inputClickNodes?.clear();this.inputCountInNodes?.clear();
+    if(hadClock&&this.project.transport.metronomeRecordOnly&&!this.recording&&!this.automationTake)this.clearMetronomeClicks();
   }
   launchBoundary(clipId,earliest=Math.max(this.rawBeat()+.02,this.nextBeat)){return nextLaunchBeat(earliest,this.project.transport.launchQuantization??4,this.project.clips[clipId]?.launch?.quantization??'global');}
   sourcePhase(trackId,beat){
@@ -270,7 +282,7 @@ export class Engine {
   tick(){this.advanceAutomationRecording();let launchChanged=false;const spb=60/this.project.bpm,horizon=this.context.currentTime+.12;
     // Audio-clock scheduling; UI animation never determines playback time.
     while(this.origin+this.nextBeat*spb<horizon){const beat=this.nextBeat,time=this.origin+beat*spb,pos=timelineBeat(beat,this.project.transport,this.mode);let step=pendingQuantum(beat,quantumLength(beat,this.project.transport,this.mode),this.pending);
-      if(this.project.transport.metronome&&Math.abs(pos-Math.round(pos))<1e-6&&time>=this.context.currentTime)this.click(time,Math.round(pos)%4===0);
+      if(metronomeAudible(this.project.transport,{recording:!!(this.recording||this.automationTake||this.inputOverdub&&beat>=(this.inputOverdub.countInEndBeat??-Infinity)||this.inputClickClock&&time>=this.inputClickClock.start),countingIn:!!(this.inputClickClock&&time<this.inputClickClock.start||this.inputOverdub?.countInEndBeat!==undefined&&beat<this.inputOverdub.countInEndBeat)})&&Math.abs(pos-Math.round(pos))<1e-6&&time>=this.context.currentTime)this.click(time,Math.round(pos)%4===0);
       if(this.processSceneFollow(beat))launchChanged=true;
       this.processFollows(beat);
       for(const [id,p]of this.pending)if(p.beat<=beat+1e-7){p.appliedBeat=beat;this.voiceSchedulers.get(this.context)?.release(id,time);this.closeRecord(id,beat);if(p.back){this.overrides.delete(id);this.active.delete(id);this.follows.delete(id);}else this.activateClip(id,p.clipId,beat,p.legato,p.slot);if(p.gate?.repeat&&p.gate.interval>0&&this.gateHolds.get(id)===p.gate)this.pending.set(id,{...p,appliedBeat:undefined,beat:beat+p.gate.interval});else this.pending.delete(id);launchChanged=true;}

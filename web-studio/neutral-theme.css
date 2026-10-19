@@ -89,3 +89,8 @@ body.studio-shell{grid-template-rows:49px 32px minmax(0,1fr) 22px}
 #history-summary,#history-status{min-height:1.5em;overflow-wrap:anywhere}
 
 .clip-grid-line{position:absolute;top:0;bottom:0;width:1px;background:#85898d55;pointer-events:none}
+
+#metronome-dialog{width:min(430px,94vw)}
+#metronome-dialog>label{display:flex;align-items:center;gap:9px;margin:16px 0}
+#metronome-volume{flex:1;min-width:70px}
+#tap-tempo{padding:3px 6px;min-height:24px}
