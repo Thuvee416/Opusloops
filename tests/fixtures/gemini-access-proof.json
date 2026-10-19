@@ -1,0 +1,81 @@
+{
+  "credentialName": "OPUS LOOPS \u2014 Odesa Gemini",
+  "googleProject": "gen-lang-client-0774760664",
+  "googleTier": "Free tier",
+  "awsSecretName": "opusloops/ai/gemini",
+  "storageReadbackVerified": true,
+  "temporaryCredentialFileRemoved": true,
+  "modelsListHttpStatus": 200,
+  "argonFreeTierQuota": 0,
+  "activeProductionProviderUnchanged": "amazon.nova-pro-v1:0",
+  "comparisons": [
+    {
+      "model": "gemini-3.8-flash",
+      "at": "2026-10-19T20:59:21.093Z",
+      "scorable": false,
+      "reason": "Requests failed at provider; no musical-quality comparison is possible.",
+      "cases": [
+        {
+          "id": "engineer-reference",
+          "milliseconds": 2935,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 503. No plan was applied."
+        },
+        {
+          "id": "song-reference",
+          "milliseconds": 15563,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 503. No plan was applied."
+        },
+        {
+          "id": "described-mix",
+          "milliseconds": 5403,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 503. No plan was applied."
+        },
+        {
+          "id": "original-composition",
+          "milliseconds": 59808,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 503. No plan was applied."
+        }
+      ]
+    },
+    {
+      "model": "gemini-4-argon",
+      "at": "2026-10-19T20:58:31.800Z",
+      "scorable": false,
+      "reason": "Requests failed at provider; no musical-quality comparison is possible.",
+      "cases": [
+        {
+          "id": "engineer-reference",
+          "milliseconds": 330,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 429. No plan was applied."
+        },
+        {
+          "id": "song-reference",
+          "milliseconds": 227,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 429. No plan was applied."
+        },
+        {
+          "id": "described-mix",
+          "milliseconds": 161,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 429. No plan was applied."
+        },
+        {
+          "id": "original-composition",
+          "milliseconds": 160,
+          "error": "agent_provider_error",
+          "message": "Planning provider returned HTTP 429. No plan was applied."
+        }
+      ]
+    }
+  ],
+  "flashInteractionsProbe": {
+    "httpStatus": 503,
+    "reason": "Google reported temporary high demand"
+  }
+}
