@@ -1,0 +1,33 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const api=async()=>({...await import('../web-studio/empty-midi.js'),...await import('../web-studio/model.js'),...await import('../web-studio/history.js'),...await import('../web-studio/track-groups.js')});
+test('fresh-set creation targets Session, while Arrangement follows explicit track and exact range without stale slot context',async()=>{
+ const t=await api(),p=t.emptyProject(),id=p.tracks[0].id;p.tracks.push({...t.makeTrack('Second'),id:'second'});
+ assert.deepEqual(t.emptyMidiTarget(p,{view:'session'}),{view:'session',slots:[{trackId:id,scene:0}],length:4});
+ const state={view:'arrangement',deviceTrackId:'second',selectedSlots:[{trackId:id,scene:1}],laneTrackId:id,range:{start:12.25,length:7.5}};assert.deepEqual(t.emptyMidiTarget(p,state),{view:'arrangement',trackId:'second',start:12.25,length:7.5});
+ assert.equal(t.emptyMidiTarget(p,{...state,deviceTrackId:null,laneTrackId:'second'}).trackId,'second');assert.equal(t.emptyMidiTarget(p,{view:'arrangement',insertBeat:20}).start,20);
+ assert.deepEqual(t.emptyMidiTarget(p,{view:'session',deviceTrackId:'second',trackIds:['second'],selectedSlots:[{trackId:id,scene:0}],scene:2}).slots,[{trackId:'second',scene:2}]);assert.throws(()=>t.emptyMidiTarget(p,{view:'session',deviceTrackId:'return-id',trackIds:[id]}));
+});
+test('multiple selected empty Session slots receive independent editable clips with default launch settings',async()=>{
+ const t=await api(),p=t.emptyProject(),id=p.tracks[0].id,before=structuredClone(p),r=t.createEmptyMidi(p,{view:'session',slots:[{trackId:id,scene:1},{trackId:id,scene:3}]});assert.deepEqual(p,before);assert.equal(r.clips.length,2);assert.notEqual(r.clips[0],r.clips[1]);assert.deepEqual(r.project.tracks[0].slots,[null,r.clips[0],null,r.clips[1]]);assert.deepEqual(r.project.arrangement,[]);
+ for(const id of r.clips){const c=r.project.clips[id];assert.equal(c.kind,'midi');assert.equal(c.beats,4);assert.equal(c.launch,undefined);assert.deepEqual(c.notes,[]);}r.project.clips[r.clips[0]].notes.push({pitch:60,start:0,duration:1,velocity:.8});assert.deepEqual(r.project.clips[r.clips[1]].notes,[]);t.validateProject(r.project);
+});
+test('Arrangement creation fills the requested range and leaves Session placements, instruments and adjacent clips intact',async()=>{
+ const t=await api(),{coreSongProject}=await import('./fixtures/core-song-project.mjs'),p=coreSongProject().project,id=p.tracks[0].id,start=Math.max(...p.arrangement.map(r=>r.start+r.length))+.125,before=structuredClone(p),r=t.createEmptyMidi(p,{view:'arrangement',trackId:id,start,length:5.75});assert.deepEqual(p,before);assert.deepEqual(r.project.tracks,before.tracks);assert.equal(r.regions.length,1);assert.equal(r.slots.length,0);assert.deepEqual(r.project.arrangement.slice(0,-1),before.arrangement);assert.deepEqual(r.project.arrangement.at(-1),{id:r.regions[0],clipId:r.clips[0],trackId:id,start,length:5.75,offset:0});assert.equal(r.project.clips[r.clips[0]].beats,5.75);for(const [key,c]of Object.entries(before.clips))assert.deepEqual(r.project.clips[key],c);t.validateProject(r.project);
+});
+test('occupied Session slots and overlapping active or inactive Arrangement clips reject atomically',async()=>{
+ const t=await api(),p=t.emptyProject(),id=p.tracks[0].id,first=t.createEmptyMidi(p,{view:'session',slots:[{trackId:id,scene:0}]}).project,occupied=t.createEmptyMidi(first,{view:'arrangement',trackId:id,start:4,length:4}).project,before=JSON.stringify(occupied);
+ for(const target of [{view:'session',slots:[{trackId:id,scene:1},{trackId:id,scene:0}]},{view:'arrangement',trackId:id,start:3,length:2},{view:'arrangement',trackId:id,start:6,length:4}]){assert.throws(()=>t.createEmptyMidi(occupied,target),/Existing Clips/);assert.equal(JSON.stringify(occupied),before);}
+ occupied.arrangement[0].active=false;assert.throws(()=>t.createEmptyMidi(occupied,{view:'arrangement',trackId:id,start:4,length:4}));assert.doesNotThrow(()=>t.createEmptyMidi(occupied,{view:'arrangement',trackId:id,start:8,length:4}));
+});
+test('next-empty Session creation retains the legacy explicit append action with valid expanded scene metadata',async()=>{
+ const t=await api(),p=t.emptyProject(),id=p.tracks[0].id;p.sceneNames=['A','B','C','D'];p.sceneFollows=[null,null,null,null];let current=p;for(let i=0;i<4;i++)current=t.createEmptyMidi(current,{view:'session-next',trackId:id}).project;const before=structuredClone(current),r=t.createEmptyMidi(current,{view:'session-next',trackId:id});assert.deepEqual(current,before);assert.equal(r.project.scenes,5);assert.equal(r.slots[0].scene,4);assert.equal(r.project.sceneNames.length,5);assert.deepEqual(r.project.sceneNames.slice(0,4),before.sceneNames);assert.equal(r.project.sceneFollows.length,5);t.validateProject(r.project);
+});
+test('group destinations, duplicate or stale slots, project limits and invalid bounds cannot create partial clips',async()=>{
+ const t=await api(),p=t.emptyProject(),id=p.tracks[0].id,before=JSON.stringify(p);
+ for(const target of [{view:'session',slots:[]},{view:'session',slots:[{trackId:id,scene:0},{trackId:id,scene:0}]},{view:'session',slots:[{trackId:'missing',scene:0}]},{view:'session',slots:[{trackId:id,scene:4}]},{view:'arrangement',trackId:id,start:16383,length:4},{view:'arrangement',trackId:id,start:NaN},{view:'arrangement',trackId:id,start:0,length:.125},{view:'arrangement',trackId:id,start:0,length:257}]){assert.throws(()=>t.createEmptyMidi(p,target));assert.equal(JSON.stringify(p),before);}
+ const group=t.editTrackGroup(p,{action:'create',ids:[id],name:'Group'}).project;assert.throws(()=>t.createEmptyMidi(group,{view:'arrangement',trackId:group.tracks[0].id,start:0,length:4}),/Regular Track/);
+ const full=structuredClone(p);for(let n=0;n<512;n++)full.clips['c'+n]={id:'c'+n,name:'Clip',kind:'midi',beats:4,sourceBpm:120,notes:[]};assert.throws(()=>t.createEmptyMidi(full,{view:'session',slots:[{trackId:id,scene:0}]}),/512/);assert.equal(Object.keys(full.clips).length,512);
+});
+test('creating several clips is one complete-project Undo and Redo, and saving preserves new destinations exactly',async()=>{
+ const t=await api(),{coreSongProject}=await import('./fixtures/core-song-project.mjs'),p=coreSongProject().project,h=new t.History(p),before=JSON.stringify(p),track=p.tracks[0],slots=track.slots.flatMap((id,scene)=>id===null?[{trackId:track.id,scene}]:[]);assert.ok(slots.length);const result=t.createEmptyMidi(p,{view:'session',slots});h.commit(result.project);assert.equal(JSON.stringify(h.undo()),before);assert.deepEqual(h.redo(),result.project);const saved=JSON.parse(JSON.stringify(result.project));t.validateProject(saved);assert.deepEqual(saved,result.project);
+});
