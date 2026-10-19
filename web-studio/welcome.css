@@ -1,62 +1,62 @@
-/* A single welcome surface, grounded in Studio chrome and the supplied landscape. */
-#opus-welcome{--welcome-surface:#e5e6e4;--welcome-ink:#24292b;--welcome-muted:#555d60;--welcome-line:#24292b24;--welcome-purple:#74628f;color-scheme:light;width:min(820px,calc(100vw - 32px));max-width:none;max-height:88dvh;padding:0;border:1px solid #a6abaa;border-radius:12px;background:var(--welcome-surface);color:var(--welcome-ink);box-shadow:0 30px 100px #12182045;font:12px/1.6 Arial,Helvetica,sans-serif;overflow:hidden}
+/* One continuous Silk surface; every content layer shares its quiet neutral wash. */
+#opus-welcome{--welcome-surface:#e5eae7;--welcome-ink:#20292a;--welcome-muted:#434f50;--welcome-line:#283e3b24;color-scheme:light;width:min(820px,calc(100vw - 32px));max-width:none;max-height:88dvh;padding:0;border:1px solid #a6abaa;border-radius:12px;background:var(--welcome-surface);color:var(--welcome-ink);box-shadow:0 30px 100px #12182045;font:12px/1.6 Arial,Helvetica,sans-serif;overflow:hidden;isolation:isolate}
 #opus-welcome[open]{display:flex;flex-direction:column;animation:welcome-in .5s cubic-bezier(.2,.7,.2,1) both}
 #opus-welcome::backdrop{background:#262b2d80;backdrop-filter:blur(7px)}
+#opus-welcome::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(110deg,#edf1eedb 5%,#edf1eed6 50%,#edf1eed1 100%)}
+#opus-welcome .welcome-silk{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:var(--welcome-surface)}
+#opus-welcome .silk-canvas{display:block;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #opus-welcome *{box-sizing:border-box}
 #opus-welcome :is(button,summary){font:inherit;cursor:pointer}
 #opus-welcome :is(button,summary,.welcome-scroll):focus-visible{outline:2px solid #227e72;outline-offset:-3px}
-#opus-welcome .welcome-top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:15px 26px 0;background:var(--welcome-surface);position:relative;z-index:2}
+#opus-welcome .welcome-top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:15px 26px 0;background:transparent;position:relative;z-index:2}
 #opus-welcome .welcome-brand{display:flex;align-items:center;gap:11px;font-size:10px;font-weight:600;letter-spacing:1.5px}
 #opus-welcome .welcome-brand img{width:27px;height:20px;object-fit:contain}
 #opus-welcome .welcome-close{display:grid;place-items:center;width:26px;height:26px;padding:0;border:1px solid transparent;border-radius:50%;background:transparent;color:#596164;transition:background .15s,color .15s}
 #opus-welcome .welcome-close:hover{background:#24292b0d;color:#202527}
 #opus-welcome .welcome-close .studio-icon{width:12px;height:12px}
-#opus-welcome .welcome-scroll{overflow-y:auto;min-height:0;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#919b9a transparent}
-#opus-welcome .welcome-hero{position:relative;isolation:isolate;min-height:330px;overflow:hidden;background:linear-gradient(120deg,var(--welcome-surface) 28%,#d5d7df 100%)}
-#opus-welcome .welcome-hero-copy{position:relative;z-index:2;padding:35px 38px 90px;max-width:75%;pointer-events:none}
+#opus-welcome .welcome-scroll{position:relative;z-index:2;overflow-y:auto;min-height:0;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#919b9a transparent}
+#opus-welcome .welcome-hero{position:relative;isolation:isolate;min-height:275px;overflow:hidden;background:transparent}
+#opus-welcome .welcome-hero-copy{position:relative;z-index:2;padding:35px 38px 45px;max-width:85%;pointer-events:none}
 #opus-welcome .welcome-eyebrow{margin:0 0 12px;font-size:8px;line-height:1.4;font-weight:600;letter-spacing:1.5px;color:var(--welcome-muted)}
 #opus-welcome .welcome-hero .welcome-eyebrow{letter-spacing:2.6px;font-size:9px}
 #opus-welcome h1{margin:0;font-size:clamp(34px,4.8vw,49px);font-weight:500;line-height:1.05;letter-spacing:-2.1px;color:var(--welcome-ink)}
-#opus-welcome h1 span{color:#6a5a84}
+#opus-welcome h1 span{color:#315e56}
 #opus-welcome .welcome-description{margin:19px 0 0;font-size:12px;line-height:1.65;color:#444e52;max-width:350px}
-#opus-welcome .welcome-landscape{position:absolute;z-index:0;inset:auto 0 0;height:145px;background:url('assets/opus-brand-landscape-v2.jpg') center bottom / 100% auto no-repeat;mask-image:linear-gradient(transparent 25%,#000 50%,#000 70%,transparent);opacity:.8}
-#opus-welcome .welcome-ascii{position:absolute;z-index:1;inset:0 0 0 35%;opacity:.6;mask-image:linear-gradient(90deg,transparent,#000 48%);overflow:hidden}
-#opus-welcome .gradient-ascii-canvas{display:block;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#opus-welcome .welcome-hero-note{position:absolute;z-index:2;right:28px;bottom:14px;font:7px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1.2px;color:#686978}
-#opus-welcome .welcome-tempo{display:grid;grid-template-columns:1fr 1fr;gap:34px;padding:29px 38px 24px;background:linear-gradient(#e5e6e4,#e1e4e1)}
-#opus-welcome .welcome-available{display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:9px;font-weight:600;color:#21695c}
+#opus-welcome .welcome-hero-note{position:absolute;z-index:2;right:28px;bottom:14px;font:7px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:1.2px;color:#434f50}
+#opus-welcome .welcome-tempo{display:grid;grid-template-columns:1fr 1fr;gap:34px;padding:29px 38px 24px;background:transparent}
+#opus-welcome .welcome-available{display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:9px;font-weight:600;color:#24564c}
 #opus-welcome .welcome-available>span:first-child{width:5px;height:5px;border-radius:50%;background:#38957e;box-shadow:0 0 0 3px #38957e13}
-#opus-welcome .welcome-version{border-left:1px solid #307f6c40;padding-left:7px;margin-left:2px;font-size:8px;color:#58716b}
+#opus-welcome .welcome-version{border-left:1px solid #307f6c40;padding-left:7px;margin-left:2px;font-size:8px;color:#43534c}
 #opus-welcome .welcome-tempo-copy .welcome-eyebrow{font-size:7px;letter-spacing:1px;margin-bottom:6px}
 #opus-welcome h2{margin:0 0 10px;font-size:28px;line-height:1.15;letter-spacing:-.8px;font-weight:400}
 #opus-welcome h2 span{font-weight:600}
 #opus-welcome .welcome-tempo-copy>p:not(.welcome-eyebrow){margin:0;font-size:11px;line-height:1.7;color:var(--welcome-muted)}
-#opus-welcome .welcome-tempo-copy>.welcome-account-note{font-size:9px!important;margin-top:11px!important;line-height:1.5!important;color:#68706f!important}
-#opus-welcome .welcome-directions{align-self:center;padding:17px 18px 13px;border:1px solid #59666326;border-radius:7px;background:#f3f5f04d}
+#opus-welcome .welcome-tempo-copy>.welcome-account-note{font-size:9px!important;margin-top:11px!important;line-height:1.5!important;color:#434f50!important}
+#opus-welcome .welcome-directions{align-self:center;padding:17px 18px 13px;border:1px solid #435d5630;border-radius:7px;background:#f4f7f380}
 #opus-welcome .welcome-directions .welcome-eyebrow{font-size:7px;letter-spacing:1.1px;margin-bottom:10px}
 #opus-welcome .welcome-prompt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 0;border:0;border-bottom:1px solid #52605c1c;border-radius:0;background:transparent;color:#35433f;font-size:10px;text-align:left;line-height:1.4;transition:color .2s,background .2s}
 #opus-welcome .welcome-prompt:last-of-type{border-bottom:0}
-#opus-welcome .welcome-prompt>.studio-icon{flex:none;width:12px;height:12px;color:#65827a;transition:transform .2s}
+#opus-welcome .welcome-prompt>.studio-icon{flex:none;width:12px;height:12px;color:#506d63;transition:transform .2s}
 #opus-welcome .welcome-prompt:hover{background:#c8ddd133;color:#226553}
 #opus-welcome .welcome-prompt:hover>.studio-icon{transform:translateX(3px)}
-#opus-welcome .welcome-prompt-note{margin:9px 0 0;font-size:8px;color:#69736f}
-#opus-welcome .welcome-workflows{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 18px;padding:5px 38px 22px;background:#e1e4e1;color:#5a6361;font-size:8px}
+#opus-welcome .welcome-prompt-note{margin:9px 0 0;font-size:8px;color:#434f50}
+#opus-welcome .welcome-workflows{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 18px;padding:5px 38px 22px;background:transparent;color:#465652;font-size:8px}
 #opus-welcome .welcome-workflows>span{display:inline-flex;align-items:center;gap:6px}
 #opus-welcome .welcome-workflows .studio-icon{width:12px;height:12px;stroke-width:1.2}
 #opus-welcome .welcome-roadmap{margin:0 38px;background:transparent;border-top:1px solid var(--welcome-line)}
 #opus-welcome .welcome-roadmap>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 0;font-size:10px;color:#424d4c}
 #opus-welcome summary::-webkit-details-marker{display:none}
-#opus-welcome .welcome-roadmap small{margin-left:auto;font-size:9px;color:#77807d}
+#opus-welcome .welcome-roadmap small{margin-left:auto;font-size:9px;color:#434f50}
 #opus-welcome .welcome-roadmap summary>.studio-icon{width:11px;height:11px;transition:transform .2s}
 #opus-welcome .welcome-roadmap[open] summary>.studio-icon{transform:rotate(180deg)}
 #opus-welcome .welcome-upcoming{display:grid;grid-template-columns:1fr 1fr;gap:12px 26px;padding:0 0 19px;animation:welcome-details-in .25s ease-out}
 #opus-welcome h3{display:flex;align-items:center;gap:8px;margin:0 0 5px;font-size:11px;font-weight:500}
-#opus-welcome h3 span{font-size:7px;font-weight:400;color:#727a77;border:1px solid #59666330;padding:1px 5px;border-radius:8px}
+#opus-welcome h3 span{font-size:7px;font-weight:400;color:#434f50;border:1px solid #59666330;padding:1px 5px;border-radius:8px}
 #opus-welcome .welcome-upcoming p{margin:0;font-size:10px;color:var(--welcome-muted)}
-#opus-welcome .welcome-upcoming>.welcome-future-note{grid-column:1/-1;font-size:8px;color:#727a77}
-#opus-welcome .welcome-footer{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:16px;min-height:76px;height:auto;grid-area:auto;padding:17px 27px;background:var(--welcome-surface);color:var(--welcome-ink);border:0;border-top:1px solid var(--welcome-line)}
+#opus-welcome .welcome-upcoming>.welcome-future-note{grid-column:1/-1;font-size:8px;color:#434f50}
+#opus-welcome .welcome-footer{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:16px;min-height:76px;height:auto;grid-area:auto;padding:17px 27px;background:transparent;color:var(--welcome-ink);border:0;border-top:1px solid var(--welcome-line)}
 #opus-welcome .welcome-footer p{display:block;margin:0;font-size:10px;color:#404b48}
-#opus-welcome .welcome-footer p span{display:block;margin-top:3px;font-size:8px;color:#747d78}
+#opus-welcome .welcome-footer p span{display:block;margin-top:3px;font-size:8px;color:#434f50}
 #opus-welcome .welcome-enter{display:flex;align-items:center;justify-content:center;gap:18px;flex:none;padding:10px 17px;border:1px solid #347666;border-radius:5px;background:#477d6e;color:#fafcf9;font-size:11px;font-weight:500;transition:background .2s,box-shadow .2s}
 #opus-welcome .welcome-enter .studio-icon{width:14px;height:14px;transition:transform .2s}
 #opus-welcome .welcome-enter:hover{background:#396e5f;box-shadow:0 2px 8px #335a4930}
@@ -65,6 +65,6 @@
 @keyframes welcome-in{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes welcome-out{to{opacity:0;transform:translateY(5px) scale(.995)}}
 @keyframes welcome-details-in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
-@media(max-width:600px){#opus-welcome{width:calc(100vw - 20px);max-height:90dvh;border-radius:9px}#opus-welcome .welcome-top{padding:13px 17px 0}#opus-welcome .welcome-brand{font-size:9px;letter-spacing:1.2px}#opus-welcome .welcome-hero{min-height:332px}#opus-welcome .welcome-hero-copy{max-width:none;padding:32px 24px 100px}#opus-welcome h1{font-size:37px;letter-spacing:-1.6px}#opus-welcome .welcome-description{font-size:11px;max-width:270px}#opus-welcome .welcome-landscape{height:130px;background-size:auto 320px;background-position:right bottom}#opus-welcome .welcome-ascii{inset:0 0 0 28%;opacity:.35}#opus-welcome .welcome-hero-note{right:15px;bottom:11px;font-size:6px;letter-spacing:.7px}#opus-welcome .welcome-tempo{grid-template-columns:1fr;gap:20px;padding:24px}#opus-welcome h2{font-size:27px}#opus-welcome .welcome-directions{padding:15px 17px 12px}#opus-welcome .welcome-prompt{font-size:11px}#opus-welcome .welcome-workflows{justify-content:flex-start;gap:12px 16px;padding:0 24px 21px}#opus-welcome .welcome-workflows>span{width:calc(50% - 8px);font-size:7px}#opus-welcome .welcome-roadmap{margin:0 24px}#opus-welcome .welcome-upcoming{grid-template-columns:1fr;gap:15px}#opus-welcome .welcome-footer{padding:13px 17px;min-height:74px;gap:10px}#opus-welcome .welcome-footer p{font-size:9px;max-width:170px}#opus-welcome .welcome-footer p span{font-size:7px;line-height:1.4}#opus-welcome .welcome-enter{padding:10px 12px;gap:10px;font-size:10px}}
+@media(max-width:600px){#opus-welcome{width:calc(100vw - 20px);max-height:90dvh;border-radius:9px}#opus-welcome .welcome-top{padding:13px 17px 0}#opus-welcome .welcome-brand{font-size:9px;letter-spacing:1.2px}#opus-welcome .welcome-hero{min-height:275px}#opus-welcome .welcome-hero-copy{max-width:none;padding:32px 24px 40px}#opus-welcome h1{font-size:37px;letter-spacing:-1.6px}#opus-welcome .welcome-description{font-size:11px;max-width:270px}#opus-welcome .welcome-hero-note{right:15px;bottom:11px;font-size:6px;letter-spacing:.7px}#opus-welcome .welcome-tempo{grid-template-columns:1fr;gap:20px;padding:24px}#opus-welcome h2{font-size:27px}#opus-welcome .welcome-directions{padding:15px 17px 12px}#opus-welcome .welcome-prompt{font-size:11px}#opus-welcome .welcome-workflows{justify-content:flex-start;gap:12px 16px;padding:0 24px 21px}#opus-welcome .welcome-workflows>span{width:calc(50% - 8px);font-size:7px}#opus-welcome .welcome-roadmap{margin:0 24px}#opus-welcome .welcome-upcoming{grid-template-columns:1fr;gap:15px}#opus-welcome .welcome-footer{padding:13px 17px;min-height:74px;gap:10px}#opus-welcome .welcome-footer p{font-size:9px;max-width:170px}#opus-welcome .welcome-footer p span{font-size:7px;line-height:1.4}#opus-welcome .welcome-enter{padding:10px 12px;gap:10px;font-size:10px}}
 @media(max-width:350px){#opus-welcome h1{font-size:32px}#opus-welcome .welcome-hero-copy{padding-left:20px;padding-right:20px}#opus-welcome .welcome-footer p{max-width:135px}}
 @media(prefers-reduced-motion:reduce){#opus-welcome,#opus-welcome *{animation:none!important;transition:none!important}}

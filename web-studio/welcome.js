@@ -5,10 +5,10 @@ const welcome = document.createElement('dialog');
 welcome.id = 'opus-welcome';
 welcome.setAttribute('aria-labelledby', 'welcome-title');
 welcome.innerHTML = `
+  <div class="welcome-silk" aria-hidden="true"></div>
   <div class="welcome-top"><div class="welcome-brand"><img class="opus-logo" src="assets/opus-mark.svg" alt="" width="27" height="20"><span>OPUS LOOPS</span></div><button class="welcome-close" aria-label="Close welcome" autofocus>${icon('close')}</button></div>
   <div class="welcome-scroll" tabindex="0" aria-label="About OPUS LOOPS And Odesa">
     <section class="welcome-hero" aria-labelledby="welcome-title">
-      <div class="welcome-landscape" aria-hidden="true"></div><div class="welcome-ascii" aria-hidden="true"></div>
       <div class="welcome-hero-copy"><p class="welcome-eyebrow">AI NATIVE DAW</p><h1 id="welcome-title">Natural Language.<br><span>Real Control.</span></h1><p class="welcome-description">Your ideas, in your own words.<br>An editable music studio that keeps you in control.</p></div>
       <span class="welcome-hero-note" aria-hidden="true">YOUR SOUND. YOUR DIRECTION.</span>
     </section>
@@ -22,7 +22,7 @@ welcome.innerHTML = `
   <footer class="welcome-footer"><p>Work With AI. Stay The Artist.<span>Projects save in this browser. Export a copy to keep.</span></p><button class="welcome-enter">Enter Studio ${icon('right')}</button></footer>`;
 document.body.append(welcome);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const field = welcome.querySelector('.welcome-ascii');
+const field = welcome.querySelector('.welcome-silk');
 let previousFocus, disposeField, motionGeneration = 0, closeTimer, artFrame;
 function stopMotion() {
   motionGeneration++;
@@ -33,19 +33,19 @@ function stopMotion() {
 }
 async function startMotion() {
   const generation = ++motionGeneration;
-  if (reduceMotion.matches || !welcome.open) return;
+  if (!welcome.open) return;
   try {
-    const { mountGradientASCII } = await import('./gradient-ascii.js');
-    if (generation !== motionGeneration || !welcome.open || reduceMotion.matches) return;
-    disposeField = mountGradientASCII(field, {
-      colors: ['#555069', '#8c75c5', '#cec8e8', '#f1f0f5'], shape: 'horizon',
-      characters: ' .:+*#', cellSize: 14, density: .62, glyphOpacity: .7,
-      gradientOpacity: .35, glow: .12, depthOfField: .12, flicker: .08,
-      softness: .8, flow: .4, speed: .35, grain: .025, dpr: 1.5,
-      mouseInteraction: true, clickEffect: 'none', intro: true
+    const { mountSilk } = await import('./silk.js');
+    if (generation !== motionGeneration || !welcome.open) return;
+    disposeField = mountSilk(field, {
+      color:'#aeb9b9', sheenColor:'#ffffff', lightMode:true,
+      speed:2.2, scale:1, rotation:-.18, sheen:.35, depth:.45,
+      glow:.15, noiseIntensity:.4, ripple:.45, wave:.65, dpr:1.25,
+      mouseInteraction:true, interactionStrength:.3, clickRipple:false, eventTarget:welcome,
+      intro:!reduceMotion.matches, paused:reduceMotion.matches
     });
   } catch {
-    // The supplied landscape stays visible if optional WebGL artwork is unavailable.
+    // The neutral modal surface stays readable if optional WebGL artwork is unavailable.
     field.replaceChildren();
   }
 }
