@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "result": {
+    "stemWaves": [
+      {
+        "name": "01-track-Club-Kick.wav",
+        "frames": 101770,
+        "sampleRate": 44100,
+        "nonzero": true
+      },
+      {
+        "name": "02-track-Room-Clap.wav",
+        "frames": 101770,
+        "sampleRate": 44100,
+        "nonzero": true
+      }
+    ],
+    "maxDifference": 3.0994415283203125e-06,
+    "rmsDifference": 4.691100664233758e-08,
+    "resumes": 0,
+    "bytes": 4884968,
+    "frames": 814154,
+    "sampleRate": 44100,
+    "peak": 0.7142757177352905,
+    "baselineHash": "cf294ff9295a966a01b9adc60b8988f9edb98912489a3a25926ea0d610025434",
+    "blockedHash": "291459f02f0426db6123c84b3382d20de36339b06edf4d5d6bcdceea645581a8",
+    "stemBytes": 1224113,
+    "stemChannels": 2,
+    "zipSignature": 67324752,
+    "sourceUnchanged": true,
+    "liveContextUntouched": true
+  },
+  "errors": [],
+  "scope": "Native Chromium offline WAV and selected-stem rendering with a controlled rejecting AudioContext.resume boundary. Normal/blocked WAV sample comparison within 0.00002 amplitude, nonzero PCM, original-project preservation. Not physical playback or browser-policy interoperability proof."
+}

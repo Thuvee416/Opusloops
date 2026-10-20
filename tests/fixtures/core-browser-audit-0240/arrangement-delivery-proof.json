@@ -1,0 +1,81 @@
+{
+  "status": "passed",
+  "multiTrackInsertCutPaste": true,
+  "globalMarkersAndUntouchedTrackPreserved": true,
+  "sourceAudioPreserved": true,
+  "threeUndoRedoExact": true,
+  "downloadedProjectReopenedExactly": true,
+  "stemsIdenticalAfterReopen": true,
+  "masterDifference": {
+    "max": 4.470348358154297e-08,
+    "rms": 0.04175893836794052,
+    "rmsDifference": 2.63076916802038e-09
+  },
+  "repeatedMasterDifference": {
+    "max": 8.568167686462402e-07,
+    "rms": 0.04175893835637124,
+    "rmsDifference": 1.3788756211027868e-08
+  },
+  "masterTolerance": 1e-05,
+  "alignedStemFrames": 441000,
+  "metrics": [
+    {
+      "channel": "pulse",
+      "opening": {
+        "max": 7.450580596923828e-09,
+        "rms": 0.013072116324929087,
+        "rmsDifference": 1.4001460733742474e-09
+      },
+      "shifted": {
+        "max": 7.450580596923828e-09,
+        "rms": 0.023047212597157585,
+        "rmsDifference": 1.5577088228460422e-09
+      },
+      "rejoined": {
+        "max": 7.450580596923828e-09,
+        "rms": 0.022686925818799074,
+        "rmsDifference": 7.453826898060166e-10
+      },
+      "moved": {
+        "max": 1.1175870895385742e-08,
+        "rms": 0.029035600661267126,
+        "rmsDifference": 2.292059493109166e-09
+      },
+      "gapPeak": 0
+    },
+    {
+      "channel": "texture",
+      "opening": {
+        "max": 7.450580596923828e-09,
+        "rms": 0.014378338004251477,
+        "rmsDifference": 1.4592730188179859e-09
+      },
+      "shifted": {
+        "max": 7.450580596923828e-09,
+        "rms": 0.02304756114163305,
+        "rmsDifference": 1.6794876020525507e-09
+      },
+      "rejoined": {
+        "max": 1.1175870895385742e-08,
+        "rms": 0.02354604953000977,
+        "rmsDifference": 1.6397451252120438e-09
+      },
+      "moved": {
+        "max": 1.1175870895385742e-08,
+        "rms": 0.02903603854492974,
+        "rmsDifference": 2.5132688279925285e-09
+      },
+      "gapPeak": 0
+    },
+    {
+      "channel": "untouched",
+      "unchanged": {
+        "max": 0,
+        "rms": 0.020035133445961535,
+        "rmsDifference": 0
+      }
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated Chromium real project import and application time-edit, Save shortcut, Undo/Redo, WAV and ZIP export controls. Two selected tracks with volume/pan automation and Arrangement fades, one untouched track. Master PCM tolerance 0.00001; stems must match exactly after reopen. Synthetic source audio; no personal project, physical playback or subjective quality check."
+}

@@ -69,3 +69,8 @@
 .piano-grid.draw-mode .piano-row,.piano-grid.draw-mode .piano-cell,.piano-grid.draw-mode .piano-note,.piano-grid.draw-mode .piano-note i{cursor:crosshair;touch-action:none}.piano-grid .draw-preview{pointer-events:none;opacity:.8;border-style:dashed}
 
 .piano-insert-marker{position:absolute;top:0;bottom:-1px;border-left:1px solid currentColor;color:var(--accent,#e5a14b);pointer-events:none;z-index:4;transform:translateX(-1px);animation:note-insert-blink 1.1s steps(2,end) infinite}@keyframes note-insert-blink{50%{opacity:.3}}@media(prefers-reduced-motion:reduce){.piano-insert-marker{animation:none}}
+
+/* MIDI time ranges retain the phrase's silence as well as its notes. */
+.piano-time-selection{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--accent,#e5a14b) 18%,transparent);border-inline:1px dashed var(--accent,#e5a14b);pointer-events:none;z-index:4}
+.piano-ruler{touch-action:none;cursor:crosshair}.piano-ruler .piano-time-selection{border-top:2px solid var(--accent,#e5a14b)}
+.piano-grid:not(.draw-mode) .piano-cell{touch-action:none}

@@ -1,0 +1,175 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "mode": "session",
+      "kind": "synth",
+      "rms": 0.03361645166838437,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "session",
+      "kind": "ensemble",
+      "rms": 0.0014115210013214868,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "session",
+      "kind": "sampler",
+      "rms": 0.023755425610302142,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "session",
+      "kind": "drums",
+      "rms": 0.025159511394325394,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "session",
+      "kind": "legacy",
+      "rms": 0.05302785670561054,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": false,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": true,
+      "stopCancelsPreparation": true
+    },
+    {
+      "mode": "session",
+      "kind": "legacy-effects",
+      "rms": 0.053424282638150855,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": false,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": true,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "arrangement",
+      "kind": "synth",
+      "rms": 0.034192692219667815,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "arrangement",
+      "kind": "ensemble",
+      "rms": 0.0030228567947035967,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "arrangement",
+      "kind": "sampler",
+      "rms": 0.023755425610302142,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "arrangement",
+      "kind": "drums",
+      "rms": 0.025168685100066212,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": true,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": false,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "arrangement",
+      "kind": "legacy",
+      "rms": 0.053803157523407266,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": false,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": true,
+      "stopCancelsPreparation": true
+    },
+    {
+      "mode": "arrangement",
+      "kind": "legacy-effects",
+      "rms": 0.053424282638150855,
+      "clockAndMixerRetained": true,
+      "unchangedVoiceRetained": false,
+      "undoExact": true,
+      "invalidEditRejected": true,
+      "realWorker": true,
+      "stopCancelsPreparation": false
+    },
+    {
+      "mode": "session",
+      "kind": "shared-source-spectrum",
+      "measurements": [
+        {
+          "oldBefore": -37.444026947021484,
+          "oldAfter": -147.34780883789062,
+          "newAfter": -37.89411163330078
+        },
+        {
+          "oldBefore": -37.02725601196289,
+          "oldAfter": -171.65643310546875,
+          "newAfter": -36.8604621887207
+        }
+      ],
+      "independentVoiceRetained": true,
+      "rapidEditLatestPitch": true
+    },
+    {
+      "mode": "arrangement",
+      "kind": "shared-source-spectrum",
+      "measurements": [
+        {
+          "oldBefore": -37.444026947021484,
+          "oldAfter": -146.58018493652344,
+          "newAfter": -37.89411163330078
+        },
+        {
+          "oldBefore": -37.02725601196289,
+          "oldAfter": -169.64468383789062,
+          "newAfter": -36.8604621887207
+        }
+      ],
+      "independentVoiceRetained": true,
+      "rapidEditLatestPitch": true
+    }
+  ],
+  "errors": [],
+  "scope": "Native isolated Chromium audio engine, Session and Arrangement loops, synth, ensemble, five-second one-shot sampler and drum pads, plus real Worker-rendered legacy MIDI with/without a pitch effect. Actual clock, mixer and unchanged voice identities, measured signal and exact data restoration. No physical-output/listening-quality, personal-project, microphone or provider claim."
+}
