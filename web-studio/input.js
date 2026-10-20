@@ -42,6 +42,7 @@ const loadedContexts=new WeakSet();
 export class AudioCapture {
   constructor(context,onFinish,{setTimer=setTimeout,clearTimer=clearTimeout}={}){this.context=context;this.onFinish=onFinish;this.active=false;this.chunks=[];this.connected=false;this.generation=0;this.setTimer=setTimer;this.clearTimer=clearTimer;}
   async connect(deviceId='',channels='stereo:0'){
+    if(this.recoverable)throw Error('Retry Saving The Captured Take Or Cancel It Before Reconnecting.');
     const selection=inputChannelSelection(channels);
     await this.disconnect();const generation=++this.generation;
     if(!navigator.mediaDevices?.getUserMedia)throw new Error('Audio input is unavailable in this browser. Open the studio over HTTPS.');
@@ -79,6 +80,7 @@ export class AudioCapture {
     this.monitor.gain.setTargetAtTime(active?level:0,now,.01);
   }
   start(bpm,startTime=this.context.currentTime,{maxBeats=256}={}){
+    if(this.recoverable)throw Error('Retry Saving The Captured Take Or Cancel It Before Recording Again.');
     if(!Number.isFinite(bpm)||bpm<=0)throw Error('Invalid Recording Tempo.');
     if(!Number.isFinite(maxBeats)||maxBeats<.25||maxBeats>256)throw Error('Invalid Recording Length Limit.');if(!Number.isFinite(startTime)||startTime<0)throw new Error('Invalid recording start time.');if(!this.connected)throw new Error('Connect an audio input first.');if(this.active)throw new Error('A take is already recording.');
     this.clearFinishTimer();this.finishRequest=null;this.interruption=null;this.bpm=bpm;this.chunks=[];this.active=true;this.completion=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.completion.catch(()=>{});
@@ -92,7 +94,13 @@ export class AudioCapture {
     this.finishTimer=this.setTimer(()=>this.interrupted('Audio Input Did Not Finish Responding.'),5000);
     try{this.processor.port.postMessage({type});}catch{this.interrupted('Audio Input Connection Was Lost.');}
   }
-  async cancel(){if(!this.active)return;this.requestFinish('cancel');try{await this.completion;}catch(error){if(error.name!=='AbortError')throw error;}}
+  async cancel(){if(this.recoverable){this.recoverable=null;this.chunks=[];return;}if(!this.active)return;this.requestFinish('cancel');try{await this.completion;}catch(error){if(error.name!=='AbortError')throw error;}}
+  retry(){
+    if(!this.recoverable)throw Error('No Captured Take Is Waiting To Be Saved.');
+    const {frames,recovery}=this.recoverable;
+    this.completion=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.completion.catch(()=>{});
+    this.complete(frames,recovery);return this.completion;
+  }
   async stop(){if(this.active)this.requestFinish('stop');return this.completion;}
   cancelled(){this.clearFinishTimer();this.active=false;this.chunks=[];this.reject?.(new DOMException('Recording Cancelled.','AbortError'));}
   inputEnded(){
@@ -117,10 +125,11 @@ export class AudioCapture {
       const received=this.chunks.reduce((sum,chunk)=>sum+chunk[0].length,0);
       if(!Number.isSafeInteger(frames)||frames!==received)throw new Error('Recorded Audio Is Incomplete. Reconnect The Input.');
       if(frames<128)throw new Error('The take was too short. Record a little longer.');
+      this.recoverable={frames,recovery};
       const sr=this.context.sampleRate,beats=Math.min(256,Math.ceil(frames/sr*this.bpm/60*4)/4),length=Math.max(frames,Math.ceil(beats*60/this.bpm*sr)),buffer=this.context.createBuffer(2,length,sr);let at=0;
       for(const chunk of this.chunks){for(let c=0;c<2;c++)buffer.copyToChannel(chunk[c],c,at);at+=chunk[0].length;}
-      this.chunks=[];const clip={id:uid(),name:recovery.interrupted?'Recovered Audio Take':'Audio take',kind:'audio',beats,sourceBpm:this.bpm,data:encode64(wav(buffer))};this.onFinish?.(clip,buffer);this.resolve?.({clip,buffer,...recovery});
-    }catch(error){this.chunks=[];this.reject?.(error);}
+      const clip={id:uid(),name:recovery.interrupted?'Recovered Audio Take':'Audio take',kind:'audio',beats,sourceBpm:this.bpm,data:encode64(wav(buffer))};this.chunks=[];this.recoverable=null;this.onFinish?.(clip,buffer);this.resolve?.({clip,buffer,...recovery});
+    }catch(error){if(this.recoverable)this.reject?.(new Error('The Captured Take Could Not Be Prepared. Audio Is Kept In This Tab; Choose Retry Saving Take Or Cancel. '+error.message,{cause:error}));else{this.chunks=[];this.reject?.(error);}}
   }
   teardown(){
     this.clearFinishTimer();this.stream?.getTracks().forEach(t=>{t.onended=null;t.stop();});
@@ -128,7 +137,7 @@ export class AudioCapture {
     for(const n of [this.source,this.processor,this.silent,this.monitor])n?.disconnect();
     this.active=false;this.connected=false;this.stream=null;this.processor=null;this.monitorTarget=null;
   }
-  async disconnect(){this.generation++;try{if(this.active)await this.stop();}finally{this.teardown();this.chunks=[];}}
+  async disconnect(){this.generation++;try{if(this.active)await this.stop();}finally{this.teardown();if(!this.recoverable)this.chunks=[];}}
 
 }
 export class LiveNotes {

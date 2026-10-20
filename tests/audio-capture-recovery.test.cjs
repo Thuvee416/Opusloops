@@ -64,3 +64,60 @@ test('application saves a recovered take once with Undo and preserves its warnin
  assert.equal(result.interrupted,true);assert.equal(result.status,'saved');assert.equal(ctx.inputPending,false);assert.equal(ctx.inputCaptureId,null);assert.match(controls['input-status'].textContent,/May Be Missing/);assert.equal(messages.at(-1).error,true);assert.equal(history.past.length,1);assert.deepEqual(history.undo(),before);assert.deepEqual(history.redo(),project);
  const prepared={intent:{action:'finish'},binding:{...meta,active:true}};assert.deepEqual(control.checkRecordingReceipt(before,project,prepared,result,{active:false,captureId:null}),{changed:true});assert.match(control.describeInputRecording(result),/Partial Audio Take/);assert.match(control.describeInputRecording({...result,mode:'arrangement',start:8}),/Beat 9/);
 });
+
+test('failed audio preparation retains exact PCM for repeated retries without restarting capture',async t=>{
+ const f=await setup(t),create=f.context.createBuffer;f.capture.start(120);const raw=f.chunk();f.send({type:'chunk',channels:raw});
+ f.context.createBuffer=()=>{throw Error('Allocation Failed');};f.send({type:'finished',frames:4096});
+ await assert.rejects(f.capture.completion,/Retry Saving Take/);assert.equal(f.capture.active,false);assert.equal(f.capture.chunks[0],raw);
+ assert.equal(f.capture.recoverable.frames,4096);assert.throws(()=>f.capture.start(120),/Retry Saving/);await assert.rejects(f.capture.connect(),/Retry Saving/);
+ await assert.rejects(f.capture.retry(),/Allocation Failed/);assert.equal(f.capture.chunks[0],raw);
+ f.context.createBuffer=create;const result=await f.capture.retry();assert.equal(result.buffer.getChannelData(0)[4095],.25);assert.equal(result.buffer.getChannelData(1)[4095],-.5);
+ assert.equal(f.capture.recoverable,null);assert.equal(f.capture.chunks.length,0);assert.equal(f.processors[0].port.sent.filter(m=>m.type==='start').length,1);
+ await f.capture.disconnect();
+});
+
+test('copy/encoding failure retains received audio, while explicit Cancel discards it',async t=>{
+ const f=await setup(t),create=f.context.createBuffer;
+ for(const phase of ['copy','encode']){
+  f.capture.start(120);const raw=f.chunk(128);f.send({type:'chunk',channels:raw});
+  f.context.createBuffer=(...args)=>{const b=create(...args);b[phase==='copy'?'copyToChannel':'getChannelData']=()=>{throw Error('Preparation Failed');};return b;};
+  f.send({type:'finished',frames:128});await assert.rejects(f.capture.completion,/Preparation Failed/);assert.equal(f.capture.chunks[0],raw);
+  await f.capture.cancel();assert.equal(f.capture.recoverable,null);assert.equal(f.capture.chunks.length,0);assert.throws(()=>f.capture.retry(),/No Captured Take/);f.context.createBuffer=create;
+ }
+ await f.capture.disconnect();
+});
+
+test('disconnected partial audio survives a preparation failure and retains its warning when retried',async t=>{
+ const f=await setup(t),create=f.context.createBuffer;f.capture.start(120);f.send({type:'chunk',channels:f.chunk()});
+ f.context.createBuffer=()=>{throw Error('Allocation Failed');};const finishing=f.capture.stop();f.expire();await assert.rejects(finishing,/Retry Saving Take/);
+ assert.equal(f.capture.connected,false);assert.equal(f.tracks[0].stopped,true);await f.capture.disconnect();assert.equal(f.capture.chunks.length,1);
+ f.context.createBuffer=create;const result=await f.capture.retry();assert.equal(result.interrupted,true);assert.match(result.warning,/End Of The Take May Be Missing/);assert.equal(result.buffer.getChannelData(1)[4095],-.5);
+});
+
+async function recoveryApplication(t){
+ const f=await setup(t),model=await import('../web-studio/model.js'),{History}=await import('../web-studio/history.js'),control=await import('../web-studio/recording-control.js'),vm=require('node:vm'),fs=require('node:fs');
+ const project=model.emptyProject(),before=structuredClone(project),history=new History(project),meta={inputRecording:true,captureId:'take',source:'audio',mode:'new',trackId:project.tracks[0].id,scene:0},controls={'input-status':{}};
+ const ctx={audioInput:f.capture,inputCompletion:null,inputPending:false,inputCaptureId:'take',inputMeta:meta,inputFinishing:false,inputStarted:0,midiTake:null,inputAbort:null,inputOutcome:null,
+  clearCountIn(){},clearInterval(){},inputTimer:null,releaseNotes(){},engine:{context:f.context,playing:false},endArrangementInput(){},endOverdubPlayback(){},renderOverdubPreview(){},
+  commitNewInput(clip){const result=control.appendRecordedClip(project,clip,meta.trackId,0);Object.assign(project,result.project);history.commit(project);return {clipId:clip.id,scene:0};},
+  $:id=>controls[id],setStatus(){},renderInput(){},renderTransport(){},renderTimeline(){}};
+ const source=fs.readFileSync(require('node:path').join(__dirname,'../web-studio/app.js'),'utf8');vm.createContext(ctx);
+ for(const [start,end]of [['function observeAudioInput(','async function startInput('],['async function cancelInput(','function commitOverdub(']])vm.runInContext(source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))),ctx);
+ f.capture.start(120);ctx.observeAudioInput(meta);f.send({type:'chunk',channels:f.chunk()});const create=f.context.createBuffer;f.context.createBuffer=()=>{throw Error('Allocation Failed');};
+ f.send({type:'finished',frames:4096});await assert.rejects(ctx.inputCompletion,/Retry Saving Take/);
+ return {...f,ctx,project,before,history,meta,controls,create,control};
+}
+
+test('actual Finish retries a retained take once, preserves capture identity and returns a valid Odesa receipt',async t=>{
+ const f=await recoveryApplication(t);assert.equal(f.ctx.inputCaptureId,'take');assert.equal(f.ctx.inputMeta,f.meta);assert.deepEqual(f.project,f.before);assert.equal(f.history.past.length,0);
+ await assert.rejects(f.ctx.finishInput(),/Allocation Failed/);assert.equal(f.ctx.inputFinishing,false);assert.equal(f.ctx.inputCaptureId,'take');
+ f.context.createBuffer=f.create;const result=await f.ctx.finishInput();assert.equal(result.status,'saved');assert.equal(result.captureId,'take');assert.equal(f.ctx.inputCaptureId,null);assert.equal(f.ctx.inputMeta,null);assert.equal(f.capture.recoverable,null);
+ assert.equal(f.history.past.length,1);assert.deepEqual(f.history.undo(),f.before);assert.deepEqual(f.history.redo(),f.project);
+ assert.deepEqual(f.control.checkRecordingReceipt(f.before,f.project,{intent:{action:'finish'},binding:{...f.meta,active:true}},result,{active:false,captureId:null}),{changed:true});
+ assert.equal(await f.ctx.finishInput(),null);await f.capture.disconnect();
+});
+
+test('actual Cancel discards a retained take without editing the project or adding Undo',async t=>{
+ const f=await recoveryApplication(t),result=await f.ctx.cancelInput();assert.equal(result.status,'cancelled');assert.equal(f.ctx.inputCaptureId,null);assert.equal(f.ctx.inputMeta,null);
+ assert.equal(f.capture.recoverable,null);assert.equal(f.capture.chunks.length,0);assert.deepEqual(f.project,f.before);assert.equal(f.history.past.length,0);await f.capture.disconnect();
+});
