@@ -397,7 +397,7 @@ export class Engine {
       if(slotActive(track,slot)&&this.nextBeat>beat){const mixer=this.mixers.get(id);this.schedule(this.context,mixer.input||mixer.chain.input,this.project.clips[a.clipId],time,beat-a.start,this.nextBeat-beat,id,`session:${a.start}`,Infinity,a.bufferIdentity);}
     }
   }
-  tailSeconds(sampleRate=this.context?.sampleRate??44100,channel='master'){return Math.min(30,routingTail(this.project,sampleRate,channel)+(this.instrumentTail??0));}
+  tailSeconds(sampleRate=this.context?.sampleRate??44100,channel='master'){return routingTail(this.project,sampleRate,channel)+(this.instrumentTail??0);}
   schedule(ctx,target,clip,time,offset,beats,trackId,instance=clip.id,limit=Infinity,bufferIdentity=clip.id,fade){
     const track=this.project.tracks.find(t=>t.id===trackId);
     if(clip.kind==='midi'&&track?.instrument){let scheduler=this.voiceSchedulers.get(ctx);if(!scheduler){scheduler=new VoiceScheduler(ctx,this.project.bpm,(id,pitch)=>this.sampleBuffer(id,pitch),node=>{if(ctx!==this.context)return;this.nodes.add(node);const cleanup=node.onended;node.onended=()=>{this.nodes.delete(node);cleanup?.();};});this.voiceSchedulers.set(ctx,scheduler);}scheduler.schedule(target,track,clip,time,offset,beats,instance,limit);return;}

@@ -15,8 +15,8 @@ export function routingTail(project,sampleRate=44100,channel='master'){
  for(const id of routes.order){const t=byId.get(id),source=incoming.get(id)+effectTail([t],sampleRate),destination=routes.destinations.get(id);trackTails.set(id,source);if(destination!==null)incoming.set(destination,Math.max(incoming.get(destination),source));else if(trackOutput(t)!=='sendsOnly')tail=Math.max(tail,source);
   for(const r of project.returns||[])if(t.sends?.[r.id]?.amount>0||(hasEnvelope(t.sends?.[r.id]?.automation?.amount)&&t.sends[r.id].automation.amount.points.some(p=>p.value>0)))returnTails.set(r.id,Math.max(returnTails.get(r.id),source+effectTail([r],sampleRate)));
  }
- if(channel==='master')return Math.min(30,Math.max(tail,0,...returnTails.values()));
- const value=typeof channel==='string'&&channel.startsWith('track:')?trackTails.get(channel.slice(6)):typeof channel==='string'&&channel.startsWith('return:')?returnTails.get(channel.slice(7)):undefined;if(value===undefined)throw new Error('Choose an existing audio routing channel.');return Math.min(30,value);
+ if(channel==='master')return Math.max(tail,0,...returnTails.values());
+ const value=typeof channel==='string'&&channel.startsWith('track:')?trackTails.get(channel.slice(6)):typeof channel==='string'&&channel.startsWith('return:')?returnTails.get(channel.slice(7)):undefined;if(value===undefined)throw new Error('Choose an existing audio routing channel.');return value;
 }
 export function createMixGraph(ctx,project,master,{meters=true}={}){
   const tracks=new Map(),returns=new Map(),nodes=[],chains=[],readers=[];const node=n=>(nodes.push(n),n);const initialRoutes=trackRouting(project),initialSolo=routingSoloState(project,initialRoutes);

@@ -36,6 +36,9 @@ export function studioEffectGraph(ctx,node,entry,output,device,bind){
  const dry=node(ctx.createGain()),wet=node(ctx.createGain());dry.gain.value=1-p.mix;wet.gain.value=p.mix;entry.connect(dry);dry.connect(output);wet.connect(output);
  bind('mix',dry.gain,v=>1-v);bind('mix',wet.gain);controls.mix=v=>{dry.gain.setTargetAtTime(1-v,ctx.currentTime,.02);wet.gain.setTargetAtTime(v,ctx.currentTime,.02);};
  const highpass=filter('highpass',p.lowCut),lowpass=filter('lowpass',p.damping);
+ // Web Audio low/high-pass Q is in dB. A Butterworth response keeps the
+ // echo feedback filters from amplifying frequencies above the saved feedback.
+ if(device.type==='echo')highpass.Q.value=lowpass.Q.value=20*Math.log10(Math.SQRT1_2);
  parameter('lowCut',highpass.frequency);parameter('damping',lowpass.frequency);
  if(device.type==='space'){
   const delay=node(ctx.createDelay(.2)),convolver=node(ctx.createConvolver());

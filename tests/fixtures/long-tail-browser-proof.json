@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "rate": 44100,
+      "seconds": 62.60208616780045,
+      "calculatedTail": 62.10207482993197,
+      "afterOldLimitPeak": 0.0006492193206213415,
+      "finalPeak": 1.303256027401778e-11,
+      "omittedTailRatio": 0.0009726450542262464,
+      "maxFilterGain": 1,
+      "tailFreeFrames": 22050
+    },
+    {
+      "rate": 48000,
+      "seconds": 62.595,
+      "calculatedTail": 62.095,
+      "afterOldLimitPeak": 0.0006492308457382023,
+      "finalPeak": 1.3037536328308619e-11,
+      "omittedTailRatio": 0.0009715665811771846,
+      "maxFilterGain": 1,
+      "tailFreeFrames": 24000
+    }
+  ],
+  "projectUnchanged": true,
+  "scope": "Isolated native Chromium Engine.render at 44.1 and 48 kHz with a short note, one-second alternating echo at 80% feedback, actual WAV PCM, an 80-second reference, and native filter-response measurements. No physical playback or listening-quality claim."
+}
