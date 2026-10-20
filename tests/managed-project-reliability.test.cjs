@@ -32,8 +32,7 @@ async function fixture({initialized=true}={}){
   const start=source.indexOf(begin);
   vm.runInContext(source.slice(start,source.indexOf(end,start+begin.length)),ctx);
  }
- const commitStart=source.indexOf(' commit:(next,observations');
- vm.runInContext('agent={'+source.slice(commitStart,source.indexOf('\n analyze:',commitStart))+'};',ctx);
+ ctx.agent={commit:ctx.commitAgentProject};
  const snapshot=()=>({project:ctx.project,engineProject:engine.project,master:engine.masterVolume,graph:engine.mixGraph,active:[...engine.active],pending:[...engine.pending],follows:[...engine.follows],sceneFollow:engine.sceneFollow,overrides:[...engine.overrides],automation:[...engine.automationOverrides],buffers:[...engine.buffers],selection:ctx.selection,sessionSelection:ctx.sessionSelection,anchor:ctx.sessionAnchor,deviceTarget:ctx.deviceTarget});
  return {api,ctx,project,engine,audio,nodes,counts,history,snapshot,controls};
 }
@@ -110,14 +109,14 @@ test('Odesa commit does not publish its master, selection or clipboard until the
   const chosen={trackId:next.tracks[1].id,scene:2,clipId:null},observations=[{type:'session_clips',selection:[chosen],clipboard:{new:true}}];
   const options=keepSelection?{navigationPreservation:{scopes:['selection'],expected:{selection:chosen,selectedSession:[chosen],deviceTrackId:chosen.trackId}}}:{};
   f.audio.createGain=()=>{throw Error('Allocation Failed');};
-  assert.throws(()=>f.ctx.agent.commit(next,observations,options),/Allocation Failed/);
+  await assert.rejects(()=>f.ctx.agent.commit(next,observations,options),/Allocation Failed/);
   assert.deepEqual(f.snapshot(),before);assert.equal(f.ctx.sessionClipboard,clipboard);assert.equal(f.counts.commit,0);
  }
 });
 
 test('Odesa success installs the requested level and navigation with one Undo',async()=>{
  const f=await fixture(),original=structuredClone(f.project),next=structuredClone(f.project);next.master=.3;
- const chosen={trackId:next.tracks[1].id,scene:2,clipId:null};f.ctx.agent.commit(next,[{type:'session_clips',selection:[chosen]}]);
+ const chosen={trackId:next.tracks[1].id,scene:2,clipId:null};await f.ctx.agent.commit(next,[{type:'session_clips',selection:[chosen]}]);
  assert.equal(f.engine.masterVolume,.3);assert.equal(f.engine.master.gain.value,.3);assert.equal(f.ctx.selection.trackId,chosen.trackId);
  assert.equal(f.counts.commit,1);assert.deepEqual(f.history.undo(),original);assert.deepEqual(f.history.redo(),next);
 });

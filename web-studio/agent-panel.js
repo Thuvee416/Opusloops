@@ -76,7 +76,7 @@ export function installAgent({getProject,commit,locked,analyze,execute,getSessio
   try {
    plan=prepareAgentPlan(original,result.actions,{stemSelectionRequirements,deliveryRequirements,quantizeRequirements,recordQuantizationState:context.studio.recording?.recordQuantization,recordingState:context.studio.recording,sessionRecordingState:captureState,historyState:context.studio.history,historyPreview:getHistoryPreview,historyRequirement,allowFileTempo:permitsFileTempo(prompt),allowImportReplacement:permitsImportReplacement(prompt),allowArrangementReplacement:context.requestedArrangementReplacement,sessionClipboard:getSessionClipboard(),sessionClipboardRequirements,sessionSelectionRequirements,clipPropertyRequirements,creationSceneRequirement,creationLaunchRequirement,navigationPreservation});
    if(plan.clipboardUsed&&context.studio.sessionClipboard?.revision!==getSessionClipboard()?.revision)throw Object.assign(new Error('The Session Clipboard Changed While Planning. Nothing Applied; Run The Request Again.'),{code:'session_clipboard_changed'});
-   if(plan.editCount&&plan.changesProject&&!plan.before.length&&locked(plan.liveSessionActive?'session-live':'edit'))throw new Error('Stop playback before editing. Add a stop command before the project edits.');
+   if(plan.editCount&&plan.changesProject&&!plan.before.length&&locked(plan.liveSessionActive?'session-live':plan.liveMidiNotes?'midi-live':'edit'))throw new Error('Stop playback before editing. Add a stop command before the project edits.');
   } catch(error) {
    if(directRecording||error.code==='session_clipboard_changed')throw error;
    feedback={error:error.message,previousPlan:result};

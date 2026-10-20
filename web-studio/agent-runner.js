@@ -1,3 +1,4 @@
+import {midiNoteChanges} from './live-midi-edit.js';
 import {projectIOIntent,checkProjectIOReceipt} from './project-io.js';
 import {prepareHistory,assertHistoryState,checkHistoryReceipt,historyIntent} from './history-control.js';
 import {SESSION_CAPTURE_COMMANDS,prepareSessionRecording,sessionRecordingBinding,assertSessionRecordingBinding,sessionRecordingSignature,checkSessionRecordingReceipt} from './session-recording.js';
@@ -94,7 +95,7 @@ export function prepareAgentPlan(project, actions, {stemSelectionRequirements=nu
   const clipboardIntent=checkSessionClipboardRequirements(project,{next,prepared,before,after,edits,editCount:edits.length},sessionClipboardRequirements,sessionClipboard);
   const preservation=prepareNavigationPreservation(project,next,actions,navigationPreservation);
   const selectionIntent=checkSessionSelectionRequirements(project,{next,before,after,editCount:edits.length},sessionSelectionRequirements);
-  return {projectIO:fileCommands.length>0,history:!!historyPrepared,historyBinding:historyPrepared?.binding??null,sessionRecordingBinding:sessionRecordingState?sessionRecordingBinding(sessionRecordingState):null,sessionRecording:captures.length>0||captureActive,next, prepared,navigationPreservation:preservation,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  return {projectIO:fileCommands.length>0,history:!!historyPrepared,historyBinding:historyPrepared?.binding??null,sessionRecordingBinding:sessionRecordingState?sessionRecordingBinding(sessionRecordingState):null,sessionRecording:captures.length>0||captureActive,next, prepared,navigationPreservation:preservation,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,liveMidiNotes:!!midiNoteChanges(project,next)?.length,liveMidiHistory:!!historyPrepared&&!!midiNoteChanges(project,historyPrepared.target)?.length,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject,getHistory,getRecording,getSessionRecording,getClipboard,getNavigation, expected, locked, commit, execute, signal, onStep = () => {}}) {
@@ -111,11 +112,11 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
   let navigationEdited=false;
   const verifyNavigation=()=>checkNavigationPreserved(plan.navigationPreservation?{...plan.navigationPreservation,expected:navigationEdited?plan.navigationPreservation.expected:plan.navigationPreservation.beforeExpected??plan.navigationPreservation.expected}:null,getNavigation?.());
   if(plan.clipboardUsed&&!getClipboard)throw new Error('Session paste requires a current clipboard adapter.');
-  const check = () => {
+  const check = (phase='request') => {
     signal.throwIfAborted();
     verifyNavigation();
     if(plan.clipboardUsed&&!commitStarted&&getClipboard()?.revision!==plan.clipboardRevision)throw new Error('Session clipboard changed. Remaining actions stopped.');
-    if (projectSignature() !== fingerprint || locked('request')) throw new Error('The session changed while executing. Remaining actions stopped.');
+    if (projectSignature() !== fingerprint || locked(phase)) throw new Error('The session changed while executing. Remaining actions stopped.');
     if(plan.history)assertHistoryState(historyBinding,getHistory());
     if(getRecording)assertRecordingBinding(captureBinding,getRecording());
     if(getSessionRecording)assertSessionRecordingBinding(sessionCaptureBinding,getSessionRecording());
@@ -123,7 +124,7 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
   const run = async command => {
     check();
     const beforeRecording=['record_input','record_session'].includes(command.name)?structuredClone(getProject()):null;
-    let result;try{if(['history','project_io'].includes(command.name)&&locked('edit'))throw new Error('Stop playback and finish recording before changing the project.');result=await execute(command,signal,command.name==='project_io'?Object.assign(plan.prepared.get(command),{assertCurrent:check}):plan.prepared?.get(command));
+    let result;try{if(['history','project_io'].includes(command.name)&&locked(command.name==='history'&&plan.liveMidiHistory?'midi-live':'edit'))throw new Error('Stop playback and finish recording before changing the project.');result=await execute(command,signal,command.name==='project_io'?Object.assign(plan.prepared.get(command),{assertCurrent:check}):command.name==='history'?{...plan.prepared.get(command),assertCurrent:()=>check('commit')}:plan.prepared?.get(command));
       if(command.name==='project_io'){projectIOApplied=!!plan.prepared.get(command).applied;checkProjectIOReceipt(plan.prepared.get(command),getProject(),result,getHistory());fingerprint=projectSignature();captureBinding=getRecording?recordingBinding(getRecording()):null;sessionCaptureBinding=getSessionRecording?sessionRecordingBinding(getSessionRecording()):null;}
       if(command.name==='history'){historyApplied=true;checkHistoryReceipt(plan.prepared.get(command),getProject(),result,getHistory());fingerprint=signature(getProject());historyBinding=getHistory();}
       if(command.name==='record_session'){const observed=checkSessionRecordingReceipt(beforeRecording,getProject(),plan.prepared.get(command),result,getSessionRecording());recordingApplied||=observed.changed;sessionCaptureBinding=sessionRecordingBinding(getSessionRecording());fingerprint=projectSignature();}
@@ -131,7 +132,7 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
         const observed=checkRecordingReceipt(beforeRecording,getProject(),plan.prepared.get(command),result,getRecording());
         recordingApplied||=observed.changed;fingerprint=signature(getProject());captureBinding=recordingBinding(getRecording());
       }
-    }catch(error){if(command.name==='project_io'&&plan.prepared.get(command)?.applied)error.agentProjectIOApplied=true;if(command.name==='history'&&(historyApplied||projectSignature()!==fingerprint))error.agentHistoryApplied=true;if(['record_input','record_session'].includes(command.name)&&projectSignature()!==fingerprint)error.agentRecordingApplied=true;error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
+    }catch(error){if(command.name==='project_io'&&plan.prepared.get(command)?.applied)error.agentProjectIOApplied=true;if(command.name==='history')error.agentHistoryApplied=historyApplied||(error.agentHistoryApplied??projectSignature()!==fingerprint);if(['record_input','record_session'].includes(command.name)&&projectSignature()!==fingerprint)error.agentRecordingApplied=true;error.agentInterruptedCommand={name:command.name,state:error.performanceState??null};throw error;}
     if(plan.selectionIntent?.command===command)checkSessionSelectionReceipt(plan.selectionIntent,result);
     if(plan.clipboardIntent?.command===command)checkSessionClipboardReceipt(plan.clipboardIntent,result);
     observations.push({name:command.name, result:result ?? null});
@@ -152,9 +153,9 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
       check();
       const intended = signature(plan.next);
       if(intended!==fingerprint){
-        if (locked(plan.liveSessionActive?'session-live':'edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
+        if (locked(plan.liveSessionActive?'session-live':plan.liveMidiNotes?'midi-live':'edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
         commitStarted = true;
-        commit(plan.next,plan.editObservations??[],{navigationPreservation:plan.navigationPreservation});
+        await commit(plan.next,plan.editObservations??[],{navigationPreservation:plan.navigationPreservation,signal,assertCurrent:()=>check('commit')});
         editsApplied = true;navigationEdited=true;
         fingerprint = signature(getProject());
         if (fingerprint !== intended) throw new Error('The applied project does not match the validated plan.');
@@ -169,7 +170,7 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
   } catch (error) {
     // Preserve what actually happened: downloads/transport cannot be undone by
     // restoring a project, and a failed export must not hide committed edits.
-    error.agentEditsApplied = editsApplied || (commitStarted && signature(getProject()) !== expected);
+    error.agentEditsApplied = editsApplied || (error.agentEditsApplied ?? (commitStarted && signature(getProject()) !== expected));
     error.agentProjectIOApplied ||= projectIOApplied;error.agentRecordingApplied ||= recordingApplied;error.agentHistoryApplied ||= historyApplied;
     error.agentCompletedCommands = completedCommands;
     throw error;

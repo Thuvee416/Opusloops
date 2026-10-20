@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "emptyClickAndTouchSetSharedMarker": true,
+  "viewStateNoUndoOrProjectChange": true,
+  "keyboardAndMenuPasteExact": true,
+  "keyboardAndMenuSplitExact": true,
+  "splitMetadataPreserved": true,
+  "addAtMarkerClippedToEnd": true,
+  "endPasteRejectedWithoutMutation": true,
+  "homeDoesNotSeekTransport": true,
+  "arrowGridAndBoundaryNavigation": true,
+  "escapeClearsSelection": true,
+  "clipAndProjectSwitchResetMarker": true,
+  "errors": [],
+  "scope": "Isolated native Chromium mouse, keyboard, emulated touch and actual project downloads. Exact edits and Undo compare against a synthetic project. No personal project, microphone, live provider or physical-device claim."
+}

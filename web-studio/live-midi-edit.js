@@ -18,7 +18,8 @@ export function renderMidiBuffers(jobs,sampleRate,{signal}={}){
  });
 }
 export function liveMidiLocked(engine){return !engine.playing||!engine.context||engine.context.state!=='running'||engine.recording||engine.automationTake||engine.inputOverdub||engine.inputArrangement||engine.startPromise||engine.preparing;}
-export async function applyLiveMidiNotes(engine,changes,{render=renderMidiBuffers,current=()=>true}={}){
+export async function applyLiveMidiNotes(engine,changes,{render=renderMidiBuffers,current=()=>true,signal}={}){
+ signal?.throwIfAborted();
  if(liveMidiLocked(engine)||engine.midiEditPending)throw new Error('Finish Recording Or Playback Preparation Before Editing MIDI.');
  if(!Array.isArray(changes)||!changes.length||new Set(changes.map(c=>c.id)).size!==changes.length)throw new Error('Choose Distinct MIDI Clip Sources To Edit.');
  const owner=engine.project,context=engine.context,generation=engine.playGeneration,original=new Map(),nextClips={...owner.clips};
@@ -30,8 +31,8 @@ export async function applyLiveMidiNotes(engine,changes,{render=renderMidiBuffer
   for(const track of tracks){if(track.instrument)native.push({trackId:track.id,clipId:clip.id,before:keyedWindowNotes(prepareWindowNotes(owner.clips[clip.id],track.midiEffects,owner.bpm)),after:keyedWindowNotes(prepareWindowNotes(clip,track.midiEffects,owner.bpm))});else if(track.midiEffects?.length){const effective=processMidiClip(clip,track.midiEffects,owner.bpm),key=signature([track.id,clip.id]);jobs.push({key:'effect:'+key,clip:effective,bpm:owner.bpm});effect.push({key,version:signature([owner.bpm,effective])});}}
  }
  const tail=voiceTail(candidate,(id,pitch)=>engine.sampleBuffer(id,pitch));
- const assertCurrent=()=>{if(!current()||engine.project!==owner||engine.context!==context||engine.playGeneration!==generation||liveMidiLocked(engine)||signature([owner.bpm,owner.tracks.map(t=>[t.id,t.instrument,t.midiEffects,t.slots]),owner.arrangement])!==binding||[...original].some(([id,s])=>signature(owner.clips[id])!==s))throw new Error('Playback Or The MIDI Source Changed Before The Edit Was Ready. Nothing Was Applied.');};
- const controller=new AbortController();engine.midiEditAbort=controller;engine.midiEditPending=true;
+ const assertCurrent=()=>{signal?.throwIfAborted();if(!current()||engine.project!==owner||engine.context!==context||engine.playGeneration!==generation||liveMidiLocked(engine)||signature([owner.bpm,owner.tracks.map(t=>[t.id,t.instrument,t.midiEffects,t.slots]),owner.arrangement])!==binding||[...original].some(([id,s])=>signature(owner.clips[id])!==s))throw new Error('Playback Or The MIDI Source Changed Before The Edit Was Ready. Nothing Was Applied.');};
+ const controller=new AbortController();engine.midiEditAbort=controller;engine.midiEditPending=true;const abort=()=>controller.abort(signal.reason);signal?.addEventListener('abort',abort,{once:true});
  try{
   const rendered=await render(jobs,context.sampleRate,{signal:controller.signal}),buffers=new Map();assertCurrent();
   for(const item of rendered){const buffer=context.createBuffer(1,item.pcm.length,context.sampleRate);buffer.copyToChannel(item.pcm,0);buffers.set(item.key,buffer);}
@@ -46,5 +47,5 @@ export async function applyLiveMidiNotes(engine,changes,{render=renderMidiBuffer
   for(const b of base)engine.buffers.set(b.id,{key:b.key,buffer:buffers.get('base:'+b.id)});
   for(const e of effect)engine.midiBuffers.set(e.key,{version:e.version,buffer:buffers.get('effect:'+e.key)});
   engine.instrumentTail=tail;return {boundary,clipIds:changes.map(c=>c.id)};
- }finally{engine.midiEditPending=false;if(engine.midiEditAbort===controller)engine.midiEditAbort=null;}
+ }finally{signal?.removeEventListener('abort',abort);engine.midiEditPending=false;if(engine.midiEditAbort===controller)engine.midiEditAbort=null;}
 }

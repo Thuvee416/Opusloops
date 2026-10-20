@@ -1,6 +1,6 @@
 // Request-local UI constraints. Values come from the real client snapshot, not
 // model-supplied restoration data. This does not infer arbitrary language intent.
-const fields={selection:['selection','selectedSession','sessionAnchor','selectedTracks','selectedRegion','selectedRegions','selectedScene','noteSelection','timeSelection','deviceTrackId'],view:['view'],panel:['detailPanel','detailExpanded','detailHeightPercent']};
+const fields={selection:['selection','selectedSession','sessionAnchor','selectedTracks','selectedRegion','selectedRegions','selectedScene','noteSelection','timeSelection','deviceTrackId'],view:['view'],panel:['detailPanel','detailExpanded','detailHeightPercent'],playback:['playing']};
 const fail=message=>{throw Object.assign(new Error(message),{code:'navigation_preservation'});};
 const decode=action=>typeof action.args==='string'?JSON.parse(action.args):action.args??{};
 const stable=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
@@ -23,7 +23,8 @@ export function readNavigationPreservation(prompt,studio={}){
   const clause=match[1].split(/\b(?:then|but|however|instead)\b/i)[0];for(const part of clause.matchAll(new RegExp('\\b(?:chang(?:e|ing)|alter(?:ing)?|switch(?:ing)?)\\s+(?:(?:the|my|current|any)\\s+)*'+list,'gi')))collect(part[1]);
  }
  for(const match of text.matchAll(new RegExp('\\b(?:preserve|retain|maintain|keep)\\s+(?:(?:the|my|current|same|existing)\\s+)*'+list,'gi')))collect(match[1]);
- const scopes=['selection','view','panel'].filter(s=>chosen.has(s));return scopes.length?{version:1,scopes,expected:navigationSnapshot(studio,scopes)}:null;
+ if(studio.playing===true&&(/\b(?:keep|leave)\s+(?:the\s+)?(?:playback|music|transport)\s+(?:running|playing)\b/i.test(text)||/\b(?:while|as)\s+(?:the\s+)?(?:playback|music)\s+continues\b/i.test(text)||/\bwithout\s+stopping(?:\s+(?:the\s+)?(?:playback|music|transport))?\b/i.test(text)||/\b(?:do\s+not|don['’]t)\s+(?:stop|pause)\s+(?:the\s+)?(?:playback|music|transport)\b/i.test(text)))chosen.add('playback');
+ const scopes=['selection','view','panel','playback'].filter(s=>chosen.has(s));return scopes.length?{version:1,scopes,expected:navigationSnapshot(studio,scopes)}:null;
 }
 export function checkNavigationCommands(actions,requirement){
  if(!requirement)return;
@@ -31,6 +32,7 @@ export function checkNavigationCommands(actions,requirement){
  const panel=value=>{if(protectedScope('panel')&&(expected.detailPanel!==value||expected.detailExpanded===false))fail('Keep The Requested Panel And Its Expanded State. Remove The Conflicting Navigation Command.');};
  const view=value=>{if(protectedScope('view')&&expected.view!==value)fail('Keep The Requested Session/Arrangement View. Remove The Conflicting Navigation Command.');};
  for(const action of actions){if(action.type!=='command')continue;const command=decode(action),args=command.args??{};
+  if(protectedScope('playback')&&['stop','pause'].includes(command.name))fail('Keep Playback Running As Requested. Remove Stop/Pause; Ask Before Any Edit That Requires Stopping.');
   if(command.name==='select'){
    if(protectedScope('selection'))fail('The Request Preserves The Current Selection. Do Not Return select Commands, Including Attempts To Restore It; The Client Preserves It With The Edit Transaction.');
    if(args.target==='session')view('session');else if(args.target==='track')panel('devices');else{view(args.target==='regions'||args.target==='notes'&&args.regionId!==undefined?'arrangement':'session');panel('clip');}
