@@ -8,7 +8,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   await page.evaluate(()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()));
   const fixture=await page.evaluate(async()=>{
    const {emptyProject}=await import('/model.js'),p=emptyProject();p.name='MIDI Gesture Verification';p.sceneNames=['Intro','Lift','Breakdown','Return'];p.returns=[];
-   p.clips.phrase={id:'phrase',name:'Phrase',kind:'midi',beats:8,sourceBpm:120,notes:[{pitch:60,start:1,duration:1,velocity:.5,releaseVelocity:.2},{pitch:64,start:3,duration:.75,velocity:.6,active:false}]};p.tracks[0].slots[0]='phrase';return p;
+   p.clips.phrase={id:'phrase',name:'Phrase',kind:'midi',beats:8,sourceBpm:120,notes:[{pitch:60,start:1,duration:1,velocity:.5,releaseVelocity:.2},{pitch:64,start:3,duration:.75,velocity:.6,active:false},{pitch:67,start:5,duration:.5,velocity:.7}]};p.tracks[0].slots[0]='phrase';return p;
   });
   const press=id=>page.evaluate(id=>{const el=document.getElementById(id);if(el.disabled)throw Error(id+' is disabled');return el.onclick?el.onclick():el.click();},id);
   const save=async()=>{await page.waitForTimeout(1100);const pending=page.waitForEvent('download');await press('save');return JSON.parse(fs.readFileSync(await(await pending).path(),'utf8'));};
@@ -16,7 +16,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   await page.waitForFunction(()=>document.querySelector('#project-name').value==='MIDI Gesture Verification'&&!document.querySelector('#save').disabled);
   await press('session-tab');await page.locator('[data-select="phrase"]').dblclick();
   const original=await save();assert.deepEqual(original,fixture);
-  const selected=()=>page.locator('[data-midi-note][aria-pressed="true"]').evaluateAll(els=>els.map(el=>Number(el.dataset.midiNote)));
+  const selected=()=>page.locator('[data-midi-note][aria-pressed="true"]').evaluateAll(els=>els.map(el=>Number(el.dataset.midiNote)).sort((a,b)=>a-b));
   const startDrag=async kind=>{
    const locator=page.locator(kind==='velocity'?'[data-velocity-note="1"]':kind==='resize'?'[data-midi-note="0"] [data-note-resize]':kind==='lasso'?'[data-pitch="60"][data-step="0"]':'[data-midi-note="0"]');
    await locator.scrollIntoViewIfNeeded();const box=await locator.boundingBox();assert.ok(box);
@@ -35,8 +35,16 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   await startDrag('move');await page.mouse.up();const edited=await save();assert.notDeepEqual(edited.clips.phrase.notes,original.clips.phrase.notes);
   await startDrag('resize');await page.keyboard.press('Control+z');await page.mouse.up();assert.deepEqual(await save(),edited);
   await press('undo');assert.deepEqual(await save(),original);await press('redo');assert.deepEqual(await save(),edited);
+  await press('undo');
+  await page.locator('[data-midi-note="0"]').click();await page.locator('[data-midi-note="1"]').click({modifiers:['Shift']});assert.deepEqual(await selected(),[0,1]);
+  const handle=page.locator('[data-midi-note="0"] [data-note-resize]');await handle.scrollIntoViewIfNeeded();
+  const box=await handle.boundingBox(),width=await page.locator('[data-midi-note="0"]').evaluate(el=>el.parentElement.getBoundingClientRect().width);
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+width/8,box.y+box.height/2,{steps:8});await page.mouse.up();
+  const resized=await save(),expected=structuredClone(original);expected.clips.phrase.notes[0].duration+=1;expected.clips.phrase.notes[1].duration+=1;
+  assert.deepEqual(resized,expected);assert.deepEqual(await selected(),[0,1]);
+  await press('undo');assert.deepEqual(await save(),original);await press('redo');assert.deepEqual(await save(),resized);
   assert.deepEqual(errors,[]);
-  const proof={status:'passed',results,undoDuringDragCancelsOnlyPreview:true,nextEditAndUndoRedoExact:true,errors,scope:'Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact downloaded projects, selection and Undo checks, then a successful move and Ctrl+Z cancellation of a subsequent drag without undoing that saved move. Synthetic MIDI; no personal project, input device or model calls.'};
+  const proof={status:'passed',results,undoDuringDragCancelsOnlyPreview:true,nextEditAndUndoRedoExact:true,selectedResize:{indices:[0,1],addedBeats:1,unselectedNotePreserved:true,exactUndoRedo:true},errors,scope:'Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact downloaded projects, selection and Undo checks, then a successful move and Ctrl+Z cancellation of a subsequent drag without undoing that saved move. Two selected notes resize by one beat together with an untouched third note and exact one-step Undo/Redo. Synthetic MIDI; no personal project, input device or model calls.'};
   fs.writeFileSync('tests/fixtures/midi-gesture-browser-proof.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

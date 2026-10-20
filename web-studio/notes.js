@@ -60,7 +60,15 @@ export function editNoteGroup(clip,action,{indices=[],clipboard=null,at=0,amount
   }else if(action==='velocity'){if(!Number.isFinite(amount))throw new Error('Use a finite velocity adjustment.');const low=Math.min(...ids.map(i=>notes[i].velocity)),high=Math.max(...ids.map(i=>notes[i].velocity)),delta=Math.max(-low,Math.min(1-high,amount));ids.forEach(i=>notes[i].velocity=Math.max(0,Math.min(1,notes[i].velocity+delta)));
   }else if(action==='transpose'){if(!Number.isInteger(amount))throw new Error('Use whole semitones.');ids.forEach(i=>notes[i].pitch+=amount);}
   else if(action==='quantize'){const subset={...clip,notes:ids.map(i=>notes[i])},result=editNotes(subset,'quantize',{all:true,grid,strength,gridMode,target});quantization=result.quantization;ids.forEach((id,i)=>notes[id]=result.notes[i]);}
-  else if(action==='move'){
+  else if(action==='resize'){
+    if(!Number.isFinite(deltaBeats)||![.0625,.125,.25,.5,1].includes(grid))throw new Error('Invalid note resize.');
+    // Constrain the selection as one gesture. Existing short notes and tails
+    // remain unchanged at zero delta instead of jumping to the visible bounds.
+    const lower=Math.max(...ids.map(i=>Math.min(.0625,notes[i].duration)-notes[i].duration));
+    const upper=Math.min(...ids.map(i=>Math.min(256,Math.max(notes[i].duration,clip.beats-notes[i].start))-notes[i].duration));
+    const delta=Math.max(lower,Math.min(upper,Math.round(deltaBeats/grid)*grid));
+    ids.forEach(i=>notes[i].duration+=delta);
+  }else if(action==='move'){
     if(!Number.isFinite(deltaBeats)||!Number.isInteger(deltaPitch)||![.0625,.125,.25,.5,1].includes(grid))throw new Error('Invalid note movement.');
     const start=Math.min(...ids.map(i=>notes[i].start)),last=Math.max(...ids.map(i=>notes[i].start+notes[i].duration)),low=Math.min(...ids.map(i=>notes[i].pitch)),high=Math.max(...ids.map(i=>notes[i].pitch));
     const time=Math.max(-start,Math.min(Math.max(0,clip.beats-last),Math.round(deltaBeats/grid)*grid)),pitch=Math.max(-low,Math.min(127-high,deltaPitch));ids.forEach(i=>{notes[i].start+=time;notes[i].pitch+=pitch;});

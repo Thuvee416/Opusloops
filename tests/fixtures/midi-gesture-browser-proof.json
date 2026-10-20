@@ -28,6 +28,15 @@
   ],
   "undoDuringDragCancelsOnlyPreview": true,
   "nextEditAndUndoRedoExact": true,
+  "selectedResize": {
+    "indices": [
+      0,
+      1
+    ],
+    "addedBeats": 1,
+    "unselectedNotePreserved": true,
+    "exactUndoRedo": true
+  },
   "errors": [],
-  "scope": "Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact downloaded projects, selection and Undo checks, then a successful move and Ctrl+Z cancellation of a subsequent drag without undoing that saved move. Synthetic MIDI; no personal project, input device or model calls."
+  "scope": "Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact downloaded projects, selection and Undo checks, then a successful move and Ctrl+Z cancellation of a subsequent drag without undoing that saved move. Two selected notes resize by one beat together with an untouched third note and exact one-step Undo/Redo. Synthetic MIDI; no personal project, input device or model calls."
 }
