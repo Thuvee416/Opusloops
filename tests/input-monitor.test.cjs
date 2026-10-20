@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 function parameter(value=0){return {value,setTargetAtTime(n){this.value=n;},setValueAtTime(n){this.value=n;},cancelScheduledValues(){}};}
 function node(){return {connections:[],gain:parameter(1),pan:parameter(),connect(to){this.connections.push(to);return to;},disconnect(){this.connections=[];}};}
-function context(){return {currentTime:1,destination:node(),createGain:node,createStereoPanner:node,createAnalyser:node,sampleRate:48000};}
+function context(){return {currentTime:1,destination:node(),createGain:node,createStereoPanner:node,createAnalyser:node,createChannelSplitter:node,sampleRate:48000};}
 async function api(){return {...await import('../web-studio/input-monitor.js'),...await import('../web-studio/input.js'),...await import('../web-studio/audio.js'),...await import('../web-studio/model.js')};}
 test('monitor routes into the selected regular track before effects and never falls back from a missing track',async()=>{
  const t=await api(),p=t.emptyProject(),target=node(),ctx=context(),e={project:p,context:ctx,mixers:new Map([[p.tracks[0].id,{input:target,chain:{input:node()}}]])};
