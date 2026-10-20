@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "node": "v24.16.0",
+  "sourceChars": 1048576,
+  "undoSteps": 40,
+  "retainedHeapBytes": 2138664,
+  "retainedMiB": 2.0395889282226562,
+  "baselineRetainedHeapBytes": 45124640,
+  "scope": "Node heap after forced GC for forty edits sharing one 1 MiB synthetic audio string. Baseline observed before the repair using the same fixture. Not total browser memory or production-load profiling."
+}
