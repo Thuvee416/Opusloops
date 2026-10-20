@@ -12,7 +12,7 @@ export function prepareClipLoop(project,clipId,beats){
   validateAudioEdit(clip.audioEdit,beats);next.sourceBpm=clip.sourceBpm*beats/clip.beats;
   if(next.sourceBpm<40||next.sourceBpm>240)throw Error('Choose A Loop Length With Source Tempo Between 40 And 240 BPM.');
  }
- if(clip.kind==='midi')next.notes=clip.notes.filter(note=>note.start<beats);
+ // MIDI loop boundaries select playback; they never crop stored source notes.
  for(const region of project.arrangement)if(region.clipId===clipId)try{validateRegionFades(region,next);}catch(error){throw Error(`Loop Length Conflicts With Arrangement Fades At Beat ${region.start+1}. Adjust Those Fades First.`,{cause:error});}
  validateProject({...project,clips:{...project.clips,[clipId]:next}});
  return next;

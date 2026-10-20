@@ -11,8 +11,8 @@ test('valid audio loop length rescales source tempo once and supports exact Undo
 test('invalid bounds, source tempo and source fades never leave partial changes',async()=>{
  const f=await editor();f.clip.audioEdit={reverse:false,gainDb:0,fadeIn:2,fadeOut:0};const before=structuredClone(f.p);for(const n of [NaN,0,1201,1,9]){assert.throws(()=>f.edit(n));assert.deepEqual(f.p,before);}assert.equal(f.history.past.length,0);
 });
-test('unchanged MIDI loop keeps boundary notes; shortening preserves the established note-filtering behavior',async()=>{
- const f=await editor();f.p.arrangement=[];f.p.clips.audio={id:'audio',name:'Phrase',kind:'midi',beats:4,sourceBpm:120,notes:[{pitch:60,start:0,duration:1,velocity:1},{pitch:67,start:4,duration:1,velocity:1}]};const before=structuredClone(f.p);f.edit(4);assert.deepEqual(f.p,before);f.edit(2);assert.equal(f.p.clips.audio.notes.length,1);f.validateProject(f.p);
+test('shortening and re-extending a MIDI loop preserves every source note, including boundary notes',async()=>{
+ const f=await editor();f.p.arrangement=[];f.p.clips.audio={id:'audio',name:'Phrase',kind:'midi',beats:4,sourceBpm:120,notes:[{pitch:60,start:0,duration:1,velocity:1},{pitch:67,start:4,duration:1,velocity:1}]};const before=structuredClone(f.p);f.edit(4);assert.deepEqual(f.p,before);f.edit(2);assert.deepEqual(f.p.clips.audio.notes,before.clips.audio.notes);f.validateProject(f.p);f.edit(4);assert.deepEqual(f.p,before);
 });
 test('generated audio preparation rebuilds when only loop length changes',async()=>{
  const {Engine}=await import('../web-studio/audio.js'),{emptyProject}=await import('../web-studio/model.js'),e=new Engine(emptyProject(),()=>{});e.context={sampleRate:8000,createBuffer(channels,length,sampleRate){const data=new Float32Array(length);return {length,sampleRate,duration:length/sampleRate,getChannelData:()=>data};}};

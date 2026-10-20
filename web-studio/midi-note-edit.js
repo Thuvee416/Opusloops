@@ -51,10 +51,10 @@ export function editMidiNotes(clip,args){
  let result;
  if(action==='add'){
   if(!Array.isArray(options.notes)||!options.notes.length||options.notes.length+before.length>4096)throw new Error('Add 1–4096 explicit notes within the clip limit.');
-  for(const n of options.notes){validatePatch(n);if(['pitch','start','duration','velocity'].some(k=>!Object.hasOwn(n,k)))throw new Error('Every added note needs pitch, start, duration and normalized velocity.');}
+  for(const n of options.notes){validatePatch(n);if(n.start>=clip.beats)throw Error('New Notes Must Start Inside The Loop. Extend The Loop First.');if(['pitch','start','duration','velocity'].some(k=>!Object.hasOwn(n,k)))throw new Error('Every added note needs pitch, start, duration and normalized velocity.');}
   const notes=[...structuredClone(before),...structuredClone(options.notes)];editNotes({...clip,notes},'transpose',{all:true,amount:0});result={notes,selection:options.notes.map((_,i)=>before.length+i)};
  }else if(action==='update'){
-  validatePatch(options.patch);const notes=structuredClone(before);for(const i of indices)Object.assign(notes[i],options.patch);editNotes({...clip,notes},'transpose',{all:true,amount:0});result={notes,selection:indices};
+  validatePatch(options.patch);if(options.patch.start>=clip.beats)throw Error('Choose A Note Start Inside The Loop. Extend The Loop First.');const notes=structuredClone(before);for(const i of indices)Object.assign(notes[i],options.patch);editNotes({...clip,notes},'transpose',{all:true,amount:0});result={notes,selection:indices};
  }else if(action==='duplicate'&&options.at!==undefined){
   result=editNoteGroup(clip,'paste',{clipboard:copyNotes(clip,indices),at:options.at});
  }else result=editNoteGroup(clip,action,{...options,indices});

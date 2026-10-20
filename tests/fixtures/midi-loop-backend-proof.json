@@ -1,0 +1,41 @@
+{
+  "stack": "opusloops-aws-application",
+  "sha256": "c6fada8eee9b97b2f59b21d7bbe7e05b47c75f1387fb28864978c7304f4176c5",
+  "lambdaCodeSha256": "xvraju6bl7L1myHXu+fgW0fHXxOH+yiGSXjHME9BdsU=",
+  "bundleSha256": "9c3e171447400eda73c7990fc94d9bccaf2444096907995e9f72ad09d5e815c1",
+  "sourceBaseCommit": "b1df337ec01dc77f7bf485e0b4415b5badbee4cb",
+  "checkedAt": "2026-10-20T22:16:26.574401+00:00",
+  "stackStatus": "UPDATE_COMPLETE",
+  "lambda": {
+    "hash": "xvraju6bl7L1myHXu+fgW0fHXxOH+yiGSXjHME9BdsU=",
+    "state": "Active",
+    "update": "Successful"
+  },
+  "health": {
+    "service": "opusloops",
+    "provider": "aws",
+    "version": 1
+  },
+  "accessChecks": [
+    {
+      "origin": null,
+      "status": 403,
+      "code": "origin_denied"
+    },
+    {
+      "origin": "https://opusloops.com",
+      "status": 401,
+      "code": "authentication_required"
+    }
+  ],
+  "scope": "API code hash and public health/origin/auth boundaries; no live model or authenticated execution.",
+  "changeSetName": "opus-midi-loop-0242-final",
+  "sourceHashes": {
+    "infra/aws-backend/runtime/studio-agent.mjs": "88a54ab2c4ba09466bd5940dfbd27ecab27c2ec8457a1725923c9cf49262ce00",
+    "web-studio/model.js": "5c75dc6e4f6895bebf7e6e2e16c3c4c3f836aac3ffbd205b4532158e1c4b98be",
+    "web-studio/notes.js": "cd1aea41df29152c91d8604ad30898150c0d247022316951a17e60da21a51745",
+    "web-studio/studio-selection.js": "fd1b06108deccf32fef231cdbf27a7fb550c0ac2ae15f8edcaf404cb5487b755",
+    "web-studio/agent-actions.js": "b6b885f7b9d444aa178e7ec5f770417342553cb63445df52ed8606eef0dddf2a",
+    "web-studio/midi-note-edit.js": "09c1caea92f9d35c8442c90564737405f8791e913117800507ef866cadff0f02"
+  }
+}

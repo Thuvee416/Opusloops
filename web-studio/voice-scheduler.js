@@ -4,7 +4,7 @@ import {drumVoice,drumTail} from './drums.js';
 import {synthVoice} from './instruments.js';
 import {samplerVoice} from './sampler.js';
 // Compile complete chains before testing time windows: pitch can affect note length.
-export function prepareWindowNotes(clip,effects,bpm=120){if(effects?.some(d=>d.enabled&&d.type==='arpeggiator'))return processMidiClip(clip,effects,bpm).notes.map((note,index)=>({index,note}));const result=[];for(let index=0;index<clip.notes.length;index++){const notes=processMidiNotes(clip.notes[index],effects,bpm);if(result.length+notes.length>65536)throw new Error('Processed MIDI clip exceeds 65,536 notes. Reduce the chord chain or clip density.');for(const note of notes)result.push({index,note});}return result;}
+export function prepareWindowNotes(clip,effects,bpm=120){if(effects?.some(d=>d.enabled&&d.type==='arpeggiator'))return processMidiClip(clip,effects,bpm).notes.map((note,index)=>({index,note}));const result=[];for(let index=0;index<clip.notes.length;index++){if(clip.notes[index].start>=clip.beats)continue;const notes=processMidiNotes(clip.notes[index],effects,bpm);if(result.length+notes.length>65536)throw new Error('Processed MIDI clip exceeds 65,536 notes. Reduce the chord chain or clip density.');for(const note of notes)result.push({index,note});}return result;}
 // Half-open windows prevent note duplication at scheduler quantum and loop edges.
 export function noteWindows(clip,offset,length,chase=false,effects,bpm=120,prepared){
  const events=[],end=offset+length,notes=prepared??prepareWindowNotes(clip,effects,bpm);

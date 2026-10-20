@@ -1,0 +1,36 @@
+{
+  "status": "passed",
+  "sourceAndPlacementsPreserved": true,
+  "saveReopenUndoRedoExact": true,
+  "visibleNotesVelocityAndFocusScoped": true,
+  "quantizationLeavesPreservedNotesUntouched": true,
+  "liveNoteEditingAndHistoryRetainPlayback": true,
+  "extendingLoopRevealsOriginalPhrase": true,
+  "odesaLoopEditAndDownloadExact": true,
+  "explicitDownloadClicks": 1,
+  "audio": [
+    {
+      "kind": "legacy",
+      "shortLoopError": 0,
+      "restoredPhraseError": 0,
+      "restoredDiffersFromShort": true,
+      "frames": 176400
+    },
+    {
+      "kind": "poly",
+      "shortLoopError": 0,
+      "restoredPhraseError": 0,
+      "restoredDiffersFromShort": true,
+      "frames": 176400
+    },
+    {
+      "kind": "arpeggiator",
+      "shortLoopError": 0,
+      "restoredPhraseError": 1.1175870895385742e-8,
+      "restoredDiffersFromShort": true,
+      "frames": 176400
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated actual Chromium application with synthetic MIDI, real downloads/reopen and native offline PCM comparisons for legacy, poly synth and arpeggiator paths. Odesa uses controlled local responses; no personal project, live provider, physical listening or mobile-device certification."
+}

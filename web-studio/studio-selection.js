@@ -24,7 +24,7 @@ export function selectionIntent(project,args){
    clipId=region.clipId;placement={target:'regions',ids:[region.id],primaryId:region.id};
    if(args.clipId!==undefined&&args.clipId!==clipId)fail('The region does not reference that MIDI clipId.');
   }else{placement=selectionIntent(project,{target:'clip',trackId:args.trackId,...(args.scene!==undefined?{scene:args.scene}:{}),...(args.clipId!==undefined?{clipId:args.clipId}:{})});clipId=placement.clipId;}
-  const clip=midiClip(project,clipId),indices=noteIndices(clip,args,{allowEmpty:true});return {target:'notes',clipId,indices,placement};
+  const clip=midiClip(project,clipId),requested=noteIndices(clip,args,{allowEmpty:true}),indices=args.all?requested.filter(i=>clip.notes[i].start<clip.beats):requested;if(indices.some(i=>clip.notes[i].start>=clip.beats))fail('Extend The Loop Before Selecting Notes Outside It.');return {target:'notes',clipId,indices,placement};
  }
  if(args.target==='track'){
   const track=[...project.tracks,...project.returns||[]].find(t=>t.id===args.trackId);if(!track)fail('Choose an existing track or return for its devices.');

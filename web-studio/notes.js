@@ -3,6 +3,8 @@ import {validReleaseVelocity,validNoteActivation,isNoteActive} from './note-stat
 export function editNotes(clip,action,{index=0,patch={},all=false,amount=0,grid=.25,strength=1,gridMode='straight',target='starts'}={}){
   if(clip.kind!=='midi')throw new Error('Select a MIDI clip.');const notes=structuredClone(clip.notes),selected=notes[index];let selection=index,quantization;
   if(['update','delete','duplicate'].includes(action)&&!selected)throw new Error('Select a note first.');
+  if((action==='add'||action==='update'&&Object.hasOwn(patch,'start'))&&patch.start!==undefined&&(!Number.isFinite(patch.start)||patch.start<0||patch.start>=clip.beats))throw Error('Choose A Note Start Inside The Loop. Extend The Loop To Edit Later Notes.');
+  if(action==='quantize'&&notes.some((n,i)=>(all||i===index)&&n.start>=clip.beats))throw Error('Extend The Loop Before Quantizing Notes Outside It.');
   if(action==='update')Object.assign(selected,patch);
   else if(action==='add'){notes.push({pitch:60,start:0,duration:Math.min(.25,clip.beats),velocity:.75,...patch});selection=notes.length-1;}
   else if(action==='delete'){notes.splice(index,1);selection=Math.max(0,index-1);}
@@ -11,7 +13,7 @@ export function editNotes(clip,action,{index=0,patch={},all=false,amount=0,grid=
   else if(action==='quantize'){quantization={...quantizeSettings({grid,strength,gridMode,target}),boundaryAdjusted:0};notes.forEach((n,i)=>{if(all||i===index){const result=quantizeNote(n,clip.beats,quantization);notes[i]=result.note;quantization.boundaryAdjusted+=Number(result.boundaryAdjusted);}});}
   else if(action!=='update')throw new Error('Unknown note edit.');
   if(notes.length>4096)throw new Error('A clip supports up to 4096 notes.');
-  for(const n of notes)if(!validNoteActivation(n)||!validReleaseVelocity(n)||!Number.isInteger(n.pitch)||n.pitch<0||n.pitch>127||!Number.isFinite(n.start)||n.start<0||n.start>=clip.beats||!Number.isFinite(n.duration)||n.duration<=0||n.duration>256||!Number.isFinite(n.velocity)||n.velocity<0||n.velocity>1)throw new Error('Use MIDI pitch 0–127, a start inside the loop, a positive length up to 256 beats, and velocity 0–100%.');
+  for(const n of notes)if(!validNoteActivation(n)||!validReleaseVelocity(n)||!Number.isInteger(n.pitch)||n.pitch<0||n.pitch>127||!Number.isFinite(n.start)||n.start<0||n.start>256||!Number.isFinite(n.duration)||n.duration<=0||n.duration>256||!Number.isFinite(n.velocity)||n.velocity<0||n.velocity>1)throw new Error('Use MIDI pitch 0–127, a source start between 0 and 256 beats, a positive length up to 256 beats, and velocity 0–100%.');
   return {notes,selection,...(quantization?{quantization}:{})};
 }
 export function dragNote(note,{deltaBeats=0,deltaPitch=0,resize=false,grid=.25,beats}){

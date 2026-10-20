@@ -54,7 +54,7 @@ export function validateProject(p) {
     validateClipLaunch(c.launch);validateFollow(c.follow);if(c.kind==='audio'){validateAudioEdit(c.audioEdit,c.beats);validateWarp(c.warp);}else if(c.audioEdit!==undefined||c.warp!==undefined)fail();
     if(c.midiChannel!==undefined&&(!Number.isInteger(c.midiChannel)||c.midiChannel<0||c.midiChannel>15))fail();
     if(c.kind==='audio' && (typeof c.data!=='string'||c.data.length>90000000))fail();
-    if(c.kind==='midi' && (!Array.isArray(c.notes)||c.notes.length>4096||c.notes.some(n=>!validNoteActivation(n)||!validReleaseVelocity(n)||!num(n.pitch,0,127)||!num(n.start,0,c.beats)||!num(n.duration,1e-9,256)||!num(n.velocity,0,1))))fail();
+    if(c.kind==='midi' && (!Array.isArray(c.notes)||c.notes.length>4096||c.notes.some(n=>!validNoteActivation(n)||!validReleaseVelocity(n)||!num(n.pitch,0,127)||!num(n.start,0,256)||!num(n.duration,1e-9,256)||!num(n.velocity,0,1))))fail();
     if(c.kind==='drums'&&!['full','sparse','hats'].includes(c.pattern))fail();
   }
   for(const t of p.tracks)for(const c of t.slots)if(c!==null&&!Object.hasOwn(p.clips,c))fail();
