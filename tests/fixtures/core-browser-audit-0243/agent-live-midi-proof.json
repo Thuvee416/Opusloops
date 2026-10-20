@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "views": [
+    "arrangement",
+    "session"
+  ],
+  "keepPlayingRejectsStop": true,
+  "multiSourceAtomicEdit": true,
+  "downloadAfterCommitExact": true,
+  "transportAndMixerRetained": true,
+  "naturalLanguageUndoRedoExact": true,
+  "mixedPlanRejectedUnchanged": true,
+  "cancelDuringPreparationUnchanged": true,
+  "cancelHistoryUnchanged": true,
+  "octaveEditsRemainVisible": true,
+  "accountChangeRejected": true,
+  "stalePlanningPreservesManualEdit": true,
+  "errors": [],
+  "scope": "Isolated Chromium actual Odesa panel and actual MIDI engine/worker with controlled local planning and allowance responses. No live model/provider, authentication service, personal project or physical listening claim."
+}

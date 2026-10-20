@@ -1,3 +1,4 @@
+import {MIDI_TIME_ACTIONS,midiTimeRange,editMidiTime} from './midi-time-edit.js';
 import {editNotes,editNoteGroup,copyNotes,selectedNotes} from './notes.js';
 import {isNoteActive} from './note-state.js';
 
@@ -28,7 +29,7 @@ export function noteIndices(clip,args,{allowEmpty=false}={}){
  if(!allowEmpty&&!indices.length)throw new Error('No notes match this selection. No notes were edited.');
  return indices;
 }
-const parameters={add:['notes'],update:['patch'],transpose:['amount'],velocity:['amount'],quantize:['grid','strength','gridMode','target'],move:['deltaBeats','deltaPitch','grid'],stretch:['factor'],split:['at'],chop:['parts'],duplicate:['at'],reverse:[],invert:[],legato:[],join:[],delete:[],activate:[],deactivate:[],'toggle-active':[]};
+const parameters={add:['notes'],update:['patch'],transpose:['amount'],velocity:['amount'],quantize:['grid','strength','gridMode','target'],move:['deltaBeats','deltaPitch','grid'],stretch:['factor'],split:['at'],chop:['parts'],duplicate:['at'],reverse:[],invert:[],legato:[],join:[],delete:[],activate:[],deactivate:[],'toggle-active':[],'insert-time':[],'delete-time':[],'duplicate-time':[]};
 const patchKeys=['pitch','start','duration','velocity','active','releaseVelocity'];
 function validatePatch(patch){if(!patch||typeof patch!=='object'||Array.isArray(patch)||!Object.keys(patch).length||Object.keys(patch).some(k=>!patchKeys.includes(k)))throw new Error('Note patches accept pitch, start, duration, velocity, active and releaseVelocity only.');}
 // Shape validation is also safe on the server’s bounded read-only preview.
@@ -38,6 +39,7 @@ export function validateNoteActionShape(args){
  const {clipId,action,...options}=args,fields=Object.hasOwn(parameters,action)?parameters[action]:null;
  if(!fields||Object.keys(options).some(k=>!fields.includes(k)&&!(action!=='add'&&NOTE_SELECTORS.includes(k))))throw new Error('Unsupported MIDI note action or argument. Read the notes capability contract.');
  if(action!=='add'&&NOTE_SELECTORS.filter(k=>Object.hasOwn(options,k)).length!==1)throw new Error('Choose exactly one note selector: all:true, indices:[zero-based note indices], or where:{start?,end?,pitchMin?,pitchMax?,active?}.');
+ if(MIDI_TIME_ACTIONS.includes(action)&&(!options.where||typeof options.where!=='object'||Array.isArray(options.where)||Object.keys(options.where).length!==2||!Object.hasOwn(options.where,'start')||!Object.hasOwn(options.where,'end')||Object.keys(options).some(k=>k!=='where')))throw Error('MIDI Time Commands Require Only where:{start,end}. They Affect All Pitches And Later Source Notes.');
  if(Object.hasOwn(options,'all')&&options.all!==true)throw new Error('Use all:true to choose every note.');
  return {action,options};
 }
@@ -45,11 +47,12 @@ export function validateNoteActionShape(args){
 export function editMidiNotes(clip,args){
  if(clip?.kind!=='midi')throw new Error('Select a MIDI clip.');
  const {action,options}=validateNoteActionShape(args);
- const indices=action==='add'?[]:noteIndices(clip,options),before=clip.notes;
+ const time=MIDI_TIME_ACTIONS.includes(action),range=time?midiTimeRange(clip,options.where):null,indices=action==='add'||time?[]:noteIndices(clip,options),before=clip.notes;
  for(const key of ({transpose:['amount'],velocity:['amount'],quantize:['grid'],stretch:['factor'],split:['at'],chop:['parts']}[action]||[]))if(!Object.hasOwn(options,key))throw new Error('MIDI '+action+' requires '+key+'.');
  if(action==='move'&&options.deltaBeats===undefined&&options.deltaPitch===undefined)throw new Error('MIDI move needs deltaBeats or deltaPitch.');
  let result;
- if(action==='add'){
+ if(time)result=editMidiTime(clip,action,{range});
+ else if(action==='add'){
   if(!Array.isArray(options.notes)||!options.notes.length||options.notes.length+before.length>4096)throw new Error('Add 1–4096 explicit notes within the clip limit.');
   for(const n of options.notes){validatePatch(n);if(n.start>=clip.beats)throw Error('New Notes Must Start Inside The Loop. Extend The Loop First.');if(['pitch','start','duration','velocity'].some(k=>!Object.hasOwn(n,k)))throw new Error('Every added note needs pitch, start, duration and normalized velocity.');}
   const notes=[...structuredClone(before),...structuredClone(options.notes)];editNotes({...clip,notes},'transpose',{all:true,amount:0});result={notes,selection:options.notes.map((_,i)=>before.length+i)};
@@ -59,6 +62,7 @@ export function editMidiNotes(clip,args){
   result=editNoteGroup(clip,'paste',{clipboard:copyNotes(clip,indices),at:options.at});
  }else result=editNoteGroup(clip,action,{...options,indices});
  const changed=JSON.stringify(before)!==JSON.stringify(result.notes),observation={type:'midi_notes',clipId:clip.id,clipName:clip.name,action,selectedCount:indices.length,beforeCount:before.length,afterCount:result.notes.length,resultSelection:result.selection,changed};
+ if(time)Object.assign(observation,{range,allPitches:true,loopLengthUnchanged:true,timeRange:result.timeRange,insertAt:result.insertAt});
  if(result.quantization)observation.quantization=result.quantization;
  if(['velocity','move'].includes(action)){
   const i=indices[0],next=result.notes[i],original=before[i];

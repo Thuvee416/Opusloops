@@ -1,0 +1,44 @@
+{
+  "stack": "opusloops-aws-application",
+  "sha256": "166f1355af6ad3238fd1113f8ddc89094be5b637e17252bf78bfc7704140855c",
+  "lambdaCodeSha256": "Fm8TVa9q0yOP0RE/jdyJCUvltjfhclK/eL/HcEFAhVw=",
+  "bundleSha256": "a93d7bc928fe28964cccdf065d4d26ce12461e2155b2f4ea43b901b848986591",
+  "sourceBaseCommit": "002265b5c2b460b60c09fc7e4ca7a7b82ed80934",
+  "checkedAt": "2026-10-20T22:29:45.753889+00:00",
+  "stackStatus": "UPDATE_COMPLETE",
+  "lambda": {
+    "hash": "Fm8TVa9q0yOP0RE/jdyJCUvltjfhclK/eL/HcEFAhVw=",
+    "state": "Active",
+    "update": "Successful"
+  },
+  "health": {
+    "service": "opusloops",
+    "provider": "aws",
+    "version": 1
+  },
+  "accessChecks": [
+    {
+      "origin": null,
+      "status": 403,
+      "code": "origin_denied"
+    },
+    {
+      "origin": "https://opusloops.com",
+      "status": 401,
+      "code": "authentication_required"
+    }
+  ],
+  "scope": "API code hash and public health/origin/auth boundaries; no live model or authenticated execution.",
+  "changeSetName": "opus-midi-time-0243",
+  "sourceHashes": {
+    "infra/aws-backend/runtime/studio-agent.mjs": "2ea91d8033abcf5e6e6e89d8a3b5c85b8860caf54cd3c6b195bf115986719d68",
+    "web-studio/model.js": "5c75dc6e4f6895bebf7e6e2e16c3c4c3f836aac3ffbd205b4532158e1c4b98be",
+    "web-studio/notes.js": "cd1aea41df29152c91d8604ad30898150c0d247022316951a17e60da21a51745",
+    "web-studio/studio-selection.js": "fd1b06108deccf32fef231cdbf27a7fb550c0ac2ae15f8edcaf404cb5487b755",
+    "web-studio/agent-actions.js": "22f29a32eb1b2100b44d7c81dcf86169e672901a4ac6d7162a3c9868dd1a389a",
+    "web-studio/midi-note-edit.js": "f27aecf4793f6f126412847a40af6c1f8cdd9afb4cdcddf6083786303dc30b9e",
+    "web-studio/midi-time-edit.js": "e9f7072acdccb0998080022b8b4453dcaa06734694c9771fdf96d00272379600",
+    "web-studio/agent-schema.js": "2b92ca59105fc560382b3f093a29ecb46ebdf1869b0eecc700f07309370b6278",
+    "infra/aws-backend/runtime/live-midi-guide.mjs": "f0cf5f31a55ec7965fad4275065f6f88c9d5c93fe2a5cae177043226a4f03d70"
+  }
+}

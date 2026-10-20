@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "instruments": [
+    {
+      "kind": "ensemble",
+      "audibleRms": 0.05211493338896486,
+      "mutedRms": 0,
+      "restoredRms": 0.055368626006628466,
+      "voicesReleased": true,
+      "oneShotBounded": false,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    },
+    {
+      "kind": "sampler",
+      "audibleRms": 0.029343874126512525,
+      "mutedRms": 0,
+      "restoredRms": 0.03944253428557517,
+      "voicesReleased": true,
+      "oneShotBounded": true,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    },
+    {
+      "kind": "drums",
+      "audibleRms": 0.16842613036002296,
+      "mutedRms": 0,
+      "restoredRms": 0.12523620219900236,
+      "voicesReleased": true,
+      "oneShotBounded": false,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    },
+    {
+      "kind": "drum-sample",
+      "audibleRms": 0.044455010832580466,
+      "mutedRms": 0,
+      "restoredRms": 0.04510089441306193,
+      "voicesReleased": true,
+      "oneShotBounded": true,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    }
+  ],
+  "nativeSynthRms": 0.03930847619579491,
+  "activeNoteAudible": true,
+  "inactiveNoteSilent": true,
+  "toggleOffSilent": true,
+  "previewNoProjectOrHistoryChange": true,
+  "keyboardPitchUsesEditedNote": true,
+  "newNoteAuditionAndUndo": true,
+  "editUndoExact": true,
+  "pendingPreviewCancelledByStop": true,
+  "voicesReleased": true,
+  "errors": [],
+  "scope": "Isolated native Chromium application with existing synth, ensemble preset, five-second one-shot sampler, generated drum and sampled drum through their mixers; Mute/Unmute and exact Undo; actual note clicks, preview toggle, arrow pitch edit, downloads and Undo. An analyser confirms output, and delayed sample preparation confirms Stop prevents late preview. No microphone, personal project, provider call or physical-output/listening-quality claim."
+}
