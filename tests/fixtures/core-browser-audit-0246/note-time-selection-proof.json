@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "timeRangeMouseTouchKeyboard": true,
+  "pitchRangeAndSilencePreserved": true,
+  "rangePasteDuplicateCutSplitExact": true,
+  "menuAndKeyboardUseSameEdits": true,
+  "enterTogglesOriginalRange": true,
+  "selectionIsViewState": true,
+  "cancellationPreservesSelectionHistory": true,
+  "zoomedSelectionScrolls": true,
+  "overflowRejected": true,
+  "cancelledCutRetainsClipboard": true,
+  "portableDownloadAndReopenExact": true,
+  "playbackIdentityPreserved": true,
+  "errors": [],
+  "runtimeHashes": {
+    "app.js": "b10dee962dafedf5821c3ad666876090c145b1a6b0c9d35f885a58d2292bfece",
+    "note-time-selection.js": "2b27f8867021cca72521e073a210a0ed62fd556232e0e9a0fea7f051f8d84aef",
+    "navigation-preservation.js": "4ad52b7c39454da6429a3971543bfad7c2c48ddb587c577e37f717250def5f5a",
+    "style.css": "1c9676a5167e98c8833ca338590fcb8e10e674ce54cea8f0284d587e1f3b9f01",
+    "menus.js": "81f0bcd18086b66684b04ca4e685ac5b35d456091db9de5ae84fedf20a17e4da"
+  },
+  "scope": "Isolated actual Chromium application, generated MIDI, mouse/keyboard and CDP touch. Playback identity, project contents, exact Undo, native download/reopen checked. No personal project, microphone, live provider, physical-device or perceptual audio-quality claim."
+}

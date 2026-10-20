@@ -1,0 +1,206 @@
+{
+  "status": "passed",
+  "runtimeHashes": {
+    "agent.css": "d05083304d077d86ce8ea00b06703bbc3a075fb1148b44decee9f33a5bbdcc7d",
+    "app.js": "b10dee962dafedf5821c3ad666876090c145b1a6b0c9d35f885a58d2292bfece",
+    "workspace.js": "93b92f278458886879fc611555aa2f54e0ebc01edff0229c783d612c4b62d34a",
+    "live-layout.css": "4c66dabe47d7d852bec77c6d49a2dc0ebf350034fcb1469165a466b5473ce074",
+    "neutral-theme.css": "eb8f62166b5af1c33276d5a8b7ec59257678dede7c09bbe87aba37943ab440fa",
+    "interaction-theme.css": "961eeb7ae1301a221c6a95e4a12b6a19a83c1f71a3ccf63a408afc776efc84e5",
+    "release.json": "b655c21ceada114ef7381d78f9ebb731f24205581911997535b0ed93733357af"
+  },
+  "runtimeUnchanged": true,
+  "results": [
+    {
+      "viewport": {
+        "width": 667,
+        "height": 375
+      },
+      "cases": [
+        {
+          "name": "Note Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "Note Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "midi-region Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "midi-region Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "audio-region Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "audio-region Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        }
+      ],
+      "pointerTypes": [
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch"
+      ],
+      "savedProjectExact": true,
+      "odesaReachable": true,
+      "collapseReopenEditorUsable": true,
+      "fixedChrome": true,
+      "noHorizontalBleed": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 700
+      },
+      "cases": [
+        {
+          "name": "Note Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "Note Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "midi-region Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "midi-region Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "audio-region Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "audio-region Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        }
+      ],
+      "pointerTypes": [
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch"
+      ],
+      "savedProjectExact": true,
+      "odesaReachable": true,
+      "collapseReopenEditorUsable": true,
+      "fixedChrome": true,
+      "noHorizontalBleed": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "cases": [
+        {
+          "name": "Note Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "Note Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "midi-region Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "midi-region Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "audio-region Move",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        },
+        {
+          "name": "audio-region Resize",
+          "touchCancelExact": true,
+          "editExact": true,
+          "undoExact": true
+        }
+      ],
+      "pointerTypes": [
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch",
+        "touch"
+      ],
+      "savedProjectExact": true,
+      "odesaReachable": true,
+      "collapseReopenEditorUsable": true,
+      "fixedChrome": true,
+      "noHorizontalBleed": true
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated local Chromium with native CDP touch input at portrait and landscape mobile viewports; MIDI note and audio/MIDI Arrangement move/resize/cancel, menu Undo and downloaded-project comparisons. Synthetic projects/audio only. Emulation does not certify physical phone hardware, Safari or audio latency."
+}

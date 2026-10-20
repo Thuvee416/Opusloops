@@ -1,3 +1,4 @@
+import {setSlotStops} from './slot-metadata.js';
 import {validateProject} from './model.js';
 import {sessionSlots} from './session-batch.js';
 
@@ -8,9 +9,7 @@ export function editSessionStops(project,intent){
  if(slots.some(s=>s.clipId))throw Error('Choose Empty Session Slots. Stop Button Changes Never Remove Clips.');
  const next=structuredClone(project);
  for(const slot of slots){
-  const track=next.tracks.find(t=>t.id===slot.trackId),values=(track.noStopSlots||[]).filter(i=>i!==slot.scene);
-  if(!intent.enabled)values.push(slot.scene);
-  if(values.length)track.noStopSlots=values.sort((a,b)=>a-b);else delete track.noStopSlots;
+  setSlotStops(next.tracks.find(t=>t.id===slot.trackId),slot.scene,intent.enabled);
  }
  validateProject(next);
  return {project:next,changed:JSON.stringify(next)!==JSON.stringify(project),observation:{type:'session_stops',enabled:intent.enabled,slots,count:slots.length}};

@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "nativeCopyCutPasteAndKeyboard": true,
+  "explicitEmptyStopSettingsRetained": true,
+  "occupiedSlotSettingsStayAtDestination": true,
+  "exactUndoRedoSaveReopen": true,
+  "pastedSceneContinuesAndStopsCorrectTracks": true,
+  "unchangedRunningSourceAndClock": true,
+  "levels": {
+    "continuing": 0.04162688219792644,
+    "stopped": 0
+  },
+  "odesaUsesSameLocalClipboard": true,
+  "errors": [],
+  "scope": "Isolated actual Chromium, synthetic audio, native clipboard menus/keyboard, downloaded exact project comparisons, native scene scheduler and signal readings, controlled Odesa responses. No personal project, microphone, live provider or physical/mobile output."
+}

@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "invalidEditUnchanged": true,
+  "invalidEditNoUndo": true,
+  "fieldRestored": true,
+  "sourceAudioPreserved": true,
+  "arrangementFadesPreserved": true,
+  "undoRedoExact": true,
+  "saveReopenExact": true,
+  "beforeHz": 220,
+  "afterHz": 110,
+  "reopenedRenderError": 0,
+  "frames": 88200,
+  "errors": [],
+  "scope": "Isolated Chromium real project import, Session loop-length control, rejected conflicting fade edit, valid repitch edit, downloaded projects, Undo/Redo and native rendered audio after reopen. No personal project or physical output device."
+}

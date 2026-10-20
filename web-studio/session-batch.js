@@ -1,6 +1,7 @@
 import {uid,validateProject} from './model.js';
 import {isGroup,groupLeaves} from './track-hierarchy.js';
-import {slotActive,setSlotActive} from './slot-metadata.js';
+import {slotStops} from './launch.js';
+import {slotActive,setSlotActive,setSlotStops} from './slot-metadata.js';
 const fail=message=>{throw new Error(message);};
 export const slotKey=slot=>JSON.stringify([slot.trackId,slot.scene]);
 export function sessionSlots(project,slots,{expandGroups=false,allowEmpty=true}={}){
@@ -14,12 +15,12 @@ export function sessionSlots(project,slots,{expandGroups=false,allowEmpty=true}=
 export function sessionRectangle(project,visible,anchor,end){const a=visible.indexOf(anchor.trackId),b=visible.indexOf(end.trackId);if(a<0||b<0)fail('Selection anchor is not visible.');const slots=[];for(const trackId of visible.slice(Math.min(a,b),Math.max(a,b)+1))for(let scene=Math.min(anchor.scene,end.scene);scene<=Math.max(anchor.scene,end.scene);scene++)slots.push({trackId,scene});return sessionSlots(project,slots,{expandGroups:true});}
 export function copySessionClips(project,slots){
  slots=sessionSlots(project,slots);const leaf=project.tracks.filter(t=>!isGroup(t)),left=Math.min(...slots.map(s=>leaf.findIndex(t=>t.id===s.trackId))),top=Math.min(...slots.map(s=>s.scene));if(!slots.some(s=>s.clipId))fail('Choose at least one occupied Session clip.');
- return {format:'opus-session-clipboard',version:1,revision:uid(),width:Math.max(...slots.map(s=>leaf.findIndex(t=>t.id===s.trackId)))-left+1,height:Math.max(...slots.map(s=>s.scene))-top+1,cells:slots.map(s=>({column:leaf.findIndex(t=>t.id===s.trackId)-left,row:s.scene-top,clip:s.clipId?structuredClone(project.clips[s.clipId]):null,active:s.clipId?slotActive(leaf.find(t=>t.id===s.trackId),s.scene):true}))};
+ return {format:'opus-session-clipboard',version:1,revision:uid(),width:Math.max(...slots.map(s=>leaf.findIndex(t=>t.id===s.trackId)))-left+1,height:Math.max(...slots.map(s=>s.scene))-top+1,cells:slots.map(s=>({column:leaf.findIndex(t=>t.id===s.trackId)-left,row:s.scene-top,clip:s.clipId?structuredClone(project.clips[s.clipId]):null,active:s.clipId?slotActive(leaf.find(t=>t.id===s.trackId),s.scene):true,...(!s.clipId?{stops:slotStops(leaf.find(t=>t.id===s.trackId),s.scene)}:{})}))};
 }
 function validateClipboard(clipboard){
  if(!clipboard||clipboard.format!=='opus-session-clipboard'||clipboard.version!==1||typeof clipboard.revision!=='string'||!Number.isInteger(clipboard.width)||clipboard.width<1||clipboard.width>16||!Number.isInteger(clipboard.height)||clipboard.height<1||clipboard.height>32||!Array.isArray(clipboard.cells)||!clipboard.cells.length||clipboard.cells.length>512)fail('Copy Session clips before pasting.');
  if(!clipboard.cells.some(cell=>cell.clip))fail('The Session clipboard contains no clips.');
- const keys=new Set();for(const cell of clipboard.cells){const key=cell.column+':'+cell.row;if(!Number.isInteger(cell.column)||cell.column<0||cell.column>=clipboard.width||!Number.isInteger(cell.row)||cell.row<0||cell.row>=clipboard.height||typeof cell.active!=='boolean'||keys.has(key)||cell.clip!==null&&(!cell.clip||typeof cell.clip!=='object'))fail('Invalid Session clipboard.');keys.add(key);}
+ const keys=new Set();for(const cell of clipboard.cells){const key=cell.column+':'+cell.row;if(!Number.isInteger(cell.column)||cell.column<0||cell.column>=clipboard.width||!Number.isInteger(cell.row)||cell.row<0||cell.row>=clipboard.height||typeof cell.active!=='boolean'||Object.hasOwn(cell,'stops')&&(typeof cell.stops!=='boolean'||cell.clip!==null)||keys.has(key)||cell.clip!==null&&(!cell.clip||typeof cell.clip!=='object'))fail('Invalid Session clipboard.');keys.add(key);}
 }
 function cleanClips(project,candidates){const used=new Set([...project.tracks.flatMap(t=>t.slots),...project.arrangement.map(r=>r.clipId)]);for(const id of candidates)if(!used.has(id))delete project.clips[id];}
 function extendScenes(project,count){if(count>32)fail('This Session edit would exceed 32 scenes.');while(project.scenes<count){project.scenes++;for(const t of project.tracks)t.slots.push(null);project.sceneNames?.push('Scene '+project.scenes);project.sceneFollows?.push(null);}}
@@ -37,7 +38,7 @@ export function editSessionClips(project,args,{clipboard=null}={}){
    let dest=args.destination;if(!dest&&args.action==='duplicate')dest={trackId:slots[0].trackId,scene:Math.min(...slots.map(s=>s.scene))+copied.height};
    if(!dest||typeof dest!=='object'||Array.isArray(dest)||Object.keys(dest).some(k=>!['trackId','scene'].includes(k))||!Number.isInteger(dest.scene)||dest.scene<0||dest.scene>=32)fail('Choose a destination trackId and zero-based scene.');
    const leaf=p.tracks.filter(t=>!isGroup(t)),left=leaf.findIndex(t=>t.id===dest.trackId);if(left<0||left+copied.width>leaf.length)fail('The copied selection is '+copied.width+' tracks wide and needs ONE top-left destination for the whole rectangle. Available regular tracks in order: '+leaf.map(t=>t.id+' ('+t.name+')').join(', ')+'. Do not repeat all source slots once per destination track. Displayed scene 3 means zero-based scene 2.');extendScenes(p,dest.scene+copied.height);result.selection=[];
-   for(const cell of copied.cells){const track=leaf[left+cell.column],scene=dest.scene+cell.row;if(track.slots[scene])candidates.add(track.slots[scene]);let clipId=null;if(cell.clip){if(args.action==='move'){clipId=cell.clip.id;p.clips[clipId]??=structuredClone(cell.clip);}else{const clip=structuredClone(cell.clip);clip.id=uid();clipId=clip.id;p.clips[clipId]=clip;}}track.slots[scene]=clipId;setSlotActive(track,scene,cell.active||!clipId);result.selection.push({trackId:track.id,scene,...(clipId?{clipId}:{})});}
+   for(const cell of copied.cells){const track=leaf[left+cell.column],scene=dest.scene+cell.row;if(track.slots[scene])candidates.add(track.slots[scene]);let clipId=null;if(cell.clip){if(args.action==='move'){clipId=cell.clip.id;p.clips[clipId]??=structuredClone(cell.clip);}else{const clip=structuredClone(cell.clip);clip.id=uid();clipId=clip.id;p.clips[clipId]=clip;}}track.slots[scene]=clipId;setSlotActive(track,scene,cell.active||!clipId);if(!clipId&&Object.hasOwn(cell,'stops'))setSlotStops(track,scene,cell.stops);result.selection.push({trackId:track.id,scene,...(clipId?{clipId}:{})});}
   }
   cleanClips(p,candidates);
  }

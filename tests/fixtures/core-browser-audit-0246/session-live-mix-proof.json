@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "identity": {
+    "project": true,
+    "graph": true,
+    "generation": true,
+    "inactive": [
+      0
+    ]
+  },
+  "initial": {
+    "rms": 0.03493798697457176,
+    "gate": 1,
+    "playing": true
+  },
+  "muted": {
+    "rms": 0,
+    "gate": 0,
+    "playing": true
+  },
+  "unmuted": {
+    "rms": 0.03502326544828656,
+    "gate": 1,
+    "playing": true
+  },
+  "undoRedoExact": true,
+  "originalSourcesPreserved": true,
+  "errors": [],
+  "scope": "Isolated Chromium actual application project import, Session launch, clip activation and mixer Mute controls. Native analyser measures track audio while transport and graph remain running. Three edits Undo/Redo exactly in downloaded projects. Synthetic sources; no personal project, microphone, physical output or model/provider evaluation."
+}
