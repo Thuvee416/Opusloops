@@ -7,14 +7,17 @@ export function channelLevels(channels){
 }
 // Parallel analysis taps; never route their outputs back into the audible graph.
 export function createStereoMeter(context,source){
- const splitter=context.createChannelSplitter(2),analysers=[context.createAnalyser(),context.createAnalyser()],buffers=analysers.map(()=>new Float32Array(1024));let clippedUntil=-Infinity,disposed=false;
- source.connect(splitter);analysers.forEach((analyser,i)=>{analyser.fftSize=1024;splitter.connect(analyser,i);});
+ const splitter=context.createChannelSplitter(2),analysers=[];let clippedUntil=-Infinity,disposed=false;
+ const dispose=()=>{if(disposed)return;disposed=true;try{source.disconnect(splitter);}catch{}try{splitter.disconnect();}catch{}for(const analyser of analysers)try{analyser.disconnect();}catch{}};
+ let buffers;
+ try{for(let i=0;i<2;i++)analysers.push(context.createAnalyser());buffers=analysers.map(()=>new Float32Array(1024));source.connect(splitter);analysers.forEach((analyser,i)=>{analyser.fftSize=1024;splitter.connect(analyser,i);});}
+ catch(error){dispose();throw error;}
  return {read(){
   if(disposed)return channelLevels([]);
   analysers.forEach((analyser,i)=>analyser.getFloatTimeDomainData(buffers[i]));const levels=channelLevels(buffers);
   if(levels.clipping)clippedUntil=context.currentTime+.75;
   return {...levels,clipping:levels.clipping||context.currentTime<clippedUntil};
- },dispose(){if(disposed)return;disposed=true;try{source.disconnect(splitter);}catch{}splitter.disconnect();analysers.forEach(a=>a.disconnect());}};
+ },dispose};
 }
 export function paintLevelMeter(element,reading,label='Output'){
  if(!element)return;reading??=channelLevels([]);
