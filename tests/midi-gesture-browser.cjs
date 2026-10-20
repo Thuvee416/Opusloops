@@ -43,8 +43,19 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   const resized=await save(),expected=structuredClone(original);expected.clips.phrase.notes[0].duration+=1;expected.clips.phrase.notes[1].duration+=1;
   assert.deepEqual(resized,expected);assert.deepEqual(await selected(),[0,1]);
   await press('undo');assert.deepEqual(await save(),original);await press('redo');assert.deepEqual(await save(),resized);
+  await press('undo');
+  await page.locator('[data-midi-note="0"]').click();await page.locator('[data-midi-note="1"]').click({modifiers:['Shift']});
+  await page.keyboard.down('ArrowRight');await page.keyboard.down('ArrowRight');await page.keyboard.down('ArrowRight');await page.keyboard.up('ArrowRight');
+  const nudged=await save(),nudgeExpected=structuredClone(original);for(const i of [0,1])nudgeExpected.clips.phrase.notes[i].start+=.75;assert.deepEqual(nudged,nudgeExpected);
+  await page.keyboard.press('ArrowRight');const nextNudge=await save();for(const i of [0,1])nudgeExpected.clips.phrase.notes[i].start+=.25;assert.deepEqual(nextNudge,nudgeExpected);
+  await press('undo');assert.deepEqual(await save(),nudged);await press('undo');assert.deepEqual(await save(),original);
+  await page.locator('.piano-scroll').focus();await page.keyboard.press('Shift+ArrowUp');
+  const octave=await save(),octaveExpected=structuredClone(original);for(const i of [0,1])octaveExpected.clips.phrase.notes[i].pitch+=12;assert.deepEqual(octave,octaveExpected);
+  await press('undo');await page.locator('.piano-scroll').focus();await page.keyboard.press('Shift+ArrowRight');
+  const length=await save(),lengthExpected=structuredClone(original);for(const i of [0,1])lengthExpected.clips.phrase.notes[i].duration+=.25;assert.deepEqual(length,lengthExpected);
+  await press('undo');assert.deepEqual(await save(),original);
   assert.deepEqual(errors,[]);
-  const proof={status:'passed',results,undoDuringDragCancelsOnlyPreview:true,nextEditAndUndoRedoExact:true,selectedResize:{indices:[0,1],addedBeats:1,unselectedNotePreserved:true,exactUndoRedo:true},errors,scope:'Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact downloaded projects, selection and Undo checks, then a successful move and Ctrl+Z cancellation of a subsequent drag without undoing that saved move. Two selected notes resize by one beat together with an untouched third note and exact one-step Undo/Redo. Synthetic MIDI; no personal project, input device or model calls.'};
+  const proof={status:'passed',results,undoDuringDragCancelsOnlyPreview:true,nextEditAndUndoRedoExact:true,selectedResize:{indices:[0,1],addedBeats:1,unselectedNotePreserved:true,exactUndoRedo:true},keyboard:{repeatedNudgeOneUndo:true,newPressSeparateUndo:true,octaveShiftExact:true,lengthShiftExact:true,unselectedNotePreserved:true},errors,scope:'Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact project/history checks. Selected-note resize, repeated arrow nudge, separate key press, octave shift and length adjustment preserve the unselected note and support exact Undo. Synthetic MIDI; no personal project, input device or model calls.'};
   fs.writeFileSync('tests/fixtures/midi-gesture-browser-proof.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

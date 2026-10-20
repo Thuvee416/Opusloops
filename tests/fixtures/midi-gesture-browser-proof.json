@@ -37,6 +37,13 @@
     "unselectedNotePreserved": true,
     "exactUndoRedo": true
   },
+  "keyboard": {
+    "repeatedNudgeOneUndo": true,
+    "newPressSeparateUndo": true,
+    "octaveShiftExact": true,
+    "lengthShiftExact": true,
+    "unselectedNotePreserved": true
+  },
   "errors": [],
-  "scope": "Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact downloaded projects, selection and Undo checks, then a successful move and Ctrl+Z cancellation of a subsequent drag without undoing that saved move. Two selected notes resize by one beat together with an untouched third note and exact one-step Undo/Redo. Synthetic MIDI; no personal project, input device or model calls."
+  "scope": "Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact project/history checks. Selected-note resize, repeated arrow nudge, separate key press, octave shift and length adjustment preserve the unselected note and support exact Undo. Synthetic MIDI; no personal project, input device or model calls."
 }
