@@ -1403,7 +1403,21 @@ $('sound-preset-import').onclick=()=>{$('sound-preset-file').value='';$('sound-p
 $('sound-preset-file').onchange=presetRun(async()=>{const file=$('sound-preset-file').files[0];if(!file)return;if(file.size>PRESET_MAX_BYTES)throw new Error('Sound preset exceeds 90 MB.');const preset=validateSoundPreset(JSON.parse(await file.text()));await saveSoundPreset(preset);await refreshSoundPresets();$('sound-preset-status').textContent='Preset imported into this browser. Choose it in the library to load it.';setStatus('Preset imported into this browser. Choose it in the library to load it.');});
 $('sound-preset-delete').onclick=presetRun(async()=>{const id=$('sound-preset-list').value,preset=await getSoundPreset(id);await removeSoundPreset(id);removedSoundPreset=preset;$('sound-preset-restore').disabled=false;await refreshSoundPresets();$('sound-preset-status').textContent='Preset removed. Undo preset removal is available until the page reloads.';setStatus('Preset removed. Undo preset removal is available until the page reloads.');});
 $('sound-preset-restore').onclick=presetRun(async()=>{if(!removedSoundPreset)return;await saveSoundPreset(removedSoundPreset);removedSoundPreset=null;$('sound-preset-restore').disabled=true;await refreshSoundPresets();$('sound-preset-status').textContent='Preset restored.';setStatus('Preset restored.');});
-document.addEventListener('opus-load-sound',run(async e=>{stopToEdit();if(busy)throw new Error('Finish the current operation before loading a preset.');const owner=project,target=$('device-chain').dataset.track;busy=true;renderTransport();try{const preset=await getSoundPreset(e.detail);stopToEdit();if(project!==owner)throw new Error('Project changed. Load the preset again.');const next=applySoundPreset(project,target,preset);install(next,true);deviceTarget=target;renderDevices();changed();setStatus('Loaded '+preset.name+'. Undo restores the previous sound.');}finally{busy=false;renderTransport();}}));
+document.addEventListener('opus-load-sound',run(async e=>{
+ stopToEdit();if(busy||engine.startPromise)throw new Error('Finish the current operation before loading a preset.');
+ const owner=project,player=engine,target=$('device-chain').dataset.track,track=owner.tracks.find(t=>t.id===target),signature=JSON.stringify(owner),generation=player.playGeneration;
+ if(!track)throw new Error('Choose A Regular Track For A Sound Preset.');
+ const assertCurrent=()=>{if(project!==owner||engine!==player||player.playGeneration!==generation||player.startPromise||player.playing||owner.tracks.find(t=>t.id===target)!==track||JSON.stringify(owner)!==signature)throw new Error('Project Or Transport Changed. Load The Preset Again.');stopToEdit();};
+ busy=true;renderTransport();
+ try{
+  const preset=await getSoundPreset(e.detail);assertCurrent();
+  const next=applySoundPreset(owner,target,preset),instrument=next.tracks.find(t=>t.id===target).instrument;
+  const samples=await player.prepareInstrument(target,instrument);assertCurrent();
+  // AudioBuffers can be reused by the replacement engine's audio context.
+  install(next,true);engine.installInstrumentSamples(target,samples);deviceTarget=target;renderDevices();changed();
+  setStatus('Loaded '+preset.name+'. Undo restores the previous sound.');
+ }finally{busy=false;renderTransport();}
+}));
 refreshSoundPresets().catch(()=>setStatus('Sound preset library unavailable. Project editing is still available.',true));
 
 function renderFollow(){
