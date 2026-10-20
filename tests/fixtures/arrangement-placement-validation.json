@@ -1,0 +1,16 @@
+{
+  "version": "0.249.0",
+  "sourceBaseCommit": "b8ef3f4f6017a76d5fe08e9c3021281ccc28445a",
+  "checkedAt": "2026-10-20T23:40:44.918779+00:00",
+  "sourceTests": 962,
+  "sourceTestLogSha256": "1107bbf2fb9a90562d79b62a179e1959e11228b0e6b24dacd7af27cfb8f312db",
+  "fileHashes": {
+    "web-studio/app.js": "cf63f01ea38c574cd4af7cd336a50533cc51c7600f33e5669f273ea6f5855c91",
+    "web-studio/arrangement-placement.js": "a9cfcb62133363e2f548313a0175e77ebf0edb3145aaad0e19ea60ea705d67e5",
+    "web-studio/release.json": "a0002db3a61fe663ba9387ef590cdfb76df623d59f9f658095a30c520778a8cb",
+    "tests/arrangement-placement.test.cjs": "18d91a3195729bf41934fd08690964095cc01ff47723a8f0408297db1e8b1a88",
+    "tests/arrangement-placement-browser.cjs": "eecbfe1a8f6b95e26c312b90d1531710d9dc9429e20ac0fbc8c6ac4f53c570c7",
+    "tests/fixtures/arrangement-placement-browser-proof.json": "3eb27e352fb2f55fa506b4379990443919f72a3dea0999304905aab77d77cc35"
+  },
+  "scope": "Full source suite plus focused native app/history/reopen/Odesa/audio/MIDI export test. Other browser workflows and backend suite not repeated; backend unchanged."
+}
