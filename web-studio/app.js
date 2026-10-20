@@ -40,6 +40,7 @@ import {preparePlayback,stopPlayback,transportSnapshot} from './transport-contro
 import {sessionNeighbor} from './session-keyboard.js';
 import {clipFeedback} from './session-feedback.js';
 import {studioShortcut,tabMovesFocus} from './studio-shortcuts.js';
+import {saveFromShortcut} from './save-shortcut.js';
 import {MidiOverdub,overdubDestination,applyMidiOverdub} from './midi-overdub.js';
 import {beginOverdubPlayback,updateOverdubPlayback,endOverdubPlayback} from './overdub-playback.js';
 import {recordingDestination,appendRecordedClip,prepareRecordInput,assertRecordingBinding,armedInputTarget} from './recording-control.js';
@@ -185,7 +186,8 @@ function ungroupSelected(){let ids=selectedTrackIds().map(id=>project.tracks.fin
 function groupSlot(t,scene){const members=groupLeaves(project,t.id),occupied=members.filter(t=>t.slots[scene]),playing=members.some(t=>engine.active.get(t.id)?.clipId),queued=members.some(t=>engine.pending.has(t.id));return `<div style="--group-clip:${clipColor(project.clips[occupied[0]?.slots[scene]],occupied[0]??t)}" class="group-slot ${playing&&engine.playing?'playing':''} ${queued?'queued':''}"><button data-group-launch="${esc(t.id)}" data-group-scene="${scene}" aria-label="Launch ${esc(t.name)} scene ${scene+1}" ${!occupied.length?'disabled':''}>${icon('play')}</button><button class="group-slot-label" data-group-slot-select="${esc(t.id)}" aria-label="Select Clips In ${esc(t.name)}, Scene ${scene+1}">${occupied.length?occupied.length+' Clips':'Group'}</button><button data-group-stop="${esc(t.id)}" aria-label="Stop group ${esc(t.name)}">${icon('stop')}</button></div>`;}
 function groupOverviewMarkup(t,v){return groupOverview(project,t.id).map((r,i)=>{const box=visibleInterval(r.start,r.length,v);if(!box)return '';return `<button class="group-overview-region ${r.active?'':'inactive'}" data-group-region="${esc(r.id)}" aria-label="Reveal ${esc(project.clips[r.clipId].name)} in ${esc(t.name)}" style="left:${box.left}%;width:${box.width}%;top:${4+(i%4)*10}px;--track:${project.tracks.find(t=>t.id===r.trackId).color}"></button>`;}).join('');}
 const setStatus=(message,error=false)=>{$('status').textContent=message;$('status').classList.toggle('error',error);};
-const run=fn=>async(...args)=>{try{await fn(...args);}catch(e){setStatus(e.message||'Something went wrong.',true);console.error(e);}};
+let fieldErrorRevision=0;
+const run=fn=>async(...args)=>{try{await fn(...args);}catch(e){if(args[0]?.type==='change')fieldErrorRevision++;setStatus(e.message||'Something went wrong.',true);console.error(e);}};
 function demo(){return createDemoSession();}
 
 const dbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open('looproom-studio',1);request.onupgradeneeded=()=>request.result.createObjectStore('projects');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
@@ -571,6 +573,7 @@ document.addEventListener('keydown',e=>{
  if(sessionMarquee?.dragging)return;
  const command=studioShortcut(e,{typing:!!e.target.closest('input,textarea,select,[contenteditable=true]'),dialog:!!document.querySelector('dialog[open]'),menu:document.body.classList.contains('menu-open'),agent:!!e.target.closest('#studio-agent'),tabNavigation:tabMovesFocus(localStorage)});
  if(!command)return;e.preventDefault();
+ if(command==='save'||command==='save-as'){run(()=>saveFromShortcut(command,{document,getErrorRevision:()=>fieldErrorRevision,setStatus}))();return;}
  if(command==='toggle_view')switchView(view==='session'?'arrangement':'session');
  else if(['session','arrangement'].includes(command))switchView(command);
  else if(command==='toggle_play')$(transportSnapshot(engine).running?'stop':'play').click();

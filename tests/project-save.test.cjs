@@ -23,9 +23,9 @@ test('project names and filenames are bounded; ordinary Save preserves legacy wh
  for(const name of ['','  Legacy Name  ']){p.name=name;const file=t.projectSaveFile(p);assert.equal(JSON.parse(file.data).name,name);assert.equal(p.name,name);}
  const invalid={...p,arrangement:[{id:'bad'}]};assert.throws(()=>t.projectSaveFile(invalid,'Snapshot'));
 });
-test('Save shortcuts route distinctly and respect editor, modal, menu and repeat guards',async()=>{
+test('Save shortcuts work in fields and agent drafts while retaining modal, menu and event guards',async()=>{
  const {studioShortcut}=await import('../web-studio/studio-shortcuts.js');
- for(const modifier of ['metaKey','ctrlKey']){const e={code:'KeyS',[modifier]:true};assert.equal(studioShortcut(e),'save');assert.equal(studioShortcut({...e,shiftKey:true}),'save-as');assert.equal(studioShortcut({...e,altKey:true}),null);for(const state of ['typing','dialog','menu','agent'])assert.equal(studioShortcut(e,{[state]:true}),null);assert.equal(studioShortcut({...e,repeat:true}),null);}
+ for(const modifier of ['metaKey','ctrlKey']){const e={code:'KeyS',[modifier]:true};assert.equal(studioShortcut(e),'save');assert.equal(studioShortcut({...e,shiftKey:true}),'save-as');assert.equal(studioShortcut({...e,altKey:true}),null);for(const state of ['typing','agent']){assert.equal(studioShortcut(e,{[state]:true}),'save');assert.equal(studioShortcut({...e,shiftKey:true},{[state]:true}),'save-as');}for(const state of ['dialog','menu'])assert.equal(studioShortcut(e,{[state]:true}),null);for(const flag of ['repeat','isComposing','defaultPrevented'])assert.equal(studioShortcut({...e,[flag]:true}),null);}
 });
 
 test('actual named-save entry rejects a changed project or history before storage and download',async()=>{
