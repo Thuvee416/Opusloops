@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync(require('node:path').join(__dirname,'../web-studio/app.js'),'utf8');
 async function fixture({initialized=true}={}){
- const api=Object.assign({},...await Promise.all(['audio','model','management','session-edit','automation-targets','history','time-edit','time-clipboard','routing'].map(n=>import('../web-studio/'+n+'.js'))));
+ const api=Object.assign({},...await Promise.all(['audio','model','management','session-edit','automation-targets','history','time-edit','time-clipboard','routing','clip-properties'].map(n=>import('../web-studio/'+n+'.js'))));
  const project=api.emptyProject();project.tracks.push(api.makeTrack('Second',1));
  const clip={id:'clip',name:'Pattern',kind:'midi',beats:4,sourceBpm:120,notes:[]};project.clips.clip=clip;project.tracks[0].slots[0]=clip.id;api.validateProject(project);
  const nodes=[],param=()=>({value:0,setTargetAtTime(v){this.value=v;},cancelScheduledValues(){}}),node=()=>{const n={gain:param(),pan:param(),edges:new Set(),connect(t){this.edges.add(t);},disconnect(){this.edges.clear();}};nodes.push(n);return n;};
@@ -12,6 +12,7 @@ async function fixture({initialized=true}={}){
  engine.overrides.add(project.tracks[0].id);engine.automationOverrides.add(project.tracks[0].id+':volume');engine.buffers.set('clip',{decoded:true});
  const counts={release:0,cancel:0,reconcile:0,render:0,commit:0},history=new api.History(project),controls={'manage-track':{value:project.tracks[0].id},'manage-scene':{value:'0'},'project-name':{},bpm:{},'time-start':{value:'1'},'time-length':{value:'4'},'time-copy':{},'time-cut':{},'time-paste':{},'add-track':{},'add-scene':{},'add-return':{},returns:{addEventListener:(_,fn)=>controls.returnsClick=fn}};
  const ctx={...api,project,engine,structuredClone,busy:false,selection:{trackId:project.tracks[0].id,clipId:'clip',scene:0},sessionSelection:[],sessionAnchor:null,selectedRegion:null,deviceTarget:'old',
+  clipPropertiesLocked:()=>false,editableClipIds:()=>['clip'],renderGrid(){},renderTimeline(){},renderEditor(){},renderMixer(){},
   inputActive:()=>false,stopToEdit(){if(engine.playing)throw Error('Stop Playback');},
   releaseNotes(){counts.release++;},cancelRegionDrag(){counts.cancel++;},reconcileContentSelection(){counts.reconcile++;},render(){counts.render++;},setStatus(){},$:id=>controls[id],
   timeScopeIds:()=>null,timeScopeLabel:()=> 'All Tracks',renderTransport(){},run:fn=>fn,
@@ -19,6 +20,12 @@ async function fixture({initialized=true}={}){
   timeClipboard:{previous:true},sessionClipboard:{previous:true},
   changed(){counts.commit++;history.commit(ctx.project);}};
  vm.createContext(ctx);
+ controls['clip-editor']={querySelector:()=>null};
+ controls['session-grid']={addEventListener:(_,fn)=>controls.trackNameChange=fn};
+ const renameStart=source.indexOf("$('session-grid').addEventListener('change'");
+ vm.runInContext(source.slice(renameStart,source.indexOf('\n',renameStart)),ctx);
+ const propertiesStart=source.indexOf('function applyManualClipProperties(');
+ vm.runInContext(source.slice(propertiesStart,source.indexOf('\nfunction showClipProperty(',propertiesStart)),ctx);
  const returnHelper=source.indexOf('function applyReturnStructure(');if(returnHelper>=0)vm.runInContext(source.slice(returnHelper,source.indexOf("$('add-return').onclick",returnHelper)),ctx);
  for(const marker of ['function newTrack(',"$('add-track').onclick","$('add-return').onclick","$('returns').addEventListener('click'"]){const start=source.indexOf(marker);vm.runInContext(source.slice(start,source.indexOf('\n',start)),ctx);}
  for(const [begin,end] of [['function installManagedProject(','function renderNotes('],['function applyTrack(action','\n'],['function applySessionTransfer(','\n'],['function retainAgentSelection(','\ninstallAgent('],["for(const action of ['copy','cut','paste'])$('time-'","for(const action of ['insert','delete','duplicate'])"]]){
@@ -31,6 +38,33 @@ async function fixture({initialized=true}={}){
  return {api,ctx,project,engine,audio,nodes,counts,history,snapshot,controls};
 }
 
+function metadataEdit(f,kind){
+ if(kind==='track'){const target={dataset:{trackName:f.project.tracks[0].id},value:'Renamed Track'};return f.controls.trackNameChange({target});}
+ return f.ctx.applyManualClipProperties({name:'Renamed Clip',color:'#62b5a5',launch:{mode:'toggle'}});
+}
+for(const kind of ['track','clip'])test(`actual ${kind} metadata edit keeps later mixer changes connected to the installed project`,async()=>{
+  const f=await fixture(),before=structuredClone(f.project),oldGraph=f.engine.mixGraph;metadataEdit(f,kind);
+  assert.equal(f.engine.project,f.ctx.project);
+  assert.equal(f.counts.commit,1);assert.deepEqual(f.history.undo(),before);assert.deepEqual(f.history.redo(),structuredClone(f.ctx.project));
+  const track=f.ctx.project.tracks[1];track.mute=true;f.engine.updateMix();assert.equal(f.engine.mixers.get(track.id).gate.gain.value,0);
+  assert.notEqual(f.engine.mixGraph,oldGraph);
+});
+test('metadata installation failure restores the project, runtime bindings and history',async()=>{
+ for(const kind of ['track','clip']){
+  const f=await fixture(),before=f.snapshot();f.audio.createGain=()=>{throw Error('Allocation Failed');};
+  assert.throws(()=>metadataEdit(f,kind),/Allocation Failed/);assert.deepEqual(f.snapshot(),before);assert.equal(f.counts.commit,0);assert.equal(f.counts.release,0);
+ }
+});
+test('unchanged clip properties add no history and do not rebuild audio',async()=>{
+ const f=await fixture(),before=f.snapshot(),nodes=f.nodes.length;f.ctx.applyManualClipProperties({name:'Pattern'});
+ assert.deepEqual(f.snapshot(),before);assert.equal(f.nodes.length,nodes);assert.equal(f.counts.commit,0);
+});
+test('metadata edits without initialized audio remain resource-free and reversible',async()=>{
+ for(const kind of ['track','clip']){
+  const f=await fixture({initialized:false}),before=structuredClone(f.project);metadataEdit(f,kind);
+  assert.equal(f.engine.context,null);assert.equal(f.nodes.length,0);assert.equal(f.counts.commit,1);assert.deepEqual(f.history.undo(),before);
+ }
+});
 test('actual track deletion preserves project, playback caches, selection and Undo on mixer failure',async()=>{
  const f=await fixture(),before=f.snapshot();f.audio.createGain=()=>{throw Error('Allocation Failed');};
  assert.throws(()=>f.ctx.applyTrack('delete'),/Allocation Failed/);

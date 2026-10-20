@@ -21,7 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CASES = ['workspace-resume', 'import-permission', 'audio-interruption',
          'computer-keyboard', 'capture-placement', 'midi-placement', 'clip-loop',
          'offline-export', 'studio-effects', 'long-tail', 'arrangement-delivery',
-         'session-delivery', 'session-start-cancellation', 'session-live-mix']
+         'session-delivery', 'session-start-cancellation', 'session-live-mix',
+         'metadata-mix']
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()

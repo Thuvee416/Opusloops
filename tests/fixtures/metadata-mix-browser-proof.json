@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "kind": "track",
+      "binding": {
+        "sameContext": true,
+        "newGraph": true
+      },
+      "initial": {
+        "rms": 0.03493798697457176,
+        "gate": 1,
+        "playing": true
+      },
+      "muted": {
+        "rms": 0,
+        "gate": 0,
+        "playing": true
+      },
+      "unmuted": {
+        "rms": 0.03504113238252209,
+        "gate": 1,
+        "playing": true
+      },
+      "onlyRequestedMetadataChanged": true,
+      "undoRedoExact": true,
+      "errors": []
+    },
+    {
+      "kind": "clip",
+      "binding": {
+        "sameContext": true,
+        "newGraph": true
+      },
+      "initial": {
+        "rms": 0.03493798697457176,
+        "gate": 1,
+        "playing": true
+      },
+      "muted": {
+        "rms": 0,
+        "gate": 0,
+        "playing": true
+      },
+      "unmuted": {
+        "rms": 0.03493817013499255,
+        "gate": 1,
+        "playing": true
+      },
+      "onlyRequestedMetadataChanged": true,
+      "undoRedoExact": true,
+      "errors": []
+    }
+  ],
+  "scope": "Two isolated Chromium application workflows with existing initialized audio: rename a track header or edit Clip Name, relaunch Session, measure Mute/Unmute with native analyser, download projects and verify exact three-step Undo/Redo. Original embedded audio and all unmentioned properties are preserved. Synthetic sources; no personal project, microphone, provider/model evaluation or physical-output certification."
+}
