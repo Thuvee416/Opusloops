@@ -159,7 +159,6 @@ export class Engine {
   halt(reset){
     for(const h of this.gateHolds.values())if(!h.repeat&&this.active.get(h.trackId)?.clipId===h.clipId)this.active.set(h.trackId,{clipId:null,start:this.position});this.gateHolds.clear();this.playGeneration++;const raw=this.rawBeat(),position=this.beat();
     this.finishAutomationRecording();this.finishRecords(raw);
-    if(this.recording){for(const s of this.project.arrangement)s.length=Math.min(s.length,Math.max(0,raw-s.start));this.project.arrangement=this.project.arrangement.filter(s=>s.length>=.0625);}
     this.recording=false;this.recordingTake=null;this.playing=false;this.position=reset?0:position;
     // Preserve clip phase when the displayed timeline wrapped before pausing.
     if(!reset){for(const a of this.active.values())a.start-=raw-position;for(const f of this.follows.values())f.beat-=raw-position;if(this.sceneFollow)this.sceneFollow.beat-=raw-position;}else{this.follows.clear();this.sceneFollow=null;}this.pendingScene=null;
@@ -316,9 +315,15 @@ export class Engine {
     if(cancel){this.records.clear();this.project.arrangement=take.previous;this.recording=false;this.recordingTake=null;}
     this.stop();return {sessionRecording:true,action:cancel?'cancel':'finish',captureId:take.id,status:cancel?'cancelled':this.project.arrangement.length?'saved':'empty',regionCount:this.project.arrangement.length};
   }
-  openRecord(trackId,clipId,beat,offset=0){if(this.project.arrangement.length>=10000){this.finishRecords(beat);this.recording=false;this.recordingTake=null;this.recordingError='Session recording stopped at the 10,000-region limit. Save or edit this take before recording again.';return;}const track=this.project.tracks.find(t=>t.id===trackId),slot=this.active.get(trackId)?.slot??track.slots.indexOf(clipId),s={id:uid(),trackId,clipId,start:beat,length:0,offset,...(!slotActive(track,slot)?{active:false}:{})};this.records.set(trackId,s);this.project.arrangement.push(s);}
+  openRecord(trackId,clipId,beat,offset=0){if(this.project.arrangement.length>=10000){this.finishRecords(this.rawBeat());this.recording=false;this.recordingTake=null;this.recordingError='Session recording stopped at the 10,000-region limit. Save or edit this take before recording again.';return;}const track=this.project.tracks.find(t=>t.id===trackId),slot=this.active.get(trackId)?.slot??track.slots.indexOf(clipId),s={id:uid(),trackId,clipId,start:beat,length:0,offset,...(!slotActive(track,slot)?{active:false}:{})};this.records.set(trackId,s);this.project.arrangement.push(s);}
   closeRecord(trackId,beat){const s=this.records.get(trackId);if(s){s.length=Math.max(0,beat-s.start);if(s.length<.0625)this.project.arrangement=this.project.arrangement.filter(x=>x!==s);this.records.delete(trackId);}}
-  finishRecords(beat){for(const id of [...this.records.keys()])this.closeRecord(id,beat);}
+  finishRecords(beat){
+    for(const id of [...this.records.keys()])this.closeRecord(id,beat);
+    // Lookahead can already have closed regions at a future launch boundary.
+    // Every finish path must trim those regions to the actual audio clock,
+    // including Record-off while playback continues and the region limit.
+    if(this.recording){for(const s of this.project.arrangement)s.length=Math.min(s.length,Math.max(0,beat-s.start));this.project.arrangement=this.project.arrangement.filter(s=>s.length>=.0625);}
+  }
   back(){this.cancelLaunchPreparation(this.project.tracks.map(t=>t.id));this.cancelSceneFollow();this.gateHolds.clear();if(!this.playing){this.overrides.clear();this.active.clear();this.follows.clear();this.changed();return;}const beat=this.launchBoundary(null);for(const t of this.project.tracks)this.pending.set(t.id,{back:true,beat});this.changed();}
   cancelSceneFollow(){this.sceneLaunchRequest=null;this.activeScene=null;this.sceneActivationBeat=null;this.pendingScene=null;this.sceneFollow=null;this.sceneFollowSignature=undefined;}
   armSceneFollow(index,beat){

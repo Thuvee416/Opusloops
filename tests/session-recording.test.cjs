@@ -13,3 +13,39 @@ test('request cancellation during audio preparation leaves no take or changed pr
 test('unrelated project changes during an active request remain stale and cannot be hidden by evolving Arrangement',async()=>{const t=await setup();try{await t.e.startRecording();const expected=t.sessionRecordingSignature(t.p,t.sessionRecordingState(t.e)),plan=t.plan([command('finish')]);t.p.bpm=131;await assert.rejects(()=>t.run(plan,{expected}),/session changed/);assert.equal(t.e.recording,true);}finally{t.e.finishSessionRecording({cancel:true});}});
 test('capture receipt rejects foreign edits, invented completion and wrong cancel restoration',async()=>{const t=await setup();await t.e.startRecording();const state=structuredClone(t.sessionRecordingState(t.e)),prepared=t.prepareSessionRecording(t.p,{action:'cancel'},state),before=structuredClone(t.p),result=t.e.finishSessionRecording({cancel:true});assert.throws(()=>t.checkSessionRecordingReceipt(before,{...t.p,bpm:131},prepared,result,t.sessionRecordingState(t.e)),/unrelated/);assert.throws(()=>t.checkSessionRecordingReceipt(before,{...t.p,arrangement:[]},prepared,{...result,regionCount:0},t.sessionRecordingState(t.e)),/restore/);assert.throws(()=>t.checkSessionRecordingReceipt(before,t.p,prepared,{...result,captureId:'other'},t.sessionRecordingState(t.e)),/finish/);});
 test('simple recording finish/cancel work locally only for an active identified Session take',async()=>{const t=await setup();for(const [prompt,action]of [['Stop recording','finish'],['Please finish the current Session recording now.','finish'],['Cancel this take!','cancel']])assert.equal(t.readSessionRecordingStopRequest(prompt,{active:true}).actions[0].args.args.action,action);for(const prompt of ['Stop','Do not cancel this take','Finish recording and export it'])assert.equal(t.readSessionRecordingStopRequest(prompt,{active:true}),null);assert.equal(t.readSessionRecordingStopRequest('Stop recording',{active:false}),null);});
+test('turning Record off trims a lookahead-closed region to the actual finish time while playback continues',async()=>{
+ const t=await setup();try{
+  await t.e.startRecording();const id=t.p.tracks[0].id;
+  // The scheduler can apply a scene boundary ahead of the audible clock.
+  t.e.closeRecord(id,4);t.e.openRecord(id,'a',4);
+  t.e.context.currentTime=t.e.origin+3.9*60/t.p.bpm;
+  await t.e.startRecording();
+  assert.equal(t.e.recording,false);assert.equal(t.e.playing,true);
+  assert.equal(t.p.arrangement.length,1);
+  assert.ok(Math.abs(t.p.arrangement[0].length-3.9)<1e-9);
+  t.validateProject(t.p);assert.deepEqual(t.history.undo(),t.original);
+ }finally{t.e.stop();}
+});
+test('recording finalization drops unheard short regions on tracks already closed by lookahead',async()=>{
+ const t=await setup();try{
+  await t.e.startRecording();const id=t.p.tracks[0].id;
+  t.e.closeRecord(id,4);t.e.openRecord(id,'a',4);t.e.closeRecord(id,4.25);
+  t.e.context.currentTime=t.e.origin+4.03*60/t.p.bpm;
+  await t.e.startRecording();
+  assert.equal(t.p.arrangement.length,1);assert.equal(t.p.arrangement[0].length,4);
+  t.validateProject(t.p);assert.deepEqual(t.history.undo(),t.original);
+ }finally{t.e.stop();}
+});
+test('the Session region limit finalizes at the audible clock rather than the future scheduled boundary',async()=>{
+ const t=await setup();try{
+  await t.e.startRecording();const id=t.p.tracks[0].id;
+  t.p.arrangement=Array.from({length:10000},(_,i)=>({id:'r'+i,trackId:id,clipId:'a',start:i*.25,length:.25,offset:0}));
+  t.e.records.clear();t.e.records.set(id,t.p.arrangement.at(-1));
+  t.e.context.currentTime=t.e.origin+2499.9*60/t.p.bpm;
+  t.e.openRecord(id,'a',2500);
+  assert.equal(t.e.recording,false);assert.equal(t.e.playing,true);assert.equal(t.e.records.size,0);
+  assert.match(t.e.recordingError,/10,000-region limit/);
+  const last=t.p.arrangement.at(-1);assert.ok(Math.abs(last.start+last.length-2499.9)<1e-9);
+  t.validateProject(t.p);
+ }finally{t.e.stop();}
+});
