@@ -38,3 +38,51 @@ test('first connection selects an available input but a missing remembered input
  assert.deepEqual(midiInputChoices(new Map()).options,[{id:'',label:'No MIDI Input Available',missing:true}]);
  assert.equal(midiInputChoices(new Map([['a',{...a,state:'disconnected'}]])).port,null);
 });
+
+test('selected-port All Notes Off closes only the addressed MIDI channel at receipt time',async()=>{
+ const t=await setup();t.send(t.a,[144,60,100],.1);t.send(t.a,[145,67,90],.2);t.take.on('KeyA',72,.7,.3);
+ t.send(t.a,[176,123,0],1);
+ assert.equal(t.take.notes.length,1);assert.equal(t.take.notes[0].pitch,60);assert.equal(t.take.notes[0].duration,1.8);
+ assert.equal(t.take.held.size,2);assert.equal(t.take.held.has('KeyA'),true);assert.equal(t.sustain.held.size,1);
+ t.send(t.a,[128,60,0],1.1);assert.equal(t.take.notes.length,1);
+ t.send(t.a,[144,60,80],1.2);t.send(t.a,[176,123,0],1.5);assert.equal(t.take.notes.length,2);assert.ok(Math.abs(t.take.notes[1].duration-.6)<1e-12);
+});
+
+test('All Notes Off respects sustain while controller reset releases only pedal-held notes',async()=>{
+ const t=await setup();t.send(t.a,[144,60,100],.1);t.send(t.a,[176,64,127],.2);t.send(t.a,[128,60,50],.3);
+ t.send(t.a,[144,64,100],.4);t.send(t.a,[176,123,0],.5);assert.equal(t.take.notes.length,0);
+ t.send(t.a,[144,67,100],.6);t.send(t.a,[177,64,127],.7);t.send(t.a,[145,72,100],.8);t.send(t.a,[129,72,30],.9);
+ t.send(t.a,[176,121,0],1);
+ assert.deepEqual(t.take.notes.map(n=>n.pitch),[60,64]);assert.equal(t.take.notes[0].releaseVelocity,50/127);
+ assert.equal(t.take.notes[0].duration,1.8);assert.equal(t.take.notes[1].duration,1.2);
+ assert.equal(t.sustain.pedals.has(0),false);assert.equal(t.sustain.pedals.has(1),true);
+ assert.equal(t.take.held.size,2);t.send(t.a,[128,67,0],1.5);assert.ok(Math.abs(t.take.notes[2].duration-1.8)<1e-12);
+ t.send(t.a,[177,121,0],2);assert.equal(t.take.notes[3].pitch,72);assert.equal(t.take.notes[3].duration,2.4);
+});
+
+test('channel release and reset controls decode only valid channel messages and never fall through as notes',async()=>{
+ const {decodeMidi,MidiSustain}=await setup();
+ for(let channel=0;channel<16;channel++){
+  assert.deepEqual(decodeMidi([176+channel,123,0]),{type:'all-notes-off',channel});
+  assert.deepEqual(decodeMidi([176+channel,121,0]),{type:'reset-controllers',channel});
+ }
+ for(const bytes of [[176,123,128],[176,121,-1],[176,123],[176,123,1],[176,121,1],[240,123,0]])assert.equal(decodeMidi(bytes),null);
+ const events=[],sustain=new MidiSustain((...args)=>events.push(args));sustain.handle(decodeMidi([176,123,0]),1);sustain.handle(decodeMidi([176,121,0]),2);
+ assert.deepEqual(events,[]);assert.equal(sustain.held.size,0);
+});
+
+test('the actual input-note bridge releases monitoring and updates both new takes and overdub at controller time',async()=>{
+ const t=await setup(),{MidiOverdub}=await import('../web-studio/midi-overdub.js'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),source=fs.readFileSync(path.join(__dirname,'../web-studio/app.js'),'utf8');
+ for(const overdub of [false,true]){
+  const original={id:'loop',kind:'midi',name:'Existing',beats:4,sourceBpm:120,notes:[{pitch:48,start:0,duration:.5,velocity:.7}]},take=overdub?new MidiOverdub(original,120,0):new t.MidiTake(120,0),monitor=new Map(),released=[],clock={currentTime:0};
+  const ctx={MidiOverdub,midiTake:take,inputConnecting:false,inputFinishing:false,inputStarted:0,inputTarget:'track',armedInputTrack:'track',inputActive:()=>true,engine:{context:clock},updateOverdubPlayback(){},renderOverdubPreview(){},liveNotes:{on(key,pitch){monitor.set(key,pitch);},off(key,velocity){released.push({pitch:monitor.get(key),velocity});monitor.delete(key);}}};
+  vm.createContext(ctx);const start=source.indexOf('function inputNote(');vm.runInContext(source.slice(start,source.indexOf('\n',start)),ctx);
+  const sustain=new t.MidiSustain((...args)=>ctx.inputNote(...args)),send=(data,time)=>{clock.currentTime=time;sustain.handle(t.decodeMidi(data),time);};
+  send([144,60,100],.1);send([145,67,90],.2);send([176,64,127],.3);send([176,123,0],.4);
+  assert.equal(monitor.size,2);send([176,121,0],.6);assert.equal(monitor.size,1);assert.equal(released[0].pitch,60);
+  send([177,123,0],.7);assert.equal(monitor.size,0);
+  const clip=take.finish(1),added=overdub?clip.notes.slice(original.notes.length):clip.notes;
+  assert.deepEqual(added.map(n=>n.pitch),[60,67]);for(let i=0;i<2;i++){assert.ok(Math.abs(added[i].start-(i+1)*.2)<1e-12);assert.ok(Math.abs(added[i].duration-1)<1e-12);}
+  if(overdub)assert.deepEqual(clip.notes[0],original.notes[0]);
+ }
+});
