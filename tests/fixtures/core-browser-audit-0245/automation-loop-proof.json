@@ -1,0 +1,73 @@
+{
+  "status": "passed",
+  "looping": true,
+  "results": [
+    {
+      "mode": "touch",
+      "start": 3.39265306122449,
+      "release": 4.623310657596371,
+      "finish": 5.006439909297052,
+      "initial": {
+        "beat": 3.381043083900227,
+        "rms": 0.040229187752960714,
+        "writing": 0
+      },
+      "held": {
+        "beat": 4.611700680272109,
+        "rms": 0,
+        "writing": 1
+      },
+      "released": {
+        "beat": 4.994829931972789,
+        "rms": 0.04018490174213822,
+        "writing": 0
+      },
+      "rendered": {
+        "frames": 352800,
+        "before": 0.04746296466649654,
+        "held": 0,
+        "after": 0.04884236617475599,
+        "wrapped": 0,
+        "outsideLoop": 0.048762453058039855,
+        "mode": "touch"
+      },
+      "exactUndoRedoAndReopen": true,
+      "unrelatedProjectDataPreserved": true,
+      "errors": []
+    },
+    {
+      "mode": "latch",
+      "start": 3.3926530612244896,
+      "release": 4.646530612244898,
+      "finish": 5.029659863945578,
+      "initial": {
+        "beat": 3.3694331065759635,
+        "rms": 0.03970348575472596,
+        "writing": 0
+      },
+      "held": {
+        "beat": 4.646530612244898,
+        "rms": 0,
+        "writing": 1
+      },
+      "released": {
+        "beat": 5.006439909297052,
+        "rms": 0,
+        "writing": 1
+      },
+      "rendered": {
+        "frames": 352800,
+        "before": 0.04746296466649654,
+        "held": 0,
+        "after": 0,
+        "wrapped": 0,
+        "outsideLoop": 0.048762453058039855,
+        "mode": "latch"
+      },
+      "exactUndoRedoAndReopen": true,
+      "unrelatedProjectDataPreserved": true,
+      "errors": []
+    }
+  ],
+  "scope": "Isolated actual application Touch/Latch recording using keyboard fader gestures, real audio-clock and native analyser; optional nonzero-start Arrangement loop crossed while held, with WAV checks inside and outside the loop; exact saved project Undo/Redo and reopen; native WAV render from the reopened data. Synthetic source; no personal project, microphone, provider or physical output checks."
+}

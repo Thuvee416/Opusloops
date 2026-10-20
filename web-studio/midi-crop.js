@@ -15,7 +15,7 @@ export function cropMidiSources(project,intent){
   const clip=next.clips[id],before=clip.notes,start=spec.start??0,length=spec.length??clip.beats,end=start+length;
   clip.notes=before.flatMap(note=>{const onset=Math.max(start,note.start),off=Math.min(end,note.start+note.duration);return off>onset?[{...note,start:onset-start,duration:onset===note.start&&off===note.start+note.duration?note.duration:off-onset}]:[];});
   clip.beats=length;
-  observations.push({type:'midi_notes',clipId:id,clipName:clip.name,action:'crop',beforeCount:before.length,afterCount:clip.notes.length,resultSelection:clip.notes.map((_,i)=>i),timeRange:null,insertAt:0,changed:JSON.stringify(project.clips[id])!==JSON.stringify(clip)});
+  observations.push({type:'midi_notes',clipId:id,clipName:clip.name,action:'crop',selectedCount:before.length,beforeCount:before.length,afterCount:clip.notes.length,resultSelection:clip.notes.map((_,i)=>i),timeRange:null,insertAt:0,changed:JSON.stringify(project.clips[id])!==JSON.stringify(clip)});
  }
  validateProject(next);
  return {project:next,changed:JSON.stringify(next)!==JSON.stringify(project),observations,ids:spec.ids};

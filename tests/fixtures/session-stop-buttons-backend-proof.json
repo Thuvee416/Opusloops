@@ -1,0 +1,48 @@
+{
+  "stack": "opusloops-aws-application",
+  "sha256": "ddc7434cfaf63e8bea259d09dbc7ffb2e1bab921272829a0a20a2394d3d01a00",
+  "lambdaCodeSha256": "3cdDTPr2PovqJZ0J28f/suG6uSEnKCmgogojlNPQGgA=",
+  "bundleSha256": "d65e514d5ce566f6cda13d638a0710c4c34ca334db67a659d4360d2b2f1cda99",
+  "sourceBaseCommit": "75c3e8170ede2a672810e5ffa2bb4e927b3551bf",
+  "checkedAt": "2026-10-20T23:01:33.868649+00:00",
+  "stackStatus": "UPDATE_COMPLETE",
+  "lambda": {
+    "hash": "3cdDTPr2PovqJZ0J28f/suG6uSEnKCmgogojlNPQGgA=",
+    "state": "Active",
+    "update": "Successful"
+  },
+  "health": {
+    "service": "opusloops",
+    "provider": "aws",
+    "version": 1
+  },
+  "accessChecks": [
+    {
+      "origin": null,
+      "status": 403,
+      "code": "origin_denied"
+    },
+    {
+      "origin": "https://opusloops.com",
+      "status": 401,
+      "code": "authentication_required"
+    }
+  ],
+  "scope": "API code hash and public health/origin/auth boundaries; no live model or authenticated execution.",
+  "changeSetName": "opus-session-stops-0245",
+  "sourceHashes": {
+    "infra/aws-backend/runtime/studio-agent.mjs": "dce3a884b05af8441afffd6bf4e66341e3fe3501b8cd72a4b6d4f34324d0a92c",
+    "web-studio/model.js": "5c75dc6e4f6895bebf7e6e2e16c3c4c3f836aac3ffbd205b4532158e1c4b98be",
+    "web-studio/notes.js": "cd1aea41df29152c91d8604ad30898150c0d247022316951a17e60da21a51745",
+    "web-studio/studio-selection.js": "fd1b06108deccf32fef231cdbf27a7fb550c0ac2ae15f8edcaf404cb5487b755",
+    "web-studio/agent-actions.js": "27902ee65fa8c8b0d02b8e179513cb424a7fd7b207d7f65a7314f862a9155c95",
+    "web-studio/midi-note-edit.js": "f27aecf4793f6f126412847a40af6c1f8cdd9afb4cdcddf6083786303dc30b9e",
+    "web-studio/midi-crop.js": "e5123cee119d16c8b198786a15d363e02baaecc3042c8eed0c07f9416c19cbc0",
+    "web-studio/musical-units.js": "d8d421a71e94d99b95784774ac2814dca38a57b6f634dbd69d2e795e6f7285c3",
+    "web-studio/agent-schema.js": "2b92ca59105fc560382b3f093a29ecb46ebdf1869b0eecc700f07309370b6278",
+    "infra/aws-backend/runtime/session-stop-guide.mjs": "2b62ffd84ad644f68e251c0a69f74bd66606103f382f8b292b13bc42fa2ae60d",
+    "web-studio/session-stop-buttons.js": "dba37a13ba2ef868ccdc341574019333e7b083618e55b9dc55e422f3b26c8218",
+    "web-studio/management.js": "f525c4727933cc79b6ee54352d9ff56d117a3a24bab2fadfef9a52bd1d50a5bb",
+    "web-studio/agent-addressing.js": "14d8912da4334bad469908d8574a4cab0a7c21e44b64c71bdddff60d1c5548f0"
+  }
+}

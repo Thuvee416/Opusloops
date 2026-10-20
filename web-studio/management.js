@@ -1,3 +1,4 @@
+import {editSessionStops} from './session-stop-buttons.js';
 import {remapSlotMetadata,insertSlotMetadata} from './slot-metadata.js';
 import {trackFamily,parentOf} from './track-hierarchy.js';
 import {editTracks} from './track-batch.js';
@@ -25,4 +26,4 @@ export function editScene(project,index,action,value){
   else throw new Error('Unknown scene operation.');validateProject(p);return {project:p,scene:selected};
 }
 
-export function editSlotStop(project,trackId,index,enabled){const p=structuredClone(project),t=p.tracks.find(t=>t.id===trackId);if(!t||!Number.isInteger(index)||index<0||index>=p.scenes||t.slots[index]!==null||typeof enabled!=='boolean')throw new Error('Choose an empty Session slot.');t.noStopSlots=(t.noStopSlots||[]).filter(i=>i!==index);if(!enabled)t.noStopSlots.push(index);t.noStopSlots.sort((a,b)=>a-b);if(!t.noStopSlots.length)delete t.noStopSlots;validateProject(p);return p;}
+export function editSlotStop(project,trackId,index,enabled){return editSessionStops(project,{slots:[{trackId,scene:index}],enabled}).project;}

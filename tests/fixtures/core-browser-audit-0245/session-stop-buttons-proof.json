@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "mixedSelectionOnlyEditsEmptySlots": true,
+  "contextMenuAndInlineControl": true,
+  "removedStopHidden": true,
+  "exactUndoRedoSaveReopen": true,
+  "occupiedHeaderAndPlaybackGuards": true,
+  "scenePreservesRunningSourcesAndClock": true,
+  "otherTrackActuallyStops": true,
+  "levels": {
+    "a": 0.04171697656265273,
+    "b": 0.04187809962676908,
+    "c": 0
+  },
+  "odesaDisplayedSceneEditAndSave": true,
+  "errors": [],
+  "scope": "Isolated actual Chromium, synthetic audio, native Edit/context/inline controls, real scene scheduler and analyser readings, downloaded project equality, controlled Odesa responses. No personal project, microphone, live provider, physical output or mobile hardware."
+}

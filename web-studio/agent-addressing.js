@@ -27,7 +27,7 @@ export function normalizeAgentAction(action,{displayOnly=false}={}){
  if(!object(args))return out;
  if(out.type==='midi')out.args=placement(args,{displayOnly});
  else if(out.type==='scene')out.args=placement(args,{indexKey:'index',displayOnly});
- else if(out.type==='session_clips')out.args=nestedPlacements(args,{displayOnly});
+ else if(['session_clips','session_stops'].includes(out.type))out.args=nestedPlacements(args,{displayOnly});
  else if(out.type==='command'){
   out.args=normalizeHistoryCommand(args);
   if(['project_io','select','launch_scene','launch_clip','launch_group','record_input','session_clipboard'].includes(args.name))out.args.args=nestedPlacements(args.args,{displayOnly});

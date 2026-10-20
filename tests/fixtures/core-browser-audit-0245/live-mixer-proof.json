@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "views": [
+    "arrangement",
+    "session"
+  ],
+  "manualControlCount": 12,
+  "exactUndoRedo": true,
+  "keyboardHistory": true,
+  "multiStepNaturalLanguageHistory": true,
+  "automationEnvelopeRestored": true,
+  "automationOverrideRedo": true,
+  "liveAudioParamChecked": true,
+  "existingContextGraphClockAndChannelsRetained": true,
+  "realDownloadedProjectAndReopenExact": true,
+  "odesaMixerAndHistory": true,
+  "mixedAndInjectedStopRejected": true,
+  "staleAndCancelledAndChangedAccountRejected": true,
+  "errors": [],
+  "scope": "Isolated Chromium actual application with synthetic MIDI and controlled local Odesa planning/allowance responses. No personal project, physical listening, mobile hardware, authentication service or live model evaluation."
+}
