@@ -1,0 +1,20 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+async function fixture(){const {emptyProject,validateProject}=await import('../web-studio/model.js'),p=emptyProject(),clip={id:'audio',name:'Shared Audio',kind:'audio',beats:4,sourceBpm:120,data:'AAAA'},r={id:'region',trackId:p.tracks[0].id,clipId:'audio',start:0,length:4,offset:0,fades:{in:{start:0,end:0,from:1,to:1},out:{start:2,end:4,from:1,to:0}}};p.clips.audio=clip;p.tracks[0].slots[0]='audio';p.arrangement=[r];validateProject(p);return {p,clip,r,validateProject};}
+async function editor(){const f=await fixture(),{History}=await import('../web-studio/history.js'),audio=await import('../web-studio/audio-edit.js'),history=new History(f.p);let handler,renders=0;let prepareClipLoop;try{({prepareClipLoop}=await import('../web-studio/clip-loop.js'));}catch{}
+ const s={project:f.p,selection:{clipId:'audio'},selectedRegion:null,engine:{buffers:new Map()},AUDIO_MAX_BEATS:1200,validateAudioEdit:audio.validateAudioEdit,prepareClipLoop,stopToEdit(){},renderEditor(){renders++;},render(){},changed(){history.commit(f.p);},run:fn=>fn,$:()=>({addEventListener:(name,fn)=>handler=fn})};const text=fs.readFileSync(require.resolve('../web-studio/app.js'),'utf8'),start=text.indexOf("$('clip-editor').addEventListener('change',run(e=>{if(e.target.id==='split-at'");vm.createContext(s);vm.runInContext(text.slice(start,text.indexOf('\n',start)),s);return {...f,history,edit:n=>handler({target:{id:'clip-beats',value:String(n),hasAttribute:()=>false}}),renders:()=>renders};}
+test('actual loop editor rejects source-length changes that invalidate Arrangement fades without mutating the project',async()=>{
+ const f=await editor(),before=structuredClone(f.p);assert.throws(()=>f.edit(3),/Arrangement|fade/i);assert.deepEqual(f.p,before);f.validateProject(f.p);assert.equal(f.history.past.length,0);assert.ok(f.renders()>0);
+});
+test('valid audio loop length rescales source tempo once and supports exact Undo/Redo with shared placements intact',async()=>{
+ const f=await editor(),before=structuredClone(f.p);f.edit(8);assert.equal(f.p.clips.audio.beats,8);assert.equal(f.p.clips.audio.sourceBpm,240);assert.equal(f.p.clips.audio.data,before.clips.audio.data);assert.deepEqual(f.p.arrangement,before.arrangement);assert.deepEqual(f.p.tracks,before.tracks);f.validateProject(f.p);assert.deepEqual(f.history.undo(),before);assert.deepEqual(f.history.redo(),f.p);
+});
+test('invalid bounds, source tempo and source fades never leave partial changes',async()=>{
+ const f=await editor();f.clip.audioEdit={reverse:false,gainDb:0,fadeIn:2,fadeOut:0};const before=structuredClone(f.p);for(const n of [NaN,0,1201,1,9]){assert.throws(()=>f.edit(n));assert.deepEqual(f.p,before);}assert.equal(f.history.past.length,0);
+});
+test('unchanged MIDI loop keeps boundary notes; shortening preserves the established note-filtering behavior',async()=>{
+ const f=await editor();f.p.arrangement=[];f.p.clips.audio={id:'audio',name:'Phrase',kind:'midi',beats:4,sourceBpm:120,notes:[{pitch:60,start:0,duration:1,velocity:1},{pitch:67,start:4,duration:1,velocity:1}]};const before=structuredClone(f.p);f.edit(4);assert.deepEqual(f.p,before);f.edit(2);assert.equal(f.p.clips.audio.notes.length,1);f.validateProject(f.p);
+});
+test('generated audio preparation rebuilds when only loop length changes',async()=>{
+ const {Engine}=await import('../web-studio/audio.js'),{emptyProject}=await import('../web-studio/model.js'),e=new Engine(emptyProject(),()=>{});e.context={sampleRate:8000,createBuffer(channels,length,sampleRate){const data=new Float32Array(length);return {length,sampleRate,duration:length/sampleRate,getChannelData:()=>data};}};
+ const clip={id:'beat',name:'Beat',kind:'drums',beats:4,sourceBpm:120,pattern:'full'},first=await e.prepareClip(clip);clip.beats=8;const longer=await e.prepareClip(clip);assert.notEqual(longer,first);assert.equal(longer.length,first.length*2);assert.ok(longer.getChannelData(0).slice(first.length).some(x=>Math.abs(x)>.01));assert.equal(await e.prepareClip(clip),longer);
+});
