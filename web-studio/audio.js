@@ -1,4 +1,4 @@
-import {validateDevices} from './devices.js';
+import {DEVICE_TYPES,validateDevices} from './devices.js';
 import {sampleKey,instrumentSamples,prepareInstrumentSamples,samplePreparationBinding,samplesStillCurrent,installInstrumentSamples} from './sample-preparation.js';
 import {createStereoMeter} from './level-meter.js';
 import {InputClickClock,metronomeAudible,metronomeLevel} from './metronome.js';
@@ -82,10 +82,10 @@ export class Engine {
   setSendLevel(trackId,returnId,value){const t=this.project.tracks.find(t=>t.id===trackId);if(!t||!this.project.returns?.some(r=>r.id===returnId)||!Number.isFinite(value)||value<0||value>1)throw new Error('Invalid send.');t.sends??={};t.sends[returnId]??={amount:0,pre:false};t.sends[returnId].amount=value;this.overrideAutomation(trackId,sendKey(returnId));}
   setSendPre(trackId,returnId,pre){const t=this.project.tracks.find(t=>t.id===trackId);if(!t||!this.project.returns?.some(r=>r.id===returnId)||typeof pre!=='boolean')throw new Error('Invalid send.');t.sends??={};t.sends[returnId]??={amount:0,pre:false};t.sends[returnId].pre=pre;this.restoreAutomation(false);}
   setDeviceParameter(trackId,deviceId,key,value){const t=this.channels().find(t=>t.id===trackId),d=t?.devices.find(d=>d.id===deviceId);if(!d)return;
-    if(d.type==='reverb'&&key==='decay'){
-      validateDevices([{...d,params:{...d.params,decay:value}}]);if(value===d.params.decay)return;
-      // Decay has no automation lane: prepare/install its impulse before saving the new value.
-      this.mixer(trackId)?.chain.update(deviceId,key,value);d.params.decay=value;return;
+    if(DEVICE_TYPES[d.type]?.preparedParams?.includes(key)){
+      validateDevices([{...d,params:{...d.params,[key]:value}}]);if(value===d.params[key])return;
+      // Allocating parameters have no automation lane: install first, then commit.
+      this.mixer(trackId)?.chain.update(deviceId,key,value);d.params[key]=value;return;
     }
     d.params[key]=value;this.overrideAutomation(trackId,deviceKey(deviceId,key));this.mixer(trackId)?.chain.update(deviceId,key,value);if(d.type==='autopan'&&['mode','division'].includes(key))this.restoreAutomation(false);}
   scheduleAutomation(track,start,length,time){const m=this.mixer(track.id);if(!m)return;m.chain.sync(start,length,time,60/this.project.bpm);for(const target of automationTargets(track,this.project.returns))if(this.targetActive(track,target))scheduleTarget(m,target,start,length,time,60/this.project.bpm,this.context.sampleRate);}

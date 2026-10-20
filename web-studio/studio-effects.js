@@ -1,7 +1,7 @@
 // Original browser-native processors. These do not load or emulate commercial plug-ins.
 export const STUDIO_EFFECTS={
  parametric:{name:'Studio EQ',labels:{lowCut:'Low Cut',lowFrequency:'Low Frequency',lowGain:'Low Gain',midFrequency:'Mid Frequency',midGain:'Mid Gain',midQ:'Mid Q',highFrequency:'High Frequency',highGain:'High Gain',highCut:'High Cut'},params:{lowCut:[20,500,1,30,'Hz'],lowFrequency:[40,800,1,120,'Hz'],lowGain:[-18,18,.1,0,'dB'],midFrequency:[100,12000,1,1800,'Hz'],midGain:[-18,18,.1,0,'dB'],midQ:[.2,10,.1,.8,'Q'],highFrequency:[1500,18000,1,8000,'Hz'],highGain:[-18,18,.1,0,'dB'],highCut:[1000,20000,1,18000,'Hz']}},
- space:{name:'Studio Space',labels:{preDelay:'Pre-Delay',lowCut:'Low Cut',damping:'Damping',mix:'Dry/Wet'},automatable:['preDelay','lowCut','damping','mix'],params:{decay:[.3,5,.1,2.4,'s'],preDelay:[0,.15,.001,.023,'s'],lowCut:[20,1000,1,250,'Hz'],damping:[1000,18000,1,6800,'Hz'],mix:[0,1,.01,.18,'']}},
+ space:{name:'Studio Space',preparedParams:['decay'],labels:{preDelay:'Pre-Delay',lowCut:'Low Cut',damping:'Damping',mix:'Dry/Wet'},automatable:['preDelay','lowCut','damping','mix'],params:{decay:[.3,5,.1,2.4,'s'],preDelay:[0,.15,.001,.023,'s'],lowCut:[20,1000,1,250,'Hz'],damping:[1000,18000,1,6800,'Hz'],mix:[0,1,.01,.18,'']}},
  echo:{name:'Studio Echo',labels:{time:'Delay Time',lowCut:'Low Cut',damping:'Damping',mix:'Dry/Wet'},params:{time:[.02,1,.001,.375,'s'],feedback:[0,.8,.01,.35,''],lowCut:[20,1000,1,180,'Hz'],damping:[500,16000,1,5500,'Hz'],mix:[0,1,.01,.2,'']}}
 };
 export function spaceImpulse(ctx,seconds){

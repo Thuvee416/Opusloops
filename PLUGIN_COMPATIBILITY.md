@@ -1,5 +1,7 @@
 # Producer Plug-ins And OPUS LOOPS Compatibility
 
+Product decision: on October 20, 2026 the user selected **Stay Browser-Based**. OPUS will use browser-native instruments/effects; a desktop companion and hosting these commercial desktop binaries are outside the selected scope. The shortlist below is research context, not a claim of bundled or hosted products.
+
 Researched October 20, 2026. This is a shortlist of widely used products, not an audited worldwide sales ranking. KVR's popularity listings and MusicRadar's 2026 synth coverage are the popularity signals; vendor documentation is authoritative for formats and requirements.
 
 | Category | Product | Production Use | Current OPUS Status |
@@ -17,11 +19,11 @@ OPUS can exchange exported MIDI and rendered WAV/stem audio with a desktop DAW r
 
 The browser build now has original OPUS synthesis patches (analog-style stacked voices, spectral coloring and decaying FM), plus Studio EQ, Studio Space and Studio Echo. These run in the shared playback/export engine, appear in the existing device/preset controls and are addressable by Odesa's shared actions. They are independent processors, not the six commercial products or claimed sound-identical replacements.
 
-## Actual Desktop Plug-in Hosting: Still Required
+## Desktop Hosting: Unselected Alternative
 
-An optional native companion is the practical route for these desktop binaries. The user has been asked whether that installation requirement fits the product. No companion has been built or advertised as supported in this release.
+An optional native companion would be the practical route for these desktop binaries, but the user chose to remain entirely browser-based. No companion is planned, built or advertised as supported. The following is retained only as architecture research for a future explicit change of direction.
 
-The implementation must include:
+A future native-host implementation would need:
 
 1. A signed native VST3 host with user-installed/licensed plug-in discovery, isolated scanning, per-instance state and native editor windows.
 2. An explicitly paired, authenticated loopback connection, limited to trusted OPUS origins. No unauthenticated browser-to-local file or process API.

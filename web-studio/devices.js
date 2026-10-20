@@ -12,11 +12,11 @@ export const DEVICE_TYPES = {
   filter: {name:'Filter', params:{frequency:[20,20000,1,18000,'Hz'],q:[.1,15,.1,.7,'Q']}},
   eq: {name:'Three-band EQ', params:{low:[-24,24,.5,0,'dB'],mid:[-24,24,.5,0,'dB'],high:[-24,24,.5,0,'dB']}},
   delay: {name:'Delay', params:{time:[.02,1,.01,.25,'s'],feedback:[0,.85,.01,.3,''],mix:[0,1,.01,.25,'']}},
-  reverb: {name:'Reverb', params:{decay:[.2,4,.1,1.8,'s'],mix:[0,1,.01,.2,'']}},
+  reverb: {name:'Reverb',preparedParams:['decay'], params:{decay:[.2,4,.1,1.8,'s'],mix:[0,1,.01,.2,'']}},
   drive: {name:'Saturation', params:{drive:[1,20,.5,3,'×'],mix:[0,1,.01,.3,'']}},
   compressor: {name:'Compressor', params:{threshold:[-60,0,1,-24,'dB'],ratio:[1,20,.5,4,':1'],attack:[.001,.2,.001,.01,'s'],release:[.02,1,.01,.25,'s']}}
 };
-export function deviceAutomationSpecs(type){return Object.fromEntries(Object.entries(DEVICE_TYPES[type]?.params||{}).filter(([key])=>(!DEVICE_TYPES[type]?.automatable||DEVICE_TYPES[type].automatable.includes(key))&&!DEVICE_TYPES[type]?.switches?.includes(key)&&!DEVICE_TYPES[type]?.choices?.[key]&&!(type==='drive'&&key==='drive')&&!(type==='reverb'&&key==='decay')).map(([key,[min,max,step]])=>[key,{min,max,step}]));}
+export function deviceAutomationSpecs(type){return Object.fromEntries(Object.entries(DEVICE_TYPES[type]?.params||{}).filter(([key])=>(!DEVICE_TYPES[type]?.automatable||DEVICE_TYPES[type].automatable.includes(key))&&!DEVICE_TYPES[type]?.switches?.includes(key)&&!DEVICE_TYPES[type]?.choices?.[key]&&!(type==='drive'&&key==='drive')&&!DEVICE_TYPES[type]?.preparedParams?.includes(key)).map(([key,[min,max,step]])=>[key,{min,max,step}]));}
 export function deviceType(value){if(typeof value==='string'){if(Object.hasOwn(DEVICE_TYPES,value))return value;const match=Object.entries(DEVICE_TYPES).find(([,spec])=>spec.name.toLowerCase()===value.trim().toLowerCase());if(match)return match[0];}throw new Error('Unknown audio device: '+String(value).slice(0,60)+'. Choose a type key '+Object.keys(DEVICE_TYPES).join(', ')+', or its exact displayed device name.');}
 export function newDevice(type){type=deviceType(type);const spec=DEVICE_TYPES[type];return {id:crypto.randomUUID(),type,enabled:true,params:Object.fromEntries(Object.entries(spec.params).map(([key,value])=>[key,value[3]]))};}
 export function deviceParameters(device){const values={...device.params},spec=DEVICE_TYPES[device.type];for(const key of spec?.optional||[])if(values[key]===undefined)values[key]=spec.params[key][3];return values;}
