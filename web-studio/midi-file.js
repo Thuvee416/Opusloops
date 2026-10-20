@@ -1,4 +1,5 @@
 import {isNoteActive} from './note-state.js';
+import {midiFileSustain} from './midi-file-sustain.js';
 import parseMidi from './vendor/midi-parser.js';
 import writeMidi from './vendor/midi-writer.js';
 import {uid,makeTrack,emptyProject,validateProject} from './model.js';
@@ -8,25 +9,26 @@ export function inspectMidi(bytes){
   const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);let cursor=0,chunks=0;while(cursor<bytes.length){if(cursor+8>bytes.length)throw new Error('Invalid MIDI file: truncated chunk.');const length=view.getUint32(cursor+4);cursor+=8+length;if(cursor>bytes.length)throw new Error('Invalid MIDI file: truncated chunk.');chunks++;}if(chunks<2)throw new Error('Invalid MIDI file: missing header or track.');
   let data;try{data=parseMidi(bytes);}catch(e){throw new Error(`Invalid MIDI file: ${e.message||e}`);}
   const h=data.header;if(![0,1].includes(h.format))throw new Error('Only Standard MIDI File formats 0 and 1 are supported.');if(!h.ticksPerBeat)throw new Error('SMPTE-timed MIDI is not supported; use a PPQN MIDI file.');if(chunks!==h.numTracks+1)throw new Error('Invalid MIDI file: extra or missing track chunks.');if(h.numTracks!==data.tracks.length||h.numTracks<1||(h.format===0&&h.numTracks!==1))throw new Error('MIDI track count does not match the header.');
-  const warnings=new Map(),groups=[],tempos=[];let total=0;
+  const releaseTick=midiFileSustain(data),warnings=new Map(),groups=[],tempos=[];let total=0;
   const warn=(name,count=1)=>warnings.set(name,(warnings.get(name)||0)+count);
   data.tracks.forEach((events,trackIndex)=>{
     let ticks=0,name=`MIDI ${trackIndex+1}`,ended=false;const channels=new Map(),held=new Map();
     const group=ch=>{if(!channels.has(ch))channels.set(ch,{channel:ch,notes:[]});return channels.get(ch);};
-    for(const e of events){if(ended)throw new Error('MIDI data follows an end-of-track event.');if(!Number.isInteger(e.deltaTime)||e.deltaTime<0)throw new Error('Invalid MIDI event timing.');ticks+=e.deltaTime;if(ticks/h.ticksPerBeat>256)throw new Error('This MIDI file exceeds the current 256-beat clip limit.');
+    for(const [eventIndex,e] of events.entries()){if(ended)throw new Error('MIDI data follows an end-of-track event.');if(!Number.isInteger(e.deltaTime)||e.deltaTime<0)throw new Error('Invalid MIDI event timing.');ticks+=e.deltaTime;if(ticks/h.ticksPerBeat>256)throw new Error('This MIDI file exceeds the current 256-beat clip limit.');
       if(e.type==='trackName')name=text(e.text).slice(0,150)||name;
       else if(e.type==='setTempo'){if(e.microsecondsPerBeat<=0)throw new Error('Invalid MIDI tempo.');tempos.push({beat:ticks/h.ticksPerBeat,bpm:60000000/e.microsecondsPerBeat});}
       else if(e.type==='endOfTrack')ended=true;
       else if(e.type==='noteOn'||e.type==='noteOff'){
         if(!Number.isInteger(e.noteNumber)||e.noteNumber<0||e.noteNumber>127||!Number.isInteger(e.velocity)||e.velocity<0||e.velocity>127)throw new Error('Invalid MIDI note data.');const key=`${e.channel}:${e.noteNumber}`;
         if(e.type==='noteOn'&&e.velocity){if(++total>65536)throw new Error('This MIDI file contains too many notes.');const q=held.get(key)||[];q.push({pitch:e.noteNumber,start:ticks/h.ticksPerBeat,velocity:e.velocity/127});held.set(key,q);}
-        else{const q=held.get(key),note=q?.shift();if(note){const duration=ticks/h.ticksPerBeat-note.start;if(duration>0)group(e.channel).notes.push({...note,duration,...(e.velocity>0?{releaseVelocity:e.velocity/127}:{})});else warn('zero-length notes omitted');}else warn('unmatched note-off events omitted');}
+        else{const q=held.get(key),note=q?.shift();if(note){const release=releaseTick(e.channel,ticks,trackIndex,eventIndex),duration=release.tick/h.ticksPerBeat-note.start;if(release.tick>ticks){warn('sustain-held notes converted to editable note lengths');if(release.open)warn('sustained notes closed at file end');}if(duration>0)group(e.channel).notes.push({...note,duration,...(e.velocity>0?{releaseVelocity:e.velocity/127}:{})});else warn('zero-length notes omitted');}else warn('unmatched note-off events omitted');}
       }else if(e.type==='timeSignature'){if(e.numerator!==4||e.denominator!==4)warn('non-4/4 meter events not applied');}
+      else if(e.type==='controller'&&e.controllerType===64){/* Applied to note durations on the shared channel timeline. */}
       else if(!['text','copyrightNotice','instrumentName','lyrics','marker','cuePoint','keySignature','sequenceNumber','channelPrefix','portPrefix'].includes(e.type))warn(`${e.type} events not applied`);
     }
     if(!ended)throw new Error('MIDI track is missing its end-of-track event.');
     for(const [key,notes] of held)for(const n of notes){const duration=ticks/h.ticksPerBeat-n.start;if(duration>0){group(Number(key.split(':')[0])).notes.push({...n,duration});warn('held notes closed at track end');}else warn('zero-length notes omitted');}
-    for(const g of channels.values()){if(g.notes.length>4096)throw new Error('One MIDI track/channel exceeds the 4096-note clip limit.');g.notes.sort((a,b)=>a.start-b.start||a.pitch-b.pitch);g.name=`${name} · ch ${g.channel+1}`;g.beats=Math.max(.25,Math.ceil(ticks/h.ticksPerBeat*4)/4);if(g.channel===9)warn('channel-10 percussion played by the basic synth');groups.push(g);}
+    for(const g of channels.values()){if(g.notes.length>4096)throw new Error('One MIDI track/channel exceeds the 4096-note clip limit.');g.notes.sort((a,b)=>a.start-b.start||a.pitch-b.pitch);g.name=`${name} · ch ${g.channel+1}`;g.beats=Math.max(.25,Math.ceil(Math.max(ticks/h.ticksPerBeat,...g.notes.map(n=>n.start+n.duration))*4)/4);if(g.channel===9)warn('channel-10 percussion played by the basic synth');groups.push(g);}
   });
   if(!groups.length)throw new Error('This MIDI file contains no playable notes.');if(groups.length>16)throw new Error('This file needs more than the current 16-track limit.');tempos.sort((a,b)=>a.beat-b.beat);if(tempos.length>1||tempos.some(t=>t.beat>0))warn('tempo-map events not applied',tempos.length);
   return {groups,tempo:tempos.find(t=>t.beat===0)?.bpm??120,format:h.format,ticksPerBeat:h.ticksPerBeat,warnings:[...warnings].map(([name,count])=>`${count} ${name}`)};
