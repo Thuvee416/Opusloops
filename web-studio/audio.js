@@ -50,8 +50,9 @@ export class Engine {
     const keys=new Set(this.channels().flatMap(t=>automationTargets(t,this.project.returns).map(a=>t.id+':'+a.key)));
     const next=createMixGraph(this.context,this.project,this.master);
     this.mixGraph=next;this.mixers=next.tracks;this.returnMixers=next.returns;this.automationOverrides=new Set([...previous.automationOverrides].filter(key=>keys.has(key)));
-    try{this.updateMix();}catch(error){Object.assign(this,previous);next.dispose();throw error;}
-    previous.mixGraph?.dispose();this.onMixersChanged?.();
+    let notifying=false;
+    try{this.updateMix();notifying=true;this.onMixersChanged?.();}catch(error){Object.assign(this,previous);next.dispose();if(notifying)try{this.onMixersChanged?.();}catch{}throw error;}
+    previous.mixGraph?.dispose();
   }
   targetActive(track,target){return this.mode==='arrangement'&&target?.enabled&&hasEnvelope(target.envelope)&&!this.automationOverrides.has(track.id+':'+target.key);}
   automationActive(track,key){return !!track&&this.targetActive(track,automationTargetFor(track,key,this.project.returns));}

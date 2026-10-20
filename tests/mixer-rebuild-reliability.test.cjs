@@ -44,8 +44,8 @@ test('initial parameter update failure rolls back graph references and automatio
 
 test('successful rebuild installs routing and current controls before notifying monitoring exactly once',async()=>{
  const {e,p,ctx}=await fixture(),before=e.mixGraph,oldNodes=ctx.nodes.slice(1);p.tracks[0].volume=.23;p.tracks[0].pan=-.4;let notified=0;
- e.onMixersChanged=()=>{notified++;assert.notEqual(e.mixGraph,before);assert.equal(e.mixers.get(p.tracks[0].id).gain.gain.value,.23);cleaned(oldNodes);};
- e.resetMixers();assert.equal(notified,1);assert.equal(e.mixers.get(p.tracks[0].id).pan.pan.value,-.4);assert.ok(e.mixers.get(p.tracks[1].id).dry.edges.has(e.mixers.get(p.tracks[0].id).chain.input));assert.equal(e.mixers.get(p.tracks[0].id).sends.get('room').post.gain.value,.3);
+ e.onMixersChanged=()=>{notified++;assert.notEqual(e.mixGraph,before);assert.equal(e.mixers.get(p.tracks[0].id).gain.gain.value,.23);};
+ e.resetMixers();cleaned(oldNodes);assert.equal(notified,1);assert.equal(e.mixers.get(p.tracks[0].id).pan.pan.value,-.4);assert.ok(e.mixers.get(p.tracks[1].id).dry.edges.has(e.mixers.get(p.tracks[0].id).chain.input));assert.equal(e.mixers.get(p.tracks[0].id).sends.get('room').post.gain.value,.3);
 });
 
 test('each effect factory failure disposes all nodes and stops already started modulation sources',async()=>{
