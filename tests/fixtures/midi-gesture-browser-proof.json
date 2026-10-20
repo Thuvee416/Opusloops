@@ -44,6 +44,14 @@
     "lengthShiftExact": true,
     "unselectedNotePreserved": true
   },
+  "clipboard": {
+    "duplicateShortcut": true,
+    "heldDuplicateRunsOnce": true,
+    "duplicatesSelected": true,
+    "cutUndoExact": true,
+    "pasteAfterUndoPreservesMetadata": true,
+    "pasteUndoExact": true
+  },
   "delivery": {
     "clipMidi": {
       "format": 0,

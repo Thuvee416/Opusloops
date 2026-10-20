@@ -54,6 +54,19 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   await press('undo');await page.locator('.piano-scroll').focus();await page.keyboard.press('Shift+ArrowRight');
   const length=await save(),lengthExpected=structuredClone(original);for(const i of [0,1])lengthExpected.clips.phrase.notes[i].duration+=.25;assert.deepEqual(length,lengthExpected);
   await press('undo');assert.deepEqual(await save(),original);
+  await page.locator('[data-midi-note="0"]').click();await page.locator('[data-midi-note="1"]').click({modifiers:['Shift']});
+  await page.keyboard.down('Control');await page.keyboard.down('d');await page.keyboard.down('d');await page.keyboard.up('d');await page.keyboard.up('Control');
+  const duplicated=await save(),duplicateExpected=structuredClone(original);
+  duplicateExpected.clips.phrase.notes.push({...original.clips.phrase.notes[0],start:3.75},{...original.clips.phrase.notes[1],start:5.75});
+  assert.deepEqual(duplicated,duplicateExpected);assert.deepEqual(await selected(),[3,4]);
+  await press('undo');assert.deepEqual(await save(),original);await press('redo');assert.deepEqual(await save(),duplicated);await press('undo');
+  await page.locator('[data-midi-note="0"]').click();await page.locator('[data-midi-note="1"]').click({modifiers:['Shift']});
+  await page.keyboard.press('Control+x');const cut=await save(),cutExpected=structuredClone(original);cutExpected.clips.phrase.notes=[original.clips.phrase.notes[2]];assert.deepEqual(cut,cutExpected);
+  await press('undo');assert.deepEqual(await save(),original);
+  await page.locator('#notes-paste-at').fill('5');await page.locator('#notes-paste-at').dispatchEvent('change');await page.locator('.piano-scroll').focus();await page.keyboard.press('Control+v');
+  const pasted=await save(),pasteExpected=structuredClone(original);pasteExpected.clips.phrase.notes.push({...original.clips.phrase.notes[0],start:4},{...original.clips.phrase.notes[1],start:6});assert.deepEqual(pasted,pasteExpected);assert.deepEqual(await selected(),[3,4]);
+  await press('undo');assert.deepEqual(await save(),original);
+  await page.locator('[data-midi-note="0"]').click();await page.locator('[data-midi-note="1"]').click({modifiers:['Shift']});
   // Follow actual keyboard edits through the application's MIDI and WAV downloads.
   await page.locator('.piano-scroll').focus();await page.keyboard.press('ArrowRight');await page.keyboard.press('Shift+ArrowUp');await page.keyboard.press('Shift+ArrowRight');
   const delivered=await save(),deliveryExpected=structuredClone(original);
@@ -94,7 +107,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   for(const [id,previous]of [['midi-export',clipMidi],['export-midi-arrangement',arrangementMidi],['export',audio]])assert.equal((await download(id)).data.equals(previous.data),true,id+' changed after project reopen');
   const delivery={clipMidi:{format:0,noteCount:2},arrangementMidi:{format:1,noteCount:2},ticksPerBeat:960,exactNoteEvents:true,inactiveNoteOmitted:true,releaseVelocityPreserved:true,wavFrames:176400,audioWindows,pitchesHz,projectReopenExact:true,midiAndWavReopenExact:true};
   assert.deepEqual(errors,[]);
-  const proof={status:'passed',results,undoDuringDragCancelsOnlyPreview:true,nextEditAndUndoRedoExact:true,selectedResize:{indices:[0,1],addedBeats:1,unselectedNotePreserved:true,exactUndoRedo:true},keyboard:{repeatedNudgeOneUndo:true,newPressSeparateUndo:true,octaveShiftExact:true,lengthShiftExact:true,unselectedNotePreserved:true},delivery,errors,scope:'Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact project/history checks. Selected-note resize, repeated arrow nudge, separate key press, octave shift and length adjustment preserve the unselected note and support exact Undo. Edited clip and Arrangement MIDI downloads preserve exact note events, inactive-note omission and release velocity. Native track WAV confirms edited pitch/length and silence around active notes; all three exports are byte-identical after project reopen. Synthetic MIDI; no personal project, input device or model calls.'};
+  const proof={status:'passed',results,undoDuringDragCancelsOnlyPreview:true,nextEditAndUndoRedoExact:true,selectedResize:{indices:[0,1],addedBeats:1,unselectedNotePreserved:true,exactUndoRedo:true},keyboard:{repeatedNudgeOneUndo:true,newPressSeparateUndo:true,octaveShiftExact:true,lengthShiftExact:true,unselectedNotePreserved:true},clipboard:{duplicateShortcut:true,heldDuplicateRunsOnce:true,duplicatesSelected:true,cutUndoExact:true,pasteAfterUndoPreservesMetadata:true,pasteUndoExact:true},delivery,errors,scope:'Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact project/history checks. Selected-note resize, repeated arrow nudge, separate key press, octave shift and length adjustment preserve the unselected note and support exact Undo. Edited clip and Arrangement MIDI downloads preserve exact note events, inactive-note omission and release velocity. Native track WAV confirms edited pitch/length and silence around active notes; all three exports are byte-identical after project reopen. Synthetic MIDI; no personal project, input device or model calls.'};
   fs.writeFileSync('tests/fixtures/midi-gesture-browser-proof.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
