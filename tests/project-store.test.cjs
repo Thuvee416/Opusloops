@@ -99,3 +99,62 @@ test('a failed initial read cannot authorize a later save, and rereading never s
  await assert.rejects(b.write([['current',{name:'Old In-Memory Copy'}]]),{name:'ProjectConflictError'});
  assert.equal(db.data.get('current').name,'Latest');
 });
+
+async function brokenWorkspace(checkpoint={format:'broken',project:{notes:[60,64]}}){
+ const saved={broken:true,media:{audio:'preserve these original bytes'}};
+ const f=await setup([['current',saved],['session-start',checkpoint]]),api=Object.assign({},...await Promise.all(['model','session-recovery','project-lifecycle','recent-sets'].map(n=>import('../web-studio/'+n+'.js'))));
+ const vm=require('node:vm'),source=require('node:fs').readFileSync(require('node:path').join(__dirname,'../web-studio/app.js'),'utf8'),controls={'save-state':{},'download-recovery-data':{}};
+ const ctx={...api,projectStore:f.a,readSet:k=>f.a.read(k),writeSets:(entries,options)=>f.a.write(entries,options),demo:()=>api.emptyProject(),setStatus(){},$:id=>controls[id],animate(){},changed(){},install:p=>ctx.project=p,run:fn=>fn,download:(data,name)=>{ctx.downloaded={data,name};}};
+ vm.createContext(ctx);const start=source.indexOf('try{\n const saved=await loadSession('),end=source.indexOf('animate();',start)+'animate();'.length;
+ await vm.runInContext('(async()=>{'+source.slice(start,end)+'})()',ctx);
+ const begin=source.indexOf('async function replaceSet(');vm.runInContext(source.slice(begin,source.indexOf('\nconst historyButton',begin)),ctx);
+ const handler=source.indexOf("$('download-recovery-data').onclick=");vm.runInContext(source.slice(handler,source.indexOf('\n',handler)),ctx);
+ return {...f,api,ctx,controls,saved,checkpoint};
+}
+
+test('actual failed startup protects unreadable data from demo edits and checkpoint overwrites',async()=>{
+ const f=await brokenWorkspace(),{Autosave}=await import('../web-studio/autosave.js');assert.equal(f.a.recoveryRequired,true);assert.match(f.controls['save-state'].textContent,/Recovery Needed/);
+ const before=structuredClone(f.db.data);f.ctx.project.name='Edited Demo';
+ const autosave=new Autosave({snapshot:()=>structuredClone(f.ctx.project),write:p=>f.a.write([['current',p]])});autosave.mark();
+ await assert.rejects(autosave.flush(),{name:'ProjectRecoveryError'});assert.equal(autosave.dirty,true);
+ await assert.rejects(f.a.write([['session-start',{project:f.ctx.project}]]),{name:'ProjectRecoveryError'});assert.deepEqual(f.db.data,before);
+});
+
+test('actual replacement preserves raw data atomically, then allows normal autosave and later recovery download',async()=>{
+ const f=await brokenWorkspace(),next=f.api.emptyProject();next.name='Opened Set';await f.ctx.replaceSet(next);
+ assert.equal(f.a.recoveryRequired,false);assert.equal(f.db.data.get('current').name,'Opened Set');assert.equal(f.ctx.project.name,'Opened Set');
+ const archived=f.db.data.get('damaged-session');assert.deepEqual(archived.current,f.saved);assert.deepEqual(archived.sessionStart,f.checkpoint);
+ next.name='Continued';await f.a.write([['current',next]]);const fresh=f.create();await fresh.read('current');assert.deepEqual(await fresh.recoveryData(),archived);
+ await f.controls['download-recovery-data'].onclick();assert.equal(f.ctx.downloaded.name,'opus-recovery-data.json');assert.deepEqual(JSON.parse(f.ctx.downloaded.data),archived);
+});
+
+test('raw recovery download works before replacement without writing or validating damaged payloads',async()=>{
+ const f=await brokenWorkspace(),before=structuredClone(f.db.data);await f.controls['download-recovery-data'].onclick();
+ const downloaded=JSON.parse(f.ctx.downloaded.data);assert.equal(downloaded.format,'opus-recovery-data');assert.deepEqual(downloaded.current,f.saved);assert.deepEqual(downloaded.sessionStart,f.checkpoint);
+ assert.deepEqual(f.db.data,before);assert.equal(f.a.recoveryRequired,true);
+});
+
+test('failed archive preparation or commit leaves unreadable data, old archive and protection intact',async()=>{
+ for(const mode of ['clone','quota']){
+  const f=await brokenWorkspace();f.db.data.set('damaged-session',{older:'preserve on failure'});const before=structuredClone(f.db.data);
+  if(mode==='clone')f.db.failPut='damaged-session';else{const read=f.ctx.readSet;f.ctx.readSet=async key=>{const value=await read(key);f.db.failCommit=true;return value;};}
+  await assert.rejects(f.ctx.replaceSet(f.api.emptyProject()),/Clone|Quota/);assert.deepEqual(f.db.data,before);assert.equal(f.a.recoveryRequired,true);
+ }
+});
+
+test('recovery cannot bypass a newer tab save or download a mismatched workspace as the damaged source',async()=>{
+ const f=await brokenWorkspace();await f.b.write([['current',{name:'Other Tab Saved'}]]);const before=structuredClone(f.db.data);
+ await assert.rejects(f.a.recoveryData(),{name:'ProjectConflictError'});
+ await assert.rejects(f.ctx.replaceSet(f.api.emptyProject()),{name:'ProjectConflictError'});assert.deepEqual(f.db.data,before);assert.equal(f.a.recoveryRequired,true);
+});
+
+test('successful checkpoint fallback archives unreadable current data on its first save without blocking normal editing',async()=>{
+ const {emptyProject}=await import('../web-studio/model.js'),backup=emptyProject();backup.name='Earlier Checkpoint';
+ const checkpoint={format:'opus-session-recovery',version:1,savedAt:1,project:backup},f=await brokenWorkspace(checkpoint);
+ assert.equal(f.ctx.project.name,'Earlier Checkpoint');assert.equal(f.a.archivePending,true);assert.equal(!!f.a.recoveryRequired,false);
+ assert.deepEqual((await f.a.recoveryData()).current,f.saved);
+ const next=structuredClone(f.ctx.project);next.name='Recovered And Edited';f.db.failCommit=true;
+ await assert.rejects(f.a.write([['current',next]]),/Quota/);assert.deepEqual(f.db.data.get('current'),f.saved);assert.equal(f.a.archivePending,true);
+ await f.a.write([['current',next]]);assert.equal(f.a.archivePending,false);assert.equal(f.db.data.get('current').name,'Recovered And Edited');
+ assert.deepEqual(f.db.data.get('damaged-session').current,f.saved);assert.deepEqual(f.db.data.get('damaged-session').sessionStart,checkpoint);
+});
