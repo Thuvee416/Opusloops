@@ -3,6 +3,7 @@ import {sampleKey,instrumentSamples,prepareInstrumentSamples,samplePreparationBi
 import {createStereoMeter} from './level-meter.js';
 import {InputClickClock,metronomeAudible,metronomeLevel} from './metronome.js';
 import {slotActive} from './slot-metadata.js';
+import {sessionActivationOnly} from './session-batch.js';
 import {isGroup,groupLeaves} from './track-hierarchy.js';
 import {setTrackOutput} from './track-routing.js';
 import {captureScene} from './capture-scene.js';
@@ -23,7 +24,7 @@ import {VoiceScheduler,voiceTail} from './voice-scheduler.js';
 import {hasEnvelope,sendKey} from './automation.js';
 import {defaultTransport,timelineBeat,quantumLength} from './transport.js';
 import {createMixGraph,routingTail} from './routing.js';
-import {mod,arrangementSlices,segmentAt,uid,wav,isRegionActive} from './model.js';
+import {mod,arrangementSlices,segmentAt,uid,wav,isRegionActive,validateProject} from './model.js';
 export function synthesize(context,clip,bpm){
   const sr=context.sampleRate,spb=60/bpm,len=Math.ceil(clip.beats*spb*sr),buffer=context.createBuffer(1,len,sr),out=buffer.getChannelData(0);
   let seed=237;const noise=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/2147483648-1;};
@@ -437,6 +438,23 @@ export class Engine {
     if(launchChanged)this.changed();
     if(this.inputArrangement&&this.context.currentTime>=this.origin+captureEnd*spb){this.stopInputMetronome();this.pause();return;}
     if(this.mode==='arrangement'&&!this.project.transport.loopEnabled&&!this.recording&&!this.automationTake&&!this.inputOverdub&&!this.inputArrangement&&this.overrides.size===0&&this.project.arrangement.length&&this.beat()>Math.max(...this.project.arrangement.map(s=>s.start+s.length))+this.tailSeconds()/spb)this.pause();
+  }
+  applySessionActivation(next){
+    if(this.recording||this.automationTake||this.inputOverdub||this.inputArrangement)throw new Error('Finish Recording Before Changing Session Activation.');
+    if(!sessionActivationOnly(this.project,next))throw new Error('Only Session Clip Activation Can Change During Playback.');
+    validateProject(next);
+    const previous={...this.project,tracks:this.project.tracks.map(t=>({...t}))};
+    const flags=next.tracks.map(t=>({present:Object.hasOwn(t,'inactiveSlots'),value:t.inactiveSlots?.slice()}));
+    // The mixer, device chains and pending launches retain these project and
+    // channel objects. Change only the validated per-slot flags in place.
+    for(const [i,t]of this.project.tracks.entries()){if(flags[i].present)t.inactiveSlots=flags[i].value;else delete t.inactiveSlots;}
+    try{this.syncSessionActivation(previous);}
+    catch(error){
+      for(const [i,t]of this.project.tracks.entries()){const old=previous.tracks[i];if(Object.hasOwn(old,'inactiveSlots'))t.inactiveSlots=old.inactiveSlots;else delete t.inactiveSlots;}
+      try{this.syncSessionActivation(next);}catch{}
+      throw error;
+    }
+    return this.project;
   }
   syncSessionActivation(previous){
     if(!this.context||!this.playing)return;
