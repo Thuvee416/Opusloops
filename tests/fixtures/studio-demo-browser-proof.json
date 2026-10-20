@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "startup": {
+    "name": "Midnight Circuit",
+    "arrangementVisible": true,
+    "status": "Midnight Circuit \u00b7 18.5 Seconds \u00b7 Press Play. Every Track, Note And Effect Is Editable."
+  },
+  "errors": [],
+  "factorySounds": 15,
+  "savedProjectPreserved": true,
+  "metrics": {
+    "seconds": 18.46154195011338,
+    "peakDB": -2.9196508933754957,
+    "rmsDB": -18.248934297153628,
+    "sideToMid": 0.23603936172372272,
+    "correlation": 0.8944844255200076,
+    "blockEnergy": [
+      3180.749285746117,
+      3053.58622622669,
+      2844.168914505476,
+      2339.7420910187766,
+      2661.237372915445,
+      2279.394920390309,
+      2365.294623162917,
+      2661.0976575653317,
+      2579.2259308358143,
+      404.8070450788107
+    ]
+  },
+  "scope": "Native headless Chromium Web Audio, fresh isolated storage, full Arrangement render and preset library. No human listening or mobile audio assessment.",
+  "loudness": {
+    "integratedLUFS": -17.0,
+    "truePeakDBFS": -1.5,
+    "loudnessRangeLU": 1.0,
+    "method": "FFmpeg ebur128=peak=true on the final native Chromium 32-bit float render"
+  }
+}

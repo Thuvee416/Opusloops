@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "sampleRate": 44100,
+  "frames": 1628308,
+  "seconds": 36.92308390022676,
+  "maxSampleError": 0.000005543231964111328,
+  "wrapMaxSampleError": 3.650784492492676e-7,
+  "wrapRMS": 0.14206922357777582,
+  "rms": 0.12225090854535214,
+  "peak": 0.7145249843597412,
+  "noteCount": 476,
+  "scope": "Actual Engine.tick scheduling and automation across two demo laps versus an explicitly repeated Arrangement export in native Chromium. No physical output, real-time CPU or human listening assessment."
+}

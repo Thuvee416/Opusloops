@@ -70,7 +70,7 @@ Sign-out uses the save-and-sync flow and warns before leaving unsynced work.
 
 - **Early access:** no hosted guest mode. Invitation-based registration is not unrestricted public signup.
 - **An AI-stem workspace:** imported audio and assisted timing analysis are the focus. General prompt-to-full-song generation is not included.
-- **Not a plugin host:** VST/AU hosting, plugin scanning, and native desktop packaging are not part of the production web app.
+- **Not a plugin host:** VST/AU hosting, plugin scanning, and native desktop packaging are not part of the production web app. See [producer plug-in compatibility](PLUGIN_COMPATIBILITY.md) for the researched shortlist and native-host requirements. Original browser-native Studio EQ, Studio Space, Studio Echo and expanded synthesis presets are available.
 - **Export scope:** built-in loop WAV export is not a complete long-form stem-project mixdown workflow.
 - **Online authentication:** cached app assets and local saves do not provide unrestricted offline studio access. Opening the studio requires an online session check.
 - **Account options:** profile-name and password changes exist. Email-change verification and password-recovery UI remain follow-up work.

@@ -6,8 +6,8 @@ export const DEMO_TITLE='Midnight Circuit',DEMO_BPM=104,DEMO_BEATS=32;
 export function createDemoSession(){
  const p=emptyProject();p.name=DEMO_TITLE;p.bpm=DEMO_BPM;p.master=.88;p.sceneNames=['Pulse','Bloom','Lift','Turnaround'];
  p.transport={...p.transport,loopEnabled:true,loopStart:0,loopEnd:DEMO_BEATS};
- const names=['Club Kick','Room Clap','Silk Hats','Night Percussion','Round Sub','Obsidian Bass','Velvet Chords','Prism Pluck','Silver Arp','Horizon Pad'];
- const levels=[.82,.64,.5,.5,.72,.5,.62,.64,.4,.45];
+ const names=['Club Kick','Room Clap','Silk Hats','Night Percussion','Round Sub','Analog Bass','Velvet Ensemble','Glass Pluck','Prismatic Arp','Air Pad'];
+ const levels=[.82,.62,.42,.4,.65,.52,.61,.62,.32,.45];
  p.tracks=names.map((name,i)=>{const sound=factorySound(name);return {...makeTrack(name,i),volume:levels[i],instrument:sound.instrument,devices:sound.devices};});
  p.locators=p.sceneNames.map((name,i)=>({id:uid(),name,beat:i*8}));
  const roots=[43,39,46,41],chords=[[58,62,65,69],[55,58,62,65],[53,58,60,65],[57,60,65,67]];
@@ -28,8 +28,9 @@ export function createDemoSession(){
    if(scene===2&&b%2===0)bass.push(note(root+12,b+.52,.12,.38));
   }
   for(const [at,vel] of [[.35,.6],[2.75,.45],[4.35,.56],[6.5,.44]])for(const pitch of chords[scene])keys.push(note(pitch,at,.7,vel));
-  const motifs=[[74,70,69,65,67],[74,77,74,70,67],[77,74,72,70,74],[72,69,65,67,74]];
+  const motifs=[[74,77,72,70,69],[74,77,79,74,70],[77,81,79,77,74],[72,76,77,74,69]];
   const times=[.5,1.25,2.5,4.5,6.25];for(let i=0;i<times.length;i++)lead.push(note(motifs[scene][i],times[i],i===3?.55:.32,[.78,.6,.72,.82,.6][i]));
+  if(scene===1||scene===3){lead.push(note(motifs[scene][4]+12,7.25,.15,.32),note(motifs[scene][4],7.65,.14,.45));}
   const order=[0,2,1,3,2,1,3,2];for(let step=0;step<16;step++){if(scene===0&&step<8)continue;arp.push(note(chords[scene][order[step%8]]+12,step*.5+.27,.14,step%4===0?.5:.32));}
   for(const pitch of chords[scene].slice(0,3))pad.push(note(pitch,0,7.65,.55));
   if(scene===3){for(const [i,at] of [7,7.25,7.5,7.75].entries())clap.push(note(38,at,.12,.3+i*.1));hats.push(note(42,7.875,.06,.4));}

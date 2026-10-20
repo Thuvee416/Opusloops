@@ -19,7 +19,7 @@ const out=process.env.OPUS_DEMO_OUTPUT||'/tmp';
  assert.ok(rendered.metrics.peakDB<0);assert.ok(rendered.metrics.sideToMid>.1);assert.ok(rendered.metrics.correlation>.6);assert.ok(rendered.metrics.seconds>18&&rendered.metrics.seconds<20);
  fs.writeFileSync(path.join(out,'opus-midnight-circuit.wav'),Buffer.from(rendered.base64,'base64'));fs.writeFileSync(path.join(out,'opus-midnight-circuit.opusloop'),JSON.stringify(rendered.project));
 
- const presets=await page.evaluate(async()=>{const {listSoundPresets,getSoundPreset}=await import('./sound-presets.js');const items=await listSoundPresets();for(const item of items)await getSoundPreset(item.id);return items.filter(x=>x.factory).length;});assert.equal(presets,10);
+ const presets=await page.evaluate(async()=>{const {listSoundPresets,getSoundPreset}=await import('./sound-presets.js');const items=await listSoundPresets();for(const item of items)await getSoundPreset(item.id);return items.filter(x=>x.factory).length;});assert.equal(presets,15);
  await page.evaluate(async()=>{const {emptyProject}=await import('./model.js');const p=emptyProject();p.name='Existing Test Set';await new Promise((resolve,reject)=>{const req=indexedDB.open('looproom-studio',1);req.onsuccess=()=>{const db=req.result,tx=db.transaction('projects','readwrite');tx.objectStore('projects').put(p,'current');tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});});
  await page.reload();await page.waitForFunction(()=>document.querySelector('#project-name')?.value==='Existing Test Set');
  page.on('dialog',dialog=>dialog.accept());await page.evaluate(()=>document.querySelector('#open-demo').click());await page.waitForFunction(()=>document.querySelector('#project-name')?.value==='Midnight Circuit');
