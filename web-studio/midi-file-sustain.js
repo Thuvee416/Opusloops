@@ -1,14 +1,15 @@
 // SMF format 1 tracks share channel controllers. Resolve pedal events on the
 // merged tick timeline, retaining original track/event order for simultaneous data.
+// Reset All Controllers releases the pedal, but does not release held keys.
 export function midiFileSustain(data){
  const channels=new Map(),ppqn=data.header.ticksPerBeat;let end=0;
  data.tracks.forEach((events,track)=>{
   let tick=0;events.forEach((event,index)=>{
    if(!Number.isSafeInteger(event.deltaTime)||event.deltaTime<0)throw Error('Invalid MIDI event timing.');
    tick+=event.deltaTime;if(tick/ppqn>256)throw Error('This MIDI file exceeds the current 256-beat clip limit.');
-   if(event.type!=='controller'||event.controllerType!==64)return;
+   if(event.type!=='controller'||![64,121].includes(event.controllerType))return;
    if(!Number.isInteger(event.channel)||event.channel<0||event.channel>15||!Number.isInteger(event.value)||event.value<0||event.value>127)throw Error('Invalid MIDI sustain pedal data.');
-   const list=channels.get(event.channel)??[];list.push({tick,track,index,down:event.value>=64});channels.set(event.channel,list);
+   const list=channels.get(event.channel)??[];list.push({tick,track,index,down:event.controllerType===64&&event.value>=64});channels.set(event.channel,list);
   });end=Math.max(end,tick);
  });
  for(const list of channels.values()){

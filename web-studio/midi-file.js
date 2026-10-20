@@ -24,6 +24,7 @@ export function inspectMidi(bytes){
         else{const q=held.get(key),note=q?.shift();if(note){const release=releaseTick(e.channel,ticks,trackIndex,eventIndex),duration=release.tick/h.ticksPerBeat-note.start;if(release.tick>ticks){warn('sustain-held notes converted to editable note lengths');if(release.open)warn('sustained notes closed at file end');}if(duration>0)group(e.channel).notes.push({...note,duration,...(e.velocity>0?{releaseVelocity:e.velocity/127}:{})});else warn('zero-length notes omitted');}else warn('unmatched note-off events omitted');}
       }else if(e.type==='timeSignature'){if(e.numerator!==4||e.denominator!==4)warn('non-4/4 meter events not applied');}
       else if(e.type==='controller'&&e.controllerType===64){/* Applied to note durations on the shared channel timeline. */}
+      else if(e.type==='controller'&&e.controllerType===121){warn('controller resets applied to sustain only');}
       else if(!['text','copyrightNotice','instrumentName','lyrics','marker','cuePoint','keySignature','sequenceNumber','channelPrefix','portPrefix'].includes(e.type))warn(`${e.type} events not applied`);
     }
     if(!ended)throw new Error('MIDI track is missing its end-of-track event.');

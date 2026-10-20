@@ -1,0 +1,17 @@
+{
+  "version": "0.247.0",
+  "sourceBaseCommit": "2281666e81c3145b0915c08e1f3e732093f9e1ef",
+  "checkedAt": "2026-10-20T23:23:16.748015+00:00",
+  "sourceTests": 947,
+  "sourceTestLogSha256": "81c0c4ba51fe150d718366b0d2691380327b4d66fe9e6f1e461b787f9390cf1c",
+  "fileHashes": {
+    "web-studio/index.html": "91747d52896e843bd96a51c06f96acbb37e9fdc34784dae445fdb411ae14b167",
+    "web-studio/midi-file.js": "4fa48b83609ee4d4b75082ec45af5b4ce59fbf51f9fab71136e259255f04cb6f",
+    "web-studio/midi-file-sustain.js": "16a98b360d3e550a4de8aab38d900b3fedc477dcea43fee6ec74107ea5c51f71",
+    "web-studio/release.json": "0e100be4e7df561a46c97d30ef24a1c8febbbaba561432c4551094a7bc00d427",
+    "tests/midi-file-sustain.test.cjs": "0cd46329886e404225b7c5fcac662516e3a89976987d9f22160fe13cbed4563f",
+    "tests/midi-reset-import-browser.cjs": "16c3306fd6c184384bfe40758d8585a16f03a5759a5d9f08e981f28f2ff2fab4",
+    "tests/fixtures/midi-reset-import-browser-proof.json": "ecccd21956c5aabe9050693d7ca881d2bf57304e821c9be88a7278cbb7d132b8"
+  },
+  "scope": "Full source suite plus focused native import/history/reopen/Odesa/audio/export test. Other browser workflows and backend suite not repeated; no backend runtime change."
+}

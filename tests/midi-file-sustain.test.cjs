@@ -56,3 +56,34 @@ test('unsupported controllers remain reported and long or malformed imports reta
  assert.throws(()=>t.inspectMidi(file(t,[[pedal(0,127),on(0),off(1),pedal(257,0),end(257)]])),/256-beat/);
  const {midiFileSustain}=await import('../web-studio/midi-file-sustain.js');for(const value of [-1,128,NaN])assert.throws(()=>midiFileSustain({header:{ticksPerBeat:480},tracks:[[{deltaTime:0,type:'controller',controllerType:64,channel:0,value}]]}),/pedal data/);
 });
+
+const reset=(beat,channel=0,value=0)=>({beat,type:'controller',channel,controllerType:121,value});
+test('Reset All Controllers ends pedal-held notes at the reset, while held keys wait for note-off',async()=>{
+ const t=await api();for(const value of [0,127]){
+  const result=t.inspectMidi(file(t,[[pedal(0,127),on(0),on(0,64),off(1),reset(2,0,value),off(3,64),end(6)]]));
+  assert.deepEqual(result.groups[0].notes.map(n=>[n.pitch,n.start,n.duration,n.releaseVelocity]),[[60,0,2,32/127],[64,0,3,32/127]]);
+  assert.equal(result.groups[0].beats,6);assert.ok(result.warnings.includes('1 controller resets applied to sustain only'));
+  assert.equal(result.warnings.some(w=>w.includes('closed at file end')||w.includes('controller events not applied')),false);
+ }
+});
+test('reset is channel-scoped across format-1 tracks and later pedal use remains independent',async()=>{
+ const t=await api(),result=t.inspectMidi(file(t,[[pedal(0,127),pedal(0,127,1),reset(2),pedal(3,127),pedal(5,0),end(6)],[on(0),on(0,67,1),off(1),off(1,67,1),on(3,64),off(4,64),end(6)]]));
+ assert.deepEqual(result.groups.find(g=>g.channel===0).notes.map(n=>[n.pitch,n.start,n.duration]),[[60,0,2],[64,3,2]]);
+ assert.equal(result.groups.find(g=>g.channel===1).notes[0].duration,6);
+});
+test('same-tick reset and pedal presses retain file ordering without truncating held notes',async()=>{
+ const t=await api();
+ for(const [controls,expected] of [[[reset(1),pedal(1,127)],4],[[pedal(1,127),reset(1)],1]]){
+  const result=t.inspectMidi(file(t,[[on(0),...controls,off(1),end(4)]]));assert.equal(result.groups[0].notes[0].duration,expected);
+ }
+ // A pedal-up/reset followed by pedal-down at the same tick still releases
+ // notes whose keys were already released before that tick.
+ const result=t.inspectMidi(file(t,[[pedal(0,127),on(0),off(.5),reset(1),pedal(1,127),end(4)]]));assert.equal(result.groups[0].notes[0].duration,1);
+});
+test('manual and Odesa shared import preserve reset note endings through project history and MIDI delivery',async()=>{
+ const t=await api(),{prepareMidiDelivery}=await import('../web-studio/midi-delivery.js'),project=t.emptyProject(),before=structuredClone(project),bytes=file(t,[[pedal(0,127),on(0),off(1),reset(2),end(6)]]);
+ const source=await t.readMidiImport({name:'Reset Performance.mid',size:bytes.length,arrayBuffer:async()=>bytes.buffer}),prepared=t.prepareMidiImport(project,source),history=new t.History(project);assert.deepEqual(project,before);
+ history.commit(prepared.next);assert.deepEqual(history.undo(),before);assert.deepEqual(history.redo(),prepared.next);
+ const reopened=t.validateProject(JSON.parse(JSON.stringify(prepared.next))),clip=reopened.clips[prepared.selection.clipId],result=prepareMidiDelivery(reopened,{clipId:clip.id});
+ assert.equal(clip.notes[0].duration,2);assert.equal(t.inspectMidi(result.data).groups[0].notes[0].duration,2);
+});
