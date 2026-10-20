@@ -63,3 +63,8 @@ test('offline preparation never resumes or routes live audio while playback prep
  const t=await api(),ctx=context({resume:()=>{throw Error('Playback Permission Denied');}}),e=new t.Engine(t.emptyProject(),()=>{});let routes=0;e.routeOutput=async()=>routes++;
  await installed(()=>ctx,async()=>{await e.prepare({resume:false});assert.equal(ctx.resumes,0);assert.equal(routes,0);assert.equal(ctx.state,'suspended');await assert.rejects(e.prepare(),/Playback Permission Denied/);assert.equal(ctx.resumes,1);assert.equal(routes,1);});
 });
+
+test('a closed audio context is replaced on explicit initialization without losing the project or decoded samples',async()=>{
+ const t=await api(),p=t.emptyProject(),before=structuredClone(p),e=new t.Engine(p,()=>{}),old=context(),fresh=context();let calls=0;
+ await installed(()=>calls++?fresh:old,async()=>{await e.init(false);e.sampleBuffers.set('keep',{buffer:{}});const samples=e.sampleBuffers;await old.close();await e.init(false);assert.equal(e.context,fresh);assert.equal(e.sampleBuffers,samples);assert.deepEqual(p,before);assert.equal(fresh.resumes,0);assert.ok(e.mixGraph);});
+});

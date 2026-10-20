@@ -166,3 +166,11 @@ export class LiveNotes {
   off(key,releaseVelocity=0){if(this.arpKeys.has(key)){const id=this.arpKeys.get(key);this.arpKeys.delete(key);this.arps.get(id)?.off(key,releaseVelocity);return;}const pending=this.pending.get(key);if(pending){this.pending.delete(key);const duration=Math.max(0,(this.engine.context.currentTime-pending.time)*pending.bpm/60);this.spawn(key,processMidiNotes({pitch:pending.pitch,velocity:pending.velocity,start:0,duration,releaseVelocity},pending.effects,pending.bpm),pending.trackId,pending.time,pending.bpm);}const group=this.voices.get(key);if(!group)return;this.voices.delete(key);for(const voice of group)if(!voice.timed){const now=this.engine.context.currentTime;voice.release(now,now<voice.startTime);}}
   allOff(){for(const arp of this.arps.values())arp.dispose();this.arps.clear();this.arpKeys.clear();this.pending.clear();for(const key of [...this.voices.keys()])this.off(key);for(const voice of this.sounding)voice.release(this.engine.context.currentTime,true);}
 }
+
+// A re-created engine cannot reuse a microphone graph owned by a closed context.
+export async function captureForContext(current,context,create=ctx=>new AudioCapture(ctx)){
+ if(current?.context===context)return current;
+ if(current?.active||current?.recoverable)throw Error('Finish Or Recover The Current Audio Take Before Reconnecting.');
+ if(current)await current.disconnect();
+ return create(context);
+}

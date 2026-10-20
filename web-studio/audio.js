@@ -44,8 +44,11 @@ export function synthesize(context,clip,bpm){
 export class Engine {
   constructor(project,changed){this.project=project;this.project.transport??=defaultTransport();this.changed=changed;this.context=null;this.buffers=new Map();this.midiBuffers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();this.sampleBuffers=new Map();this.active=new Map();this.pending=new Map();this.follows=new Map();this.activeScene=null;this.pendingScene=null;this.sceneFollow=null;this.gateHolds=new Map();this.overrides=new Set();this.automationOverrides=new Set();this.nodes=new Set();this.clickNodes=new Set();this.records=new Map();this.playing=false;this.recording=false;this.mode='session';this.nextBeat=0;this.position=0;this.insertMarker=0;this.playGeneration=0;this.masterVolume=project.master??.8;}
   async init(resume=true){
+    if(this.context?.state==='closed'){
+      this.mixGraph?.dispose();this.masterMeter?.dispose();this.context=null;this.master=null;this.compressor=null;this.masterMeter=null;delete this.mixGraph;this.mixers=new Map();this.returnMixers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();
+    }
     if(!this.context){
-      const context=new AudioContext();this.context=context;
+      const context=new AudioContext();this.context=context;context.addEventListener?.('statechange',()=>{if(this.context===context)this.onContextStateChange?.(context.state);});
       try{
         this.master=context.createGain();this.master.gain.value=this.masterVolume;this.compressor=context.createDynamicsCompressor();
         this.master.connect(this.compressor);this.compressor.connect(context.destination);this.masterMeter=createStereoMeter(context,this.compressor);this.mixers=new Map();this.resetMixers();
@@ -161,7 +164,7 @@ export class Engine {
     // Preserve clip phase when the displayed timeline wrapped before pausing.
     if(!reset){for(const a of this.active.values())a.start-=raw-position;for(const f of this.follows.values())f.beat-=raw-position;if(this.sceneFollow)this.sceneFollow.beat-=raw-position;}else{this.follows.clear();this.sceneFollow=null;}this.pendingScene=null;
     clearInterval(this.timer);for(const n of this.nodes){try{n.stop();}catch{}}this.nodes.clear();this.pending.clear();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();
-    if(this.context)this.resetMixers();this.changed();
+    if(this.context&&this.context.state!=='closed')this.resetMixers();this.changed();
   }
   stop(){this.halt(true);}
   pause(){this.halt(false);}
