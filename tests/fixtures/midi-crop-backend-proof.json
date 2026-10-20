@@ -1,0 +1,45 @@
+{
+  "stack": "opusloops-aws-application",
+  "sha256": "8b349f15cc3d1ddb04376256f6bdb34acd7fead3e5446aae1c3ef783dcd856c6",
+  "lambdaCodeSha256": "izSfFcw9HdsEN2JW9r2zSs1/6tPlRGquHD73g9zYVsY=",
+  "bundleSha256": "cc80e8232f0a284206814ecdc213d41c6e020fc9ce502ed70c8d270ab71dc972",
+  "sourceBaseCommit": "d0272cc26b522ea36b28fc2187198e5071ab090f",
+  "checkedAt": "2026-10-20T22:48:19.300579+00:00",
+  "stackStatus": "UPDATE_COMPLETE",
+  "lambda": {
+    "hash": "izSfFcw9HdsEN2JW9r2zSs1/6tPlRGquHD73g9zYVsY=",
+    "state": "Active",
+    "update": "Successful"
+  },
+  "health": {
+    "service": "opusloops",
+    "provider": "aws",
+    "version": 1
+  },
+  "accessChecks": [
+    {
+      "origin": null,
+      "status": 403,
+      "code": "origin_denied"
+    },
+    {
+      "origin": "https://opusloops.com",
+      "status": 401,
+      "code": "authentication_required"
+    }
+  ],
+  "scope": "API code hash and public health/origin/auth boundaries; no live model or authenticated execution.",
+  "changeSetName": "opus-midi-crop-0244",
+  "sourceHashes": {
+    "infra/aws-backend/runtime/studio-agent.mjs": "12611529e554baadc88bb0c2ae38921602c5770c99ca4500adc1ec67e3fe8bbf",
+    "web-studio/model.js": "5c75dc6e4f6895bebf7e6e2e16c3c4c3f836aac3ffbd205b4532158e1c4b98be",
+    "web-studio/notes.js": "cd1aea41df29152c91d8604ad30898150c0d247022316951a17e60da21a51745",
+    "web-studio/studio-selection.js": "fd1b06108deccf32fef231cdbf27a7fb550c0ac2ae15f8edcaf404cb5487b755",
+    "web-studio/agent-actions.js": "db16dd4dfed0311fa1f062ae835ceacb76161365cd29bad8bb8ea2664a578096",
+    "web-studio/midi-note-edit.js": "f27aecf4793f6f126412847a40af6c1f8cdd9afb4cdcddf6083786303dc30b9e",
+    "web-studio/midi-crop.js": "366465d35c05b6eed3ddb1a621e248d7b88aad3e23ddd9e80321b2d3ebcd56ea",
+    "web-studio/musical-units.js": "d8d421a71e94d99b95784774ac2814dca38a57b6f634dbd69d2e795e6f7285c3",
+    "web-studio/agent-schema.js": "2b92ca59105fc560382b3f093a29ecb46ebdf1869b0eecc700f07309370b6278",
+    "infra/aws-backend/runtime/live-midi-guide.mjs": "88e307a81ae34ecc90d382988e746684725d03dfbdde716e4c56b112032941c6"
+  }
+}

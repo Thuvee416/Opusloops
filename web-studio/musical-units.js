@@ -46,7 +46,7 @@ export function normalizeMusicalAction(action,{requireUnits=false}={}){
  if(['add_track','add_return','track_group'].includes(out.type))convert(x,'volume',gain);
  if(out.type==='clip')convert(x.changes,'beats',duration);
  if(out.type==='midi'){convert(x,'beats',duration);if(Array.isArray(x.notes))x.notes=x.notes.map(note);}
- if(['region','time','region_crossfade'].includes(out.type)){for(const key of ['start','boundary'])convert(x,key,position);for(const key of ['length','offset'])convert(x,key,duration);}
+ if(['region','time','region_crossfade','midi_crop'].includes(out.type)){for(const key of ['start','boundary'])convert(x,key,position);for(const key of ['length','offset'])convert(x,key,duration);}
  if(out.type==='region_split')convert(x,'at',position);
  if(out.type==='region_fades')for(const key of ['fadeIn','fadeOut'])convert(x,key,duration);
  if(out.type==='region_group')convert(x,'delta',delta);

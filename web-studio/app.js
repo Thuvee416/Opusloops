@@ -1,3 +1,4 @@
+import {cropMidiSources} from './midi-crop.js';
 import {midiTimeRange,copyMidiTime,editMidiTime,midiTimeKey} from './midi-time-edit.js';
 import {loopNotes,loopNoteIndices} from './note-state.js';
 import {mixerChanges,applyLiveMixerSnapshot} from './live-mixer-edit.js';
@@ -340,6 +341,30 @@ function renderTimeline(){
 }
 function editableClipIds(){return [...new Set((selectedRegion?selectedRegionIds().map(id=>project.arrangement.find(r=>r.id===id)?.clipId):selectedSessionSlots().map(s=>s.clipId)).filter(id=>id&&project.clips[id]))];}
 function clipPropertiesLocked(){return busy||inputActive()||engine.playing||engine.recording||!!engine.automationTake||!!(engine.startPromise||engine.preparing)||navigationLocked();}
+function midiCropRequest(context,rangeOnly=false){
+ const editor=!!context?.closest?.('#clip-editor'),ids=editor?[selection?.clipId]:editableClipIds();
+ if(!ids.length||ids.some(id=>project.clips[id]?.kind!=='midi'))return null;
+ if(rangeOnly){if(!editor||!noteTimeSelection)return null;return {ids:[selection.clipId],start:noteTimeSelection.start,length:noteTimeSelection.end-noteTimeSelection.start};}
+ return {ids};
+}
+function canCropMidi(context,rangeOnly=false){
+ if(navigationLocked()||midiEditingLocked())return false;const spec=midiCropRequest(context,rangeOnly);if(!spec)return false;
+ if(spec.length!==undefined&&(spec.length<.25||engine.playing&&(spec.start!==0||spec.length!==project.clips[spec.ids[0]].beats)))return false;
+ return true;
+}
+async function applyManualMidiCrop(context,rangeOnly=false){
+ const spec=midiCropRequest(context,rangeOnly);if(!spec)return;
+ if(!canCropMidi(context,rangeOnly)){setStatus('Stop Playback And Finish The Current Operation Before Cropping To A Shorter Time Selection.',true);return;}
+ const result=cropMidiSources(project,spec);if(!result.changed){setStatus('MIDI Sources Already Fit The Crop. No Undo Step Added.');return;}
+ await commitAgentProject(result.project,result.observations,{source:'manual'});
+ if(context?.closest?.('#clip-editor'))focusPiano();
+ setStatus(`${result.ids.length} MIDI Clip ${result.ids.length===1?'Source':'Sources'} Cropped. All Shared Placements Use The Result. Undo Restores Discarded Notes.`);
+}
+for(const rangeOnly of [false,true]){const button=document.createElement('button');button.hidden=true;button.id=rangeOnly?'crop-midi-range':'crop-midi-clips';button.canRun=context=>canCropMidi(context,rangeOnly);button.onclick=run(()=>applyManualMidiCrop(button.opusEditContext,rangeOnly));document.body.append(button);}
+document.addEventListener('keydown',run(e=>{
+ if(!(e.ctrlKey||e.metaKey)||!e.shiftKey||e.altKey||e.code!=='KeyJ'||e.isComposing||e.target.closest('input,textarea,select,[contenteditable=true]')||!e.target.closest('#clip-editor,#session-grid .slot,#timeline [data-region]'))return;
+ e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)return applyManualMidiCrop(e.target,!!e.target.closest('#clip-editor')&&!!noteTimeSelection);
+}));
 function applyManualClipProperties(changes){
  stopToEdit();if(clipPropertiesLocked())throw new Error('Finish The Current Operation Before Editing Clip Properties.');
  const bound=$('clip-editor').querySelector('[data-clip-property-ids]'),ids=editableClipIds();
@@ -451,7 +476,7 @@ function performTrackEdit(action,context){
 }
 for(const action of ['duplicate','delete','rename','select-all']){
  const button=document.createElement('button');button.id='selected-tracks-'+action;button.hidden=true;
- button.canRun=context=>canEditTracks(action,context);button.onclick=run(()=>{const context=button.editContext;button.editContext=null;performTrackEdit(action,context);});document.body.append(button);
+ button.canRun=context=>canEditTracks(action,context);button.onclick=run(()=>{const context=button.opusEditContext;button.opusEditContext=null;performTrackEdit(action,context);});document.body.append(button);
 }
 document.addEventListener('keydown',run(e=>{
  const action=trackEditShortcut(e,{trackFocus:!!e.target.closest(TRACK_EDIT_CONTEXT),typing:!!e.target.closest('input,textarea,select,[contenteditable=true]'),dialog:!!document.querySelector('dialog[open]'),menu:document.body.classList.contains('menu-open')});
@@ -515,12 +540,28 @@ const sessionMenuEntry=(label,action,shortcut)=>({label,action,shortcut,enabled:
 const sessionModifier=/Mac|iPhone|iPad/.test(navigator.platform)?'⌘':'Ctrl+';
 sessionContextMenu=mountContextMenu({getBinding:()=>JSON.stringify({view,revision:sessionProjectRevision,slots:selectedSessionSlots(),primary:selection,clipboard:sessionClipboard?.revision??null}),getEntries:()=>{
  const slots=selectedSessionSlots(),single=slots.length===1?slots[0]:null,clip=single?.clipId?project.clips[single.clipId]:null,allActive=slots.filter(s=>s.clipId).every(s=>slotActive(project.tracks.find(t=>t.id===s.trackId),s.scene));
- return [{label:'Insert Empty MIDI Clip',action:'new-midi',enabled:()=>!$('new-midi').disabled},null,sessionMenuEntry('Cut','cut',sessionModifier+'X'),sessionMenuEntry('Copy','copy',sessionModifier+'C'),sessionMenuEntry('Paste','paste',sessionModifier+'V'),sessionMenuEntry('Duplicate','duplicate',sessionModifier+'D'),sessionMenuEntry('Delete','delete','Delete'),null,{label:'Rename',action:'rename',enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()},{label:'Edit Info Text',action:'info',enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()},{label:'Clip Colors',palette:[...CLIP_COLORS.map(([name,color])=>({label:name,action:'color',color,enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()})),{label:'Follow Track Color',action:'color',color:null,enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()}]},sessionMenuEntry((allActive?'Deactivate':'Activate')+(slots.filter(s=>s.clipId).length===1?' Clip':' Clips'),'active','0'),null,sessionMenuEntry('Select All','select-all',sessionModifier+'A'),sessionMenuEntry('Deselect All','deselect-all','Escape'),{label:'Import Audio...',action:'import',enabled:()=>!!single&&!clip&&!isGroup(project.tracks.find(t=>t.id===single.trackId))&&!engine.playing&&!navigationLocked()}, {label:'Export MIDI Clip...',action:'export-midi',enabled:()=>!!single&&clip?.kind==='midi'&&!engine.playing&&!navigationLocked()}];},
- invoke:entry=>{if(entry.action==='new-midi'){$('new-midi').click();}else if(entry.action==='rename')showClipProperty('name');else if(entry.action==='info')showClipProperty('info');else if(entry.action==='color'){try{applyManualClipProperties({color:entry.color});}catch(error){setStatus(error.message,true);}}else if(entry.action==='export-midi'){$('detail-clip').click();$('midi-export')?.click();}else if(entry.action==='import'){const slot=selectedSessionSlots()[0];[...$('session-grid').querySelectorAll('.slot')].find(el=>el.dataset.track===slot.trackId&&Number(el.dataset.scene)===slot.scene)?.querySelector('[data-empty]')?.click();}else $('session-batch-'+entry.action)?.click();},onRestore:()=>{if(sessionAnchor)focusSessionPlacement(sessionAnchor);else $('session-grid').focus({preventScroll:true});},onStale:()=>setStatus('Session Selection Or Clipboard Changed. Open The Menu Again.',true)
+ return [{label:'Insert Empty MIDI Clip',action:'new-midi',enabled:()=>!$('new-midi').disabled},null,sessionMenuEntry('Cut','cut',sessionModifier+'X'),sessionMenuEntry('Copy','copy',sessionModifier+'C'),sessionMenuEntry('Paste','paste',sessionModifier+'V'),sessionMenuEntry('Duplicate','duplicate',sessionModifier+'D'),sessionMenuEntry('Delete','delete','Delete'),null,{label:'Crop Clip',action:'crop-midi',shortcut:sessionModifier+'Shift+J',enabled:()=>canCropMidi($('session-grid'))},{label:'Rename',action:'rename',enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()},{label:'Edit Info Text',action:'info',enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()},{label:'Clip Colors',palette:[...CLIP_COLORS.map(([name,color])=>({label:name,action:'color',color,enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()})),{label:'Follow Track Color',action:'color',color:null,enabled:()=>editableClipIds().length>0&&!clipPropertiesLocked()}]},sessionMenuEntry((allActive?'Deactivate':'Activate')+(slots.filter(s=>s.clipId).length===1?' Clip':' Clips'),'active','0'),null,sessionMenuEntry('Select All','select-all',sessionModifier+'A'),sessionMenuEntry('Deselect All','deselect-all','Escape'),{label:'Import Audio...',action:'import',enabled:()=>!!single&&!clip&&!isGroup(project.tracks.find(t=>t.id===single.trackId))&&!engine.playing&&!navigationLocked()}, {label:'Export MIDI Clip...',action:'export-midi',enabled:()=>!!single&&clip?.kind==='midi'&&!engine.playing&&!navigationLocked()}];},
+ invoke:entry=>{if(entry.action==='crop-midi'){run(()=>applyManualMidiCrop($('session-grid')))();}else if(entry.action==='new-midi'){$('new-midi').click();}else if(entry.action==='rename')showClipProperty('name');else if(entry.action==='info')showClipProperty('info');else if(entry.action==='color'){try{applyManualClipProperties({color:entry.color});}catch(error){setStatus(error.message,true);}}else if(entry.action==='export-midi'){$('detail-clip').click();$('midi-export')?.click();}else if(entry.action==='import'){const slot=selectedSessionSlots()[0];[...$('session-grid').querySelectorAll('.slot')].find(el=>el.dataset.track===slot.trackId&&Number(el.dataset.scene)===slot.scene)?.querySelector('[data-empty]')?.click();}else $('session-batch-'+entry.action)?.click();},onRestore:()=>{if(sessionAnchor)focusSessionPlacement(sessionAnchor);else $('session-grid').focus({preventScroll:true});},onStale:()=>setStatus('Session Selection Or Clipboard Changed. Open The Menu Again.',true)
 });
 function openSessionContext(cell,x,y){if(navigationLocked()||!cell)return;const slot={trackId:cell.dataset.track,scene:Number(cell.dataset.scene)},track=project.tracks.find(t=>t.id===slot.trackId),chosen=selectedSessionSlots();if(sessionSlotSelected(track,slot.scene)){const family=isGroup(track)?groupLeaves(project,track.id).map(t=>t.id):[track.id],primary=chosen.find(s=>s.scene===slot.scene&&family.includes(s.trackId));applyStudioSelection({target:'session',slots:chosen,primary},{open:false});focusSessionPlacement(slot);}else chooseSessionSlot(slot,{});const current=[...$('session-grid').querySelectorAll('.slot')].find(el=>el.dataset.track===slot.trackId&&Number(el.dataset.scene)===slot.scene);sessionContextMenu.open(x,y,current);}
 $('session-grid').addEventListener('contextmenu',run(e=>{const cell=e.target.closest('.slot');if(!cell||e.target.closest('input,textarea'))return;e.preventDefault();openSessionContext(cell,e.clientX,e.clientY);}));
 $('session-grid').addEventListener('keydown',run(e=>{if(e.key!=='ContextMenu'&&!(e.shiftKey&&e.key==='F10'))return;const cell=e.target.closest('.slot');if(!cell)return;e.preventDefault();e.stopImmediatePropagation();const r=cell.getBoundingClientRect();openSessionContext(cell,r.left+Math.min(35,r.width/2),r.bottom);}),true);
+
+const midiCropMenu=mountContextMenu({label:'MIDI Crop Menu',getBinding:()=>JSON.stringify({view,revision:sessionProjectRevision,selection,ids:editableClipIds(),range:noteTimeSelection}),getEntries:()=>[
+ {label:'Crop Clip',action:'loop',enabled:()=>canCropMidi(midiCropMenuTarget)},
+ {label:'Crop To Time Selection',action:'range',enabled:()=>canCropMidi(midiCropMenuTarget,true)}
+],invoke:entry=>run(()=>applyManualMidiCrop(midiCropMenuTarget,entry.action==='range'))(),onStale:()=>setStatus('Clip Or Time Selection Changed. Open The Menu Again.',true)});
+let midiCropMenuTarget=null;
+function openMidiCropMenu(target,x,y){
+ if(navigationLocked())return;const region=target.closest('#timeline [data-region]');
+ if(region&&!regionSelection.has(region.dataset.region))applyStudioSelection({target:'regions',ids:[region.dataset.region],primaryId:region.dataset.region},{open:false});
+ midiCropMenuTarget=region?$('timeline'):target;
+ if(!midiCropRequest(midiCropMenuTarget))return;midiCropMenu.open(x,y,target);
+}
+for(const host of [$('clip-editor'),$('timeline')]){
+ host.addEventListener('contextmenu',e=>{if(e.target.closest('input,textarea,select')||!e.target.closest('.piano-scroll,#timeline [data-region]'))return;e.preventDefault();openMidiCropMenu(e.target,e.clientX,e.clientY);});
+ host.addEventListener('keydown',e=>{if(e.key!=='ContextMenu'&&!(e.shiftKey&&e.key==='F10')||e.target.closest('input,textarea,select')||!e.target.closest('.piano-scroll,#timeline [data-region]'))return;e.preventDefault();e.stopImmediatePropagation();const box=e.target.getBoundingClientRect();openMidiCropMenu(e.target,box.left+20,box.top+20);},true);
+}
 
 async function playFromControls(args={}){try{return await executeStudioCommand({name:'play',args});}catch(error){if(error.code!=='PLAYBACK_CANCELLED')throw error;}}
 $('play').onclick=run(()=>engine.playing?undefined:playFromControls());
@@ -2012,7 +2053,7 @@ async function commitAgentProject(next,observations=[],options={}){
    if(options.navigationPreservation?.scopes.includes('selection'))retainAgentSelection(options.navigationPreservation.expected);
    else {const edited=observations.filter(o=>o.type==='midi_notes'&&o.clipId===selection?.clipId).at(-1);if(edited){noteTimeSelection=edited.timeRange??null;if(edited.insertAt!==undefined)notePasteAt=edited.insertAt;noteSelection=new Set(edited.resultSelection);noteIndex=edited.resultSelection[0]??0;}}
    const focused=project.clips[selection?.clipId]?.notes?.[noteIndex];if(focused&&(focused.pitch<noteBase||focused.pitch>noteBase+noteRange-1))noteBase=Math.max(0,Math.min(128-noteRange,focused.pitch-Math.floor((noteRange-1)/2)));
-   renderEditor();changed();setStatus('Odesa MIDI Edits Applied. Playback Continues. Undo Reverses This Request.');
+   renderEditor();changed();setStatus(options.source==='manual'?'MIDI Edit Applied. Playback Continues. Undo Is Available.':'Odesa MIDI Edits Applied. Playback Continues. Undo Reverses This Request.');
   }catch(error){error.agentEditsApplied=applied;throw error;}
   finally{if(agentMidiCommit===token)agentMidiCommit=null;busy=false;renderEditor();renderTransport();}
   return;

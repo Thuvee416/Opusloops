@@ -32,7 +32,7 @@ test('track edit shortcuts require header focus and leave text, dialogs, menus a
  for(const guard of ['defaultPrevented','altKey','shiftKey','repeat'])assert.equal(t.trackEditShortcut({key:'Delete',[guard]:true},state),null);assert.equal(t.trackEditShortcut({ctrlKey:true,key:'Delete'},state),null);
 });
 test('actual Edit menu routes header operations to tracks and disables stale clip clipboard actions',async()=>{
- const fs=require('node:fs'),vm=require('node:vm'),{TRACK_EDIT_CONTEXT}=await api(),buttons=new Map(),calls=[];let mounted;const button=id=>{if(!buttons.has(id))buttons.set(id,{disabled:false,canRun:()=>true,click(){calls.push({id,context:this.editContext});}});return buttons.get(id);};
+ const fs=require('node:fs'),vm=require('node:vm'),{TRACK_EDIT_CONTEXT}=await api(),buttons=new Map(),calls=[];let mounted;const button=id=>{if(!buttons.has(id))buttons.set(id,{disabled:false,canRun:()=>true,set editContext(_){throw Error('Native HTMLElement.editContext Requires An EditContext');},click(){calls.push({id,context:this.opusEditContext});}});return buttons.get(id);};
  const sandbox={document:{getElementById:button,querySelector:()=>({}),body:{classList:{contains:()=>false}}},navigator:{platform:'Mac'},CLIP_GRIDS:[],RECORD_QUANTIZATION_PRESETS:[],TRACK_EDIT_CONTEXT,mountMenubar:args=>mounted=args};
  const source=fs.readFileSync(require.resolve('../web-studio/menus.js'),'utf8').replace(/^import .*;\n/gm,'').replace('export function installMenus','function installMenus');vm.runInNewContext(source+'\ninstallMenus();',sandbox);
  const edit=mounted.menus.find(m=>m[0]==='Edit')[1],entry=label=>edit.find(e=>e?.label===label),header={closest:s=>s===TRACK_EDIT_CONTEXT||s==='#session-grid'?header:null};mounted.rememberContext(header);

@@ -23,7 +23,7 @@ CASES = ['workspace-resume', 'import-permission', 'audio-interruption',
          'offline-export', 'studio-effects', 'long-tail', 'arrangement-delivery',
          'session-delivery', 'session-start-cancellation', 'session-live-mix',
          'metadata-mix', 'automation-take', 'automation-loop', 'recording-seek',
-         'midi-gesture', 'playback-edit-lock', 'note-preview', 'menu-navigation', 'touch-editing', 'save-shortcut', 'note-draw', 'note-insert', 'live-midi-engine', 'live-midi-editor', 'agent-live-midi', 'note-time-selection', 'live-mixer', 'midi-loop-preservation', 'midi-time-edit']
+         'midi-gesture', 'playback-edit-lock', 'note-preview', 'menu-navigation', 'touch-editing', 'save-shortcut', 'note-draw', 'note-insert', 'live-midi-engine', 'live-midi-editor', 'agent-live-midi', 'note-time-selection', 'live-mixer', 'midi-loop-preservation', 'midi-time-edit', 'midi-crop']
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
