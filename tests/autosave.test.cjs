@@ -47,7 +47,7 @@ test('actual storage writer rejects an abort without an error event and leaves a
 
 test('actual changed handler marks Undo dirty even when history has already moved',async()=>{
  const {Autosave}=await api(),{History}=await import('../web-studio/history.js');let callback,writes=[];
- const ctx={project:{name:'One',sceneNames:[]},engine:{playing:false,recording:false,automationTake:null},sessionProjectRevision:0,view:'session',saveTimer:null,renderMixer(){},renderAutomation(){},sceneNames:()=>[],renderManagement(){},updateHistory(){},renderTransport(){},renderGrid(){},renderTimeline(){},clearTimeout(){},setTimeout:fn=>{callback=fn;return 1;},structuredClone};
+ const ctx={project:{name:'One',sceneNames:[]},engine:{playing:false,recording:false,automationTake:null,automationOverrides:new Set()},historyMixerStates:new WeakMap(),sessionProjectRevision:0,view:'session',saveTimer:null,renderMixer(){},renderAutomation(){},sceneNames:()=>[],renderManagement(){},updateHistory(){},renderTransport(){},renderGrid(){},renderTimeline(){},clearTimeout(){},setTimeout:fn=>{callback=fn;return 1;},structuredClone};
  ctx.history=new History(ctx.project);ctx.project.name='Two';ctx.history.commit(ctx.project);ctx.project=ctx.history.undo();
  ctx.autosave=new Autosave({snapshot:()=>structuredClone(ctx.project),write:async p=>writes.push(p.name)});vm.createContext(ctx);
  vm.runInContext(extract('function persist()','\nfunction install(p,'),ctx);ctx.changed();assert.equal(ctx.sessionProjectRevision,0);assert.equal(ctx.autosave.dirty,true);await callback();assert.deepEqual(writes,['One']);assert.equal(ctx.autosave.dirty,false);

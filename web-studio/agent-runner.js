@@ -1,3 +1,4 @@
+import {mixerChanges} from './live-mixer-edit.js';
 import {midiNoteChanges} from './live-midi-edit.js';
 import {projectIOIntent,checkProjectIOReceipt} from './project-io.js';
 import {prepareHistory,assertHistoryState,checkHistoryReceipt,historyIntent} from './history-control.js';
@@ -95,7 +96,7 @@ export function prepareAgentPlan(project, actions, {stemSelectionRequirements=nu
   const clipboardIntent=checkSessionClipboardRequirements(project,{next,prepared,before,after,edits,editCount:edits.length},sessionClipboardRequirements,sessionClipboard);
   const preservation=prepareNavigationPreservation(project,next,actions,navigationPreservation);
   const selectionIntent=checkSessionSelectionRequirements(project,{next,before,after,editCount:edits.length},sessionSelectionRequirements);
-  return {projectIO:fileCommands.length>0,history:!!historyPrepared,historyBinding:historyPrepared?.binding??null,sessionRecordingBinding:sessionRecordingState?sessionRecordingBinding(sessionRecordingState):null,sessionRecording:captures.length>0||captureActive,next, prepared,navigationPreservation:preservation,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,liveMidiNotes:!!midiNoteChanges(project,next)?.length,liveMidiHistory:!!historyPrepared&&!!midiNoteChanges(project,historyPrepared.target)?.length,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
+  return {projectIO:fileCommands.length>0,history:!!historyPrepared,historyBinding:historyPrepared?.binding??null,sessionRecordingBinding:sessionRecordingState?sessionRecordingBinding(sessionRecordingState):null,sessionRecording:captures.length>0||captureActive,next, prepared,navigationPreservation:preservation,creationSceneIntent,selectionIntent,clipboardIntent,clipPropertyIntent,liveSessionActive,liveMixerEdits:!!mixerChanges(project,next)?.length,liveMixerHistory:!!historyPrepared&&!!mixerChanges(project,historyPrepared.target)?.length,liveMidiNotes:!!midiNoteChanges(project,next)?.length,liveMidiHistory:!!historyPrepared&&!!midiNoteChanges(project,historyPrepared.target)?.length,clipboardUsed,clipboardRevision:clipboardUsed?sessionClipboard?.revision:null, deliveryChecks, quantizeCheck,recordingBinding:recordingState?recordingBinding(recordingState):null,recording:recording.length>0, editCount:edits.length,changesProject:signature(project)!==signature(next), before, after,editObservations};
 }
 
 export async function runAgentPlan(plan, {getProject,getHistory,getRecording,getSessionRecording,getClipboard,getNavigation, expected, locked, commit, execute, signal, onStep = () => {}}) {
@@ -124,7 +125,7 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
   const run = async command => {
     check();
     const beforeRecording=['record_input','record_session'].includes(command.name)?structuredClone(getProject()):null;
-    let result;try{if(['history','project_io'].includes(command.name)&&locked(command.name==='history'&&plan.liveMidiHistory?'midi-live':'edit'))throw new Error('Stop playback and finish recording before changing the project.');result=await execute(command,signal,command.name==='project_io'?Object.assign(plan.prepared.get(command),{assertCurrent:check}):command.name==='history'?{...plan.prepared.get(command),assertCurrent:()=>check('commit')}:plan.prepared?.get(command));
+    let result;try{if(['history','project_io'].includes(command.name)&&locked(command.name==='history'&&plan.liveMidiHistory?'midi-live':command.name==='history'&&plan.liveMixerHistory?'mixer-live':'edit'))throw new Error('Stop playback and finish recording before changing the project.');result=await execute(command,signal,command.name==='project_io'?Object.assign(plan.prepared.get(command),{assertCurrent:check}):command.name==='history'?{...plan.prepared.get(command),assertCurrent:()=>check('commit')}:plan.prepared?.get(command));
       if(command.name==='project_io'){projectIOApplied=!!plan.prepared.get(command).applied;checkProjectIOReceipt(plan.prepared.get(command),getProject(),result,getHistory());fingerprint=projectSignature();captureBinding=getRecording?recordingBinding(getRecording()):null;sessionCaptureBinding=getSessionRecording?sessionRecordingBinding(getSessionRecording()):null;}
       if(command.name==='history'){historyApplied=true;checkHistoryReceipt(plan.prepared.get(command),getProject(),result,getHistory());fingerprint=signature(getProject());historyBinding=getHistory();}
       if(command.name==='record_session'){const observed=checkSessionRecordingReceipt(beforeRecording,getProject(),plan.prepared.get(command),result,getSessionRecording());recordingApplied||=observed.changed;sessionCaptureBinding=sessionRecordingBinding(getSessionRecording());fingerprint=projectSignature();}
@@ -153,7 +154,7 @@ export async function runAgentPlan(plan, {getProject,getHistory,getRecording,get
       check();
       const intended = signature(plan.next);
       if(intended!==fingerprint){
-        if (locked(plan.liveSessionActive?'session-live':plan.liveMidiNotes?'midi-live':'edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
+        if (locked(plan.liveSessionActive?'session-live':plan.liveMidiNotes?'midi-live':plan.liveMixerEdits?'mixer-live':'edit')) throw new Error('Stop playback before editing. Put a stop command before the project edits.');
         commitStarted = true;
         await commit(plan.next,plan.editObservations??[],{navigationPreservation:plan.navigationPreservation,signal,assertCurrent:()=>check('commit')});
         editsApplied = true;navigationEdited=true;

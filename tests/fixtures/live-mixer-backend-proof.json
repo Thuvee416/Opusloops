@@ -1,0 +1,38 @@
+{
+  "stack": "opusloops-aws-application",
+  "sha256": "233a14590537fd874f5807f680e34339c7aa31da43f7d50b6435ca4b551ea993",
+  "lambdaCodeSha256": "IzoUWQU3/YdPWAf2gONDOceqMdpD99ULZDXKS1UeqZM=",
+  "bundleSha256": "30d0d464d0e6aa8fabc6923af11e46cba7509feeb343f8000bc316514ad34986",
+  "sourceBaseCommit": "192928aacecae8a90d6bfa800478d49b0f4cf0a5",
+  "checkedAt": "2026-10-20T21:55:19.018261+00:00",
+  "stackStatus": "UPDATE_COMPLETE",
+  "lambda": {
+    "hash": "IzoUWQU3/YdPWAf2gONDOceqMdpD99ULZDXKS1UeqZM=",
+    "state": "Active",
+    "update": "Successful"
+  },
+  "health": {
+    "service": "opusloops",
+    "provider": "aws",
+    "version": 1
+  },
+  "accessChecks": [
+    {
+      "origin": null,
+      "status": 403,
+      "code": "origin_denied"
+    },
+    {
+      "origin": "https://opusloops.com",
+      "status": 401,
+      "code": "authentication_required"
+    }
+  ],
+  "scope": "API code hash and public health/origin/auth boundaries; no live model or authenticated execution.",
+  "changeSetName": "opus-live-mixer-0241",
+  "sourceHashes": {
+    "infra/aws-backend/runtime/studio-agent.mjs": "88a54ab2c4ba09466bd5940dfbd27ecab27c2ec8457a1725923c9cf49262ce00",
+    "infra/aws-backend/runtime/live-mixer-guide.mjs": "f8213b9694867576117b248ca07170736755f4d5c7fa74daa1d6f27879ae88c0",
+    "web-studio/agent-actions.js": "2e392542858029899a74930989342e74e9b48f5dc15f6978af63e165d43f84c5"
+  }
+}
