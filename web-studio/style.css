@@ -65,3 +65,5 @@
 
 /* Muted notes retain selection and editing affordances. */
 .piano-note.muted-note{background:#44484d;border:1px dashed #a1a6ad;color:#e2e4e7;opacity:1!important}.piano-note.muted-note.selected{outline:2px solid #fff;outline-offset:-2px}.velocity-stem.muted-note:after{background:#747a82}.velocity-stem.muted-note i{background:#363a40;border:1px solid #a1a6ad}
+
+.piano-grid.draw-mode .piano-row,.piano-grid.draw-mode .piano-cell,.piano-grid.draw-mode .piano-note,.piano-grid.draw-mode .piano-note i{cursor:crosshair;touch-action:none}.piano-grid .draw-preview{pointer-events:none;opacity:.8;border-style:dashed}

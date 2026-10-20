@@ -1,0 +1,36 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.OPUS_CHROMIUM});
+ try{
+  const page=await browser.newPage({viewport:{width:1440,height:1100},hasTouch:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+  await page.goto('http://127.0.0.1:4196/');await page.waitForFunction(()=>!document.documentElement.dataset.startup);await page.evaluate(()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()));
+  const fixture=await page.evaluate(async()=>{const {emptyProject}=await import('/model.js'),p=emptyProject();p.name='Draw Mode Verification';p.sceneNames=['Intro','Lift','Breakdown','Return'];p.returns=[];p.clips.phrase={id:'phrase',name:'Phrase',kind:'midi',beats:8,sourceBpm:120,notes:[{pitch:60,start:1,duration:1,velocity:.6,releaseVelocity:.2},{pitch:64,start:3,duration:.5,velocity:.7,active:false}]};p.tracks[0].slots[0]='phrase';return p;});
+  const press=id=>page.evaluate(id=>{const el=document.getElementById(id);if(el.disabled)throw Error(id+' is disabled');return el.onclick?el.onclick():el.click();},id);
+  const save=async()=>{await page.waitForTimeout(1100);const event=page.waitForEvent('download');await press('save');return JSON.parse(fs.readFileSync(await(await event).path(),'utf8'));};
+  await page.locator('#project-file').setInputFiles({name:'Draw.opusloop',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});await page.waitForFunction(()=>document.getElementById('project-name').value==='Draw Mode Verification');await press('session-tab');await page.locator('[data-select="phrase"]').dblclick();
+  const original=await save();assert.deepEqual(original,fixture);assert.equal(await page.locator('#note-draw').getAttribute('aria-pressed'),'false');
+  const point=async(pitch,beat)=>{const row=page.locator(`[data-row-pitch="${pitch}"]`);await row.scrollIntoViewIfNeeded();const r=await row.boundingBox();return {x:r.x+r.width*beat/8,y:r.y+r.height/2};};
+  let a=await point(62,.05);await page.mouse.click(a.x,a.y);assert.equal(await page.locator('[data-midi-note]').count(),2);assert.equal(await page.locator('#undo').isDisabled(),true);
+  await page.mouse.dblclick(a.x,a.y);assert.equal(await page.locator('[data-midi-note]').count(),3);await press('undo');assert.deepEqual(await save(),original);
+  // Double-click deletion must work despite selection rerenders between clicks.
+  a=await point(60,1.2);await page.mouse.dblclick(a.x,a.y);assert.equal(await page.locator('[data-midi-note]').count(),1);await press('undo');assert.deepEqual(await save(),original);
+  await page.locator('#project-name').focus();await page.keyboard.press('b');assert.equal(await page.locator('#note-draw').getAttribute('aria-pressed'),'false');await page.locator('#project-name').fill(original.name);await page.locator('.piano-scroll').focus();await page.keyboard.press('b');assert.equal(await page.locator('#note-draw').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('#undo').isDisabled(),true);
+  const mouseStroke=async(cancel=false)=>{const a=await point(62,.05),b=await point(62,.8);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:1});assert.equal(await page.locator('.draw-preview').count(),4);if(cancel)await page.keyboard.press('Escape');await page.mouse.up();};
+  await mouseStroke(true);assert.equal(await page.locator('.draw-preview').count(),0);assert.deepEqual(await save(),original);assert.equal(await page.locator('#undo').isDisabled(),true);
+  await mouseStroke();const drawn=await save(),expected=structuredClone(original);for(const start of [0,.25,.5,.75])expected.clips.phrase.notes.push({pitch:62,start,duration:.25,velocity:.7});assert.deepEqual(drawn,expected);await press('undo');assert.deepEqual(await save(),original);assert.equal(await page.locator('#undo').isDisabled(),true);await press('redo');assert.deepEqual(await save(),drawn);await press('undo');
+  a=await point(60,1.1);let b=await point(60,1.9);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:5});await page.mouse.up();const erased=await save(),without=structuredClone(original);without.clips.phrase.notes.splice(0,1);assert.deepEqual(erased,without);await press('undo');assert.deepEqual(await save(),original);
+  // Real touch events share the transaction and pointercancel ownership.
+  const cdp=await page.context().newCDPSession(page),touch=async(type,p)=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:p?[{x:p.x,y:p.y,id:1}]:[]});
+  for(const cancelled of [true,false]){a=await point(62,.05);b=await point(62,.8);await touch('touchStart',a);await touch('touchMove',b);await touch(cancelled?'touchCancel':'touchEnd');assert.deepEqual(await save(),cancelled?original:expected);if(!cancelled){await press('undo');assert.deepEqual(await save(),original);}assert.equal(await page.locator('#undo').isDisabled(),true);}
+  // Folded views draw only their visible pitch rows, including diagonal strokes.
+  await page.locator('#note-fold').check();a=await point(64,.05);b=await point(60,.8);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:1});await page.mouse.up();
+  const folded=structuredClone(original);for(const [pitch,start] of [[64,0],[64,.25],[60,.5],[60,.75]])folded.clips.phrase.notes.push({pitch,start,duration:.25,velocity:.7});assert.deepEqual(await save(),folded);await press('undo');assert.deepEqual(await save(),original);await page.locator('#note-fold').uncheck();
+  // Undo during a stroke cancels its draft without undoing earlier saved work.
+  a=await point(62,.05);b=await point(62,.8);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.keyboard.press('Control+z');await page.mouse.up();assert.deepEqual(await save(),original);assert.equal(await page.locator('#undo').isDisabled(),true);
+  await page.locator('.piano-scroll').focus();await page.keyboard.press('b');assert.equal(await page.locator('#note-draw').getAttribute('aria-pressed'),'false');
+  // Menu invokes the same toggle and exposes checked state.
+  await page.getByRole('menuitem',{name:'Options',exact:true}).click();await page.getByRole('menuitemcheckbox',{name:'Draw Mode',exact:true}).click();assert.equal(await page.locator('#note-draw').getAttribute('aria-pressed'),'true');
+  assert.deepEqual(await save(),original);assert.deepEqual(errors,[]);
+  const proof={status:'passed',singleClickDoesNotInsert:true,doubleClickInsertDeleteUndoExact:true,shortcutTypingGuard:true,paintSkippedCells:true,eraseLongNoteOnce:true,strokeSingleUndoRedoExact:true,escapeCancels:true,nativeTouchCommitCancelExact:true,menuToggle:true,foldedPitchStroke:true,undoDuringStrokeCancels:true,errors,scope:'Isolated native headless Chromium with mouse, keyboard and CDP touch events. Actual portable project downloads compare exact edits and Undo/Redo. No personal project, provider, microphone or physical device claim.'};fs.writeFileSync('tests/fixtures/note-draw-browser-proof.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

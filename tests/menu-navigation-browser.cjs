@@ -36,11 +36,14 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
    await page.keyboard.press('Escape');if(await page.locator('[role="menu"]').count())await page.keyboard.press('Escape');
    // Session contextual commands use the same scrolling behavior, including palettes.
    await page.locator('.slot').first().focus();await page.keyboard.press('Shift+F10');const contextFirst=await visibleFocus();
-   await page.keyboard.press('End');assert.equal(await visibleFocus(),'Export MIDI Clip...');await page.keyboard.press('ArrowDown');assert.equal(await visibleFocus(),contextFirst);
+   // Keep the physical pointer over the menu while keyboard scrolling moves rows beneath it.
+   const firstBox=await page.getByRole('menuitem',{name:contextFirst,exact:true}).boundingBox();await page.mouse.move(firstBox.x+firstBox.width/2,firstBox.y+firstBox.height/2);
+   await page.keyboard.press('End');await page.waitForTimeout(200);assert.equal(await visibleFocus(),'Export MIDI Clip...');await page.keyboard.press('ArrowDown');await page.waitForTimeout(200);assert.equal(await visibleFocus(),contextFirst);
+   await page.getByRole('menuitem',{name:'Duplicate',exact:true}).hover();assert.equal(await visibleFocus(),'Duplicate');
    await page.keyboard.type('export');assert.equal(await visibleFocus(),'Export MIDI Clip...');await page.keyboard.press('Escape');assert.equal(await page.locator('[role="menu"]').count(),0);
    // Keyboard Save still invokes the existing command and preserves the project.
    await root('File').click();await page.keyboard.type('save');assert.equal(await visibleFocus(),'Save Live Set');const pending=page.waitForEvent('download');await page.keyboard.press('Enter');const file=await pending;const saved=JSON.parse(fs.readFileSync(await file.path(),'utf8'));assert.deepEqual(saved,fixture);assert.equal(await page.locator('[role="menu"]').count(),0);assert.equal(await page.locator('#undo').isDisabled(),true);
-   results.push({viewport,menus,typeaheadVisible:true,submenuReturnVisible:true,openFromEndVisible:true,touchSubmenuUsable:true,sessionContextVisible:true,pageStationary:true,savedProjectExact:true,noUndo:true});await page.close();
+   results.push({viewport,menus,typeaheadVisible:true,submenuReturnVisible:true,openFromEndVisible:true,touchSubmenuUsable:true,sessionContextVisible:true,stationaryPointerKeepsKeyboardFocus:true,realPointerHoverWorks:true,pageStationary:true,savedProjectExact:true,noUndo:true});await page.close();
   }
   assert.deepEqual(errors,[]);const proof={status:'passed',results,errors,scope:'Isolated local Chromium at desktop, narrow and short landscape viewports, including emulated touch. Native keyboard and touch menu navigation plus downloaded project equality. No physical-phone, screen-reader, personal-project or model-provider claim.'};fs.writeFileSync('tests/fixtures/menu-navigation-browser-proof.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));
  }finally{await browser.close();}

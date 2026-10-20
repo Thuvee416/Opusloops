@@ -24,7 +24,7 @@ export function mountMenubar({host,menus,enabled,invoke,rememberContext,shortcut
    const text=document.createElement('span');text.textContent=entry.label;const hint=document.createElement('small');hint.textContent=entry.children?'›':entry.checked?.()?'✓':shortcuts[entry.label]||'';b.append(text,hint);
    if(entry.children){b.setAttribute('aria-haspopup','menu');b.setAttribute('aria-expanded','false');}
    const submenu=focusChild=>{if(levels[depth+1]?.trigger===b){if(focusChild)focusMenuItem(rows(levels[depth+1])[0]);return;}create(entry.children,depth+1,b,entry.label,focusChild);};
-   b.onpointerenter=e=>{if(e.pointerType==='touch')return;clearTimeout(hoverTimer);b.focus({preventScroll:true});hoverTimer=setTimeout(()=>{if(!b.isConnected)return;if(entry.children&&enabled(entry))submenu(false);else trim(depth+1);},120);};
+   b.onpointermove=e=>{if(e.pointerType==='touch'||!(e.movementX||e.movementY))return;clearTimeout(hoverTimer);b.focus({preventScroll:true});hoverTimer=setTimeout(()=>{if(!b.isConnected)return;if(entry.children&&enabled(entry))submenu(false);else trim(depth+1);},120);};
    b.onclick=()=>{clearTimeout(hoverTimer);if(!enabled(entry))return;if(entry.children)submenu(true);else{close();invoke(entry);}};
    el.append(b);
   }
@@ -38,7 +38,7 @@ export function mountMenubar({host,menus,enabled,invoke,rememberContext,shortcut
    if(e.altKey&&!e.metaKey&&!e.ctrlKey&&!e.shiftKey){const i=menus.findIndex(([name])=>name[0].toLowerCase()===e.key.toLowerCase());if(i>=0){e.preventDefault();e.stopImmediatePropagation();open(i);return;}}
    if(nav.contains(e.target)){const i=roots.indexOf(e.target);if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();roots[(i+(e.key==='ArrowRight'?1:roots.length-1))%roots.length].focus();}else if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();open(i,e.key==='ArrowUp');}}return;
   }
-  e.stopImmediatePropagation();const depth=levels.findIndex(l=>l.el.contains(document.activeElement)),level=levels[Math.max(0,depth)];
+  clearTimeout(hoverTimer);e.stopImmediatePropagation();const depth=levels.findIndex(l=>l.el.contains(document.activeElement)),level=levels[Math.max(0,depth)];
   if(e.key==='Escape'){e.preventDefault();if(levels.length>1)back(levels.length-1);else close(true);return;}
   if(e.key==='Tab'){close(true);return;}
   if(e.key==='ArrowLeft'&&depth>0){e.preventDefault();back(depth);return;}
