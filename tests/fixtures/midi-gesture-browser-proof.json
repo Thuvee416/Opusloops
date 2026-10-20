@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "kind": "move",
+      "cancelledProjectExact": true,
+      "selectionRestored": true,
+      "noUndo": true
+    },
+    {
+      "kind": "resize",
+      "cancelledProjectExact": true,
+      "selectionRestored": true,
+      "noUndo": true
+    },
+    {
+      "kind": "velocity",
+      "cancelledProjectExact": true,
+      "selectionRestored": true,
+      "noUndo": true
+    },
+    {
+      "kind": "lasso",
+      "cancelledProjectExact": true,
+      "selectionRestored": true,
+      "noUndo": true
+    }
+  ],
+  "undoDuringDragCancelsOnlyPreview": true,
+  "nextEditAndUndoRedoExact": true,
+  "errors": [],
+  "scope": "Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact downloaded projects, selection and Undo checks, then a successful move and Ctrl+Z cancellation of a subsequent drag without undoing that saved move. Synthetic MIDI; no personal project, input device or model calls."
+}
