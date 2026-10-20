@@ -4,38 +4,7 @@
   "results": [
     {
       "mode": "touch",
-      "start": 0.8848979591836736,
-      "release": 1.2680272108843538,
-      "finish": 1.6511564625850341,
-      "initial": {
-        "beat": 0.8732879818594106,
-        "rms": 0.03974310051876723,
-        "writing": 0
-      },
-      "held": {
-        "beat": 1.2564172335600907,
-        "rms": 0,
-        "writing": 1
-      },
-      "released": {
-        "beat": 1.639546485260771,
-        "rms": 0.04029316073920121,
-        "writing": 0
-      },
-      "rendered": {
-        "frames": 352800,
-        "before": 0.04552801435326083,
-        "held": 0,
-        "after": 0.04887541345572824,
-        "mode": "touch"
-      },
-      "exactUndoRedoAndReopen": true,
-      "unrelatedProjectDataPreserved": true,
-      "errors": []
-    },
-    {
-      "mode": "latch",
-      "start": 0.9197278911564626,
+      "start": 0.9081179138321995,
       "release": 1.302857142857143,
       "finish": 1.6743764172335602,
       "initial": {
@@ -50,12 +19,43 @@
       },
       "released": {
         "beat": 1.6627664399092972,
+        "rms": 0.040251951078561804,
+        "writing": 0
+      },
+      "rendered": {
+        "frames": 352800,
+        "before": 0.04561633111716957,
+        "held": 0,
+        "after": 0.04884030438390453,
+        "mode": "touch"
+      },
+      "exactUndoRedoAndReopen": true,
+      "unrelatedProjectDataPreserved": true,
+      "errors": []
+    },
+    {
+      "mode": "latch",
+      "start": 0.8965079365079365,
+      "release": 1.2796371882086168,
+      "finish": 1.6511564625850341,
+      "initial": {
+        "beat": 0.8732879818594106,
+        "rms": 0.03974310051876723,
+        "writing": 0
+      },
+      "held": {
+        "beat": 1.2680272108843538,
+        "rms": 0,
+        "writing": 1
+      },
+      "released": {
+        "beat": 1.639546485260771,
         "rms": 0,
         "writing": 1
       },
       "rendered": {
         "frames": 352800,
-        "before": 0.0457075209910738,
+        "before": 0.045598610625700184,
         "held": 0,
         "after": 0,
         "mode": "latch"

@@ -8,13 +8,13 @@
   "stemsIdenticalAfterReopen": true,
   "masterDifference": {
     "max": 8.568167686462402e-7,
-    "rms": 0.04175893836794052,
-    "rmsDifference": 1.3800342244346037e-8
+    "rms": 0.04175893835637124,
+    "rmsDifference": 1.3788756211027868e-8
   },
   "repeatedMasterDifference": {
-    "max": 0,
+    "max": 8.568167686462402e-7,
     "rms": 0.04175893835637124,
-    "rmsDifference": 0
+    "rmsDifference": 1.3788756211027868e-8
   },
   "masterTolerance": 0.00001,
   "alignedStemFrames": 441000,
