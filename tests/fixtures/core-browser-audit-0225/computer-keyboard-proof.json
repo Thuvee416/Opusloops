@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "pitches": [
+    60,
+    72
+  ],
+  "velocities": [
+    0.75,
+    0.6299212598425197
+  ],
+  "durations": [
+    0.18675963718820865,
+    0.1857596371882086
+  ],
+  "heldNoteReleasedAfterOctaveChange": true,
+  "typingAndCompositionIgnored": true,
+  "controlsMatchShortcuts": true,
+  "undoExact": true,
+  "errors": [],
+  "scope": "Isolated Chromium actual computer-keyboard MIDI capture, UI controls, project download and Undo. No hardware MIDI, microphone or subjective audio quality claim."
+}

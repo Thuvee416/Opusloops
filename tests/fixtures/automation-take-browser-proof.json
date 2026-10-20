@@ -1,31 +1,32 @@
 {
   "status": "passed",
+  "looping": false,
   "results": [
     {
       "mode": "touch",
-      "start": 0.9197278911564626,
-      "release": 1.337687074829932,
-      "finish": 1.7092063492063492,
+      "start": 0.9081179138321995,
+      "release": 1.302857142857143,
+      "finish": 1.6743764172335602,
       "initial": {
         "beat": 0.8965079365079365,
         "rms": 0.039686862134631254,
         "writing": 0
       },
       "held": {
-        "beat": 1.326077097505669,
+        "beat": 1.2912471655328799,
         "rms": 0,
         "writing": 1
       },
       "released": {
-        "beat": 1.6975963718820863,
-        "rms": 0.039991176492738395,
+        "beat": 1.6627664399092972,
+        "rms": 0.040251951078561804,
         "writing": 0
       },
       "rendered": {
         "frames": 352800,
-        "before": 0.0457075209910738,
+        "before": 0.04561633111716957,
         "held": 0,
-        "after": 0.04864043731426568,
+        "after": 0.04884030438390453,
         "mode": "touch"
       },
       "exactUndoRedoAndReopen": true,
@@ -34,27 +35,27 @@
     },
     {
       "mode": "latch",
-      "start": 0.8965079365079365,
-      "release": 1.2680272108843538,
-      "finish": 1.6511564625850341,
+      "start": 0.8732879818594104,
+      "release": 1.2448072562358277,
+      "finish": 1.627936507936508,
       "initial": {
-        "beat": 0.8732879818594106,
-        "rms": 0.03974310051876723,
+        "beat": 0.8616780045351473,
+        "rms": 0.04016693662842751,
         "writing": 0
       },
       "held": {
-        "beat": 1.2564172335600907,
+        "beat": 1.2448072562358277,
         "rms": 0,
         "writing": 1
       },
       "released": {
-        "beat": 1.627936507936508,
+        "beat": 1.604716553287982,
         "rms": 0,
         "writing": 1
       },
       "rendered": {
         "frames": 352800,
-        "before": 0.045598610625700184,
+        "before": 0.04547630907562274,
         "held": 0,
         "after": 0,
         "mode": "latch"
@@ -64,5 +65,5 @@
       "errors": []
     }
   ],
-  "scope": "Isolated actual application Touch/Latch recording using keyboard fader gestures, real audio-clock and native analyser; exact saved project Undo/Redo and reopen; native WAV render from the reopened data. Synthetic source; no personal project, microphone, provider or physical output checks."
+  "scope": "Isolated actual application Touch/Latch recording using keyboard fader gestures, real audio-clock and native analyser; optional nonzero-start Arrangement loop crossed while held, with WAV checks inside and outside the loop; exact saved project Undo/Redo and reopen; native WAV render from the reopened data. Synthetic source; no personal project, microphone, provider or physical output checks."
 }

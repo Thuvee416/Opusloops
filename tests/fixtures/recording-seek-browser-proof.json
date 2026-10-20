@@ -16,8 +16,8 @@
         {
           "pitch": 60,
           "velocity": 0.75,
-          "start": 0.266229478267315,
-          "duration": 0.4417791387034652
+          "start": 0.3240793650793651,
+          "duration": 0.3955392292156782
         }
       ],
       "exactUndoRedo": true,
@@ -33,14 +33,14 @@
         "marker": 0,
         "position": 0,
         "playing": true,
-        "preview": "overdub-d4e8945b-3827-4a7f-80c4-240d4d2fa5f9"
+        "preview": "overdub-c56e82d5-83ad-4fc7-897d-67bd0c8db965"
       },
       "addedNotes": [
         {
           "pitch": 60,
           "velocity": 0.75,
-          "start": 0.21031927456715227,
-          "duration": 0.36090929657531706
+          "start": 0.1752893423082611,
+          "duration": 0.37271927466251964
         }
       ],
       "exactUndoRedo": true,
