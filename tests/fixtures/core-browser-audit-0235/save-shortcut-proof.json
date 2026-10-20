@@ -1,0 +1,88 @@
+{
+  "status": "passed",
+  "controlAndCommandSave": true,
+  "focusedNameAndSelectionRetained": true,
+  "clipRenameAndPitchCommitted": true,
+  "recreatedFieldFocusRetained": true,
+  "invalidNativeFieldBlocksDownload": true,
+  "customValidationAndRepeatedRetryBlocksDownload": true,
+  "correctedFieldRecovers": true,
+  "editUndoExact": true,
+  "agentDraftUnchanged": true,
+  "noAgentSubmission": true,
+  "saveAsCommitsFieldAndNamesDownload": true,
+  "dialogDoesNotTriggerGlobalSave": true,
+  "reopenedProjectExact": true,
+  "keys": [
+    {
+      "prevented": true,
+      "target": "project-name"
+    },
+    {
+      "prevented": true,
+      "target": ""
+    },
+    {
+      "prevented": true,
+      "target": "project-name"
+    },
+    {
+      "prevented": true,
+      "target": ""
+    },
+    {
+      "prevented": true,
+      "target": "clip-name"
+    },
+    {
+      "prevented": true,
+      "target": ""
+    },
+    {
+      "prevented": true,
+      "target": "note-pitch"
+    },
+    {
+      "prevented": true,
+      "target": ""
+    },
+    {
+      "prevented": true,
+      "target": "note-pitch"
+    },
+    {
+      "prevented": true,
+      "target": "note-pitch"
+    },
+    {
+      "prevented": true,
+      "target": "clip-name"
+    },
+    {
+      "prevented": true,
+      "target": "clip-name"
+    },
+    {
+      "prevented": true,
+      "target": "clip-name"
+    },
+    {
+      "prevented": true,
+      "target": ""
+    },
+    {
+      "prevented": true,
+      "target": "agent-prompt"
+    },
+    {
+      "prevented": true,
+      "target": "project-name"
+    },
+    {
+      "prevented": true,
+      "target": "project-name"
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated native Chromium keyboard shortcuts, uncommitted project/clip/note fields, real project downloads, Edit-menu Undo, Save As and reopen. Synthetic project only. Odesa draft is not submitted; no personal session or provider call."
+}

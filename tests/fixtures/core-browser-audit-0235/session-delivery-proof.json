@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "finishBeat": 7.804444444444444,
+  "futureLaunchDiscarded": true,
+  "recordOffKeepsPlayback": true,
+  "originalSourcesPreserved": true,
+  "recordingUndoRedoExact": true,
+  "timeEditUndoRedoExact": true,
+  "projectReopenExact": true,
+  "exportReopenExact": true,
+  "exportFrames": 352800,
+  "frequencies": [
+    220,
+    220,
+    275
+  ],
+  "afterFinishPeak": 0,
+  "errors": [],
+  "scope": "Isolated native Chromium application: Session scene launches, Record on/off with unmodified audio clock and scheduler, Stop, downloaded projects, Undo/Redo, whole-song Duplicate Time and track WAV export/reopen. A test observer reads the actual Engine to press Record off during lookahead. Synthetic audio; no personal project, microphone, physical playback or subjective mix-quality claim."
+}
