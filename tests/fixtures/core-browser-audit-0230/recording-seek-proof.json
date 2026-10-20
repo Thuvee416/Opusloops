@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "mode": "new",
+      "destination": 8,
+      "transportPreserved": {
+        "origin": null,
+        "generation": 0,
+        "marker": 0,
+        "position": 0,
+        "playing": false,
+        "preview": null
+      },
+      "addedNotes": [
+        {
+          "pitch": 60,
+          "velocity": 0.75,
+          "start": 0.34709931944178884,
+          "duration": 0.3841292521775175
+        }
+      ],
+      "exactUndoRedo": true,
+      "originalLoopPreserved": true,
+      "errors": []
+    },
+    {
+      "mode": "overdub",
+      "destination": 8,
+      "transportPreserved": {
+        "origin": 0.08580498866213151,
+        "generation": 0,
+        "marker": 0,
+        "position": 0,
+        "playing": true,
+        "preview": "overdub-3df54f15-b863-4815-a3df-15952c8e678c"
+      },
+      "addedNotes": [
+        {
+          "pitch": 60,
+          "velocity": 0.75,
+          "start": 0.23353922921567793,
+          "duration": 0.37251927389957995
+        }
+      ],
+      "exactUndoRedo": true,
+      "originalLoopPreserved": true,
+      "errors": []
+    }
+  ],
+  "scope": "Isolated actual application standalone MIDI and Session overdub, generated original loop, computer-keyboard held note across a visible Arrangement-ruler click. Transport identity/clock origin retained, recording remains active, exact saved-project Undo/Redo. No personal project, microphone, physical controller or live model evaluation."
+}

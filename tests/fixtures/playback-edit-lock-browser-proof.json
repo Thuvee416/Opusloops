@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "outcome": "cancel",
+      "projectUnchanged": true,
+      "controlsLockedDuringPreparation": true,
+      "controlsRestored": true,
+      "noUndo": true
+    },
+    {
+      "outcome": "failure",
+      "projectUnchanged": true,
+      "controlsLockedDuringPreparation": true,
+      "controlsRestored": true,
+      "noUndo": true
+    },
+    {
+      "outcome": "success",
+      "projectUnchanged": true,
+      "controlsLockedDuringPreparation": true,
+      "controlsRestored": true,
+      "noUndo": true
+    }
+  ],
+  "editingAfterStopAndUndo": true,
+  "errors": [],
+  "scope": "Isolated actual app with controlled delay/failure around native Engine.prepare. Real note-property and duplicate event paths cannot mutate the project during startup. Stop cancels startup, failure and successful playback release controls at the correct boundary. No personal project, microphone, provider calls or physical output check."
+}

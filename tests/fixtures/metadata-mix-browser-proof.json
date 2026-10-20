@@ -8,7 +8,7 @@
         "newGraph": true
       },
       "initial": {
-        "rms": 0.034948216743062366,
+        "rms": 0.03493798697457176,
         "gate": 1,
         "playing": true
       },
@@ -18,7 +18,7 @@
         "playing": true
       },
       "unmuted": {
-        "rms": 0.03504113238252209,
+        "rms": 0.03493817013499255,
         "gate": 1,
         "playing": true
       },
@@ -43,7 +43,7 @@
         "playing": true
       },
       "unmuted": {
-        "rms": 0.03501319040139173,
+        "rms": 0.03493817013499255,
         "gate": 1,
         "playing": true
       },

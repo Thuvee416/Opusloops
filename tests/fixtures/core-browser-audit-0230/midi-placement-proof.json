@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "rawStart": 0.28924943310657597,
+  "quantizedStart": 0,
+  "notesPreserved": true,
+  "finishTimeFrozen": true,
+  "recoveryBlocksNewNotes": true,
+  "repeatedRetryNoPartialCommit": true,
+  "performedTimingUndoExact": true,
+  "originalUndoExact": true,
+  "redoExact": true,
+  "cancelUnchanged": true,
+  "errors": [],
+  "scope": "Isolated native Chromium computer-keyboard MIDI take with quarter-note quantization, injected failure preparing the second candidate, real Retry/Cancel controls and downloaded-project comparisons. No physical MIDI controller or genuine memory exhaustion."
+}
