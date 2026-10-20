@@ -1104,7 +1104,22 @@ function renderInstrument(t){if(isGroup(t)){$('midi-effects').innerHTML='';$('in
  else rack.innerHTML+='<p class="micro">Choose a synth or sampler to shape this track’s MIDI sound. Audio clips and generated drum loops keep their own sound.</p>';
  rack.querySelectorAll('[data-instrument-edit]').forEach(el=>el.disabled=el.hasAttribute('data-crop-unavailable')||engine.playing||inputActive()||busy||(el.id==='sample-audition'&&!s?.data));
 }
-$('instrument').addEventListener('change',run(async e=>{stopToEdit();const t=deviceTrack($('device-chain').dataset.track);releaseNotes();let next=t.instrument?structuredClone(t.instrument):undefined;
+async function applyInstrumentEdit(track,next){
+ if(busy)throw new Error('Wait For The Current Operation To Finish.');stopToEdit();
+ const owner=project,currentEngine=engine,instrument=track?.instrument,signature=JSON.stringify(instrument);
+ if(!owner.tracks.includes(track))throw new Error('Choose An Existing Instrument Track.');
+ const candidate=structuredClone(next),tracks=owner.tracks.map(t=>{if(t!==track)return t;const result={...t};if(candidate)result.instrument=candidate;else delete result.instrument;return result;});
+ try{validateProject({...owner,tracks});}catch(error){renderInstrument(track);throw error;}
+ if(JSON.stringify(candidate)===signature){renderInstrument(track);return;}
+ busy=true;renderInstrument(track);renderTransport();
+ try{
+  const prepared=await currentEngine.prepareInstrument(track.id,candidate);stopToEdit();
+  if(owner!==project||engine!==currentEngine||!owner.tracks.includes(track)||track.instrument!==instrument||JSON.stringify(instrument)!==signature)throw new Error('The Instrument Changed During Preparation. Try Again.');
+  releaseNotes();currentEngine.installInstrumentSamples(track.id,prepared);
+  if(candidate)track.instrument=candidate;else delete track.instrument;changed();
+ }finally{busy=false;renderDevices();renderTransport();}
+}
+$('instrument').addEventListener('change',run(async e=>{if(busy)throw new Error('Wait For The Current Operation To Finish.');stopToEdit();const t=deviceTrack($('device-chain').dataset.track);let next=t.instrument?structuredClone(t.instrument):undefined;
  if(e.target.id==='instrument-type')next=instrumentChoice(e.target.value==='legacy'?'original':e.target.value);
  else if(e.target.dataset.drumParam)next.pads[drumPad-36][e.target.dataset.drumParam]=Number(e.target.value);
  else if(e.target.id==='drum-source'){const p=next.pads[drumPad-36];p.source=e.target.value;if(p.source==='sample')p.sample??=padSample();}
@@ -1125,7 +1140,7 @@ $('instrument').addEventListener('change',run(async e=>{stopToEdit();const t=dev
  else if(e.target.id==='sample-start')next.start=Number(e.target.value)/100;
  else if(e.target.id==='sample-end')next.end=Number(e.target.value)/100;
  else return;
- try{if(next?.type==='sampler')validateSampler(next);if(next?.type==='drums')validateDrums(next);}catch(error){renderInstrument(t);throw error;}if(next)t.instrument=next;else delete t.instrument;renderInstrument(t);changed();if(engine.context){await engine.prepareSamples();if($('device-chain').dataset.track===t.id)renderInstrument(t);}
+ await applyInstrumentEdit(t,next);
 }));
 $('instrument').addEventListener('input',e=>{const synth=e.target.dataset.synthParam,sample=e.target.dataset.sampleParam,k=synth||sample;if(k)e.target.previousElementSibling.textContent=e.target.value+(synth?SYNTH_PARAMS:SAMPLER_PARAMS)[k][4];});
 $('instrument').addEventListener('click',run(async e=>{if(e.target.id==='sample-audition-stop'){liveNotes?.off('sample-preview');return;}if(e.target.id==='sample-audition'){stopToEdit();const t=deviceTrack($('device-chain').dataset.track);releaseNotes();await engine.prepareSamples();stopToEdit();liveNotes??=new LiveNotes(engine,message=>setStatus(message,true));liveNotes.on('sample-preview',t.instrument.root,.8,t.id);if($('device-chain').dataset.track===t.id)renderInstrument(t);return;}if(e.target.id!=='sample-import')return;stopToEdit();sampleImportTrack={id:$('device-chain').dataset.track,binding:importBinding(project,sessionProjectRevision)};$('sample-file').value='';$('sample-file').click();}));

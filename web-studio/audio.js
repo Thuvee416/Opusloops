@@ -1,3 +1,4 @@
+import {sampleKey,instrumentSamples,prepareInstrumentSamples,samplePreparationBinding,samplesStillCurrent,installInstrumentSamples} from './sample-preparation.js';
 import {createStereoMeter} from './level-meter.js';
 import {InputClickClock,metronomeAudible,metronomeLevel} from './metronome.js';
 import {slotActive} from './slot-metadata.js';
@@ -17,7 +18,6 @@ import {audioEditKey,editedAudioBuffer} from './audio-edit.js';
 import {nextLaunchBeat,pendingQuantum,toggleLaunchAction,repeatGrid,slotStops} from './launch.js';
 import {AutomationTake} from './automation-recording.js';
 import {automationChannels,automationTargets,automationTargetFor,deviceKey,scheduleTarget} from './automation-targets.js';
-import {trimSample} from './sampler.js';
 import {VoiceScheduler,voiceTail} from './voice-scheduler.js';
 import {hasEnvelope,sendKey} from './automation.js';
 import {defaultTransport,timelineBeat,quantumLength} from './transport.js';
@@ -60,9 +60,16 @@ export class Engine {
   releaseAutomationControl(trackId,key){if(!this.automationTake)return;try{if(this.automationTake.release(trackId,key,this.rawBeat())){this.automationOverrides.delete(trackId+':'+key);this.restoreAutomation(false);}}catch(error){this.automationError='Automation recording stopped: '+error.message;this.finishAutomationRecording(false);}}
   advanceAutomationRecording(){if(!this.automationTake)return;try{this.automationTake.advance(this.rawBeat());if(this.rawBeat()>=16384)this.finishAutomationRecording();}catch(error){this.automationError='Automation recording stopped: '+error.message;this.finishAutomationRecording(false);}}
   finishAutomationRecording(advance=true){const take=this.automationTake;if(!take)return;if(advance)try{take.advance(this.rawBeat());}catch(error){this.automationError='Automation recording stopped: '+error.message;}this.automationTake=null;for(const key of take.writing.keys())this.automationOverrides.delete(key);this.restoreAutomation(false);}
-  sampleKey(trackId,pitch){return pitch===undefined?trackId:JSON.stringify([trackId,pitch]);}
+  sampleKey(trackId,pitch){return sampleKey(trackId,pitch);}
   sampleBuffer(trackId,pitch){return this.sampleBuffers.get(this.sampleKey(trackId,pitch))?.buffer;}
-  async prepareSamples(){await this.init();const used=new Set();for(const track of this.project.tracks){const instrument=track.instrument,entries=instrument?.type==='sampler'?[[undefined,instrument]]:instrument?.type==='drums'?instrument.pads.filter(p=>p.source==='sample').map(p=>[p.pitch,p.sample]):[];for(const [pitch,s]of entries){if(!s?.data)continue;const id=this.sampleKey(track.id,pitch);used.add(id);const old=this.sampleBuffers.get(id),key=JSON.stringify([s.start,s.end,s.reverse]);if(old?.key===key&&old.data===s.data)continue;const raw=old?.data===s.data?old.raw:await this.context.decodeAudioData(Uint8Array.from(atob(s.data),c=>c.charCodeAt(0)).buffer);if(raw.duration>60)throw new Error('Sampler samples must be 60 seconds or shorter.');if(track.instrument!==instrument)continue;this.sampleBuffers.set(id,{key,data:s.data,raw,buffer:trimSample(this.context,raw,s)});}}for(const id of this.sampleBuffers.keys())if(!used.has(id))this.sampleBuffers.delete(id);}
+  async prepareInstrument(trackId,instrument){if(instrumentSamples(instrument).some(([,s])=>s?.data))await this.init(false);return prepareInstrumentSamples(this.context,trackId,instrument,this.sampleBuffers);}
+  installInstrumentSamples(trackId,prepared){this.sampleBuffers=installInstrumentSamples(this.sampleBuffers,trackId,prepared);}
+  async prepareSamples(){
+    await this.init();const binding=samplePreparationBinding(this.project),prepared=new Map();
+    for(const {track,instrument}of binding.tracks)for(const [id,sample]of await prepareInstrumentSamples(this.context,track.id,instrument,this.sampleBuffers))prepared.set(id,sample);
+    if(!samplesStillCurrent(binding,this.project))throw new Error('Sample Sources Changed During Preparation. Try Again.');
+    this.sampleBuffers=prepared;
+  }
   checkWarpBudget(id,bytes,reused){const counted=new Set(reused?[reused]:[]);for(const [key,b]of this.buffers)if(key!==id&&b.warped&&!counted.has(b.warped)){counted.add(b.warped);bytes+=b.warped.length*b.warped.numberOfChannels*4;}if(bytes>128*1024*1024)throw new Error('Prepared Stretch audio exceeds 128 MB. Use fewer or shorter stretched clips.');}
   audioKey(clip){return JSON.stringify([audioEditKey(clip),clip.sourceBpm,this.project.bpm,clip.warp]);}
   cacheAudio(clip,raw){const buffer=editedAudioBuffer(this.context,raw,clip);this.buffers.set(clip.id,{key:clip.warp?.mode==='stretch'?null:this.audioKey(clip),data:clip.data,raw,buffer});return buffer;}
