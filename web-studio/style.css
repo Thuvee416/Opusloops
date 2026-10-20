@@ -67,3 +67,5 @@
 .piano-note.muted-note{background:#44484d;border:1px dashed #a1a6ad;color:#e2e4e7;opacity:1!important}.piano-note.muted-note.selected{outline:2px solid #fff;outline-offset:-2px}.velocity-stem.muted-note:after{background:#747a82}.velocity-stem.muted-note i{background:#363a40;border:1px solid #a1a6ad}
 
 .piano-grid.draw-mode .piano-row,.piano-grid.draw-mode .piano-cell,.piano-grid.draw-mode .piano-note,.piano-grid.draw-mode .piano-note i{cursor:crosshair;touch-action:none}.piano-grid .draw-preview{pointer-events:none;opacity:.8;border-style:dashed}
+
+.piano-insert-marker{position:absolute;top:0;bottom:-1px;border-left:1px solid currentColor;color:var(--accent,#e5a14b);pointer-events:none;z-index:4;transform:translateX(-1px);animation:note-insert-blink 1.1s steps(2,end) infinite}@keyframes note-insert-blink{50%{opacity:.3}}@media(prefers-reduced-motion:reduce){.piano-insert-marker{animation:none}}
