@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "kind": "clip",
+      "manual": false,
+      "cancelled": "AbortError",
+      "reportedPlaying": false,
+      "playing": false,
+      "selected": [],
+      "scheduled": [],
+      "activeScene": null,
+      "interests": 0,
+      "projectUnchanged": true,
+      "contextState": "running"
+    },
+    {
+      "kind": "clip",
+      "manual": true,
+      "cancelled": "AbortError",
+      "reportedPlaying": true,
+      "playing": true,
+      "selected": [
+        "b"
+      ],
+      "scheduled": [
+        "b"
+      ],
+      "activeScene": null,
+      "interests": 0,
+      "projectUnchanged": true,
+      "contextState": "running"
+    },
+    {
+      "kind": "scene",
+      "manual": false,
+      "cancelled": "AbortError",
+      "reportedPlaying": false,
+      "playing": false,
+      "selected": [],
+      "scheduled": [],
+      "activeScene": null,
+      "interests": 0,
+      "projectUnchanged": true,
+      "contextState": "running"
+    },
+    {
+      "kind": "scene",
+      "manual": true,
+      "cancelled": "AbortError",
+      "reportedPlaying": true,
+      "playing": true,
+      "selected": [
+        "b"
+      ],
+      "scheduled": [
+        "b"
+      ],
+      "activeScene": null,
+      "interests": 0,
+      "projectUnchanged": true,
+      "contextState": "running"
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated Chromium native AudioContext, instrument preparation, playback scheduler and Odesa performSessionCommand bridge. A controlled promise delays the second preparation boundary; native preparation then completes normally. No model/API calls, signed-in session, microphone or personal project. Verifies cancellation schedules no withdrawn clip and preserves independent manual startup; not physical-output or conversational-model proof."
+}

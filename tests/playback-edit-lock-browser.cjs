@@ -28,7 +28,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
    if(outcome==='cancel'){await press('stop');assert.equal(await page.locator('#note-pitch').isDisabled(),true);await page.evaluate(()=>window.releasePreparation());}
    else await page.evaluate(fail=>fail?window.failPreparation():window.releasePreparation(),outcome==='failure');
    await page.evaluate(()=>window.playRequest);await page.waitForFunction(()=>!window.testEngine.startPromise&&!window.testEngine.preparing);
-   if(outcome==='success'){assert.equal(await page.evaluate(()=>window.testEngine.playing),true);assert.equal(await page.locator('#note-pitch').isDisabled(),true);await press('stop');}
+   if(outcome==='success'){assert.equal(await page.evaluate(()=>window.testEngine.playing),true);await page.waitForFunction(()=>!document.getElementById('note-pitch').disabled);assert.equal(await page.locator('#bpm').isDisabled(),true);await press('stop');}
    await page.waitForFunction(()=>!document.getElementById('note-pitch').disabled&&!document.getElementById('bpm').disabled);
    assert.equal(await page.evaluate(()=>JSON.stringify(window.testEngine.project)),before);assert.equal(await page.locator('#undo').isDisabled(),true);
    results.push({entry,outcome,projectUnchanged:true,controlsLockedDuringPreparation:true,controlsRestored:true,noUndo:true});

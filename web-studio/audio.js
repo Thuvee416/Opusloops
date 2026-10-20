@@ -10,7 +10,9 @@ import {captureScene} from './capture-scene.js';
 import {stretchAudio,stretchPlan} from './warp.js';
 import {followDelay,followTarget} from './follow-actions.js';
 import {BufferScheduler} from './buffer-scheduler.js';
-import {isNoteActive} from './note-state.js';
+import {synthesize} from './legacy-synth.js';
+export {synthesize} from './legacy-synth.js';
+import {applyLiveMidiNotes} from './live-midi-edit.js';
 import {exportChannel} from './export-channel.js';
 import {exportRangePlan} from './export-range.js';
 import {exportOptions,encodeWave} from './wav-export.js';
@@ -25,23 +27,7 @@ import {hasEnvelope,sendKey} from './automation.js';
 import {defaultTransport,timelineBeat,quantumLength} from './transport.js';
 import {createMixGraph,routingTail} from './routing.js';
 import {mod,arrangementSlices,segmentAt,uid,wav,isRegionActive,validateProject} from './model.js';
-export function synthesize(context,clip,bpm){
-  const sr=context.sampleRate,spb=60/bpm,len=Math.ceil(clip.beats*spb*sr),buffer=context.createBuffer(1,len,sr),out=buffer.getChannelData(0);
-  let seed=237;const noise=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/2147483648-1;};
-  if(clip.kind==='drums'){
-    for(let step=0;step<clip.beats*4;step++){
-      const start=Math.round(step*.25*spb*sr);
-      if(clip.pattern!=='hats'&&step%4===0&&(clip.pattern!=='sparse'||step%8===0))for(let i=0;i<sr*.32&&start+i<len;i++){const t=i/sr;out[start+i]+=Math.sin(2*Math.PI*(48*t+4*(1-Math.exp(-t*30))))*Math.exp(-t*15)*.65;}
-      if(clip.pattern==='full'&&step%8===4)for(let i=0;i<sr*.15&&start+i<len;i++){const t=i/sr;out[start+i]+=(noise()*.5+Math.sin(2*Math.PI*180*t)*.25)*Math.exp(-t*28);}
-      if(step%2===0)for(let i=0;i<sr*.035&&start+i<len;i++)out[start+i]+=noise()*.12*Math.exp(-i/sr*100);
-    }
-  } else for(const n of clip.notes){
-    if(!isNoteActive(n))continue;
-    const start=Math.round(n.start*spb*sr),duration=n.duration*spb,freq=440*2**((n.pitch-69)/12);
-    for(let i=0;i<(duration+.08)*sr&&start+i<len;i++){const t=i/sr,envelope=Math.min(1,t/.008)*Math.max(0,Math.min(1,(duration+.08-t)/.09));out[start+i]+=(Math.sin(2*Math.PI*freq*t)+Math.sin(2*Math.PI*freq*2*t)*.18)*envelope*n.velocity*.23;}
-  }
-  return buffer;
-}
+
 export class Engine {
   constructor(project,changed){this.project=project;this.project.transport??=defaultTransport();this.changed=changed;this.context=null;this.buffers=new Map();this.midiBuffers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();this.sampleBuffers=new Map();this.active=new Map();this.pending=new Map();this.follows=new Map();this.activeScene=null;this.pendingScene=null;this.sceneFollow=null;this.gateHolds=new Map();this.overrides=new Set();this.automationOverrides=new Set();this.nodes=new Set();this.clickNodes=new Set();this.records=new Map();this.playing=false;this.recording=false;this.mode='session';this.nextBeat=0;this.position=0;this.insertMarker=0;this.playGeneration=0;this.masterVolume=project.master??.8;}
   async init(resume=true){
@@ -122,6 +108,7 @@ export class Engine {
     if(clip.data!==data||this.audioKey(clip)!==key)return this.prepareAudioClip(clip);
     if(warped)this.checkWarpBudget(clip.id,warped.length*warped.numberOfChannels*4,warped);const buffer=editedAudioBuffer(this.context,warped??raw,clip);this.buffers.set(clip.id,{key,data,raw,warped,warpKey,buffer});return buffer;
   }
+  async editMidiNotes(changes,options){return applyLiveMidiNotes(this,changes,options);}
   async prepareClip(clip){if(clip.kind==='audio')return this.prepareAudioClip(clip);const key=JSON.stringify([clip.id,clip.kind,clip.beats,this.project.bpm,clip.notes??clip.pattern]),old=this.buffers.get(clip.id);if(old?.key===key)return old.buffer;const buffer=synthesize(this.context,clip,this.project.bpm);this.buffers.set(clip.id,{key,buffer});return buffer;}
   get preparing(){return (this.preparationCount??0)>0;}
   async prepare({resume=true}={}){
@@ -175,6 +162,7 @@ export class Engine {
     }finally{if(this.startPromise===pending)this.startPromise=null;if(this.playRequestGeneration===generation)this.playRequestGeneration=null;}
   }
   halt(reset){
+    this.midiEditAbort?.abort();
     for(const h of this.gateHolds.values())if(!h.repeat&&this.active.get(h.trackId)?.clipId===h.clipId)this.active.set(h.trackId,{clipId:null,start:this.position});this.gateHolds.clear();this.playGeneration++;const raw=this.rawBeat(),position=this.beat();
     this.finishAutomationRecording();this.finishRecords(raw);
     this.recording=false;this.recordingTake=null;this.playing=false;this.position=reset?0:position;
@@ -478,7 +466,7 @@ export class Engine {
     const rate=clip.kind==='audio'&&clip.warp?.mode!=='stretch'?this.project.bpm/clip.sourceBpm:1;
     let remaining=beats,phase=mod(offset,clip.beats),when=time;
     while(remaining>1e-7){const chunk=Math.min(remaining,clip.beats-phase),sourceOffset=phase*spb*rate,dur=chunk*spb;
-      if(sourceOffset<buffer.duration){let scheduler=this.bufferSchedulers.get(ctx);if(!scheduler){scheduler=new BufferScheduler(ctx,node=>{if(ctx!==this.context)return;this.nodes.add(node);const cleanup=node.onended;node.onended=()=>{this.nodes.delete(node);cleanup?.();};});this.bufferSchedulers.set(ctx,scheduler);}scheduler.schedule(target,buffer,rate,when,sourceOffset,dur,JSON.stringify([trackId,instance,bufferIdentity]),fade&&clip.kind!=='midi'&&fade.region.fades?{region:fade.region,origin:time-fade.beat*spb,spb}:undefined);}
+      if(sourceOffset<buffer.duration){let scheduler=this.bufferSchedulers.get(ctx);if(!scheduler){scheduler=new BufferScheduler(ctx,node=>{if(ctx!==this.context)return;this.nodes.add(node);const cleanup=node.onended;node.onended=()=>{this.nodes.delete(node);cleanup?.();};});this.bufferSchedulers.set(ctx,scheduler);}scheduler.schedule(target,buffer,rate,when,sourceOffset,dur,JSON.stringify([trackId,instance,bufferIdentity]),fade&&clip.kind!=='midi'&&fade.region.fades?{region:fade.region,origin:time-fade.beat*spb,spb}:undefined,clip.kind==='midi');}
       remaining-=chunk;phase=0;when+=dur;
     }
   }

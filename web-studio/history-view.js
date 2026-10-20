@@ -54,7 +54,7 @@ export function installHistoryView({getHistory,isLocked,move,setStatus}){
  document.body.append(dialog);const $=id=>dialog.querySelector('#'+id);let timeline=null,lastFocus,restoring=false;
  function update(){
   const entry=timeline?.entries.find(item=>item.index===Number($('history-list').value));
-  $('history-restore').disabled=restoring||isLocked()||!entry?.action;
+  $('history-restore').disabled=restoring||isLocked(entry)||!entry?.action;
   $('history-restore').textContent=entry?.action?`${entry.action==='undo'?'Undo':'Redo'} ${entry.steps} ${entry.steps===1?'Edit':'Edits'}`:'Current State';
   $('history-summary').textContent=entry?`${entry.name} · ${entry.bpm} BPM · ${entry.tracks} Tracks · ${entry.clips} Clips · ${entry.regions} Regions`:'';
  }
@@ -70,12 +70,12 @@ export function installHistoryView({getHistory,isLocked,move,setStatus}){
  function close(){if(restoring)return;dialog.close();timeline=null;lastFocus?.focus();}
  for(const id of ['history-close','history-done'])$(id).onclick=close;
  dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.addEventListener('keydown',e=>e.stopPropagation());$('history-list').onchange=update;
- $('history-restore').onclick=()=>{
+ $('history-restore').onclick=async()=>{
   if(restoring)return;
   try{
-   if(isLocked())throw Error('Stop playback and finish the current operation before restoring history.');
+   if(isLocked(timeline?.entries.find(item=>item.index===Number($('history-list').value))))throw Error('Stop playback and finish the current operation before restoring history.');
    const intent=historySelection(timeline,Number($('history-list').value),getHistory());restoring=true;update();
-   move(intent);$('history-status').textContent=`${intent.action==='undo'?'Undid':'Redid'} ${intent.steps} ${intent.steps===1?'Edit':'Edits'}.`;refresh(true);$('history-list').focus();
+   await move(intent);$('history-status').textContent=`${intent.action==='undo'?'Undid':'Redid'} ${intent.steps} ${intent.steps===1?'Edit':'Edits'}.`;refresh(true);$('history-list').focus();
   }catch(error){$('history-status').textContent=error.message;setStatus(error.message,true);refresh(true);}
   finally{restoring=false;update();}
  };

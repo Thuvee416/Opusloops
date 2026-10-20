@@ -8,17 +8,40 @@ export function prepareWindowNotes(clip,effects,bpm=120){if(effects?.some(d=>d.e
 // Half-open windows prevent note duplication at scheduler quantum and loop edges.
 export function noteWindows(clip,offset,length,chase=false,effects,bpm=120,prepared){
  const events=[],end=offset+length,notes=prepared??prepareWindowNotes(clip,effects,bpm);
- for(let cycle=Math.floor(offset/clip.beats);cycle*clip.beats<end-1e-7;cycle++)for(const {index,note}of notes){
+ for(let cycle=Math.floor(offset/clip.beats);cycle*clip.beats<end-1e-7;cycle++)for(const {index,note,voiceKey}of notes){
   if(note.start>=clip.beats)continue;const start=cycle*clip.beats+note.start,stop=Math.min(start+note.duration,(cycle+1)*clip.beats),inside=start>=offset-1e-7&&start<end-1e-7,held=chase&&start<offset&&stop>offset+1e-7;
   if(!inside&&!held)continue;const at=Math.max(offset,start);
-  events.push({index,cycle,pitch:note.pitch,velocity:note.velocity,delay:at-offset,elapsed:at-start,duration:stop-at});
+  events.push({index,cycle,pitch:note.pitch,velocity:note.velocity,delay:at-offset,elapsed:at-start,duration:stop-at,...(voiceKey===undefined?{}:{voiceKey})});
  }
  return events.sort((a,b)=>a.delay-b.delay||a.index-b.index);
 }
-export class VoiceScheduler {
- constructor(ctx,bpm,getSample=()=>null,onNode=()=>{}){this.ctx=ctx;this.bpm=bpm;this.getSample=getSample;this.onNode=onNode;this.cursors=new Map();this.sounding=new Map();this.prepared=new WeakMap();}
- preparedNotes(clip,track){let tracks=this.prepared.get(clip);if(!tracks){tracks=new Map();this.prepared.set(clip,tracks);}const key=JSON.stringify([clip.beats,clip.notes,track.midiEffects,this.bpm]),cached=tracks.get(track.id);if(cached?.key===key)return cached.notes;const notes=prepareWindowNotes(clip,track.midiEffects,this.bpm);tracks.set(track.id,{key,notes});return notes;}
- release(trackId,time){for(const voice of this.sounding.get(trackId)||[])voice.release(time);this.cursors.delete(trackId);}
- schedule(target,track,clip,time,offset,length,instance,limit=Infinity){const previous=this.cursors.get(track.id),continuous=previous?.instance===instance&&Math.abs(previous.endTime-time)<1e-6&&Math.abs(previous.endOffset-offset)<1e-6;if(!continuous)this.release(track.id,time);const spb=60/this.bpm,ctx=this.ctx,s=track.instrument;for(const n of noteWindows(clip,offset,length,!continuous,track.midiEffects,this.bpm,this.preparedNotes(clip,track))){const at=time+n.delay*spb,duration=Math.min(n.duration*spb,limit-at);if(duration<=1e-8)continue;const voice=s.type==='drums'?drumVoice(ctx,target,s,n.pitch,n.velocity,this.getSample(track.id,n.pitch),at,n.elapsed*spb,track.id):s.type==='sampler'?samplerVoice(ctx,target,s,this.getSample(track.id),n.pitch,n.velocity,at,duration,n.elapsed*spb):synthVoice(ctx,target,s,n.pitch,n.velocity,at,duration,n.elapsed*spb);if(!voice)continue;const set=this.sounding.get(track.id)||new Set();this.sounding.set(track.id,set);set.add(voice);const cleanup=voice.osc.onended;voice.osc.onended=()=>{set.delete(voice);cleanup?.();};this.onNode(voice.osc);}this.cursors.set(track.id,{instance,endTime:time+length*spb,endOffset:offset+length});}
+// Stable musical identity keeps unchanged held notes and one-shot tails alive,
+// even when array indexes move after inserting or deleting another note.
+export function keyedWindowNotes(entries){
+ const counts=new Map();return entries.map(entry=>{const key=JSON.stringify(entry.note),count=counts.get(key)||0;counts.set(key,count+1);return {...entry,voiceKey:JSON.stringify([key,count])};});
 }
+export class VoiceScheduler {
+ constructor(ctx,bpm,getSample=()=>null,onNode=()=>{}){this.ctx=ctx;this.bpm=bpm;this.getSample=getSample;this.onNode=onNode;this.cursors=new Map();this.sounding=new Map();this.prepared=new WeakMap();this.voiceInfo=new WeakMap();this.revisions=new Map();}
+ preparedNotes(clip,track){let tracks=this.prepared.get(clip);if(!tracks){tracks=new Map();this.prepared.set(clip,tracks);}const key=JSON.stringify([clip.beats,clip.notes,track.midiEffects,this.bpm]),cached=tracks.get(track.id);if(cached?.key===key)return cached.notes;const notes=keyedWindowNotes(prepareWindowNotes(clip,track.midiEffects,this.bpm));tracks.set(track.id,{key,notes});return notes;}
+ release(trackId,time){for(const voice of this.sounding.get(trackId)||[])voice.release(time);this.cursors.delete(trackId);}
+ reviseClip(trackId,clipId,before,after,time){
+  const oldKeys=new Set(before.map(n=>n.voiceKey)),newKeys=new Set(after.map(n=>n.voiceKey)),id=JSON.stringify([trackId,clipId]),pending=this.revisions.get(id),added=new Set([...(pending?.keys||[]),...after.filter(n=>!oldKeys.has(n.voiceKey)).map(n=>n.voiceKey)]);
+  for(const key of added)if(!newKeys.has(key))added.delete(key);
+  for(const voice of this.sounding.get(trackId)||[]){const info=this.voiceInfo.get(voice);if(info?.clipId===clipId&&!newKeys.has(info.voiceKey))voice.release(time,true);}
+  this.revisions.set(id,{time,keys:added});
+ }
+ schedule(target,track,clip,time,offset,length,instance,limit=Infinity){
+  const previous=this.cursors.get(track.id),continuous=previous?.instance===instance&&Math.abs(previous.endTime-time)<1e-6&&Math.abs(previous.endOffset-offset)<1e-6;
+  if(!continuous)this.release(track.id,time);
+  const spb=60/this.bpm,ctx=this.ctx,s=track.instrument,prepared=this.preparedNotes(clip,track),revisionId=JSON.stringify([track.id,clip.id]),revision=this.revisions.get(revisionId),events=noteWindows(clip,offset,length,!continuous,track.midiEffects,this.bpm,prepared);
+  if(revision&&time>=revision.time-1e-6){if(continuous&&revision.keys.size)events.push(...noteWindows(clip,offset,length,true,track.midiEffects,this.bpm,prepared.filter(n=>revision.keys.has(n.voiceKey))).filter(n=>n.elapsed>1e-9));this.revisions.delete(revisionId);}
+  events.sort((a,b)=>a.delay-b.delay||a.index-b.index);
+  for(const n of events){const at=time+n.delay*spb,duration=Math.min(n.duration*spb,limit-at);if(duration<=1e-8)continue;
+   const voice=s.type==='drums'?drumVoice(ctx,target,s,n.pitch,n.velocity,this.getSample(track.id,n.pitch),at,n.elapsed*spb,track.id):s.type==='sampler'?samplerVoice(ctx,target,s,this.getSample(track.id),n.pitch,n.velocity,at,duration,n.elapsed*spb):synthVoice(ctx,target,s,n.pitch,n.velocity,at,duration,n.elapsed*spb);if(!voice)continue;
+   this.voiceInfo.set(voice,{clipId:clip.id,voiceKey:n.voiceKey});const set=this.sounding.get(track.id)||new Set();this.sounding.set(track.id,set);set.add(voice);const cleanup=voice.osc.onended;voice.osc.onended=()=>{set.delete(voice);cleanup?.();};this.onNode(voice.osc);
+  }
+  this.cursors.set(track.id,{instance,endTime:time+length*spb,endOffset:offset+length});
+ }
+}
+
 export function voiceTail(project,getSample=()=>null){let tail=0;for(const t of project.tracks){const s=t.instrument;if(!s)continue;if(s.type==='drums'){tail=Math.max(tail,drumTail(s,pitch=>getSample(t.id,pitch)));continue;}if(s.type==='poly'||s.mode==='gate')tail=Math.max(tail,s.release+.005);else{const sample=getSample(t.id);if(!sample)continue;const ids=new Set([...t.slots,...project.arrangement.filter(r=>r.trackId===t.id).map(r=>r.clipId)]);for(const id of ids){const clip=project.clips[id];if(!clip?.notes)continue;const effective=processMidiClip({...clip,notes:clip.notes.map(n=>({...n,velocity:n.velocity??1}))},t.midiEffects,project.bpm??120);for(const voice of effective.notes)if(isNoteActive(voice)&&voice.velocity>0)tail=Math.max(tail,sample.duration/2**((voice.pitch-s.root+s.transpose+s.detune/100)/12));}}}return tail;}

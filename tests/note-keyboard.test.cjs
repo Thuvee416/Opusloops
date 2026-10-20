@@ -28,10 +28,10 @@ test('changing key modifiers or selected notes starts a new grouped edit',async(
  assert.equal(f.h.past.length,2);assert.equal(f.project.clips.clip.notes[0].pitch,73);
  f.ctx.noteSelection=new Set([0]);f.press(f.event('ArrowUp',{repeat:true,shiftKey:true}));assert.equal(f.h.past.length,3);assert.equal(f.project.clips.clip.notes[1].pitch,77);
 });
-test('playback, preparation, recording, busy operations and other controls cannot nudge notes',async()=>{
- for(const lock of ['playing','startPromise','busy','input','gesture','velocity','field']){
+test('preparation, recording, busy operations and other controls cannot nudge notes',async()=>{
+ for(const lock of ['recording','automationTake','startPromise','busy','input','gesture','velocity','field']){
   const f=await fixture(),before=structuredClone(f.project);
-  if(['playing','startPromise'].includes(lock))f.ctx.engine[lock]=true;if(lock==='busy')f.ctx.busy=true;if(lock==='input')f.ctx.inputActive=()=>true;if(lock==='gesture')f.ctx.navigationLocked=()=>true;
+  if(['recording','automationTake','startPromise'].includes(lock))f.ctx.engine[lock]=true;if(lock==='busy')f.ctx.busy=true;if(lock==='input')f.ctx.inputActive=()=>true;if(lock==='gesture')f.ctx.navigationLocked=()=>true;
   const e=f.event('ArrowUp');if(lock==='velocity'||lock==='field')e.target.closest=selector=>selector==='.piano-scroll'||selector.includes(lock==='velocity'?'data-velocity-note':'input')?{}:null;
   f.press(e);assert.deepEqual(f.project,before);assert.equal(f.h.past.length,0);
  }

@@ -3,11 +3,13 @@ import {scheduleRegionFades} from './region-fades.js';
 export class BufferScheduler {
  constructor(ctx,onNode=()=>{}){this.ctx=ctx;this.onNode=onNode;this.voices=new Map();}
  release(trackId,time){const prefix=JSON.stringify([trackId]).slice(0,-1)+',';for(const [key,voice] of this.voices)if(key.startsWith(prefix)){voice.node.stop(time);this.voices.delete(key);}}
- schedule(target,buffer,rate,time,offset,duration,key,fade){
+ schedule(target,buffer,rate,time,offset,duration,key,fade,smooth=false){
   const end=time+Math.min(duration,(buffer.duration-offset)/rate);if(end<=time)return;
   const previous=this.voices.get(key);
   if(previous&&previous.buffer===buffer&&previous.target===target&&previous.rate===rate&&previous.fadeKey===JSON.stringify(fade?[fade.region.fades,fade.region.length,fade.spb]:null)&&(!fade||Math.abs(previous.fadeOrigin-fade.origin)<1e-7)&&Math.abs(previous.end-time)<1e-7&&Math.abs(previous.sourceEnd-offset)<1e-7&&previous.end>=this.ctx.currentTime-1e-8){previous.end=end;previous.sourceEnd=offset+(end-time)*rate;previous.node.stop(end);return;}
-  const node=this.ctx.createBufferSource();node.buffer=buffer;node.playbackRate.value=rate;const gains=fade?scheduleRegionFades(this.ctx,node,target,fade.region,fade.origin,time,fade.spb):(node.connect(target),[]);const voice={node,buffer,target,rate,end,fadeKey:JSON.stringify(fade?[fade.region.fades,fade.region.length,fade.spb]:null),fadeOrigin:fade?.origin,sourceEnd:offset+(end-time)*rate};this.voices.set(key,voice);
-  node.onended=()=>{if(this.voices.get(key)===voice)this.voices.delete(key);node.disconnect();for(const gain of gains)gain.disconnect();};this.onNode(node);node.start(time,offset);node.stop(end);
+  const node=this.ctx.createBufferSource(),transition=smooth?this.ctx.createGain():null;
+  if(transition){transition.connect(target);transition.gain.setValueAtTime(1,time);if(previous?.transition&&previous.buffer!==buffer&&Math.abs(previous.end-time)<1e-7&&previous.buffer.duration-previous.sourceEnd>.01*rate){previous.transition.gain.setValueAtTime(1,time);previous.transition.gain.linearRampToValueAtTime(0,time+.01);previous.node.stop(time+.01);transition.gain.setValueAtTime(0,time);transition.gain.linearRampToValueAtTime(1,time+.01);}}
+  const output=transition||target;node.buffer=buffer;node.playbackRate.value=rate;const gains=fade?scheduleRegionFades(this.ctx,node,output,fade.region,fade.origin,time,fade.spb):(node.connect(output),[]);const voice={node,buffer,target,transition,rate,end,fadeKey:JSON.stringify(fade?[fade.region.fades,fade.region.length,fade.spb]:null),fadeOrigin:fade?.origin,sourceEnd:offset+(end-time)*rate};this.voices.set(key,voice);
+  node.onended=()=>{if(this.voices.get(key)===voice)this.voices.delete(key);node.disconnect();transition?.disconnect();for(const gain of gains)gain.disconnect();};this.onNode(node);node.start(time,offset);node.stop(end);
  }
 }

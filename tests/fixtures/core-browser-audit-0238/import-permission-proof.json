@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "resumes": 0,
+  "singleImport": {
+    "clips": 1,
+    "beats": 0.5,
+    "sourceBpm": 120
+  },
+  "stems": [
+    {
+      "start": 4,
+      "length": 0.5
+    },
+    {
+      "start": 4,
+      "length": 0.5
+    }
+  ],
+  "singleAndBatchUndoRedoExact": true,
+  "downloadAndReloadExact": true,
+  "errors": [],
+  "scope": "Isolated native Chromium application handlers, real File/PCM decode and project downloads; controlled rejecting playback resume. No user project or physical input accessed; no OS file-picker or listening proof."
+}

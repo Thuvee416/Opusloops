@@ -16,4 +16,6 @@ test('UI lock synchronization follows startup settlement and replacement without
  ctx.engine.startPromise=Promise.resolve();ctx.syncPlaybackPreparation();assert.equal(renders,3);
  ctx.engine={};ctx.syncPlaybackPreparation();assert.equal(renders,4);
  ctx.engine.preparing=true;ctx.syncPlaybackPreparation();assert.equal(renders,5);ctx.syncPlaybackPreparation();assert.equal(renders,5);ctx.engine.preparing=false;ctx.syncPlaybackPreparation();assert.equal(renders,6);
+ // A fully cached start can settle between animation frames; unlock live MIDI anyway.
+ ctx.engine.playing=true;ctx.engine.context={state:'running'};ctx.syncPlaybackPreparation();assert.equal(renders,7);ctx.syncPlaybackPreparation();assert.equal(renders,7);ctx.engine.context.state='suspended';ctx.syncPlaybackPreparation();assert.equal(renders,8);
 });

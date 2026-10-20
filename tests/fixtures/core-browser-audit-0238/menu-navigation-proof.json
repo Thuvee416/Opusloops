@@ -1,0 +1,181 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 600
+      },
+      "menus": [
+        {
+          "name": "File",
+          "first": "New Live Set",
+          "last": "Export MIDI Clip..."
+        },
+        {
+          "name": "Edit",
+          "first": "Cut",
+          "last": "Record Quantization"
+        },
+        {
+          "name": "Create",
+          "first": "Insert Audio Track",
+          "last": "Import Audio/MIDI File..."
+        },
+        {
+          "name": "Playback",
+          "first": "Play",
+          "last": "Back to Arrangement"
+        },
+        {
+          "name": "View",
+          "first": "Full Screen",
+          "last": "Zoom to Time Selection"
+        },
+        {
+          "name": "Navigate",
+          "first": "Control Bar",
+          "last": "Use Tab Key To Move Focus"
+        },
+        {
+          "name": "Options",
+          "first": "Accessibility",
+          "last": "Time Ruler Format"
+        },
+        {
+          "name": "Help",
+          "first": "Read the Live Manual...",
+          "last": "Get Support"
+        }
+      ],
+      "typeaheadVisible": true,
+      "submenuReturnVisible": true,
+      "openFromEndVisible": true,
+      "touchSubmenuUsable": true,
+      "sessionContextVisible": true,
+      "stationaryPointerKeepsKeyboardFocus": true,
+      "realPointerHoverWorks": true,
+      "pageStationary": true,
+      "savedProjectExact": true,
+      "noUndo": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 600
+      },
+      "menus": [
+        {
+          "name": "File",
+          "first": "New Live Set",
+          "last": "Export MIDI Clip..."
+        },
+        {
+          "name": "Edit",
+          "first": "Cut",
+          "last": "Record Quantization"
+        },
+        {
+          "name": "Create",
+          "first": "Insert Audio Track",
+          "last": "Import Audio/MIDI File..."
+        },
+        {
+          "name": "Playback",
+          "first": "Play",
+          "last": "Back to Arrangement"
+        },
+        {
+          "name": "View",
+          "first": "Full Screen",
+          "last": "Zoom to Time Selection"
+        },
+        {
+          "name": "Navigate",
+          "first": "Control Bar",
+          "last": "Use Tab Key To Move Focus"
+        },
+        {
+          "name": "Options",
+          "first": "Accessibility",
+          "last": "Time Ruler Format"
+        },
+        {
+          "name": "Help",
+          "first": "Read the Live Manual...",
+          "last": "Get Support"
+        }
+      ],
+      "typeaheadVisible": true,
+      "submenuReturnVisible": true,
+      "openFromEndVisible": true,
+      "touchSubmenuUsable": true,
+      "sessionContextVisible": true,
+      "stationaryPointerKeepsKeyboardFocus": true,
+      "realPointerHoverWorks": true,
+      "pageStationary": true,
+      "savedProjectExact": true,
+      "noUndo": true
+    },
+    {
+      "viewport": {
+        "width": 667,
+        "height": 375
+      },
+      "menus": [
+        {
+          "name": "File",
+          "first": "New Live Set",
+          "last": "Export MIDI Clip..."
+        },
+        {
+          "name": "Edit",
+          "first": "Cut",
+          "last": "Record Quantization"
+        },
+        {
+          "name": "Create",
+          "first": "Insert Audio Track",
+          "last": "Import Audio/MIDI File..."
+        },
+        {
+          "name": "Playback",
+          "first": "Play",
+          "last": "Back to Arrangement"
+        },
+        {
+          "name": "View",
+          "first": "Full Screen",
+          "last": "Zoom to Time Selection"
+        },
+        {
+          "name": "Navigate",
+          "first": "Control Bar",
+          "last": "Use Tab Key To Move Focus"
+        },
+        {
+          "name": "Options",
+          "first": "Accessibility",
+          "last": "Time Ruler Format"
+        },
+        {
+          "name": "Help",
+          "first": "Read the Live Manual...",
+          "last": "Get Support"
+        }
+      ],
+      "typeaheadVisible": true,
+      "submenuReturnVisible": true,
+      "openFromEndVisible": true,
+      "touchSubmenuUsable": true,
+      "sessionContextVisible": true,
+      "stationaryPointerKeepsKeyboardFocus": true,
+      "realPointerHoverWorks": true,
+      "pageStationary": true,
+      "savedProjectExact": true,
+      "noUndo": true
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated local Chromium at desktop, narrow and short landscape viewports, including emulated touch. Native keyboard and touch menu navigation plus downloaded project equality. No physical-phone, screen-reader, personal-project or model-provider claim."
+}
