@@ -1,23 +1,26 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync(require('node:path').join(__dirname,'../web-studio/app.js'),'utf8');
 async function fixture({initialized=true}={}){
- const api=Object.assign({},...await Promise.all(['audio','model','management','session-edit','automation-targets','history','time-edit','time-clipboard'].map(n=>import('../web-studio/'+n+'.js'))));
+ const api=Object.assign({},...await Promise.all(['audio','model','management','session-edit','automation-targets','history','time-edit','time-clipboard','routing'].map(n=>import('../web-studio/'+n+'.js'))));
  const project=api.emptyProject();project.tracks.push(api.makeTrack('Second',1));
  const clip={id:'clip',name:'Pattern',kind:'midi',beats:4,sourceBpm:120,notes:[]};project.clips.clip=clip;project.tracks[0].slots[0]=clip.id;api.validateProject(project);
  const nodes=[],param=()=>({value:0,setTargetAtTime(v){this.value=v;},cancelScheduledValues(){}}),node=()=>{const n={gain:param(),pan:param(),edges:new Set(),connect(t){this.edges.add(t);},disconnect(){this.edges.clear();}};nodes.push(n);return n;};
- const audio={currentTime:0,createGain:node,createStereoPanner:node,createAnalyser:node,createChannelSplitter:node};
+ const audio={currentTime:0,sampleRate:8,createGain:node,createStereoPanner:node,createAnalyser:node,createChannelSplitter:node,createConvolver:node,createBuffer:(channels,length)=>({getChannelData:()=>new Float32Array(length)})};
  const engine=new api.Engine(project,()=>{});if(initialized){engine.context=audio;engine.master=node();engine.resetMixers();}
  engine.active.set(project.tracks[0].id,{clipId:'clip',slot:0,followSignature:'retain'});
  engine.pending.set(project.tracks[1].id,{clipId:'clip'});engine.follows.set(project.tracks[0].id,{beat:4});engine.sceneFollow={beat:8};
  engine.overrides.add(project.tracks[0].id);engine.automationOverrides.add(project.tracks[0].id+':volume');engine.buffers.set('clip',{decoded:true});
- const counts={release:0,cancel:0,reconcile:0,render:0,commit:0},history=new api.History(project),controls={'manage-track':{value:project.tracks[0].id},'manage-scene':{value:'0'},'project-name':{},bpm:{},'time-start':{value:'1'},'time-length':{value:'4'},'time-copy':{},'time-cut':{},'time-paste':{}};
+ const counts={release:0,cancel:0,reconcile:0,render:0,commit:0},history=new api.History(project),controls={'manage-track':{value:project.tracks[0].id},'manage-scene':{value:'0'},'project-name':{},bpm:{},'time-start':{value:'1'},'time-length':{value:'4'},'time-copy':{},'time-cut':{},'time-paste':{},'add-track':{},'add-scene':{},'add-return':{},returns:{addEventListener:(_,fn)=>controls.returnsClick=fn}};
  const ctx={...api,project,engine,structuredClone,busy:false,selection:{trackId:project.tracks[0].id,clipId:'clip',scene:0},sessionSelection:[],sessionAnchor:null,selectedRegion:null,deviceTarget:'old',
   inputActive:()=>false,stopToEdit(){if(engine.playing)throw Error('Stop Playback');},
   releaseNotes(){counts.release++;},cancelRegionDrag(){counts.cancel++;},reconcileContentSelection(){counts.reconcile++;},render(){counts.render++;},setStatus(){},$:id=>controls[id],
   timeScopeIds:()=>null,timeScopeLabel:()=> 'All Tracks',renderTransport(){},run:fn=>fn,
+  deviceTrack:id=>[...ctx.project.tracks,...ctx.project.returns??[]].find(t=>t.id===id),
   timeClipboard:{previous:true},sessionClipboard:{previous:true},
   changed(){counts.commit++;history.commit(ctx.project);}};
  vm.createContext(ctx);
+ const returnHelper=source.indexOf('function applyReturnStructure(');if(returnHelper>=0)vm.runInContext(source.slice(returnHelper,source.indexOf("$('add-return').onclick",returnHelper)),ctx);
+ for(const marker of ['function newTrack(',"$('add-track').onclick","$('add-return').onclick","$('returns').addEventListener('click'"]){const start=source.indexOf(marker);vm.runInContext(source.slice(start,source.indexOf('\n',start)),ctx);}
  for(const [begin,end] of [['function installManagedProject(','function renderNotes('],['function applyTrack(action','\n'],['function applySessionTransfer(','\n'],['function retainAgentSelection(','\ninstallAgent('],["for(const action of ['copy','cut','paste'])$('time-'","for(const action of ['insert','delete','duplicate'])"]]){
   const start=source.indexOf(begin);
   vm.runInContext(source.slice(start,source.indexOf(end,start+begin.length)),ctx);
@@ -44,7 +47,7 @@ test('successful track deletion prunes only obsolete state and records one rever
  const f=await fixture(),original=structuredClone(f.project);f.ctx.applyTrack('delete');
  assert.equal(f.ctx.project,f.engine.project);assert.equal(f.engine.active.size,0);assert.equal(f.engine.overrides.size,0);assert.equal(f.engine.automationOverrides.size,0);
  assert.equal(f.engine.pending.size,0);assert.equal(f.engine.follows.size,0);assert.equal(f.engine.sceneFollow,null);assert.equal(f.counts.release,1);assert.equal(f.counts.commit,1);
- assert.deepEqual(f.history.undo(),original);assert.deepEqual(f.history.redo(),f.ctx.project);
+ assert.deepEqual(f.history.undo(),original);assert.deepEqual(f.history.redo(),structuredClone(f.ctx.project));
 });
 
 test('monitor failure restores the original master level and reconnects using the original project',async()=>{
@@ -97,4 +100,65 @@ test('a failed edit can be retried without reloading the project',async()=>{
  f.audio.createGain=()=>{throw Error('Allocation Failed');};assert.throws(()=>f.ctx.applyTrack('duplicate'),/Allocation Failed/);
  f.audio.createGain=create;f.ctx.applyTrack('duplicate');assert.equal(f.ctx.project.tracks.length,3);assert.equal(f.engine.mixers.size,3);
  assert.equal(f.counts.commit,1);assert.deepEqual(f.history.undo(),original);
+});
+
+test('actual Add Track, Scene and Return controls preserve the existing project, graph and Undo on failure',async()=>{
+ for(const button of ['add-track','add-scene','add-return']){
+  const f=await fixture(),before=structuredClone(f.project),state=f.snapshot();f.audio.createGain=()=>{throw Error('Allocation Failed');};
+  assert.throws(()=>f.controls[button].onclick(),/Allocation Failed/);assert.deepEqual(f.ctx.project,before);assert.deepEqual(f.snapshot(),state);assert.equal(f.counts.commit,0);
+ }
+});
+
+test('actual Remove Return preserves its send levels, send automation and selected devices when rebuilding fails',async()=>{
+ const f=await fixture(),r=f.api.newReturn();r.devices=[];f.project.returns=[r];f.project.tracks[0].sends={[r.id]:{amount:.4,pre:true,automation:{amount:{enabled:true,points:[{beat:0,value:.2,curve:'linear'},{beat:4,value:.7,curve:'linear'}]}}}};
+ f.ctx.deviceTarget=r.id;f.engine.resetMixers();f.history.commit(f.project);const before=structuredClone(f.project),state=f.snapshot();f.audio.createGain=()=>{throw Error('Allocation Failed');};
+ assert.throws(()=>f.controls.returnsClick({target:{closest:()=>({dataset:{return:r.id}}),hasAttribute:key=>key==='data-return-remove'}}),/Allocation Failed/);
+ assert.deepEqual(f.ctx.project,before);assert.deepEqual(f.snapshot(),state);assert.equal(f.counts.commit,0);
+});
+
+test('successful creation keeps scene lengths and names valid and remains one reversible edit',async()=>{
+ for(const button of ['add-track','add-scene','add-return']){
+  const f=await fixture();f.project.scenes=7;f.project.sceneNames=Array.from({length:7},(_,i)=>'Named '+i);f.project.sceneFollows=Array(7).fill(null);for(const t of f.project.tracks)t.slots.push(null,null,null);
+  f.history.commit(f.project);const before=structuredClone(f.project);f.controls[button].onclick();f.api.validateProject(f.ctx.project);
+  assert.equal(f.ctx.project.scenes,button==='add-scene'?8:7);assert.equal(f.ctx.project.tracks.length,button==='add-track'?3:2);
+  assert.equal(f.ctx.project.returns?.length??0,button==='add-return'?1:0);assert.equal(f.counts.commit,1);assert.deepEqual(f.history.undo(),before);assert.deepEqual(f.history.redo(),structuredClone(f.ctx.project));
+  if(button==='add-return'){const r=f.ctx.project.returns[0];assert.equal(r.devices[0].params.mix,1);assert.equal(f.ctx.deviceTarget,r.id);}
+ }
+});
+
+test('manual creation refuses busy or pending playback before changing arrays or selection',async()=>{
+ for(const button of ['add-track','add-scene','add-return'])for(const mode of ['busy','pending']){
+  const f=await fixture(),before=structuredClone(f.project),state=f.snapshot();if(mode==='busy')f.ctx.busy=true;else f.engine.startPromise=Promise.resolve();
+  assert.throws(()=>f.controls[button].onclick());assert.deepEqual(f.ctx.project,before);assert.deepEqual(f.snapshot(),state);assert.equal(f.counts.commit,0);
+ }
+});
+
+
+test('removing a return clears only its sends and obsolete automation and can be undone',async()=>{
+ const f=await fixture(),removed=f.api.newReturn(),kept=f.api.newReturn('Return B');removed.devices=[];kept.devices=[];
+ f.project.returns=[removed,kept];for(const t of f.project.tracks)t.sends={[removed.id]:{amount:.4,pre:true},[kept.id]:{amount:.25,pre:false}};
+ f.ctx.deviceTarget=removed.id;f.engine.resetMixers();f.history.commit(f.project);
+ const before=structuredClone(f.project);f.engine.automationOverrides.add(removed.id+':volume');f.engine.automationOverrides.add(kept.id+':volume');
+ f.controls.returnsClick({target:{closest:()=>({dataset:{return:removed.id}}),hasAttribute:key=>key==='data-return-remove'}});
+ f.api.validateProject(f.ctx.project);assert.equal(f.ctx.deviceTarget,null);assert.deepEqual(f.ctx.project.returns,[kept]);
+ for(const t of f.ctx.project.tracks){assert.equal(t.sends[removed.id],undefined);assert.deepEqual(t.sends[kept.id],{amount:.25,pre:false});}
+ assert.equal(f.engine.automationOverrides.has(removed.id+':volume'),false);assert.equal(f.engine.automationOverrides.has(kept.id+':volume'),true);
+ assert.equal(f.counts.commit,1);assert.deepEqual(f.history.undo(),before);assert.deepEqual(f.history.redo(),structuredClone(f.ctx.project));
+});
+
+test('creation limits reject without replacing the graph or touching history',async()=>{
+ for(const button of ['add-track','add-scene','add-return']){
+  const f=await fixture();if(button==='add-track')while(f.project.tracks.length<16)f.project.tracks.push(f.api.makeTrack('Extra',0));
+  if(button==='add-scene'){f.project.scenes=32;for(const t of f.project.tracks)t.slots=Array(32).fill(null);}
+  if(button==='add-return')f.project.returns=Array.from({length:4},()=>({...f.api.newReturn(),devices:[]}));
+  f.api.validateProject(f.project);f.engine.resetMixers();const before=structuredClone(f.project),state=f.snapshot();
+  assert.throws(()=>f.controls[button].onclick(),/Supports Up To|Four Return/);assert.deepEqual(f.ctx.project,before);assert.deepEqual(f.snapshot(),state);assert.equal(f.counts.commit,0);
+ }
+});
+
+test('manual structural controls work before audio initialization without allocating nodes',async()=>{
+ for(const button of ['add-track','add-scene','add-return']){
+  const f=await fixture({initialized:false}),before=structuredClone(f.project);f.controls[button].onclick();
+  f.api.validateProject(f.ctx.project);assert.equal(f.engine.context,null);assert.equal(f.nodes.length,0);assert.equal(f.counts.commit,1);assert.deepEqual(f.history.undo(),before);
+ }
 });
