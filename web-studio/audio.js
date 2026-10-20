@@ -42,7 +42,23 @@ export function synthesize(context,clip,bpm){
 }
 export class Engine {
   constructor(project,changed){this.project=project;this.project.transport??=defaultTransport();this.changed=changed;this.context=null;this.buffers=new Map();this.midiBuffers=new Map();this.voiceSchedulers=new WeakMap();this.bufferSchedulers=new WeakMap();this.sampleBuffers=new Map();this.active=new Map();this.pending=new Map();this.follows=new Map();this.activeScene=null;this.pendingScene=null;this.sceneFollow=null;this.gateHolds=new Map();this.overrides=new Set();this.automationOverrides=new Set();this.nodes=new Set();this.clickNodes=new Set();this.records=new Map();this.playing=false;this.recording=false;this.mode='session';this.nextBeat=0;this.position=0;this.insertMarker=0;this.playGeneration=0;this.masterVolume=project.master??.8;}
-  async init(resume=true){if(!this.context){this.context=new AudioContext();this.master=this.context.createGain();this.master.gain.value=this.masterVolume;this.compressor=this.context.createDynamicsCompressor();this.master.connect(this.compressor);this.compressor.connect(this.context.destination);this.masterMeter=createStereoMeter(this.context,this.compressor);this.mixers=new Map();this.resetMixers();}if(resume)await this.context.resume();}
+  async init(resume=true){
+    if(!this.context){
+      const context=new AudioContext();this.context=context;
+      try{
+        this.master=context.createGain();this.master.gain.value=this.masterVolume;this.compressor=context.createDynamicsCompressor();
+        this.master.connect(this.compressor);this.compressor.connect(context.destination);this.masterMeter=createStereoMeter(context,this.compressor);this.mixers=new Map();this.resetMixers();
+      }catch(error){
+        try{this.mixGraph?.dispose();}catch{}try{this.masterMeter?.dispose();}catch{}
+        for(const node of [this.master,this.compressor])try{node?.disconnect();}catch{}
+        // Clear ownership before awaiting close so a retry cannot be erased by late cleanup.
+        this.context=null;this.master=null;this.compressor=null;this.masterMeter=null;delete this.mixGraph;this.mixers=new Map();this.returnMixers=new Map();
+        try{await context.close();}catch{}throw error;
+      }
+    }
+    // A denied resume keeps the complete graph available for the next user gesture.
+    if(resume)await this.context.resume();
+  }
   channels(){return automationChannels(this.project);}
   mixer(id){return this.mixers?.get(id)||this.returnMixers?.get(id);}
   resetMixers(){
