@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "pausedAt": 1.41,
+  "manualResumeRequired": true,
+  "closedContextRecreated": true,
+  "playbackProjectUnchanged": true,
+  "sessionCaptureRegions": 10,
+  "sessionUndoExact": true,
+  "midiNotesRecovered": 1,
+  "midiDuration": 0.4189591836734695,
+  "midiUndoExact": true,
+  "errors": [],
+  "scope": "Isolated native Chromium real AudioContext suspend/resume/close, actual playback/Continue and computer-keyboard MIDI capture/Undo. No microphone or physical output device was used; OS/device-originated interruption and other browsers remain unverified."
+}

@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "historySteps": 40,
+  "sourceHash": "831a1b20556685645ccfc00e4da3e4c8718bc4f29a48a1eb9ebf07c1425ccfa1",
+  "sourceBytes": 3201192,
+  "projectBytes": 4269083,
+  "sourcePreserved": true,
+  "importUndoRedoExact": true,
+  "reloadExact": true,
+  "rendered": {
+    "sourceDuration": 200,
+    "outputDuration": 8,
+    "correlation": 0.9999999999998281,
+    "relativeGain": 0.999999984825992,
+    "maxError": 4.470348355378739e-09,
+    "peak": 0.06651467084884644
+  },
+  "errors": [],
+  "scope": "Isolated native Chromium local MP3 import, actual clip numeric controls, project downloads and reload, selected-track float WAV download independently compared with decoded source at 40 seconds. No source audio or project payload committed/published; no physical playback or listening proof."
+}
