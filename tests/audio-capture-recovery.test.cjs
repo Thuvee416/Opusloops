@@ -58,7 +58,7 @@ test('disconnect cannot hang forever waiting for a silent processor',async t=>{
 test('application saves a recovered take once with Undo and preserves its warning in Odesa receipts',async t=>{
  const f=await setup(t),model=await import('../web-studio/model.js'),{History}=await import('../web-studio/history.js'),control=await import('../web-studio/recording-control.js'),vm=require('node:vm'),fs=require('node:fs');
  const project=model.emptyProject(),before=structuredClone(project),history=new History(project),meta={inputRecording:true,captureId:'take',source:'audio',mode:'new',trackId:project.tracks[0].id,scene:0},messages=[],controls={'input-status':{}};
- const ctx={audioInput:f.capture,inputCompletion:null,inputPending:true,inputCaptureId:'take',inputMeta:meta,meta,clearCountIn(){},clearInterval(){},inputTimer:null,releaseNotes(){},engine:{playing:false},endArrangementInput(){},commitNewInput(clip){const result=control.appendRecordedClip(project,clip,meta.trackId,0);Object.assign(project,result.project);history.commit(project);return {clipId:clip.id,scene:0};},$:id=>controls[id],setStatus:(text,error)=>messages.push({text,error}),renderTransport(){},renderTimeline(){},inputAbort:null,inputOutcome:null};
+ const ctx={newInputCandidate:()=>({}),audioInput:f.capture,inputCompletion:null,inputPending:true,inputCaptureId:'take',inputMeta:meta,meta,clearCountIn(){},clearInterval(){},inputTimer:null,releaseNotes(){},engine:{playing:false},endArrangementInput(){},commitNewInput(clip){const result=control.appendRecordedClip(project,clip,meta.trackId,0);Object.assign(project,result.project);history.commit(project);return {clipId:clip.id,scene:0};},$:id=>controls[id],setStatus:(text,error)=>messages.push({text,error}),renderTransport(){},renderTimeline(){},inputAbort:null,inputOutcome:null};
  f.capture.start(120);const source=fs.readFileSync(require('node:path').join(__dirname,'../web-studio/app.js'),'utf8'),start=source.indexOf('inputCompletion=audioInput.completion.then('),end=source.indexOf('inputCompletion.catch(()=>{});',start)+'inputCompletion.catch(()=>{});'.length;
  vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);f.send({type:'chunk',channels:f.chunk()});f.capture.processor.onprocessorerror();const result=await ctx.inputCompletion;
  assert.equal(result.interrupted,true);assert.equal(result.status,'saved');assert.equal(ctx.inputPending,false);assert.equal(ctx.inputCaptureId,null);assert.match(controls['input-status'].textContent,/May Be Missing/);assert.equal(messages.at(-1).error,true);assert.equal(history.past.length,1);assert.deepEqual(history.undo(),before);assert.deepEqual(history.redo(),project);
@@ -94,12 +94,12 @@ test('disconnected partial audio survives a preparation failure and retains its 
  f.context.createBuffer=create;const result=await f.capture.retry();assert.equal(result.interrupted,true);assert.match(result.warning,/End Of The Take May Be Missing/);assert.equal(result.buffer.getChannelData(1)[4095],-.5);
 });
 
-async function recoveryApplication(t){
- const f=await setup(t),model=await import('../web-studio/model.js'),{History}=await import('../web-studio/history.js'),control=await import('../web-studio/recording-control.js'),vm=require('node:vm'),fs=require('node:fs');
- const project=model.emptyProject(),before=structuredClone(project),history=new History(project),meta={inputRecording:true,captureId:'take',source:'audio',mode:'new',trackId:project.tracks[0].id,scene:0},controls={'input-status':{}};
- const ctx={audioInput:f.capture,inputCompletion:null,inputPending:false,inputCaptureId:'take',inputMeta:meta,inputFinishing:false,inputStarted:0,midiTake:null,inputAbort:null,inputOutcome:null,
+async function recoveryApplication(t,mode='new'){
+ const f=await setup(t),model=await import('../web-studio/model.js'),{History}=await import('../web-studio/history.js'),control=await import('../web-studio/recording-control.js'),arrangement=await import('../web-studio/arrangement-input.js'),vm=require('node:vm'),fs=require('node:fs');
+ const project=model.emptyProject(),before=structuredClone(project),history=new History(project),meta={inputRecording:true,captureId:'take',source:'audio',mode,trackId:project.tracks[0].id,...(mode==='arrangement'?{start:8,maxBeats:256,regionId:'recorded'}:{scene:0})},controls={'input-status':{}};
+ const ctx={newInputCandidate:(clip,meta)=>mode==='arrangement'?arrangement.appendArrangementTake(project,clip,meta,meta.regionId):control.appendRecordedClip(project,clip,meta.trackId,0),audioInput:f.capture,inputCompletion:null,inputPending:false,inputCaptureId:'take',inputMeta:meta,inputFinishing:false,inputStarted:0,midiTake:null,inputAbort:null,inputOutcome:null,
   clearCountIn(){},clearInterval(){},inputTimer:null,releaseNotes(){},engine:{context:f.context,playing:false},endArrangementInput(){},endOverdubPlayback(){},renderOverdubPreview(){},
-  commitNewInput(clip){const result=control.appendRecordedClip(project,clip,meta.trackId,0);Object.assign(project,result.project);history.commit(project);return {clipId:clip.id,scene:0};},
+  commitNewInput(clip,buffer,meta,candidate){const result=candidate??ctx.newInputCandidate(clip,meta);Object.assign(project,result.project);history.commit(project);return {clipId:clip.id,...(mode==='arrangement'?{regionId:result.regionId,start:result.start,length:result.length}:{scene:0})};},
   $:id=>controls[id],setStatus(){},renderInput(){},renderTransport(){},renderTimeline(){}};
  const source=fs.readFileSync(require('node:path').join(__dirname,'../web-studio/app.js'),'utf8');vm.createContext(ctx);
  for(const [start,end]of [['function observeAudioInput(','async function startInput('],['async function cancelInput(','function commitOverdub(']])vm.runInContext(source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))),ctx);
@@ -120,4 +120,32 @@ test('actual Finish retries a retained take once, preserves capture identity and
 test('actual Cancel discards a retained take without editing the project or adding Undo',async t=>{
  const f=await recoveryApplication(t),result=await f.ctx.cancelInput();assert.equal(result.status,'cancelled');assert.equal(f.ctx.inputCaptureId,null);assert.equal(f.ctx.inputMeta,null);
  assert.equal(f.capture.recoverable,null);assert.equal(f.capture.chunks.length,0);assert.deepEqual(f.project,f.before);assert.equal(f.history.past.length,0);await f.capture.disconnect();
+});
+
+
+test('failed destination preparation retains completed PCM for retry with the same take identity and one Undo',async t=>{
+ const f=await recoveryApplication(t);f.context.createBuffer=f.create;
+ const prepare=f.ctx.newInputCandidate;f.ctx.newInputCandidate=()=>{throw Error('Project Allocation Failed');};
+ await assert.rejects(f.ctx.finishInput(),/Project Allocation Failed/);
+ assert.ok(f.capture.recoverable,'Completed take must remain retryable');assert.equal(f.ctx.inputCaptureId,'take');assert.deepEqual(f.project,f.before);assert.equal(f.history.past.length,0);
+ const held=f.capture.recoverable.prepared;assert.equal(held.buffer.getChannelData(1)[4095],-.5);
+ // Retry placement without allocating/encoding the completed audio again.
+ f.context.createBuffer=()=>{throw Error('Audio Must Not Be Rebuilt');};
+ await assert.rejects(f.ctx.finishInput(),/Project Allocation Failed/);assert.equal(f.capture.recoverable.prepared.buffer,held.buffer);assert.equal(f.capture.recoverable.prepared.clip,held.clip);
+ f.ctx.newInputCandidate=prepare;const result=await f.ctx.finishInput();assert.equal(result.status,'saved');assert.equal(result.clipId,held.clip.id);assert.equal(result.captureId,'take');
+ assert.equal(f.capture.recoverable,null);assert.equal(f.ctx.inputCaptureId,null);assert.equal(f.history.past.length,1);assert.deepEqual(f.history.undo(),f.before);assert.deepEqual(f.history.redo(),f.project);await f.capture.disconnect();
+});
+
+test('Cancel releases a prepared take after destination failure without changing the saved project',async t=>{
+ const f=await recoveryApplication(t);f.context.createBuffer=f.create;f.ctx.newInputCandidate=()=>{throw Error('Destination Rejected');};await assert.rejects(f.ctx.finishInput(),/Destination Rejected/);
+ assert.ok(f.capture.recoverable);assert.throws(()=>f.capture.start(120),/Retry Saving/);await assert.rejects(f.capture.connect(),/Retry Saving/);
+ const result=await f.ctx.cancelInput();assert.equal(result.status,'cancelled');assert.equal(f.capture.recoverable,null);assert.equal(f.ctx.inputCaptureId,null);assert.deepEqual(f.project,f.before);assert.equal(f.history.past.length,0);await f.capture.disconnect();
+});
+
+
+test('Arrangement destination failure keeps its bound position and interruption warning through retry',async t=>{
+ const f=await recoveryApplication(t,'arrangement');f.context.createBuffer=f.create;
+ const prepare=f.ctx.newInputCandidate;f.capture.recoverable.recovery={interrupted:true,warning:'Partial Take Recovered.'};f.ctx.newInputCandidate=()=>{throw Error('Arrangement Preparation Failed');};await assert.rejects(f.ctx.finishInput(),/Arrangement Preparation Failed/);
+ assert.equal(f.capture.recoverable.prepared.warning,'Partial Take Recovered.');assert.deepEqual(f.project,f.before);f.ctx.newInputCandidate=prepare;
+ const result=await f.ctx.finishInput();assert.equal(result.start,8);assert.equal(result.regionId,'recorded');assert.equal(result.interrupted,true);assert.equal(result.warning,'Partial Take Recovered.');assert.equal(f.project.arrangement[0].start,8);assert.equal(f.history.past.length,1);assert.deepEqual(f.history.undo(),f.before);await f.capture.disconnect();
 });

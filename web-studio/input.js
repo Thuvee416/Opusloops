@@ -40,7 +40,8 @@ export class MidiTake {
 }
 const loadedContexts=new WeakSet();
 export class AudioCapture {
-  constructor(context,onFinish,{setTimer=setTimeout,clearTimer=clearTimeout}={}){this.context=context;this.onFinish=onFinish;this.active=false;this.chunks=[];this.connected=false;this.generation=0;this.setTimer=setTimer;this.clearTimer=clearTimer;}
+  // Wrap browser timers so they are never invoked with AudioCapture as their receiver.
+  constructor(context,onFinish,{setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}={}){this.context=context;this.onFinish=onFinish;this.active=false;this.chunks=[];this.connected=false;this.generation=0;this.setTimer=setTimer;this.clearTimer=clearTimer;}
   async connect(deviceId='',channels='stereo:0'){
     if(this.recoverable)throw Error('Retry Saving The Captured Take Or Cancel It Before Reconnecting.');
     const selection=inputChannelSelection(channels);
@@ -94,9 +95,11 @@ export class AudioCapture {
     this.finishTimer=this.setTimer(()=>this.interrupted('Audio Input Did Not Finish Responding.'),5000);
     try{this.processor.port.postMessage({type});}catch{this.interrupted('Audio Input Connection Was Lost.');}
   }
-  async cancel(){if(this.recoverable){this.recoverable=null;this.chunks=[];return;}if(!this.active)return;this.requestFinish('cancel');try{await this.completion;}catch(error){if(error.name!=='AbortError')throw error;}}
+  async cancel(){if(this.recoverable){this.recoverable=null;this.chunks=[];this.completion=null;this.resolve=null;this.reject=null;return;}if(!this.active)return;this.requestFinish('cancel');try{await this.completion;}catch(error){if(error.name!=='AbortError')throw error;}}
+  retainPrepared(result){this.recoverable={prepared:result};}
   retry(){
     if(!this.recoverable)throw Error('No Captured Take Is Waiting To Be Saved.');
+    if(this.recoverable.prepared){const result=this.recoverable.prepared;this.recoverable=null;this.completion=Promise.resolve(result);return this.completion;}
     const {frames,recovery}=this.recoverable;
     this.completion=new Promise((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});this.completion.catch(()=>{});
     this.complete(frames,recovery);return this.completion;

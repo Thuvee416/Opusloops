@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "frames": 22050,
+  "peak": 0.09999994188547134,
+  "retryVisible": true,
+  "repeatedRetryPreservesSameBuffer": true,
+  "exactAudioSaved": true,
+  "oneUndoExact": true,
+  "redoExact": true,
+  "cancelUnchanged": true,
+  "errors": [],
+  "scope": "Isolated Chromium actual AudioWorklet capture of a locally generated sine, injected project-clone failure during Session placement, real Retry/Cancel controls and downloaded project comparisons. No microphone, personal project or real memory exhaustion."
+}
