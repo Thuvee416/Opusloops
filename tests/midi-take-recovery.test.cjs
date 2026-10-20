@@ -1,0 +1,29 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+async function setup(mode='new',quantized=true){
+ const [{emptyProject},{History},{MidiTake},{MidiOverdub,applyMidiOverdub},{appendRecordedClip},{appendArrangementTake}]=await Promise.all(['model','history','input','midi-overdub','recording-control','arrangement-input'].map(n=>import('../web-studio/'+n+'.js')));
+ const project=emptyProject(),trackId=project.tracks[0].id,source={id:'source',kind:'midi',name:'Original',beats:4,sourceBpm:120,notes:[{pitch:48,start:0,duration:.5,velocity:.8}]};if(mode==='overdub'){project.clips.source=source;project.tracks[0].slots[0]='source';}
+ const before=structuredClone(project),history=new History(project),quantization={enabled:quantized,grid:.25,gridMode:'straight',target:'starts'},take=mode==='overdub'?new MidiOverdub(source,120,0,{quantization}):new MidiTake(120,0,{quantization});take.on('note',60,.7,.06);take.off('note',.23);
+ const meta={captureId:'take',inputRecording:true,source:'midi',mode,trackId,countInBars:0,...(mode==='arrangement'?{start:8,maxBeats:256,regionId:'take-region'}:{scene:0}),...(mode==='overdub'?{clipId:'source'}:{})},elements={'input-status':{}},calls=[];
+ const prepare=(clip)=>mode==='overdub'?applyMidiOverdub(project,clip,trackId,0):mode==='arrangement'?appendArrangementTake(project,clip,meta,meta.regionId):appendRecordedClip(project,clip,trackId,0);
+ const s={project,midiTake:take,inputMeta:meta,inputCaptureId:'take',inputFinishing:false,inputCompletion:null,inputOutcome:null,inputStarted:0,inputTimer:1,audioInput:null,inputAbort:null,liveNotes:{allOff(){}},midiSustain:{reset(){}},engine:{context:{currentTime:.5},playing:mode==='overdub',buffers:{delete(){}},stop(){this.playing=false;}},clearCountIn(){},clearInterval(){calls.push('timer-cleared');},endArrangementInput(){},endOverdubPlayback(){},renderOverdubPreview(){},releaseNotes(){},$:id=>elements[id],setStatus(message){calls.push(message);},render(){},renderTimeline(){},renderInput(){},renderTransport(){},recordQuantizationDescription:()=> 'Quantized',changed(){history.commit(project);},newInputCandidate:prepare,applyMidiOverdub:(p,c)=>prepare(c),
+ commitNewInput(clip,buffer,meta,candidate){const result=candidate??s.newInputCandidate(clip);Object.assign(project,result.project);history.commit(project);return {clipId:clip.id,...(mode==='arrangement'?{regionId:result.regionId,start:result.start,length:result.length}:{scene:0})};},
+ commitOverdub(clip,meta,source,candidate){const result=candidate??s.applyMidiOverdub(project,clip);Object.assign(project,result.project);history.commit(project);return {clipId:clip.id,scene:0};}};
+ const text=fs.readFileSync(require.resolve('../web-studio/app.js'),'utf8');vm.createContext(s);vm.runInContext(text.slice(text.indexOf('async function cancelInput('),text.indexOf('function commitOverdub(')),s);
+ return {s,take,project,before,history,meta,prepare,calls,elements};
+}
+for(const mode of ['new','arrangement','overdub'])test(mode+': late preparation failure retains performed and quantized MIDI without a partial commit',async()=>{
+ const f=await setup(mode);let calls=0;const failing=clip=>{if(++calls%2===0)throw Error('Candidate Allocation Failed');return f.prepare(clip);};if(mode==='overdub')f.s.applyMidiOverdub=(p,c)=>failing(c);else f.s.newInputCandidate=failing;
+ await assert.rejects(f.s.finishInput(),/Candidate Allocation Failed/);assert.equal(f.s.midiTake,f.take);assert.equal(f.s.inputCaptureId,'take');assert.equal(f.take.recoverable,true);assert.deepEqual(f.project,f.before);assert.equal(f.history.past.length,0);assert.match(f.elements['input-status'].textContent,/Retry Saving Take/);
+ const raw=structuredClone(f.take.rawClip),final=structuredClone(f.take.clip);f.s.engine.context.currentTime=20;await assert.rejects(f.s.finishInput(),/Candidate Allocation Failed/);assert.deepEqual(f.take.rawClip,raw);assert.deepEqual(f.take.clip,final);assert.deepEqual(f.project,f.before);
+ f.s.newInputCandidate=f.prepare;f.s.applyMidiOverdub=(p,c)=>f.prepare(c);const result=await f.s.finishInput();assert.equal(result.status,'saved');assert.equal(result.captureId,'take');assert.equal(f.s.midiTake,null);assert.equal(f.s.inputCaptureId,null);assert.deepEqual(f.project.clips[final.id],final);assert.equal(f.history.past.length,2);
+ const performed=f.history.undo();assert.deepEqual(performed.clips[raw.id],raw);assert.deepEqual(f.history.undo(),f.before);assert.equal(await f.s.finishInput(),null);
+});
+for(const mode of ['new','arrangement','overdub'])test(mode+': Cancel discards retained MIDI without changing the original project',async()=>{
+ const f=await setup(mode,false),fail=()=>{throw Error('Destination Unavailable');};f.s.newInputCandidate=fail;f.s.applyMidiOverdub=fail;await assert.rejects(f.s.finishInput(),/Destination Unavailable/);assert.equal(f.s.inputCaptureId,'take');const result=await f.s.cancelInput();assert.equal(result.status,'cancelled');assert.equal(f.s.midiTake,null);assert.equal(f.s.inputCaptureId,null);assert.deepEqual(f.project,f.before);assert.equal(f.history.past.length,0);
+});
+
+test('failure while finalizing MIDI retains its first Finish time instead of extending the take on retry',async()=>{
+ const f=await setup('new',false),finish=f.take.finish.bind(f.take);let attempts=0;f.take.finish=time=>{if(!attempts++)throw Error('Finalization Allocation Failed');return finish(time);};
+ await assert.rejects(f.s.finishInput(),/Finalization Allocation Failed/);assert.equal(f.take.finishTime,.5);assert.equal(f.s.midiTake,f.take);assert.equal(f.take.recoverable,true);assert.deepEqual(f.project,f.before);
+ f.s.engine.context.currentTime=60;const result=await f.s.finishInput();assert.equal(result.status,'saved');assert.equal(f.project.clips[result.clipId].beats,1);assert.equal(f.history.past.length,1);assert.deepEqual(f.history.undo(),f.before);
+});
