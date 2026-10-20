@@ -6,7 +6,7 @@ import {Autosave,installSaveExitGuard} from './autosave.js';
 import {ProjectStore} from './project-store.js';
 import {renderWavSnapshot} from './wav-delivery.js';
 import {inputMonitorRoute} from './input-monitor.js';
-import {projectSaveName,projectSaveFile,saveProjectVariant} from './project-save.js';
+import {projectSaveName,projectSaveFile,saveProjectVariant,saveProjectDownload} from './project-save.js';
 import {installProjectSaveDialog} from './project-save-dialog.js';
 import {midiInputChoices} from './midi-inputs.js';
 import {splitRegions,arrangementSplitTarget} from './region-split.js';
@@ -1705,8 +1705,9 @@ async function executeStudioCommand(x,signal,prepared){
  if(x.name==='record_quantization'){const after=recordQuantizationTransition(recordQuantization,a,prepared),result=configureRecordQuantization(after);showStudioPanel('recording');document.querySelector('.record-quantization-options').scrollIntoView({block:'start'});return {...result,detailPanel:'recording'};}
  if(x.name==='show_panel')return showStudioPanel(detailPanelIntent(a));
  if(x.name==='save_project'){
-  if(engine.recording||engine.automationTake)throw new Error('Stop recording before saving.');
-  const file=projectSaveFile(project);download(file.data,file.name,'application/json');setStatus('Project downloaded with embedded audio.');return {download:file.name};
+  if(busy||inputActive()||engine.recording||engine.automationTake)throw new Error('Finish Recording Or The Current Operation Before Saving.');
+  const file=projectSaveFile(project),result=await saveProjectDownload(file,{persist,isCurrent:()=>!autosave.dirty&&JSON.stringify(project)===file.data,download,signal});
+  setStatus(result.localSaved?'Project Saved In This Browser And Downloaded With Embedded Audio.':result.localSaveError?'Project Downloaded. Browser Save Failed: '+result.localSaveError:'Project Snapshot Downloaded. Newer Edits May Still Be Saving.',!!result.localSaveError);return result;
  }
  if(x.name==='export_midi')return exportStudioMidi(a,signal,prepared);
  if(x.name==='export_wav')return exportStudioWav(a,signal);

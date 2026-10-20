@@ -21,3 +21,13 @@ export async function saveProjectVariant(file,mode,{write,commit,download}){
  catch(error){if(mode==='as')throw Error('The Named Set Was Saved In This Browser, But Its Download Could Not Start. Use File → Save Live Set To Try Again.',{cause:error});throw error;}
  return {mode,name:file.name,projectName:file.project.name};
 }
+
+// A completed File Save must wait for browser durability before offering its file.
+// A failed browser write must never prevent the user's portable recovery copy.
+export async function saveProjectDownload(file,{persist,isCurrent,download,signal}){
+ signal?.throwIfAborted();let localSaveError;
+ try{await persist();}catch(error){localSaveError=error?.message||'Browser Storage Unavailable.';}
+ signal?.throwIfAborted();const localSaved=!localSaveError&&isCurrent();
+ download(file.data,file.name,'application/json');
+ return {download:file.name,localSaved,...(localSaveError?{localSaveError}:{})};
+}
