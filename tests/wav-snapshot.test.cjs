@@ -42,3 +42,7 @@ test('render scheduling failure disposes the offline mixer before returning an e
  const e=new Engine(p,()=>{});e.prepare=async()=>{};e.tailSeconds=()=>0;let input;e.schedule=(ctx,target)=>{input=target;throw Error('Scheduling Failed');};const previous=global.OfflineAudioContext;global.OfflineAudioContext=Context;
  try{await assert.rejects(()=>e.render(),/Scheduling Failed/);assert.equal(input.connections.length,0);}finally{global.OfflineAudioContext=previous;}
 });
+
+test('offline export explicitly requests silent preparation before rendering',async()=>{
+ const {Engine}=await import('../web-studio/audio.js'),t=await fixture(),e=new Engine(t.source.project,()=>{});let settings;e.prepare=async options=>{settings=options;throw Error('Preparation Boundary');};await assert.rejects(e.render(),/Preparation Boundary/);assert.deepEqual(settings,{resume:false});
+});

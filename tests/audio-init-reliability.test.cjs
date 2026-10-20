@@ -58,3 +58,8 @@ test('output routing completes before resume; failures retain the graph for retr
  const t=await api(),ctx=context(),e=new t.Engine(t.emptyProject(),()=>{});let fail=true,routes=0;e.routeOutput=async target=>{routes++;assert.equal(target,ctx);assert.equal(ctx.resumes,0);if(fail)throw Error('Output Unavailable');};
  await installed(()=>ctx,async()=>{await e.init(false);assert.equal(routes,0);const graph=e.mixGraph;await assert.rejects(e.init(),/Output Unavailable/);assert.equal(ctx.resumes,0);assert.equal(e.mixGraph,graph);fail=false;await e.init();assert.equal(ctx.resumes,1);assert.equal(routes,2);assert.equal(e.mixGraph,graph);});
 });
+
+test('offline preparation never resumes or routes live audio while playback preparation still does',async()=>{
+ const t=await api(),ctx=context({resume:()=>{throw Error('Playback Permission Denied');}}),e=new t.Engine(t.emptyProject(),()=>{});let routes=0;e.routeOutput=async()=>routes++;
+ await installed(()=>ctx,async()=>{await e.prepare({resume:false});assert.equal(ctx.resumes,0);assert.equal(routes,0);assert.equal(ctx.state,'suspended');await assert.rejects(e.prepare(),/Playback Permission Denied/);assert.equal(ctx.resumes,1);assert.equal(routes,1);});
+});
