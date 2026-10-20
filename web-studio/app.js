@@ -356,7 +356,7 @@ const stemImportLocked=()=>busy||inputActive()||engine.playing||!!engine.startPr
 const openStemImport=installStemImportDialog({getStart:()=>timeSelection?.range?.start??engine.insertMarker??0,getSummary:()=>`${project.bpm} BPM · ${16-project.tracks.length} Available Tracks · Arrangement Only`,isLocked:stemImportLocked,bind:()=>importBinding(project,sessionProjectRevision),validate:(files,start,binding)=>{assertImportCurrent(binding,project,sessionProjectRevision);stemImportRequest(project,files,start);},setStatus,
  execute:async(files,start,binding,{signal,onProgress})=>{
   if(stemImportLocked())throw Error('Finish The Current Operation First.');assertImportCurrent(binding,project,sessionProjectRevision);stemImportRequest(project,files,start);busy=true;renderTransport();
-  try{const importingEngine=engine;await importingEngine.init();signal.throwIfAborted();const check=()=>assertImportCurrent(binding,project,sessionProjectRevision);const sources=await readStemFiles(files,bytes=>importingEngine.context.decodeAudioData(bytes),{signal,check,onProgress});check();signal.throwIfAborted();const prepared=prepareStemImport(project,sources,{start});check();signal.throwIfAborted();install(prepared.next,true);for(const item of prepared.imports)engine.cacheAudio(item.clip,item.buffer);busy=false;const ids=prepared.imports.map(i=>i.regionId);applyStudioSelection({target:'regions',ids,primaryId:ids[0]},{open:true,reveal:true});changed();setStatus(`${files.length} Stems Imported On New Tracks At Beat ${start+1}. One Undo Removes The Whole Import.`);
+  try{const importingEngine=engine;await importingEngine.init(false);signal.throwIfAborted();const check=()=>assertImportCurrent(binding,project,sessionProjectRevision);const sources=await readStemFiles(files,bytes=>importingEngine.context.decodeAudioData(bytes),{signal,check,onProgress});check();signal.throwIfAborted();const prepared=prepareStemImport(project,sources,{start});check();signal.throwIfAborted();install(prepared.next,true);for(const item of prepared.imports)engine.cacheAudio(item.clip,item.buffer);busy=false;const ids=prepared.imports.map(i=>i.regionId);applyStudioSelection({target:'regions',ids,primaryId:ids[0]},{open:true,reveal:true});changed();setStatus(`${files.length} Stems Imported On New Tracks At Beat ${start+1}. One Undo Removes The Whole Import.`);
   }finally{busy=false;renderTransport();}
  }});
 const stemImportButton=document.createElement('button');stemImportButton.id='import-stems';stemImportButton.hidden=true;document.body.append(stemImportButton);stemImportButton.onclick=run(()=>openStemImport());
@@ -364,7 +364,7 @@ async function importAudio(file,target){
  if(!file)return;stopToEdit();if(busy)throw new Error('Wait for the current operation to finish.');
  const binding=importBinding(project,sessionProjectRevision);busy=true;renderTransport();setStatus(`Decoding ${file.name}…`);
  try{
-  await engine.init();const source=await readAudioImport(file,bytes=>engine.context.decodeAudioData(bytes));
+  await engine.init(false);const source=await readAudioImport(file,bytes=>engine.context.decodeAudioData(bytes));
   assertImportCurrent(binding,project,sessionProjectRevision);
   const prepared=prepareAudioImport(project,source,{...target,replace:!!target});
   install(prepared.next,true);selection=prepared.selection;sessionSelection=[{...selection}];sessionAnchor=sessionSelection[0];selectedRegion=null;
