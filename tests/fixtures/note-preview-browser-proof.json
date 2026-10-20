@@ -1,6 +1,48 @@
 {
   "status": "passed",
-  "nativeSynthRms": 0.020465724745901435,
+  "instruments": [
+    {
+      "kind": "ensemble",
+      "audibleRms": 0.05211493338896486,
+      "mutedRms": 0,
+      "restoredRms": 0.05596013676707664,
+      "voicesReleased": true,
+      "oneShotBounded": false,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    },
+    {
+      "kind": "sampler",
+      "audibleRms": 0.0393235806894325,
+      "mutedRms": 0,
+      "restoredRms": 0.03893229091057935,
+      "voicesReleased": true,
+      "oneShotBounded": true,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    },
+    {
+      "kind": "drums",
+      "audibleRms": 0.15455223566251744,
+      "mutedRms": 0,
+      "restoredRms": 0.11934671621606605,
+      "voicesReleased": true,
+      "oneShotBounded": false,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    },
+    {
+      "kind": "drum-sample",
+      "audibleRms": 0.045126795928698844,
+      "mutedRms": 0,
+      "restoredRms": 0.04449404479495608,
+      "voicesReleased": true,
+      "oneShotBounded": true,
+      "previewProjectUnchanged": true,
+      "muteUndoExact": true
+    }
+  ],
+  "nativeSynthRms": 0.053610574087990755,
   "activeNoteAudible": true,
   "inactiveNoteSilent": true,
   "toggleOffSilent": true,
@@ -11,5 +53,5 @@
   "pendingPreviewCancelledByStop": true,
   "voicesReleased": true,
   "errors": [],
-  "scope": "Isolated native Chromium application with existing synth and mixer, actual note clicks, preview toggle, arrow pitch edit, downloads and Undo. An analyser confirms output, and delayed sample preparation confirms Stop prevents late preview. No microphone, personal project, provider call or physical-output/listening-quality claim."
+  "scope": "Isolated native Chromium application with existing synth, ensemble preset, five-second one-shot sampler, generated drum and sampled drum through their mixers; Mute/Unmute and exact Undo; actual note clicks, preview toggle, arrow pitch edit, downloads and Undo. An analyser confirms output, and delayed sample preparation confirms Stop prevents late preview. No microphone, personal project, provider call or physical-output/listening-quality claim."
 }
