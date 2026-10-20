@@ -1,3 +1,4 @@
+import {ComputerKeyboard,COMPUTER_NOTE_KEYS,computerKeyAction} from './computer-keyboard.js';
 import {AudioOutputRoute,audioOutputChoices} from './audio-output.js';
 import {WorkspaceResume} from './workspace-resume.js';
 import {createDemoSession} from './demo-session.js';
@@ -127,6 +128,7 @@ const tempoTapper=new TapTempo();let tempoTapGroup=Symbol('tap-tempo');
 function clearCountIn(){engine?.stopInputMetronome();}
 let armedInputTrack=null;
 const audioOutputRoute=new AudioOutputRoute();let availableAudioOutputs=[],outputListGeneration=0;
+const computerKeyboard=new ComputerKeyboard();
 let inputConnecting=false,audioInput=null,liveNotes=null,midiTake=null,inputTarget=null,inputStarted=0,inputTimer=null,keyboardEnabled=false,midiAccess=null,midiPort=null,midiInputName='MIDI Input',inputPending=false,inputCaptureId=null,inputMeta=null,inputCompletion=null,inputOutcome=null,inputAbort=null,inputFinishing=false;
 let recordQuantization=loadRecordQuantization({getItem:key=>localStorage.getItem(key)});
 const inputActive=()=>!!(inputConnecting||midiTake||audioInput?.active||audioInput?.recoverable||inputPending||inputFinishing);
@@ -890,7 +892,7 @@ $('session-grid').addEventListener('click',run(async e=>{
  await startInput();[...$('session-grid').querySelectorAll('[data-slot-record]')].find(el=>el.closest('.slot').dataset.track===trackId&&Number(el.closest('.slot').dataset.scene)===scene)?.focus({preventScroll:true});
 }),true);
 function renderInput(){
-  if(!project)return;renderAudioOutput();const select=$('input-track'),previous=select.value;
+  if(!project)return;renderComputerKeyboard();renderAudioOutput();const select=$('input-track'),previous=select.value;
   if([...select.options].map(o=>o.value+o.text).join('|')!==clipTracks().map(t=>t.id+t.name).join('|')){select.innerHTML=clipTracks().map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');if(clipTracks().some(t=>t.id===previous))select.value=previous;}
   if(previous&&!clipTracks().some(t=>t.id===previous))$('input-monitor').checked=false;
   if(armedInputTrack&&!clipTracks().some(t=>t.id===armedInputTrack))armedInputTrack=null;
@@ -919,7 +921,7 @@ function commitNewInput(clip,buffer,meta){
  selection={trackId:meta.trackId,clipId:clip.id};selectedRegion=result.regionId;regionSelection=new Set([result.regionId]);deviceTarget=meta.trackId;regionPasteTrack=meta.trackId;switchView('arrangement');render();changed();setStatus(`${clip.name} Saved To Arrangement At Beat ${meta.start+1}.`);
  return {clipId:clip.id,regionId:result.regionId,start:result.start,length:result.length};
 }
-async function enableInput(){if(busy)throw Error('Wait For The Current Operation To Finish.');if(inputActive())return;inputConnecting=true;renderTransport();try{await engine.prepareSamples();await engine.context.resume();liveNotes??=new LiveNotes(engine,message=>setStatus(message,true));if($('input-kind').value==='audio'){audioInput=await captureForContext(audioInput,engine.context);const capture=audioInput,monitorEngine=engine;engine.onMixersChanged=()=>{if(engine===monitorEngine&&audioInput===capture)syncInputMonitor();};capture.onDisconnected=()=>{if(audioInput!==capture)return;$('input-monitor').checked=false;$('input-status').textContent='Audio input disconnected. Finish processing the take, then select and enable an input.';renderInput();};$('input-monitor').checked=false;try{await capture.connect($('audio-device').value,$('audio-channels').value);}catch(error){$('input-status').textContent='Audio input not connected. Select an available device and enable input.';throw error;}await refreshAudioDevices().catch(()=>{});await refreshAudioOutputs().catch(()=>{});armedInputTrack=$('input-track').value;$('input-status').textContent='Audio input connected. Monitoring is off. Ready to record.';}else{armedInputTrack=$('input-track').value;keyboardEnabled=true;$('input-status').textContent='Keyboard enabled: A W S E D F T G Y H U J K · C4–C5, or drum notes 36–48. Click outside text fields to play.';}}finally{inputConnecting=false;renderTransport();}}
+async function enableInput(){if(busy)throw Error('Wait For The Current Operation To Finish.');if(inputActive())return;inputConnecting=true;renderTransport();try{await engine.prepareSamples();await engine.context.resume();liveNotes??=new LiveNotes(engine,message=>setStatus(message,true));if($('input-kind').value==='audio'){audioInput=await captureForContext(audioInput,engine.context);const capture=audioInput,monitorEngine=engine;engine.onMixersChanged=()=>{if(engine===monitorEngine&&audioInput===capture)syncInputMonitor();};capture.onDisconnected=()=>{if(audioInput!==capture)return;$('input-monitor').checked=false;$('input-status').textContent='Audio input disconnected. Finish processing the take, then select and enable an input.';renderInput();};$('input-monitor').checked=false;try{await capture.connect($('audio-device').value,$('audio-channels').value);}catch(error){$('input-status').textContent='Audio input not connected. Select an available device and enable input.';throw error;}await refreshAudioDevices().catch(()=>{});await refreshAudioOutputs().catch(()=>{});armedInputTrack=$('input-track').value;$('input-status').textContent='Audio input connected. Monitoring is off. Ready to record.';}else{armedInputTrack=$('input-track').value;keyboardEnabled=true;$('input-status').textContent='Keyboard Enabled · A–K Play Notes · Z/X Change Octave · C/V Change Velocity. Click Outside Text Fields To Play.';}}finally{inputConnecting=false;renderTransport();}}
 function observeAudioInput(meta){
  inputPending=true;inputCompletion=audioInput.completion.then(({clip,buffer,interrupted=false,warning})=>{
     clearCountIn();clearInterval(inputTimer);releaseNotes();if(meta.mode==='arrangement')endArrangementInput(engine);else if(engine.playing)engine.stop();const saved=commitNewInput(clip,buffer,meta);inputOutcome={...meta,action:'finish',status:'saved',...saved,quantized:false,...(interrupted?{interrupted:true,warning}:{})};$('input-status').textContent=interrupted?warning:audioInput?.connected?'Audio take saved. Input remains connected until Disconnect inputs.':'Audio take saved. Input disconnected; select and enable an input to record again.';if(interrupted)setStatus(warning,true);return inputOutcome;
@@ -1044,8 +1046,21 @@ $('input-use-marker').onclick=()=>{$('input-arrangement-start').value=String((en
 $('input-mode').onchange=()=>{if($('input-mode').value==='arrangement')$('input-use-marker').click();if($('input-mode').value==='overdub'&&$('input-kind').value!=='midi'){releaseInputs();$('input-kind').value='midi';}renderInput();renderOverdubPreview();};$('input-kind').onchange=()=>{releaseInputs();if($('input-kind').value==='audio'&&$('input-mode').value==='overdub')$('input-mode').value='new';renderInput();if($('input-kind').value==='audio')refreshAudioDevices().catch(()=>{});};
 $('midi-connect').onclick=run(async()=>{if(busy)throw Error('Wait For The Current Operation To Finish.');if(inputActive())return;inputConnecting=true;renderTransport();try{if(!navigator.requestMIDIAccess)throw new Error('Web MIDI is unavailable in this browser. Use the computer keyboard or a browser that supports Web MIDI.');await engine.prepareSamples();await engine.context.resume();liveNotes??=new LiveNotes(engine,message=>setStatus(message,true));midiAccess=await navigator.requestMIDIAccess({sysex:false});armedInputTrack=$('input-track').value;midiAccess.onstatechange=refreshMidi;refreshMidi();$('input-status').textContent=midiPort?'MIDI input connected. Sustain pedal (CC64) supported; recorded as held note lengths.':'MIDI permission granted. Connect a MIDI input device.';}finally{inputConnecting=false;renderTransport();}});
 $('midi-device').onchange=bindMidi;
-const keyboardCodes=['KeyA','KeyW','KeyS','KeyE','KeyD','KeyF','KeyT','KeyG','KeyY','KeyH','KeyU','KeyJ','KeyK'];
-document.addEventListener('keydown',e=>{if(!keyboardEnabled||e.repeat||e.metaKey||e.ctrlKey||e.altKey||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)||$('help-dialog').open)return;const i=keyboardCodes.indexOf(e.code);if(i>=0){e.preventDefault();const t=project.tracks.find(t=>t.id===(inputActive()?inputTarget:armedInputTrack));inputNote('on',e.code,(t?.instrument?.type==='drums'?36:60)+i,undefined,inputEventTime(engine.context,e.timeStamp));}});
+const keyboardCodes=COMPUTER_NOTE_KEYS;
+function computerKeyboardDrums(){return project?.tracks.find(t=>t.id===(inputActive()?inputTarget:armedInputTrack??$('input-track').value))?.instrument?.type==='drums';}
+function renderComputerKeyboard(){
+ const label=$('computer-keyboard-state');if(!label)return;label.textContent=computerKeyboard.describe(computerKeyboardDrums());
+ for(const button of document.querySelectorAll('[data-keyboard-control]'))button.disabled=!keyboardEnabled||busy||inputConnecting||inputFinishing;
+}
+function adjustComputerKeyboard(control){if(!keyboardEnabled||busy||inputConnecting||inputFinishing)return;computerKeyboard.adjust(control,computerKeyboardDrums());renderComputerKeyboard();setStatus('Computer Keyboard · '+computerKeyboard.describe(computerKeyboardDrums()));}
+for(const button of document.querySelectorAll('[data-keyboard-control]'))button.onclick=()=>adjustComputerKeyboard(button.dataset.keyboardControl);
+document.addEventListener('keydown',e=>{
+ const focused=document.activeElement,typing=focused?.isContentEditable||e.target?.isContentEditable||!!focused?.closest('input,textarea,select,[role="textbox"]')||!!e.target?.closest?.('input,textarea,select,[role="textbox"]');
+ const action=computerKeyAction(e,{enabled:keyboardEnabled&&!busy&&!inputConnecting&&!inputFinishing,typing,dialog:!!document.querySelector('dialog[open]'),menu:document.body.classList.contains('menu-open'),agent:!!focused?.closest('#studio-agent')});
+ if(!action)return;e.preventDefault();if(action.control){adjustComputerKeyboard(action.control);return;}
+ inputNote('on',e.code,computerKeyboard.base(computerKeyboardDrums())+action.note,computerKeyboard.velocity,inputEventTime(engine.context,e.timeStamp));
+});
+// Note-off must still arrive after focus, octave or modifier changes.
 document.addEventListener('keyup',e=>{if(liveNotes&&keyboardCodes.includes(e.code))inputNote('off',e.code,0,0,inputEventTime(engine.context,e.timeStamp));});
 window.addEventListener('blur',releaseNotes);
 
