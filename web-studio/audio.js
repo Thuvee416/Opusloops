@@ -181,7 +181,7 @@ export class Engine {
   stop(){this.halt(true);}
   pause(){this.halt(false);}
   async seek(position,{moveMarker=true,snap=true}={}){
-    if(this.recording||this.inputArrangement)throw new Error('Finish recording before seeking.');
+    if(this.recording||this.automationTake||this.inputOverdub||this.inputArrangement)throw new Error('Finish recording before seeking.');
     if(!Number.isFinite(position)||position<0||position>16384)throw new Error('Choose a position within the timeline.');
     const resume=this.playing||!!this.startPromise&&this.playRequestGeneration===this.playGeneration;this.pause();
     const next=snap?Math.round(position*4)/4:position;if(moveMarker)this.insertMarker=next;
