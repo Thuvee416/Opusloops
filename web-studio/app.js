@@ -1,5 +1,6 @@
 import {levelMeterMarkup,paintLevelMeter} from './level-meter.js';
 import {Autosave,installSaveExitGuard} from './autosave.js';
+import {ProjectStore} from './project-store.js';
 import {renderWavSnapshot} from './wav-delivery.js';
 import {inputMonitorRoute} from './input-monitor.js';
 import {projectSaveName,projectSaveFile,saveProjectVariant} from './project-save.js';
@@ -184,9 +185,12 @@ function demo(){const p=emptyProject();p.name='After hours';p.tracks=['Pocket dr
   add(3,1,'Night signals','midi',{notes:notes([76,72,71,69],.35)});add(3,2,'Last light','midi',{notes:notes([69,72,76,79],.6)});add(3,3,'Night signals','midi',{notes:notes([76,72,71,69],.35)});return p;
 }
 const dbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open('looproom-studio',1);request.onupgradeneeded=()=>request.result.createObjectStore('projects');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+const projectStore=new ProjectStore(dbPromise);
 
 const autosave=new Autosave({snapshot:()=>structuredClone(project),write:snapshot=>writeSets([['current',snapshot]]),canWrite:()=>!!engine&&!busy&&!engine.recording&&!engine.automationTake,onState:({dirty,error})=>{
- $('save-state').textContent=error?'Autosave Unavailable · Download A Project':engine?.recording||engine?.automationTake?'Recording · Save After Stop':dirty?'Saving Locally…':'Saved In This Browser';
+ if(error?.name==='ProjectConflictError'&&$('save-state').title!==error.message)setStatus(error.message,true);
+ $('save-state').textContent=error?.name==='ProjectConflictError'?'Saved In Another Tab · Download This Project':error?'Autosave Unavailable · Download A Project':engine?.recording||engine?.automationTake?'Recording · Save After Stop':dirty?'Saving Locally…':'Saved In This Browser';
+ $('save-state').title=error?.message??'';
 }});
 function persist(){clearTimeout(saveTimer);saveTimer=null;return autosave.flush().finally(()=>{if(autosave.dirty&&!autosave.error){clearTimeout(saveTimer);saveTimer=setTimeout(()=>persist().catch(()=>{}),600);}});}
 function scheduleSave(){clearTimeout(saveTimer);autosave.mark();saveTimer=setTimeout(()=>persist().catch(()=>{}),600);}
@@ -504,8 +508,8 @@ $('import').onclick=run(()=>{stopToEdit();importTarget=null;$('audio-file').clic
 // File-menu lifecycle commands retain one previous set in the same atomic write.
 const lifecycle=document.createElement('div');lifecycle.hidden=true;document.body.append(lifecycle);
 for(const id of ['new-set','save-default-set','reset-default-set','restore-previous-set','restore-session-start','save-template','open-templates','open-recents']){const button=document.createElement('button');button.id=id;lifecycle.append(button);}
-async function readSet(key){const db=await dbPromise;return new Promise((resolve,reject)=>{const r=db.transaction('projects').objectStore('projects').get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
-async function writeSets(entries,{signal}={}){const db=await dbPromise;signal?.throwIfAborted();await new Promise((resolve,reject)=>{const tx=db.transaction('projects','readwrite'),store=tx.objectStore('projects'),abort=()=>{try{tx.abort();}catch{}};signal?.addEventListener('abort',abort,{once:true});const clean=()=>signal?.removeEventListener('abort',abort);try{for(const [key,value] of entries)value===null?store.delete(key):store.put(value,key);}catch(error){clean();tx.abort();reject(error);return;}tx.oncomplete=()=>{clean();resolve();};tx.onabort=()=>{clean();reject(signal?.aborted?new DOMException('Project operation cancelled','AbortError'):tx.error||new Error('Could not save this set.'));};tx.onerror=()=>{clean();reject(tx.error);};});}
+async function readSet(key){return projectStore.read(key);}
+async function writeSets(entries,options){return projectStore.write(entries,options);}
 async function withSetLock(fn){if(busy)throw new Error('Wait for the current operation to finish.');stopToEdit();if(engine.recording||engine.automationTake)throw new Error('Stop recording first.');busy=true;renderTransport();clearTimeout(saveTimer);try{await autosave.settle();return await fn();}finally{busy=false;renderTransport();scheduleSave();}}
 const lifecycleRun=fn=>run(()=>withSetLock(fn));
 async function replaceSet(next,{signal,committed=()=>{},recentId}={}){
@@ -595,6 +599,7 @@ try{
  const saved=await loadSession({read:readSet,write:writeSets,validate:validateProject});
  install(saved.project||demo());
  if(saved.recovered)setStatus('Recovered your session-start backup because the current autosave could not be opened. Download a project copy to keep it.',true);
+ else if(saved.checkpointError?.name==='ProjectConflictError'){$('save-state').textContent='Saved In Another Tab · Download This Project';$('save-state').title=saved.checkpointError.message;setStatus(saved.checkpointError.message,true);}
  else if(saved.checkpointError)setStatus('Session restored, but its recovery backup could not be saved. Download a project copy.',true);
  else if(saved.project)setStatus('Restored your browser-local session. A session-start backup is available in File.');
 }catch(error){install(demo());$('save-state').textContent='Recovery unavailable · import a downloaded project';setStatus(error.message,true);}animate();

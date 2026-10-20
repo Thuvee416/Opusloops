@@ -37,11 +37,12 @@ test('actual project lock drains an older autosave before replacing the stored s
 });
 
 test('actual storage writer rejects an abort without an error event and leaves autosave dirty',async()=>{
- const {Autosave}=await api();let tx,stored;
- const db={transaction:()=>tx={objectStore:()=>({put:p=>stored=p}),error:null}},ctx={dbPromise:Promise.resolve(db),DOMException};
+ const {Autosave}=await api(),{ProjectStore}=await import('../web-studio/project-store.js');let tx,stored,request;
+ const db={transaction:()=>tx={objectStore:()=>({get:()=>request={result:null},put:(p,key)=>{if(key==='current')stored=p;}}),error:null}},projectStore=new ProjectStore(Promise.resolve(db),{createRevision:()=> 'revision'}),ctx={projectStore};
+ projectStore.loaded=true;
  vm.createContext(ctx);vm.runInContext(extract('async function writeSets(','\nasync function withSetLock'),ctx);
- const save=new Autosave({snapshot:()=>({name:'Song'}),write:p=>ctx.writeSets([['current',p]])});save.mark();const pending=save.flush();await tick();assert.equal(stored.name,'Song');tx.onabort();await assert.rejects(pending,/Could not save/);assert.equal(save.dirty,true);
- const retry=save.flush();await tick();tx.oncomplete();await retry;assert.equal(save.dirty,false);
+ const save=new Autosave({snapshot:()=>({name:'Song'}),write:p=>ctx.writeSets([['current',p]])});save.mark();const pending=save.flush();await tick();request.onsuccess();assert.equal(stored.name,'Song');tx.onabort();await assert.rejects(pending,/Could not save/);assert.equal(save.dirty,true);
+ const retry=save.flush();await tick();request.onsuccess();tx.oncomplete();await retry;assert.equal(save.dirty,false);
 });
 
 test('actual changed handler marks Undo dirty even when history has already moved',async()=>{
