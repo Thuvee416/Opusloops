@@ -1,0 +1,20 @@
+{
+  "version": "0.250.0",
+  "sourceBaseCommit": "406861931197a692d1b13958b38ee8411b7bd1df",
+  "checkedAt": "2026-10-20T23:51:58.857598+00:00",
+  "sourceTests": 967,
+  "sourceTestLogSha256": "58251bb4c99c791593db311db6c66cc1984bc942703ce8c7e0b132326d069608",
+  "reproductionLogSha256": "4b577797f5e6a53a572f0635cd0e70afc3a23fc06de3cdf94939654ad99492be",
+  "browserLogSha256": "0171da587975b87a8fb9ce00ccd24a1c4d3624a589e67f95b93b8edb40c4c71b",
+  "fileHashes": {
+    "web-studio/app.js": "352bf950b5f4abf1833517376c7f87f63fd5d87aaa1b365a6bd3c351af8acd5a",
+    "web-studio/release.json": "93376c7a22220b89de7bfd9861326aa31c9b26d53fdbe385b990070cc8490097",
+    "tests/warp-gesture.test.cjs": "f0676ca0289137591f4428d83646fd0a89afc1c6bbb9ea1e0be2e0a0b0232614",
+    "tests/warp-gesture-browser.cjs": "78de9b8b86a27037876cbee5b3bd65caad6f18191d2d601d1901c9fd0d60ffed",
+    "tests/fixtures/warp-gesture-browser-proof.json": "e4d1c5b842266e6620fa88b580bf5495b26138072e6d3dcf4ec0fb50e2b67d85",
+    "tests/autosave.test.cjs": "35db6aa770beee8ba91d2007d00ea19183cc0249a975d362848b5b8b10ede424",
+    "tests/playback-edit-lock.test.cjs": "dc5e30358cb399a6abf51b64ce8b95ffcb3a8138d67fe13aec6ebe5e0b2940e4",
+    "scripts/audit-core-browser.py": "cee5b33ecaab081ebcb46d8148594e1d35c8fcaaaf76db061c6ae695bf19e452"
+  },
+  "scope": "Full source suite plus focused isolated native Warp drag cancellation/history/reopen test with synthetic PCM. Controlled focus, visibility and pointer-cancel events; native capture loss. Backend unchanged; unrelated browser workflows not repeated."
+}
