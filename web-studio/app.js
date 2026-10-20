@@ -1,3 +1,4 @@
+import {WorkspaceResume} from './workspace-resume.js';
 import {createDemoSession} from './demo-session.js';
 import {levelMeterMarkup,paintLevelMeter} from './level-meter.js';
 import {Autosave,installSaveExitGuard} from './autosave.js';
@@ -181,6 +182,18 @@ function demo(){return createDemoSession();}
 
 const dbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open('looproom-studio',1);request.onupgradeneeded=()=>request.result.createObjectStore('projects');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
 const projectStore=new ProjectStore(dbPromise);
+const workspaceResume=new WorkspaceResume();let workspaceResumeReady=false,workspaceRememberedAt=0;
+function rememberWorkspace(force=false){
+ if(!workspaceResumeReady||!engine||busy||inputActive()||engine.startPromise||projectStore.recoveryRequired||(!force&&engine.playing))return;
+ const now=Date.now();if(!force&&now-workspaceRememberedAt<500)return;workspaceRememberedAt=now;
+ workspaceResume.save(projectStore.revision,{view,position:engine.beat(),marker:engine.insertMarker??0,viewport:currentViewport()});
+}
+function restoreWorkspace(state){
+ if(!state)return;engine.position=state.position;engine.insertMarker=state.marker;engine.mode=state.view;
+ $('timeline-start').value=state.viewport.start+1;$('timeline-bars').value=String(state.viewport.span/4);switchView(state.view);renderTransport();
+}
+window.addEventListener('pagehide',()=>rememberWorkspace(true));
+
 
 const autosave=new Autosave({snapshot:()=>structuredClone(project),write:snapshot=>writeSets([['current',snapshot]]),canWrite:()=>!!engine&&!busy&&!engine.recording&&!engine.automationTake,onState:({dirty,error})=>{
  if(['ProjectConflictError','ProjectRecoveryError'].includes(error?.name)&&$('save-state').title!==error.message)setStatus(error.message,true);
@@ -591,18 +604,19 @@ function animateLevelMeters(){
   paintLevelMeter(channel.querySelector('.meter'),running?meter?.read():null,track?.name??'Master');
  }
 }
-function animate(){if(engine){if(engine.recordingError)setStatus(engine.recordingError,true);if(engine.automationError){setStatus(engine.automationError,true);}animateDeviceAutomation();animateMixerAutomation();animateSessionFeedback();const beat=engine.beat();updatePosition();updateFollow(beat);const cursor=document.querySelector('.timeline-cursor');if(cursor){const timeline=$('timeline'),lane=timeline.querySelector('.timeline-ruler .timeline-lane'),bounds=lane.getBoundingClientRect(),origin=timeline.getBoundingClientRect();const v=currentViewport();cursor.style.left=(bounds.left-origin.left+timeline.scrollLeft+(beat-v.start)/v.span*bounds.width)+'px';cursor.style.display=beat>=v.start&&beat<v.end?'block':'none';const marker=timeline.querySelector('.timeline-insert-marker'),at=engine.insertMarker??0;if(marker){marker.style.left=(bounds.left-origin.left+timeline.scrollLeft+(at-v.start)/v.span*bounds.width)+'px';marker.style.display=at>=v.start&&at<v.end?'block':'none';const label='Insert Marker: Beat '+(at+1);if(marker.getAttribute('aria-label')!==label)marker.setAttribute('aria-label',label);}}for(const s of engine.records.values())s.length=Math.max(0,engine.rawBeat()-s.start);animateLevelMeters();}requestAnimationFrame(animate);}
+function animate(){rememberWorkspace();if(engine){if(engine.recordingError)setStatus(engine.recordingError,true);if(engine.automationError){setStatus(engine.automationError,true);}animateDeviceAutomation();animateMixerAutomation();animateSessionFeedback();const beat=engine.beat();updatePosition();updateFollow(beat);const cursor=document.querySelector('.timeline-cursor');if(cursor){const timeline=$('timeline'),lane=timeline.querySelector('.timeline-ruler .timeline-lane'),bounds=lane.getBoundingClientRect(),origin=timeline.getBoundingClientRect();const v=currentViewport();cursor.style.left=(bounds.left-origin.left+timeline.scrollLeft+(beat-v.start)/v.span*bounds.width)+'px';cursor.style.display=beat>=v.start&&beat<v.end?'block':'none';const marker=timeline.querySelector('.timeline-insert-marker'),at=engine.insertMarker??0;if(marker){marker.style.left=(bounds.left-origin.left+timeline.scrollLeft+(at-v.start)/v.span*bounds.width)+'px';marker.style.display=at>=v.start&&at<v.end?'block':'none';const label='Insert Marker: Beat '+(at+1);if(marker.getAttribute('aria-label')!==label)marker.setAttribute('aria-label',label);}}for(const s of engine.records.values())s.length=Math.max(0,engine.rawBeat()-s.start);animateLevelMeters();}requestAnimationFrame(animate);}
 timeSelection=installTimeSelection({timeline:$('timeline'),startInput:$('time-start'),lengthInput:$('time-length'),modeButton:$('time-select-mode'),readout:$('time-selection-status'),getView:currentViewport,getTrackIds:timeScopeIds,onPan:view=>{$('timeline-start').value=view.start+1;$('timeline-bars').value=String(view.span/4);renderTimeline();renderAutomation();},isLocked:()=>!engine||engine.playing||busy||inputActive()||!!gesture||!!clipMarquee?.enabled,onChange:()=>{updateLoopSelectionControl();updateEmptyMidiControl();},onStart:target=>{if(clipMarquee?.enabled)clipMarquee.disable();selectedRegion=null;if(target?.trackId){regionPasteTrack=target.trackId;deviceTarget=null;}updateRegionClipboardControls();suspendFollow();},onCommit:range=>{updateRegionClipboardControls();updateLoopSelectionControl();updateEmptyMidiControl();setStatus(`Selected beats ${range.start+1}–${range.start+range.length+1} for ${timeScopeLabel(timeScopeIds())}. Use Edit → Copy, Cut or Paste Time.`);}});
 try{
  const saved=await loadSession({read:readSet,write:writeSets,validate:validateProject});
  if(saved.recovered)projectStore.preserveUnreadable();
  install(saved.project||demo());
  if(!saved.project)showDemoArrangement();
+ else if(!saved.recovered)restoreWorkspace(workspaceResume.read(projectStore.revision));
  if(saved.recovered)setStatus('Recovered your session-start backup because the current autosave could not be opened. Download a project copy to keep it.',true);
  else if(saved.checkpointError?.name==='ProjectConflictError'){$('save-state').textContent='Saved In Another Tab · Download This Project';$('save-state').title=saved.checkpointError.message;setStatus(saved.checkpointError.message,true);}
  else if(saved.checkpointError)setStatus('Session restored, but its recovery backup could not be saved. Download a project copy.',true);
  else if(saved.project)setStatus('Restored your browser-local session. A session-start backup is available in File.');
-}catch(error){if(error.name==='ProjectRecoveryError')projectStore.protectUnreadable();install(demo());$('save-state').textContent=projectStore.recoveryRequired?'Autosave Paused · Recovery Needed':'Recovery unavailable · import a downloaded project';setStatus(error.message,true);}animate();
+}catch(error){if(error.name==='ProjectRecoveryError')projectStore.protectUnreadable();install(demo());$('save-state').textContent=projectStore.recoveryRequired?'Autosave Paused · Recovery Needed':'Recovery unavailable · import a downloaded project';setStatus(error.message,true);}workspaceResumeReady=true;animate();
 
 function updateHistory(){if(!history||!engine)return;$('undo').disabled=!history.past.length||engine.playing||inputActive()||busy;$('redo').disabled=!history.future.length||engine.playing||inputActive()||busy;historyView?.refresh();}
 function moveStudioHistory(action,steps=1,prepared=null){

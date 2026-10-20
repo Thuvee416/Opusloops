@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "before": {
+    "view": "arrangement",
+    "position": "13.5",
+    "start": "17",
+    "bars": "8",
+    "name": "Resume Test",
+    "playing": "false"
+  },
+  "after": {
+    "view": "arrangement",
+    "position": "13.5",
+    "start": "17",
+    "bars": "8",
+    "name": "Resume Test",
+    "playing": "false"
+  },
+  "projectUnchanged": true,
+  "different": {
+    "view": "session",
+    "position": "1",
+    "start": "1",
+    "bars": "16",
+    "name": "Different Set",
+    "playing": "false"
+  },
+  "errors": [],
+  "scope": "Isolated native Chromium browser storage and actual app controls/reload; no original user project, physical playback, or private-browser quota proof."
+}
