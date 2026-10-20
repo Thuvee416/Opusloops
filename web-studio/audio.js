@@ -126,7 +126,19 @@ export class Engine {
   rawBeat(){if(!this.playing)return this.position;const raw=Math.max(this.clockStart,(this.context.currentTime-this.origin)/(60/this.project.bpm));return this.inputArrangement?Math.min(raw,this.inputArrangement.start+this.inputArrangement.maxBeats):raw;}
   playbackTransport(){return this.inputArrangement?{...this.project.transport,loopEnabled:false}:this.project.transport;}
   beat(){return this.playing?timelineBeat(this.rawBeat(),this.playbackTransport(),this.mode):this.position;}
-  async play(mode=this.mode,{onReady,delayBeats=0}={}){
+  async play(mode=this.mode,options={}){
+    const {signal}=options;signal?.throwIfAborted();
+    const generation=this.playGeneration,interest={};this.playInterests??=new Map();
+    let interests=this.playInterests.get(generation);if(!interests){interests=new Set();this.playInterests.set(generation,interests);}interests.add(interest);
+    // Startup can be shared by independent launches. Abort may stop it only
+    // after every caller has withdrawn, never while a newer Play still owns it.
+    const abort=()=>{interests.delete(interest);if(!interests.size&&this.playGeneration===generation&&!this.playing)this.stop();};
+    signal?.addEventListener('abort',abort,{once:true});
+    try{await this.startPlayback(mode,options);signal?.throwIfAborted();}
+    catch(error){signal?.throwIfAborted();throw error;}
+    finally{signal?.removeEventListener('abort',abort);interests.delete(interest);if(!interests.size&&this.playInterests.get(generation)===interests)this.playInterests.delete(generation);}
+  }
+  async startPlayback(mode=this.mode,{onReady,delayBeats=0}={}){
     if(!Number.isFinite(delayBeats)||delayBeats<0||delayBeats>16)throw Error('Invalid Playback Count-In.');
     if(this.playing)return;
     const generation=this.playGeneration;this.playRequestGeneration=generation;
@@ -217,14 +229,44 @@ export class Engine {
     try{
       await this.prepare();signal?.throwIfAborted();if(!this.launchCurrent(binding,trackId))return {events:[],interrupted:true};
       if(this.launchLoads.get(trackId)===loadingRequest)this.launchLoads.delete(trackId);
-      const receipt=await this.launchPrepared(trackId,clipId,slot,{action});if(!this.launchCurrent(binding,trackId))receipt.interrupted=true;return receipt;
+      const receipt=await this.launchPrepared(trackId,clipId,slot,{action,signal});if(!this.launchCurrent(binding,trackId))receipt.interrupted=true;return receipt;
     }finally{if(this.launchLoads.get(trackId)===loadingRequest)this.launchLoads.delete(trackId);}
   }
-  async launchPrepared(trackId,clipId,slot,{action:requestedAction}={}){
+  async playSessionSelection(trackIds,activate,{signal,sceneRequest}={}){
+    const generation=this.playGeneration,previous=new Map(trackIds.map(id=>[id,{active:this.active.get(id),follow:this.follows.get(id),override:this.overrides.has(id)}]));
+    const sceneFields=['activeScene','sceneActivationBeat','sceneFollow','sceneFollowSignature'],sceneBefore=Object.fromEntries(sceneFields.map(key=>[key,this[key]]));
+    activate();const owned=new Map(trackIds.map(id=>[id,this.active.get(id)]));this.sessionSelectionOwners??=new WeakMap();
+    for(const [id,a]of owned)this.sessionSelectionOwners.set(a,{previous:previous.get(id),withdrawn:false});
+    const sceneOwner=sceneRequest?{previous:sceneBefore,parent:this.sessionSceneOwner,withdrawn:false}:null;if(sceneOwner)this.sessionSceneOwner=sceneOwner;
+    const rollback=()=>{
+      if(this.playing||this.playGeneration!==generation)return;
+      if(sceneOwner)sceneOwner.withdrawn=true;
+      for(const a of owned.values())this.sessionSelectionOwners.get(a).withdrawn=true;
+      for(const [id,a]of owned)if(this.active.get(id)===a){
+        let old=previous.get(id),owner;
+        // A failed replacement must not resurrect another withdrawn launch.
+        while(old.active&&(owner=this.sessionSelectionOwners.get(old.active))?.withdrawn)old=owner.previous;
+        if(old.active)this.active.set(id,old.active);else this.active.delete(id);if(old.follow)this.follows.set(id,old.follow);else this.follows.delete(id);if(!old.override)this.overrides.delete(id);
+      }
+      if(sceneOwner&&this.sessionSceneOwner===sceneOwner&&this.sceneLaunchRequest===sceneRequest){
+        let state=sceneOwner.previous,parent=sceneOwner.parent;
+        while(parent?.withdrawn){state=parent.previous;parent=parent.parent;}
+        Object.assign(this,state);this.sessionSceneOwner=parent;this.sceneLaunchRequest=null;
+      }
+      this.changed();
+    };
+    // Restore only this unsounded selection, before Play's abort listener
+    // cancels unowned startup. Newer selections and scheduled audio survive.
+    signal?.addEventListener('abort',rollback,{once:true});
+    try{await this.play(this.mode,{signal});for(const a of owned.values())this.sessionSelectionOwners.delete(a);if(sceneOwner&&this.sessionSceneOwner===sceneOwner)this.sessionSceneOwner=null;}
+    catch(error){rollback();throw error;}
+    finally{signal?.removeEventListener('abort',rollback);}
+  }
+  async launchPrepared(trackId,clipId,slot,{action:requestedAction,signal}={}){
     const clip=this.project.clips[clipId],toggle=clip?.launch?.mode==='toggle',action=requestedAction??(this.playing&&toggle?toggleLaunchAction(clipId,this.mode==='session'||this.overrides.has(trackId)?this.active.get(trackId):null,this.pending.get(trackId)):'start');
     if(action==='cancel'){this.pending.delete(trackId);this.changed();return {events:[],cancelled:true};}
     const selected=action==='stop'?null:clipId;
-    if(!this.playing){const beat=this.position;this.activateClip(trackId,selected,beat,clip?.launch?.legato,slot);if(selected)await this.play(this.mode);else this.changed();return {events:[{trackId,event:{clipId:selected,beat,appliedBeat:beat}}]};}
+    if(!this.playing){const beat=this.position,activate=()=>this.activateClip(trackId,selected,beat,clip?.launch?.legato,slot);if(selected)await this.playSessionSelection([trackId],activate,{signal});else{activate();this.changed();}return {events:[{trackId,event:{clipId:selected,beat,appliedBeat:beat}}]};}
     const event={clipId:selected,beat:this.launchBoundary(clipId),legato:clip?.launch?.legato??false,...(toggle?{toggleSource:clipId}:{}),...(slot===undefined?{}:{slot})};
     this.pending.set(trackId,event);this.changed();return {events:[{trackId,event}]};
   }
@@ -243,9 +285,11 @@ export class Engine {
     if(!members.some(t=>this.launchCurrent(binding,t.id))||requested.length&&!targets.length)return {events:[],interrupted:true};
     const ownsScene=!groupId&&this.sceneLaunchRequest===sceneRequest;const receipt={events:[],...(interrupted||!groupId&&!ownsScene?{interrupted:true}:{})};
     if(!this.playing){
-      const beat=this.position;if(ownsScene){this.activeScene=index;this.sceneActivationBeat=beat;this.armSceneFollow(index,beat);receipt.scene={index,beat,appliedBeat:beat};}
-      for(const t of targets){const clipId=t.slots[index];this.activateClip(t.id,clipId,beat,this.project.clips[clipId]?.launch?.legato,index);receipt.events.push({trackId:t.id,event:{clipId,beat,appliedBeat:beat}});}
-      await this.play(this.mode);
+      const beat=this.position;
+      await this.playSessionSelection(targets.map(t=>t.id),()=>{
+        if(ownsScene){this.activeScene=index;this.sceneActivationBeat=beat;this.armSceneFollow(index,beat);receipt.scene={index,beat,appliedBeat:beat};}
+        for(const t of targets){const clipId=t.slots[index];this.activateClip(t.id,clipId,beat,this.project.clips[clipId]?.launch?.legato,index);receipt.events.push({trackId:t.id,event:{clipId,beat,appliedBeat:beat}});}
+      },{signal,...(ownsScene?{sceneRequest}:{})});
     }else{
       const earliest=Math.max(this.rawBeat()+.02,this.nextBeat);if(ownsScene)receipt.scene=this.pendingScene={index,beat:this.launchBoundary(null,earliest)};
       for(const t of targets){const clipId=t.slots[index],event={clipId,beat:this.launchBoundary(clipId,earliest),legato:this.project.clips[clipId]?.launch?.legato??false,slot:index};this.pending.set(t.id,event);receipt.events.push({trackId:t.id,event});}
@@ -325,7 +369,7 @@ export class Engine {
     if(this.recording){for(const s of this.project.arrangement)s.length=Math.min(s.length,Math.max(0,beat-s.start));this.project.arrangement=this.project.arrangement.filter(s=>s.length>=.0625);}
   }
   back(){this.cancelLaunchPreparation(this.project.tracks.map(t=>t.id));this.cancelSceneFollow();this.gateHolds.clear();if(!this.playing){this.overrides.clear();this.active.clear();this.follows.clear();this.changed();return;}const beat=this.launchBoundary(null);for(const t of this.project.tracks)this.pending.set(t.id,{back:true,beat});this.changed();}
-  cancelSceneFollow(){this.sceneLaunchRequest=null;this.activeScene=null;this.sceneActivationBeat=null;this.pendingScene=null;this.sceneFollow=null;this.sceneFollowSignature=undefined;}
+  cancelSceneFollow(){this.sceneLaunchRequest=null;this.sessionSceneOwner=null;this.activeScene=null;this.sceneActivationBeat=null;this.pendingScene=null;this.sceneFollow=null;this.sceneFollowSignature=undefined;}
   armSceneFollow(index,beat){
     const f=this.project.sceneFollows?.[index];this.sceneFollowSignature=JSON.stringify(f);this.sceneFollow=null;
     if(this.project.transport.followActionsEnabled!==false&&f?.enabled)this.sceneFollow={index,beat:beat+f.beats};
