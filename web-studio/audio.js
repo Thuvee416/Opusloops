@@ -58,7 +58,7 @@ export class Engine {
       }
     }
     // A denied resume keeps the complete graph available for the next user gesture.
-    if(resume)await this.context.resume();
+    if(resume){const context=this.context;await this.routeOutput?.(context);if(context!==this.context||context.state==='closed')throw Error('Audio Startup Was Cancelled.');await context.resume();}
   }
   channels(){return automationChannels(this.project);}
   mixer(id){return this.mixers?.get(id)||this.returnMixers?.get(id);}

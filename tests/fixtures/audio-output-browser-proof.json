@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "result": {
+    "supported": true,
+    "value": "",
+    "disabled": false,
+    "monitor": false,
+    "status": "Output Selection Applies To This Tab. Additional Devices Depend On Browser Permission.",
+    "playing": "false",
+    "native": {
+      "sinkId": "",
+      "state": "running"
+    }
+  },
+  "errors": [],
+  "scope": "Isolated Chromium app startup, actual default-output control and native AudioContext default routing. No microphone permission, physical output switch or user project accessed."
+}

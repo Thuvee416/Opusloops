@@ -53,3 +53,8 @@ test('constructor and monitoring errors remain retryable without mutating projec
  await installed(()=>failed,async()=>{await assert.rejects(e.init(),/Monitor Unavailable/);assert.equal(e.context,null);cleaned(failed);assert.equal(e.sampleBuffers,cache);assert.equal(cache.get('existing').sentinel,true);assert.deepEqual(p,before);});
  e.onMixersChanged=null;const fresh=context();await installed(()=>fresh,async()=>{await e.init(false);assert.equal(e.mixers.size,1);assert.deepEqual(p,before);});
 });
+
+test('output routing completes before resume; failures retain the graph for retry and silent init bypasses routing',async()=>{
+ const t=await api(),ctx=context(),e=new t.Engine(t.emptyProject(),()=>{});let fail=true,routes=0;e.routeOutput=async target=>{routes++;assert.equal(target,ctx);assert.equal(ctx.resumes,0);if(fail)throw Error('Output Unavailable');};
+ await installed(()=>ctx,async()=>{await e.init(false);assert.equal(routes,0);const graph=e.mixGraph;await assert.rejects(e.init(),/Output Unavailable/);assert.equal(ctx.resumes,0);assert.equal(e.mixGraph,graph);fail=false;await e.init();assert.equal(ctx.resumes,1);assert.equal(routes,2);assert.equal(e.mixGraph,graph);});
+});

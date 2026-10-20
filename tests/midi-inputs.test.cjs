@@ -6,7 +6,7 @@ async function setup(){
  const sustain=new api.MidiSustain((type,key,pitch,velocity,time)=>{time??=clock.currentTime;emitted.push({type,key,pitch,time});if(type==='on')take.on(key,pitch,velocity,time);else take.off(key,time,velocity);});
  let resets=0;const reset=sustain.reset.bind(sustain);sustain.reset=()=>{resets++;reset();};
  const ctx={midiInputChoices:api.midiInputChoices,midiAccess:{inputs:new Map([[a.id,a],[b.id,b]])},midiPort:null,midiInputName:'MIDI Input',midiSustain:sustain,engine:{context:clock},decodeMidi:api.decodeMidi,inputEventTime:api.inputEventTime,inputActive:()=>true,$:id=>id==='midi-device'?select:status,esc:s=>s.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')};
- vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('function bindMidi(){'),source.indexOf('\nasync function refreshAudioDevices()')),ctx);ctx.refreshMidi();
+ vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('function bindMidi(){'),source.indexOf('\nfunction audioOutputSupported()')),ctx);ctx.refreshMidi();
  const send=(port,bytes,time)=>{clock.currentTime=time;port.onmidimessage?.({data:bytes,timeStamp:0});};
  return {...api,ctx,a,b,select,status,clock,take,sustain,send,emitted,resets:()=>resets};
 }
@@ -75,7 +75,7 @@ test('the actual input-note bridge releases monitoring and updates both new take
  const t=await setup(),{MidiOverdub}=await import('../web-studio/midi-overdub.js'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),source=fs.readFileSync(path.join(__dirname,'../web-studio/app.js'),'utf8');
  for(const overdub of [false,true]){
   const original={id:'loop',kind:'midi',name:'Existing',beats:4,sourceBpm:120,notes:[{pitch:48,start:0,duration:.5,velocity:.7}]},take=overdub?new MidiOverdub(original,120,0):new t.MidiTake(120,0),monitor=new Map(),released=[],clock={currentTime:0};
-  const ctx={MidiOverdub,midiTake:take,inputConnecting:false,inputFinishing:false,inputStarted:0,inputTarget:'track',armedInputTrack:'track',inputActive:()=>true,engine:{context:clock},updateOverdubPlayback(){},renderOverdubPreview(){},liveNotes:{on(key,pitch){monitor.set(key,pitch);},off(key,velocity){released.push({pitch:monitor.get(key),velocity});monitor.delete(key);}}};
+  const ctx={MidiOverdub,midiTake:take,busy:false,inputConnecting:false,inputFinishing:false,inputStarted:0,inputTarget:'track',armedInputTrack:'track',inputActive:()=>true,engine:{context:clock},updateOverdubPlayback(){},renderOverdubPreview(){},liveNotes:{on(key,pitch){monitor.set(key,pitch);},off(key,velocity){released.push({pitch:monitor.get(key),velocity});monitor.delete(key);}}};
   vm.createContext(ctx);const start=source.indexOf('function inputNote(');vm.runInContext(source.slice(start,source.indexOf('\n',start)),ctx);
   const sustain=new t.MidiSustain((...args)=>ctx.inputNote(...args)),send=(data,time)=>{clock.currentTime=time;sustain.handle(t.decodeMidi(data),time);};
   send([144,60,100],.1);send([145,67,90],.2);send([176,64,127],.3);send([176,123,0],.4);
