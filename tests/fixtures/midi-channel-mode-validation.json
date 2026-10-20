@@ -1,0 +1,19 @@
+{
+  "version": "0.248.0",
+  "sourceBaseCommit": "cd09a37f45f12362be4c3124422cd52187e87941",
+  "checkedAt": "2026-10-20T23:32:00.505757+00:00",
+  "sourceTests": 955,
+  "sourceTestLogSha256": "688150180d129a97ac2506d6c97a3cff42929b30c8b8893648a9e685925f4783",
+  "fileHashes": {
+    "web-studio/index.html": "9d21047b1f6f3ebaede08922ba16a3ec49633c00d4604014d5ab98027367af0e",
+    "web-studio/midi-file.js": "ef20969831697aada08f156ea9979859c9bb077983cca7d2d93f38e24d8f96ef",
+    "web-studio/midi-file-releases.js": "4f589fcdc4ea7bc69b2ad3778c01b07ef6562f228fe9e3ff512b28d1c590da9a",
+    "web-studio/release.json": "d1ac279221f839684dd493cfe1f22a12ad0eac4a25e7a46fc3da93eb181b7572",
+    "tests/midi-file-channel-mode.test.cjs": "ee14e630389a74bf673e6063aadf410f5535dd0d886c040a1ef6cdad0842fa52",
+    "tests/midi-channel-mode-browser.cjs": "e5186db96459cafbf39f0f8f004d80f5ab914df52d2b618a9ea6130f5af6e907",
+    "tests/midi-reset-import-browser.cjs": "19f82209829928b880dba2742b305d78e9cd5c4ec2dc1764e90db34e560af38f",
+    "tests/fixtures/midi-channel-mode-browser-proof.json": "693a9f1951653e271b2e2298d387cb5671cd4ed75079d56df4dc993d742378a3",
+    "tests/fixtures/midi-channel-mode-reset-regression-proof.json": "3176663076979475040762f86cfb339dcbcf5491608c9f9008b74d1e1066822e"
+  },
+  "scope": "Full source suite plus two native import/history/reopen/Odesa/audio/export cases. Other browser workflows and backend suite not repeated; no backend runtime change."
+}
