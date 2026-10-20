@@ -44,6 +44,35 @@
     "lengthShiftExact": true,
     "unselectedNotePreserved": true
   },
+  "delivery": {
+    "clipMidi": {
+      "format": 0,
+      "noteCount": 2
+    },
+    "arrangementMidi": {
+      "format": 1,
+      "noteCount": 2
+    },
+    "ticksPerBeat": 960,
+    "exactNoteEvents": true,
+    "inactiveNoteOmitted": true,
+    "releaseVelocityPreserved": true,
+    "wavFrames": 176400,
+    "audioWindows": {
+      "before": 0,
+      "extendedNote": 0.040929284538013505,
+      "afterNote": 0,
+      "inactiveNote": 0,
+      "untouchedNote": 0.05729968845850685,
+      "ending": 0
+    },
+    "pitchesHz": [
+      522.2222222222223,
+      394.99999999999966
+    ],
+    "projectReopenExact": true,
+    "midiAndWavReopenExact": true
+  },
   "errors": [],
-  "scope": "Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact project/history checks. Selected-note resize, repeated arrow nudge, separate key press, octave shift and length adjustment preserve the unselected note and support exact Undo. Synthetic MIDI; no personal project, input device or model calls."
+  "scope": "Isolated actual application mouse note move, resize, velocity and Shift-marquee cancellation with Escape; exact project/history checks. Selected-note resize, repeated arrow nudge, separate key press, octave shift and length adjustment preserve the unselected note and support exact Undo. Edited clip and Arrangement MIDI downloads preserve exact note events, inactive-note omission and release velocity. Native track WAV confirms edited pitch/length and silence around active notes; all three exports are byte-identical after project reopen. Synthetic MIDI; no personal project, input device or model calls."
 }
