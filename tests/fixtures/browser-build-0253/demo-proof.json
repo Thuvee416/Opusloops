@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "startup": {
+    "name": "Midnight Circuit",
+    "arrangementVisible": true,
+    "status": "Midnight Circuit · 18.5 Seconds · Press Play. Every Track, Note And Effect Is Editable."
+  },
+  "errors": [],
+  "factorySounds": 15,
+  "savedProjectPreserved": true,
+  "metrics": {
+    "seconds": 18.46154195011338,
+    "peakDB": -2.9226808252882446,
+    "rmsDB": -18.251461387747547,
+    "sideToMid": 0.23425947416661833,
+    "correlation": 0.89598692269007,
+    "blockEnergy": [
+      3179.808121407907,
+      3054.14623159497,
+      2841.6247050776287,
+      2338.4425934999426,
+      2660.779523803928,
+      2277.9636745212215,
+      2364.119743069907,
+      2658.165831050628,
+      2578.451012397737,
+      401.62664492934044
+    ]
+  },
+  "scope": "Native headless Chromium Web Audio, fresh isolated storage, full Arrangement render and preset library. No human listening or mobile audio assessment."
+}

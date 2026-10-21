@@ -1,0 +1,43 @@
+{
+  "version": "0.253.0",
+  "sourceBaseCommit": "2861c42b534a8d7bad98e7b427d4173e9a2f1c57",
+  "checkedAt": "2026-10-21T00:34:37.485448+00:00",
+  "sourceTests": 983,
+  "browserWorkflows": [
+    "Arrangement Gesture Cancellation",
+    "Touch Editing (Three Viewports)",
+    "Demo Audio And Saved-Project Preservation"
+  ],
+  "logs": {
+    "opus-0253-source.log": "b651294abac4f8d3b3f2df1163a52f983dc4c9f41a45969a00374c8b56513b4c",
+    "opus-0253-before.log": "aff0182c3a9ac0fcc781db816e2c3cd98eb873a4c3dc67192c9abc819071986d",
+    "opus-0253-browser.log": "f785ed46d478f8b334b0a75be3bd098a9a8c468995d930d812ee95fe8383fd6d",
+    "opus-0253-touch-final.log": "0692a0f050fb07133d9bcdd5bcb59e240cfe7a9c6cd073857b471df29d37fa9e",
+    "opus-0253-demo.log": "d451a9bc13e9c978ab5629a4730fddb9b907d98e641d2087bf3fb2d26a0ff694",
+    "opus-0253-loudness.log": "139e9dd814e1210d4987a7ac51442f7e28e5b697e2176218b474089a5b0642cb"
+  },
+  "fileHashes": {
+    "web-studio/app.js": "02f675e56c29fbe4a8d4ecef91fa1c880800daa813d446b9328fb9e6d8d6629e",
+    "web-studio/release.json": "9d748d5e3b94acd5ff1010589a0609fe76841e15baeb8d08ffdf0604588ea66c",
+    "tests/region-gesture-cancel.test.cjs": "34ae9ea02f4264fb27fb9f767e6a7b0b64712b93c1f7a15bd09c46e37928ba57",
+    "tests/region-gesture-browser.cjs": "c79d5bb33e6b54c5f8d815dcdcc94d5ab694cdbd742329a58e2208465d474f46",
+    "tests/autosave.test.cjs": "52e593259d2f9df6c427f1c853b5a2d663bc25a28edff9ab6088df819fb20f38",
+    "tests/fixtures/region-gesture-browser-proof.json": "2493b3db46f3d1afd4d0a173d8e9e99f9838cf34d3a178d39c66ce9e936e39e9",
+    "scripts/audit-core-browser.py": "14b515a88dd70b95c6dbbe81827bc73435e866795e9f689923b7024d7a4d0f37",
+    "web-studio/demo-session.js": "3360cb2ee805f1a9e0b5df2091f7a29c2002f24d428ed97586cdb69e6d04aef5",
+    "web-studio/factory-sounds.js": "902269390490ef2a13fd90c9499efbcdc2dd727d803e4ec8d03b413e181490e6",
+    "web-studio/instruments.js": "87fbf0cb82b7864511383938e335205d1791897787d02e5364bd2bd0da608eb6",
+    "web-studio/ensemble-voice.js": "0d20ec02f57643586ea5f6064cd5acabbb6ada16b3945b8f8d3747c90c88e384",
+    "web-studio/studio-effects.js": "a98e37ea583d0e7236fbbda8cab4ca7ef0f1d0a27dffcdb03c93bbb9d878e82e",
+    "web-studio/studio-drums.js": "d611b3879c409e953accfe2f4f610fef5393c946b3c754adceae5c4063b3732e",
+    "tests/demo-session-audio.cjs": "3616d2ff825739f6b9091ede9f9eb0fa07782769faca27aa426350c48f00adb8",
+    "tests/touch-editing-browser.cjs": "a04b139e8940f5d3a9f5d347d664026d0825a6c0432427b934e8079db33a0345",
+    "tests/fixtures/browser-build-0253/touch-editing-proof.json": "3b205eab1a00c74e89d4bf68b083abdf6c377e540d4e6f3148b96e24444c527d",
+    "tests/fixtures/browser-build-0253/demo-proof.json": "d451a9bc13e9c978ab5629a4730fddb9b907d98e641d2087bf3fb2d26a0ff694"
+  },
+  "demoLoudness": {
+    "integratedLUFS": -17,
+    "truePeakDBFS": -1.5
+  },
+  "scope": "Isolated local Chromium and source tests. Existing richer demo verified, not a new composition. No personal project, microphone, live provider, physical device or perceptual-quality acceptance. Initial touch run invalidated by release-marker update; final unchanged-file run passed. Backend unchanged."
+}
