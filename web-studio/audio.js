@@ -1,4 +1,5 @@
 import {DEVICE_TYPES,validateDevices} from './devices.js';
+import {prunePlaybackBuffers} from './playback-sources.js';
 import {sampleKey,instrumentSamples,prepareInstrumentSamples,samplePreparationBinding,samplesStillCurrent,installInstrumentSamples} from './sample-preparation.js';
 import {createStereoMeter} from './level-meter.js';
 import {InputClickClock,metronomeAudible,metronomeLevel} from './metronome.js';
@@ -114,8 +115,26 @@ export class Engine {
   get preparing(){return (this.preparationCount??0)>0;}
   async prepare({resume=true}={}){
     this.preparationCount=(this.preparationCount??0)+1;
-    try{await this.prepareSamples({resume});this.instrumentTail=voiceTail(this.project,(id,pitch)=>this.sampleBuffer(id,pitch));const legacyMidi=new Set(this.project.tracks.filter(t=>!t.instrument).flatMap(t=>[...t.slots,...this.project.arrangement.filter(r=>r.trackId===t.id).map(r=>r.clipId)]));for(const clip of Object.values(this.project.clips)){if(clip.kind==='midi'&&!legacyMidi.has(clip.id)){this.buffers.delete(clip.id);continue;}await this.prepareClip(clip);}const used=new Set();for(const t of this.project.tracks){if(!t.midiEffects?.length)continue;const ids=new Set([...t.slots,...this.project.arrangement.filter(r=>r.trackId===t.id).map(r=>r.clipId)]);for(const id of ids){const clip=this.project.clips[id];if(clip?.kind!=='midi')continue;const effective=processMidiClip(clip,t.midiEffects,this.project.bpm);if(t.instrument)continue;const key=JSON.stringify([t.id,id]),version=JSON.stringify([this.project.bpm,effective]);used.add(key);if(this.midiBuffers.get(key)?.version!==version)this.midiBuffers.set(key,{version,buffer:synthesize(this.context,effective,this.project.bpm)});}}for(const key of this.midiBuffers.keys())if(!used.has(key))this.midiBuffers.delete(key);}
-    finally{this.preparationCount--;}
+    try{
+      await this.prepareSamples({resume});this.instrumentTail=voiceTail(this.project,(id,pitch)=>this.sampleBuffer(id,pitch));
+      const sources=prunePlaybackBuffers(this),used=new Set([...sources.values()].flatMap(ids=>[...ids]));
+      const legacyMidi=new Set(this.project.tracks.filter(t=>!t.instrument).flatMap(t=>[...sources.get(t.id)]));
+      for(const id of used){const clip=this.project.clips[id];if(!clip)continue;if(clip.kind==='midi'&&!legacyMidi.has(id)){this.buffers.delete(id);continue;}await this.prepareClip(clip);}
+      for(const t of this.project.tracks){
+        if(!t.midiEffects?.length)continue;
+        for(const id of sources.get(t.id)??[]){
+          const clip=this.project.clips[id];if(clip?.kind!=='midi')continue;
+          const effective=processMidiClip(clip,t.midiEffects,this.project.bpm);if(t.instrument)continue;
+          const key=JSON.stringify([t.id,id]),version=JSON.stringify([this.project.bpm,effective]);
+          if(this.midiBuffers.get(key)?.version!==version)this.midiBuffers.set(key,{version,buffer:synthesize(this.context,effective,this.project.bpm)});
+        }
+      }
+    }finally{
+      // A cancelled or superseded load can finish after its placement vanished.
+      // Re-read current reachability so it cannot retain irrelevant cache memory
+      // or evict a clip acquired by a newer concurrent preparation.
+      prunePlaybackBuffers(this);this.preparationCount--;
+    }
   }
   rawBeat(){if(!this.playing)return this.position;const raw=Math.max(this.clockStart,(this.context.currentTime-this.origin)/(60/this.project.bpm));return this.inputArrangement?Math.min(raw,this.inputArrangement.start+this.inputArrangement.maxBeats):raw;}
   playbackTransport(){return this.inputArrangement?{...this.project.transport,loopEnabled:false}:this.project.transport;}

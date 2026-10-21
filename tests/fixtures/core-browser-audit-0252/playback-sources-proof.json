@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "first": {
+    "prepared": [
+      "retained",
+      "used"
+    ],
+    "cached": [
+      "retained",
+      "used"
+    ]
+  },
+  "trimmed": {
+    "prepared": [
+      "used"
+    ],
+    "cached": [
+      "used"
+    ],
+    "retained": true
+  },
+  "unusedInvalidAudioCannotBlockPlayback": true,
+  "undoRepreparesRestoredSource": true,
+  "saveUndoRedoReloadExact": true,
+  "audio": {
+    "error": 0,
+    "peak": 0.06033947691321373,
+    "retainedSources": true
+  },
+  "errors": [],
+  "scope": "Isolated Chromium with synthetic PCM and an unreferenced undecodable source. Actual Session launch and Arrangement deletion/Undo/Redo, project downloads, reload and native WAV rendering. Memory-budget and concurrent-preparation cases are source-level tests; no personal project, microphone, model or physical-device check."
+}

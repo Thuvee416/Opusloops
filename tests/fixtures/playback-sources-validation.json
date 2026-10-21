@@ -1,0 +1,21 @@
+{
+  "version": "0.252.0",
+  "sourceBaseCommit": "3215126ade1e019e98b8ab3eaae7e9bcf9b12de9",
+  "checkedAt": "2026-10-21T00:19:26.449877+00:00",
+  "sourceTests": 979,
+  "browserCases": 42,
+  "sourceTestLogSha256": "729f646e71562964dfc030f474d092dfc15179d6e5f3ba61058cbafb9024a2a3",
+  "nativeReproductionLogSha256": "bda5e1467c05b50d4e2cf13b28a88abc03c61bf933874015661409b4fc1afac3",
+  "fileHashes": {
+    "web-studio/audio.js": "a815f66f67c282f422bb0d7e5db4be45a21dce7e2358ab5a5fac4a2378f0808a",
+    "web-studio/playback-sources.js": "b87819ea1449087eeaeddce8700eb3f51ac9f8ca919de991991ea5ce41a57c97",
+    "web-studio/release.json": "d6fa57e0de0b9ceec118b5ea200c8314d79bfe3ff0b40ea6ed7dfbe39382ff9e",
+    "tests/playback-sources.test.cjs": "8010f05307b336c7e1bd4005ccde6a113e676ae17c134c679eca7a0cdd7253b7",
+    "tests/playback-sources-browser.cjs": "cf92e2a9a77f28e69faec686a40d89fd06c966b26e8a4a973d6333a43b4cab87",
+    "tests/fixtures/playback-sources-browser-proof.json": "8666e36224c2ed35f62f7b42d3c9a1742303cb03555f5fb9f0fb254a9e6ad126",
+    "tests/audio-preparation-state.test.cjs": "54e674802e4acf88c4ca799544a306a25f48508a31b5a8b32ccc9b21e257a313",
+    "scripts/audit-core-browser.py": "28f84e5571e874823c24c34bbb343c1b6c53b0754bdb77d6cc251eae1a8a77c7",
+    "tests/fixtures/core-browser-audit-0252/report.json": "8fafbad60690e0677e1ae7ec9a0497e053df837f1d385c27155b0830fc393815"
+  },
+  "scope": "Full source suite and 42 isolated browser workflows on unchanged final runtime. Preliminary browser run intentionally stopped after source-review correction; only final run counts. Synthetic audio and controlled Odesa responses. No personal project, microphone, live provider or physical device/perceptual-quality acceptance. Backend behavior unchanged."
+}

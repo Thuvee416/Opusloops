@@ -18,6 +18,6 @@ test('Stop cancels launch intent without prematurely releasing pending resource 
  gates[0].resolve();const receipt=await launch;assert.equal(receipt.interrupted,true);assert.equal(e.preparing,false);assert.equal(e.playing,false);assert.equal(e.active.size,0);
 });
 test('errors after sample preparation also release ownership',async()=>{
- const {engine:e,gates}=await fixture();e.project.clips.bad={id:'bad',kind:'audio'};e.prepareClip=async()=>{throw Error('Clip Failed');};
+ const {engine:e,gates}=await fixture();e.project.clips.bad={id:'bad',kind:'audio'};e.project.tracks[0].slots[0]='bad';e.prepareClip=async()=>{throw Error('Clip Failed');};
  const pending=e.prepare(),rejected=assert.rejects(pending,/Clip Failed/);gates[0].resolve();await rejected;assert.equal(e.preparing,false);assert.equal(e.preparationCount,0);
 });

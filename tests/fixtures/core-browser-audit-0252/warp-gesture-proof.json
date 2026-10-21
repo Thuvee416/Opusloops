@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "cancel": "Control+Z",
+      "projectExact": true
+    },
+    {
+      "cancel": "Meta+Z",
+      "projectExact": true
+    },
+    {
+      "cancel": "Escape",
+      "projectExact": true
+    },
+    {
+      "cancel": "Blur",
+      "projectExact": true
+    },
+    {
+      "cancel": "Resize",
+      "projectExact": true
+    },
+    {
+      "cancel": "Capture Loss",
+      "projectExact": true
+    },
+    {
+      "cancel": "Pointer Cancel",
+      "projectExact": true
+    },
+    {
+      "cancel": "Hidden Document",
+      "projectExact": true
+    }
+  ],
+  "keyboardShortcutsSuppressedDuringDrag": true,
+  "historyLockedDuringDrag": true,
+  "completedDragSingleUndo": true,
+  "redoBranchPreservedOnCancel": true,
+  "keyboardNudge": true,
+  "saveUndoRedoReloadExact": true,
+  "errors": [],
+  "scope": "Isolated Chromium with synthetic two-second PCM, actual pointer and keyboard events, native stretch preparation and real project downloads. Focus/visibility/pointer-cancel events are controlled; capture loss uses the native capture API. No personal project, provider, microphone, physical device or perceptual audio-quality check."
+}

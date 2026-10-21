@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "menuAndKeyboardRippleCommands": true,
+  "allPitchesAndHiddenSourceShifted": true,
+  "loopAndPlacementsUnchanged": true,
+  "exactUndoRedo": true,
+  "livePlaybackIdentityPreserved": true,
+  "copyCutPasteRetainFullTime": true,
+  "cancelledCutRetainsClipboard": true,
+  "odesaTimeEditAndRealDownload": true,
+  "portableReopenExact": true,
+  "sourceOverflowAtomic": true,
+  "errors": [],
+  "scope": "Isolated actual Chromium application, synthetic MIDI and controlled Odesa API responses. Native menu/keyboard, playback identity, exact project state, Undo/Redo, downloads/reopen and cancellation. No live model, personal project, microphone, physical audio or mobile hardware."
+}
