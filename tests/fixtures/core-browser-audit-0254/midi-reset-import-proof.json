@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "manualImport": true,
+  "odesaImport": true,
+  "format1CrossTrackReset": true,
+  "heldKeysPreserved": true,
+  "allNotesOffRespectsPedal": false,
+  "unrelatedProjectPreserved": true,
+  "exactUndoRedoAndReopen": true,
+  "audio": {
+    "maxError": 0,
+    "peak": 0.20241788029670715,
+    "exportedNotes": [
+      [
+        60,
+        2
+      ],
+      [
+        64,
+        3
+      ]
+    ]
+  },
+  "errors": [],
+  "scope": "Isolated Chromium using actual file inputs, synthetic MIDI, real project downloads and native offline audio; controlled Odesa response. No personal files, account, provider, microphone or physical audio acceptance."
+}

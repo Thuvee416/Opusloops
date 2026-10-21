@@ -20,5 +20,5 @@ test('Escape and platform Undo shortcuts cancel Arrangement previews while other
  }
 });
 test('direct history commands are locked until the Arrangement drag ends',()=>{
- const start=source.indexOf('function historyLocked(action,steps=1)'),line=source.slice(start,source.indexOf('\n',start)),ctx={history:{},engine:{playing:false},warpDrag:null,gesture:{},busy:false,inputActive:()=>false};vm.createContext(ctx);vm.runInContext(line,ctx);assert.equal(ctx.historyLocked('undo'),true);assert.equal(ctx.historyLocked('redo'),true);ctx.gesture=null;assert.ok(!ctx.historyLocked('undo'));
+ const start=source.indexOf('function historyLocked(action,steps=1)'),line=source.slice(start,source.indexOf('\n',start)),ctx={history:{},engine:{playing:false},warpDrag:null,gesture:{},automationGesture:null,busy:false,inputActive:()=>false};vm.createContext(ctx);vm.runInContext(line,ctx);assert.equal(ctx.historyLocked('undo'),true);assert.equal(ctx.historyLocked('redo'),true);ctx.gesture=null;assert.ok(!ctx.historyLocked('undo'));
 });

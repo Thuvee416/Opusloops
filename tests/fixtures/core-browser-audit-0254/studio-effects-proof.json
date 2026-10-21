@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "rate": 44100,
+      "eqAmplitudeRatio": 0.25118867449167104,
+      "echoLeft": 0.7107344994951781,
+      "echoRight": 0.7107337516610939,
+      "repeat": 0.10423112728343936,
+      "prematureRight": 0,
+      "reverbBeforePredelay": 0,
+      "reverbBody": 0.059467403763505254,
+      "reverbLate": 0,
+      "reverbStereoDifference": 0.13904503222419692
+    },
+    {
+      "rate": 48000,
+      "eqAmplitudeRatio": 0.2511886745287479,
+      "echoLeft": 0.6540861253738737,
+      "echoRight": 0.6540854520995019,
+      "repeat": 0.09411853404196474,
+      "prematureRight": 0,
+      "reverbBeforePredelay": 0,
+      "reverbBody": 0.05411512963356761,
+      "reverbLate": 0,
+      "reverbStereoDifference": 0.12659413725821886
+    }
+  ],
+  "scope": "Native Chromium offline DSP at 44.1 and 48 kHz. EQ response, alternating echo timing, feedback, reverb pre-delay/decay and stereo decorrelation. Not a listening-quality or third-party plug-in compatibility test."
+}

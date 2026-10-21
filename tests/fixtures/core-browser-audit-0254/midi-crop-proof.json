@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "loopCropMenuAndShortcut": true,
+  "sessionBatchContextCrop": true,
+  "pianoKeyboardAndArrangementContextCrop": true,
+  "nativeTrackDuplicateMenuAndUndo": true,
+  "timeCropAllPitchesRebased": true,
+  "sharedPlacementsAndMetadataPreserved": true,
+  "exactUndoRedoAndReopen": true,
+  "liveLoopCropKeepsPlaybackIdentity": true,
+  "lengthChangeRequiresStop": true,
+  "cancelledCropRetainsSourceAndHistory": true,
+  "odesaLoopAndRangeCropSave": true,
+  "audioError": 0,
+  "errors": [],
+  "scope": "Isolated actual Chromium, synthetic MIDI and controlled Odesa responses. Native menus/shortcuts/context, exact saved projects and history, PCM reference comparison, no personal project/provider/microphone/physical audio or mobile hardware."
+}

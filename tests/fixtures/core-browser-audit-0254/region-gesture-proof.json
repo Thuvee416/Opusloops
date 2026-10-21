@@ -1,0 +1,53 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "kind": "move",
+      "group": false,
+      "cancellationPreservesProjectAndSelection": true,
+      "singleUndoRedoExact": true
+    },
+    {
+      "kind": "trim",
+      "group": false,
+      "cancellationPreservesProjectAndSelection": true,
+      "singleUndoRedoExact": true
+    },
+    {
+      "kind": "copy",
+      "group": false,
+      "cancellationPreservesProjectAndSelection": true,
+      "singleUndoRedoExact": true
+    },
+    {
+      "kind": "move",
+      "group": true,
+      "cancellationPreservesProjectAndSelection": true,
+      "singleUndoRedoExact": true
+    },
+    {
+      "kind": "trim",
+      "group": true,
+      "cancellationPreservesProjectAndSelection": true,
+      "singleUndoRedoExact": true
+    },
+    {
+      "kind": "copy",
+      "group": true,
+      "cancellationPreservesProjectAndSelection": true,
+      "singleUndoRedoExact": true
+    }
+  ],
+  "competingShortcutsBlocked": true,
+  "interruptionCancellation": [
+    "blur",
+    "resize",
+    "pointercancel",
+    "native capture loss",
+    "hidden document"
+  ],
+  "autoscrollRestoredOnCancel": true,
+  "previousEditUndoRedoAndReloadExact": true,
+  "errors": [],
+  "scope": "Isolated Chromium with synthetic MIDI project, actual pointer/keyboard/menu-control edits, project downloads, native capture release and autoscroll. Blur/resize/visibility/pointer-cancel interruptions are controlled events. No personal project, microphone, provider or physical-device check."
+}

@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "manualAppendAtExactEnd": true,
+  "boundaryMidiNotes": 1,
+  "ordinaryAppendAudio": true,
+  "overflowLeavesProjectAndHistoryUnchanged": true,
+  "selectedSlotActivationPreserved": true,
+  "saveUndoRedoReopenExact": true,
+  "odesaExistingOverflowGuardAtomic": true,
+  "odesaValidPlacement": true,
+  "controlledPlannerRequests": 4,
+  "audio": {
+    "error": 0,
+    "peak": 0.07335919141769409,
+    "notes": 1
+  },
+  "errors": [],
+  "scope": "Isolated actual Chromium, synthetic MIDI project, real downloads and native offline audio with controlled Odesa responses. Region-cap and failed-install cases are source-level checks. No personal project, live provider, microphone or physical-device validation."
+}

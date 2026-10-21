@@ -1,0 +1,26 @@
+{
+  "version": "0.254.0",
+  "sourceBaseCommit": "26c085b80e918dbc953a8b8c7e17d331b39e0c28",
+  "checkedAt": "2026-10-21T00:49:49.818808+00:00",
+  "sourceTests": 988,
+  "browserCases": 44,
+  "logs": {
+    "opus-0254-source.log": "a32c3cd2d1eaf7712cde40fdf6b9e5a799958ab883474b70ca2bc5ad33b6c035",
+    "opus-0254-before.log": "bc4d88e193dbf8777cf7e95ee7bc74b09d76f7dbdd11669ce5fe0819f25f32ac",
+    "opus-0254-audit.log": "5f3c85296c58f8ef540b0e57a7b3eacd2c57df11501b0387caaae864928885e1"
+  },
+  "fileHashes": {
+    "web-studio/app.js": "1b361c7352a93e96a67c6fe3b8785bbf74f65860c94692d615d60c495495a7e6",
+    "web-studio/index.html": "ab278e0fc05be1d0abfac02196ac900ba57c72721e06aa8d9b34502fceeab797",
+    "web-studio/release.json": "b48d01291e0301b1338097c31327ba29dd6e5c2897617625a0fa809226306300",
+    "tests/automation-gesture-browser.cjs": "8e74a714654092bdb8b5c8b528a6e69fcd18cd50ab09bb6d2019c8f229d6af33",
+    "tests/automation-gesture-cancel.test.cjs": "5d1080b3abebae5f52eda3783c78369ee1bb06cb8851b69a773fb7d67ec243a4",
+    "tests/autosave.test.cjs": "f7deb3464316b96d36191d8bb388c45ef6c2b738faacbf49c16ac1f3b2fbc021",
+    "tests/playback-edit-lock.test.cjs": "03d399c9654e598bfd09ac16803787b64b92033c393cd1975a692851abda209c",
+    "tests/region-gesture-cancel.test.cjs": "79d8cd6316b1177c305a8cbbb7abd95e2b05bb41eff12ebccd7a809fab4b6027",
+    "tests/fixtures/automation-gesture-browser-proof.json": "499ee436a02d18e14e768dc790b623d898f0744ee9e7c67ea69c1bcadd959e5a",
+    "scripts/audit-core-browser.py": "916efa1ba8db2e26cb25d8d776d8aa56147cb6827438307e22216750db65f1c4",
+    "tests/fixtures/core-browser-audit-0254/report.json": "29e55a96bea96a1205e83ffe2f8fb8468027f0f2e1f91ed9624bcdcfd04a88ab"
+  },
+  "scope": "Full source suite and 44 isolated Chromium workflows on unchanged final runtime. Five automation target types, synthetic PCM, exact saved files and Undo/Redo/reload. Native mouse/keyboard/emulated touch and capture release, controlled interrupt/stale events. No personal project, microphone, live provider, physical device or listening-quality certification. Backend unchanged."
+}

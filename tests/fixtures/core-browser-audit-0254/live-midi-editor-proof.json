@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "kind": "synth",
+      "nativeFieldAndKeyboardEdits": true,
+      "clockAndMixerRetained": true,
+      "undoRedoExact": true,
+      "drawLiveSingleHistory": true,
+      "dragLiveAndUndoExact": true,
+      "velocityFocusRetained": true,
+      "historyDialogAwaited": true,
+      "structuralHistoryLocked": true,
+      "gestureCancelExact": true,
+      "stopCancelsPreparation": false
+    },
+    {
+      "kind": "legacy",
+      "nativeFieldAndKeyboardEdits": true,
+      "clockAndMixerRetained": true,
+      "undoRedoExact": true,
+      "drawLiveSingleHistory": true,
+      "dragLiveAndUndoExact": true,
+      "velocityFocusRetained": true,
+      "historyDialogAwaited": true,
+      "structuralHistoryLocked": true,
+      "gestureCancelExact": true,
+      "stopCancelsPreparation": true
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated actual app with native field, keyboard, pointer and Draw Mode edits while Arrangement plays. Exact project snapshots and Undo/Redo; Stop cancels delayed worker preparation. No personal project, microphone, provider, physical controller or listening-quality claim."
+}

@@ -63,7 +63,7 @@ test('exit guard warns only for unsaved edits or a pending take and attempts pag
 
 test('hidden-page handler flushes immediately and again after asynchronous capture commits',async()=>{
  const gate=deferred(),writes=[];let listener,project='Before Take',stopped=false;
- const ctx={document:{hidden:true,addEventListener:(_,fn)=>listener=fn},engine:{playing:true,stop(){stopped=true;}},releaseNotes(){},cancelMidiGesture(){},cancelWarpDrag(){},cancelRegionDrag(){},inputActive:()=>true,run:fn=>fn,finishInput:async()=>{await gate.promise;project='With Take';},persist:async()=>writes.push(project),setStatus(){},clearTimeout(){},saveTimer:null,Promise};
+ const ctx={document:{hidden:true,addEventListener:(_,fn)=>listener=fn},engine:{playing:true,stop(){stopped=true;}},releaseNotes(){},cancelMidiGesture(){},cancelWarpDrag(){},cancelRegionDrag(){},cancelAutomationPointDrag(){},inputActive:()=>true,run:fn=>fn,finishInput:async()=>{await gate.promise;project='With Take';},persist:async()=>writes.push(project),setStatus(){},clearTimeout(){},saveTimer:null,Promise};
  vm.createContext(ctx);vm.runInContext(extract("document.addEventListener('visibilitychange',()=>{","\ninstallSaveExitGuard"),ctx);
  listener();assert.equal(stopped,true);assert.deepEqual(writes,['Before Take']);gate.resolve();await tick();assert.deepEqual(writes,['Before Take','With Take']);ctx.document.hidden=false;listener();assert.equal(writes.length,2);
 });

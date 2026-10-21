@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "singleClickDoesNotInsert": true,
+  "doubleClickInsertDeleteUndoExact": true,
+  "shortcutTypingGuard": true,
+  "paintSkippedCells": true,
+  "eraseLongNoteOnce": true,
+  "strokeSingleUndoRedoExact": true,
+  "escapeCancels": true,
+  "nativeTouchCommitCancelExact": true,
+  "menuToggle": true,
+  "foldedPitchStroke": true,
+  "undoDuringStrokeCancels": true,
+  "errors": [],
+  "scope": "Isolated native headless Chromium with mouse, keyboard and CDP touch events. Actual portable project downloads compare exact edits and Undo/Redo. No personal project, provider, microphone or physical device claim."
+}

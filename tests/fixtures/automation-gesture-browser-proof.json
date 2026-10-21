@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "runtimeHashes": {
+    "app.js": "1b361c7352a93e96a67c6fe3b8785bbf74f65860c94692d615d60c495495a7e6",
+    "index.html": "ab278e0fc05be1d0abfac02196ac900ba57c72721e06aa8d9b34502fceeab797",
+    "release.json": "b48d01291e0301b1338097c31327ba29dd6e5c2897617625a0fa809226306300"
+  },
+  "results": [
+    {
+      "target": "Volume",
+      "cancelPreservesProjectAndPointSelection": true,
+      "oneUndoRedoExact": true,
+      "curvePreserved": true
+    },
+    {
+      "target": "Pan",
+      "cancelPreservesProjectAndPointSelection": true,
+      "oneUndoRedoExact": true,
+      "curvePreserved": true
+    },
+    {
+      "target": "Device Gain",
+      "cancelPreservesProjectAndPointSelection": true,
+      "oneUndoRedoExact": true,
+      "curvePreserved": true
+    },
+    {
+      "target": "Send",
+      "cancelPreservesProjectAndPointSelection": true,
+      "oneUndoRedoExact": true,
+      "curvePreserved": true
+    },
+    {
+      "target": "Return Volume",
+      "cancelPreservesProjectAndPointSelection": true,
+      "oneUndoRedoExact": true,
+      "curvePreserved": true
+    }
+  ],
+  "competingShortcutsBlocked": true,
+  "interruptionCancellation": [
+    "blur",
+    "resize",
+    "pointercancel",
+    "native capture loss",
+    "hidden document"
+  ],
+  "staleTargetViewportRevisionAndDetachedPointRejected": true,
+  "nativeTouchEditAndCancelExact": true,
+  "audio": {
+    "peak": 0.8256793022155762,
+    "maxSampleDifference": 0,
+    "maxChangeFromOriginal": 0.0029407073743641376
+  },
+  "previousEditUndoRedoAndReloadExact": true,
+  "errors": [],
+  "scope": "Isolated Chromium, synthetic stereo tone. Native pointer/keyboard/touch input and capture release; controlled interruption/stale-state events. Five automation target types and exact downloaded projects. Shared offline WAV compared with independently specified envelope. No personal project, microphone, live provider, physical device or listening-quality acceptance."
+}
