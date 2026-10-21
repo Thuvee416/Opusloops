@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "capture": {
+    "lookahead": {
+      "recording": true,
+      "regions": 1,
+      "end": 16384
+    },
+    "recording": false,
+    "playing": true,
+    "records": 0,
+    "sameContext": true,
+    "sameMixers": true,
+    "error": "Session Recording Stopped At The 16,384-Beat Timeline Limit. The Captured Take Is Saved; Playback Continues. Undo Restores The Previous Arrangement.",
+    "end": 16384
+  },
+  "saveUndoRedoReloadExact": true,
+  "originalProjectRestoredByOneUndo": true,
+  "delivery": {
+    "boundaryNotes": 1,
+    "audioRange": {
+      "start": 0,
+      "length": 4
+    },
+    "error": 0,
+    "peak": 0.05756337195634842
+  },
+  "errors": [],
+  "scope": "Isolated Chromium, synthetic MIDI project, actual Session launch/Record/Stop controls and native audio engine. Clock origin accelerated to exercise the timeline boundary; not a multi-hour endurance or physical-device test. Boundary MIDI verified; native WAV compared only for the first four beats because long-timeline WAV export retains its existing limits. No personal project, microphone or model call."
+}

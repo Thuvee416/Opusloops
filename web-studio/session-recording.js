@@ -1,5 +1,6 @@
 import {validateProject} from './model.js';
 // Session performance capture is distinct from microphone/keyboard input takes.
+export const SESSION_RECORDING_MAX_BEATS=16384;
 const json=value=>JSON.stringify(value);
 export const SESSION_CAPTURE_COMMANDS=['launch_scene','launch_clip','stop_track','stop_clips','launch_group','stop_group'];
 export function sessionRecordingState(engine){const take=engine.recordingTake;return {active:!!engine.recording,captureId:take?.id??null,previousArrangement:take?.previous??null,regions:engine.recording?engine.project.arrangement.length:0};}

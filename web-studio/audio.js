@@ -21,6 +21,7 @@ import {consolidationSource,CONSOLIDATE_BYTES} from './consolidate.js';
 import {audioEditKey,editedAudioBuffer} from './audio-edit.js';
 import {nextLaunchBeat,pendingQuantum,toggleLaunchAction,repeatGrid,slotStops} from './launch.js';
 import {AutomationTake} from './automation-recording.js';
+import {SESSION_RECORDING_MAX_BEATS} from './session-recording.js';
 import {automationChannels,automationTargets,automationTargetFor,deviceKey,scheduleTarget} from './automation-targets.js';
 import {VoiceScheduler,voiceTail} from './voice-scheduler.js';
 import {hasEnvelope,sendKey} from './automation.js';
@@ -353,9 +354,20 @@ export class Engine {
     if(cancel){this.records.clear();this.project.arrangement=take.previous;this.recording=false;this.recordingTake=null;}
     this.stop();return {sessionRecording:true,action:cancel?'cancel':'finish',captureId:take.id,status:cancel?'cancelled':this.project.arrangement.length?'saved':'empty',regionCount:this.project.arrangement.length};
   }
-  openRecord(trackId,clipId,beat,offset=0){if(this.project.arrangement.length>=10000){this.finishRecords(this.rawBeat());this.recording=false;this.recordingTake=null;this.recordingError='Session recording stopped at the 10,000-region limit. Save or edit this take before recording again.';return;}const track=this.project.tracks.find(t=>t.id===trackId),slot=this.active.get(trackId)?.slot??track.slots.indexOf(clipId),s={id:uid(),trackId,clipId,start:beat,length:0,offset,...(!slotActive(track,slot)?{active:false}:{})};this.records.set(trackId,s);this.project.arrangement.push(s);}
-  closeRecord(trackId,beat){const s=this.records.get(trackId);if(s){s.length=Math.max(0,beat-s.start);if(s.length<.0625)this.project.arrangement=this.project.arrangement.filter(x=>x!==s);this.records.delete(trackId);}}
+  finishSessionRecordingAtLimit(beat,message){
+    if(!this.recording)return;this.finishRecords(beat);this.recording=false;this.recordingTake=null;this.recordingError=message;this.changed();
+  }
+  advanceSessionRecording(){
+    if(this.recording&&this.rawBeat()>=SESSION_RECORDING_MAX_BEATS)this.finishSessionRecordingAtLimit(SESSION_RECORDING_MAX_BEATS,'Session Recording Stopped At The 16,384-Beat Timeline Limit. The Captured Take Is Saved; Playback Continues. Undo Restores The Previous Arrangement.');
+  }
+  openRecord(trackId,clipId,beat,offset=0){
+    // Lookahead may launch beyond the capture boundary before it is audible.
+    // Keep playback running, but never open a region outside the supported set.
+    if(beat>=SESSION_RECORDING_MAX_BEATS)return;
+    if(this.project.arrangement.length>=10000){this.finishSessionRecordingAtLimit(this.rawBeat(),'Session recording stopped at the 10,000-region limit. Save or edit this take before recording again.');return;}const track=this.project.tracks.find(t=>t.id===trackId),slot=this.active.get(trackId)?.slot??track.slots.indexOf(clipId),s={id:uid(),trackId,clipId,start:beat,length:0,offset,...(!slotActive(track,slot)?{active:false}:{})};this.records.set(trackId,s);this.project.arrangement.push(s);}
+  closeRecord(trackId,beat){const s=this.records.get(trackId);if(s){s.length=Math.max(0,Math.min(beat,SESSION_RECORDING_MAX_BEATS)-s.start);if(s.length<.0625)this.project.arrangement=this.project.arrangement.filter(x=>x!==s);this.records.delete(trackId);}}
   finishRecords(beat){
+    beat=Math.min(beat,SESSION_RECORDING_MAX_BEATS);
     for(const id of [...this.records.keys()])this.closeRecord(id,beat);
     // Lookahead can already have closed regions at a future launch boundary.
     // Every finish path must trim those regions to the actual audio clock,
@@ -408,7 +420,7 @@ export class Engine {
       if(f.beat<=beat+1e-7){this.gateHolds.delete(id);this.pending.set(id,{...f.event,beat});this.follows.delete(id);}
     }
   }
-  tick(){this.advanceAutomationRecording();let launchChanged=false;const spb=60/this.project.bpm,horizon=this.context.currentTime+.12,captureEnd=this.inputArrangement?this.inputArrangement.start+this.inputArrangement.maxBeats:Infinity;
+  tick(){this.advanceSessionRecording();this.advanceAutomationRecording();let launchChanged=false;const spb=60/this.project.bpm,horizon=this.context.currentTime+.12,captureEnd=this.inputArrangement?this.inputArrangement.start+this.inputArrangement.maxBeats:Infinity;
     // Audio-clock scheduling; UI animation never determines playback time.
     while(this.origin+this.nextBeat*spb<horizon&&this.nextBeat<captureEnd-1e-9){const beat=this.nextBeat,time=this.origin+beat*spb,pos=timelineBeat(beat,this.playbackTransport(),this.mode);let step=Math.min(captureEnd-beat,pendingQuantum(beat,quantumLength(beat,this.playbackTransport(),this.mode),this.pending));
       if(metronomeAudible(this.project.transport,{recording:!!(this.recording||this.automationTake||this.inputOverdub&&beat>=(this.inputOverdub.countInEndBeat??-Infinity)||this.inputClickClock&&time>=this.inputClickClock.start),countingIn:!!(this.inputClickClock&&time<this.inputClickClock.start||this.inputOverdub?.countInEndBeat!==undefined&&beat<this.inputOverdub.countInEndBeat)})&&Math.abs(pos-Math.round(pos))<1e-6&&time>=this.context.currentTime)this.click(time,Math.round(pos)%4===0);

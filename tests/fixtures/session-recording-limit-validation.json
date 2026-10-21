@@ -1,0 +1,19 @@
+{
+  "version": "0.251.0",
+  "sourceBaseCommit": "3e2778be8e03f3eb03a73d9f3daf2254d7dba9aa",
+  "checkedAt": "2026-10-21T00:00:55.145233+00:00",
+  "sourceTests": 972,
+  "sourceTestLogSha256": "18d3cb8fbb982d5b1bb026edc3d22c4e76fccae4cb0aa03872de24862b1e6cb3",
+  "reproductionLogSha256": "8eeb9c8c78d25f9c24eaa7e70011ad293d243bd18147c04c73fd8e64d2c5a840",
+  "browserLogSha256": "eea69df9fc567fa76cdaa47a464c51a99e9d5c9ded2d02ef0b92e655db3d74a0",
+  "fileHashes": {
+    "web-studio/audio.js": "e1338cc4faae8b61d389a3bfb6bfb2e2885f3f4c2234701e4ddb8eedc6275dfd",
+    "web-studio/session-recording.js": "3e0f8764922fe52b34390ac711b0373a742cc34e9388bf8f6fdb795961901f51",
+    "web-studio/release.json": "780c37a185f3e7f06afd24495dfcdf9f6beb7ffd680c60fb65d7f9ea22011f6d",
+    "tests/session-recording-limit.test.cjs": "2f15f81ea97a17b27d05cdee6eb19e8da745bc10f367edbbc997135fc5340df0",
+    "tests/session-recording-limit-browser.cjs": "0b0f3c77892cf0e714d91feb1af30d0c2e544737148d3445878f7651ff4ae02f",
+    "tests/fixtures/session-recording-limit-browser-proof.json": "0c614a59919da32d71f6aeeecd56187728e548bfd17ed27ddfe1c3c0037c1f9c",
+    "scripts/audit-core-browser.py": "c5a479945fcdea1b56f842996193fb16269003c75e0a9283b29a4717fb49e3fc"
+  },
+  "scope": "Full source suite plus isolated native Session capture/history/reload test at an accelerated clock boundary, boundary MIDI and early-range WAV comparison. Not a multi-hour endurance, long-range WAV or physical-device test. Backend behavior unchanged; unrelated browser cases not repeated."
+}
